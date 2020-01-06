@@ -17,7 +17,7 @@ class CalcDeltas:
         :type _number_alts: Integer
         :param _list: List of metrics for which to calculate deltas.
         :type _list: List
-        :return: A new dataframe consisting of the passed dataframe appended with deltas for each scenario in the passed data.
+        :return: A new DataFrame consisting of the passed DataFrame appended with deltas for each scenario in the passed data.
         """
         return_df = pd.DataFrame()
         alternative = dict()

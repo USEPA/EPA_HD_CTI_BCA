@@ -1,16 +1,26 @@
 import pandas as pd
 from pathlib import Path, PurePath
 
+fuel_price_metrics = ['gasoline_retail', 'gasoline_pretax', 'diesel_retail', 'diesel_pretax']
+
 
 class GetFuelPrices(object):
     """
-    The GetFuelPrices class grabs the appropriate fuel prices from the aeo folder, cleans up some naming and creates a fuel_prices df for use in calcs
+    The GetFuelPrices class grabs the appropriate fuel prices from the aeo folder, cleans up some naming and creates a fuel_prices DataFrame for use in operating costs.
+
+    :param _path_project: Well, this is the path of the project and the parent of the aeo directory.
     """
     def __init__(self, _path_project):
         self.path_project = _path_project
         self.aeo = _path_project.joinpath('aeo')
 
-    def get_fuel_prices(self, _aeo_case, _metrics):
+    def get_fuel_prices(self, _aeo_case):
+        """
+
+        :param _aeo_case: From the BCA inputs sheet - the AEO fuel case to use (a CSV of fuel prices must exist in the aeo directory).
+        :param _metrics: A list of fuel prices to gather (i.e., gasoline, diesel, retail, pre-tax, etc.)
+        :return: A fuel_prices DataFrame.
+        """
         fuel_prices_file = PurePath(str(self.aeo) + '/Components_of_Selected_Petroleum_Product_Prices_' + _aeo_case + '.csv')
         fuel_prices_full = pd.read_csv(fuel_prices_file, skiprows=4)
         fuel_prices_full = fuel_prices_full[fuel_prices_full.columns[:-1]]
@@ -27,5 +37,5 @@ class GetFuelPrices(object):
         _fuel_prices.reset_index(drop=True, inplace=True)
         for fuel in ['gasoline', 'diesel']:
             _fuel_prices.insert(len(_fuel_prices.columns), fuel + '_pretax', _fuel_prices[fuel + '_distribution'] + _fuel_prices[fuel + '_wholesale'])
-        _fuel_prices = _fuel_prices[['yearID'] + _metrics]
+        _fuel_prices = _fuel_prices[['yearID'] + fuel_price_metrics]
         return _fuel_prices

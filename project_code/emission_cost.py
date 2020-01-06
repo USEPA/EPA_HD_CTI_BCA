@@ -2,11 +2,12 @@ import pandas as pd
 
 
 class EmissionCost:
-    """The EmissionCost class calculates the monetized damages from pollutants.
+    """
+    The EmissionCost class calculates the monetized damages from pollutants.
 
     :param _fleet: The fleet data that provides pollutant inventories.
-    :type _fleet: DataFrame
     """
+
     def __init__(self, _fleet):
         self._fleet = _fleet
 

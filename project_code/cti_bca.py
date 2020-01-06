@@ -1,6 +1,5 @@
 """
 This is the primary module of the benefit cost analysis. This module reads input files, calls other modules and generates output files.
-<Add more here regarding what input files are read and what output files are generated.>
 """
 import pandas as pd
 import numpy as np
@@ -31,7 +30,7 @@ PATH_PROJECT_CODE = PATH_PROJECT.joinpath('project_code')
 PATH_INPUTS = PATH_PROJECT.joinpath('inputs')
 PATH_OUTPUTS = PATH_PROJECT.joinpath('outputs')
 
-fuel_price_metrics = ['gasoline_retail', 'gasoline_pretax', 'diesel_retail', 'diesel_pretax']
+# fuel_price_metrics = ['gasoline_retail', 'gasoline_pretax', 'diesel_retail', 'diesel_pretax']
 
 def inputs_filenames(input_files_pathlist):
     """
@@ -56,7 +55,7 @@ def reshape_df(df, value_variable_list, cols_to_melt, melted_header, new_column_
     :type melted_header: String
     :param new_column_name: Name to use for the ‘Value’ column.
     :type new_column_name: String
-    :return: A new dataframe in long and narrow shape rather than the passed short and wide shape.
+    :return: A new DataFrame in long and narrow shape rather than the passed short and wide shape.
     """
     df = df.melt(id_vars=value_variable_list,
                  value_vars=cols_to_melt, var_name=melted_header,
@@ -77,7 +76,7 @@ def convert_dollars_to_bca_basis(df, deflators, dollar_basis_years, _metric, bca
     :type _metric: String
     :param bca_dollar_basis: The basis year for the analysis - the year for which the GDP Price Deflator is 1.
     :type bca_dollar_basis: Integer
-    :return: A new dataframe consisting of the passed data but with dollar values in a single dollar basis year.
+    :return: A DataFrame consisting of the passed data but with dollar values in a single dollar basis year.
     """
     for number in range(len(dollar_basis_years)):
         df.loc[df['DollarBasis'] == dollar_basis_years[number], _metric] = df[_metric] * deflators[number]
@@ -92,15 +91,18 @@ def main():
     start_time = time.time()
     start_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')
     # these can be returned to interactive once further along, but for now just hardcoding the inputs for ease of testing
+    run_settings_file = PATH_INPUTS.joinpath('1_RunSettings.csv')
     bca_inputs_file = PATH_INPUTS.joinpath('BCA_General_Inputs.csv')
     regclass_costs_file = PATH_INPUTS.joinpath('DirectCostInputs_byRegClass_byFuelType.csv')
     # regclass_techpens_file = PATH_INPUTS.joinpath('TechPackages_TechPens.csv')
     regclass_learningscalars_file = PATH_INPUTS.joinpath('LearningRateScalars_byRegClass.csv')
-    sourcetype_costs_file = PATH_INPUTS.joinpath('DirectCostInputs_bySourcetype_no_0gtech.csv')
+    # sourcetype_costs_file = PATH_INPUTS.joinpath('DirectCostInputs_bySourcetype_no_0gtech.csv')
+    sourcetype_costs_file = PATH_INPUTS.joinpath('DirectCostInputs_bySourcetype.csv')
     markups_file = PATH_INPUTS.joinpath('IndirectCostInputs_byFuelType.csv')
     markups_vmt_scalars_file = PATH_INPUTS.joinpath('IndirectCostInputs_VMTscalars_byRegClass_byFuelType.csv')
     # markups_sourcetype_file = PATH_INPUTS.joinpath('IndirectCostInputs_bySourcetype.csv')
-    moves_file = PATH_INPUTS.joinpath('WAIT_OptionSelection.csv')
+    moves_file = PATH_INPUTS.joinpath('WAIT_Alternatives.csv')
+    moves_adjustments_file = PATH_INPUTS.joinpath('MOVES_Adjustments.csv')
     options_file = PATH_INPUTS.joinpath('options.csv')
     def_doserate_inputs_file = PATH_INPUTS.joinpath('DEF_DoseRateInputs.csv')
     def_prices_file = PATH_INPUTS.joinpath('DEF_Prices.csv')
@@ -108,8 +110,8 @@ def main():
     criteria_emission_costs_file = PATH_INPUTS.joinpath('CriteriaEmissionCost_Inputs.csv')
 # TODO make the rest more flexible to include or exclude sourcetype data/calcs
     # add input files as needed for copy to path_to_results folder
-    input_files_pathlist = [bca_inputs_file, regclass_costs_file, regclass_learningscalars_file,
-                            markups_file, markups_vmt_scalars_file, sourcetype_costs_file, moves_file, options_file,
+    input_files_pathlist = [run_settings_file, bca_inputs_file, regclass_costs_file, regclass_learningscalars_file,
+                            markups_file, markups_vmt_scalars_file, sourcetype_costs_file, moves_file, moves_adjustments_file, options_file,
                             orvr_fuelchange_file, criteria_emission_costs_file]
     inputs_filename_list = inputs_filenames(input_files_pathlist)
 
@@ -125,6 +127,7 @@ def main():
     markups_vmt_scalars = pd.read_csv(markups_vmt_scalars_file)
     # sourcetype_markups = pd.read_csv(markups_sourcetype_file)
     moves = pd.read_csv(moves_file)
+    moves_adjustments = pd.read_csv(moves_adjustments_file)
     options = pd.read_csv(options_file)
     def_doserate_inputs = pd.read_csv(def_doserate_inputs_file)
     def_prices = pd.read_csv(def_prices_file)
@@ -180,7 +183,7 @@ def main():
     for number in range(len(dollar_basis_years_cpiu)):
         factors_cpiu[number] = pd.to_numeric(bca_inputs.at['cpiu_factor_' + str(dollar_basis_years_cpiu[number]), 'Value'])
 
-    fuel_prices = GetFuelPrices(PATH_PROJECT).get_fuel_prices(aeo_case, fuel_price_metrics)
+    fuel_prices = GetFuelPrices(PATH_PROJECT).get_fuel_prices(aeo_case)
 
     # Now, reshape some of the inputs for easier use
     criteria_emission_costs_list = [col for col in criteria_emission_costs.columns if 'tailpipe' in col]
@@ -201,17 +204,20 @@ def main():
                                               + criteria_emission_costs_reshaped['DR'].map(str)
 
     # add the identifier metrics, alt_rc_ft and alt_st_rc_ft, to the dataframes
-    for df in [regclass_costs_modified, regclass_learningscalars, moves, sourcetype_costs]:
+    for df in [regclass_costs_modified, regclass_learningscalars, moves, moves_adjustments, sourcetype_costs]:
         df = Fleet(df).define_bca_regclass()
-    for df in [moves, sourcetype_costs]:
+    for df in [moves, moves_adjustments, sourcetype_costs]:
         df = Fleet(df).define_bca_sourcetype()
 
+    # adjust MOVES VPOP/VMT/Gallons to reflect what's included in CTI (excluding what's not in CTI)
+    moves_adjusted = Fleet(moves).adjust_moves(moves_adjustments)
+
     # add VMT/vehicle & Gallons/mile metrics to moves dataframe
-    moves.insert(len(moves.columns), 'VMT_AvgPerVeh', moves['VMT'] / moves['VPOP'])
-    moves.insert(len(moves.columns), 'MPG_AvgPerVeh', moves['VMT'] / moves['Gallons'])
+    moves_adjusted.insert(len(moves_adjusted.columns), 'VMT_AvgPerVeh', moves_adjusted['VMT'] / moves_adjusted['VPOP'])
+    moves_adjusted.insert(len(moves_adjusted.columns), 'MPG_AvgPerVeh', moves_adjusted['VMT'] / moves_adjusted['Gallons'])
 
     # pass moves thru Fleet.sales to get sales (population ageID=0) of everything in the moves runs by both sourcetype and by regclass
-    sales_moves = Fleet(moves).sales()
+    sales_moves = Fleet(moves_adjusted).sales()
 
     # determine the earliest model year for which MOVES runs have ageID=0 data (i.e., where does BCA start?)
     year_min = sales_moves.loc[sales_moves['ageID'] == 0, 'yearID'].min()
@@ -221,7 +227,7 @@ def main():
     sales_for_learning = dict()
     rc_ft_age0 = dict()
     for step in regclass_costs_years:
-        sales_for_learning[step] = Fleet(moves.loc[moves['modelYearID'] >= pd.to_numeric(step)]).sales_by_alt_rc_ft()
+        sales_for_learning[step] = Fleet(moves_adjusted.loc[moves_adjusted['modelYearID'] >= pd.to_numeric(step)]).sales_by_alt_rc_ft()
         rc_ft_age0[step] = pd.Series(sales_for_learning[step]['alt_rc_ft']).unique()
     # Apply learning to direct costs
     for step in regclass_costs_years:
@@ -268,7 +274,7 @@ def main():
     except ValueError:
         zgtech_max = 0
 
-    fleet_bca = Fleet(moves).fleet_with_0gtech(sourcetype_costs, zgtech_max)
+    fleet_bca = Fleet(moves_adjusted).fleet_with_0gtech(sourcetype_costs, zgtech_max)
     fleet_bca = pd.DataFrame(fleet_bca.loc[fleet_bca['modelYearID'] >= year_min])
     fleet_bca.reset_index(drop=True, inplace=True)
     # add the identifier metric, alt_st_rc_ft_zg, to the dataframes
@@ -278,9 +284,11 @@ def main():
 # TODO put zgtech costs into absolute space as done above for regclass costs
     # calculate the zero gram tech direct mfg costs by passing vehicles, package costs, sales and learning metrics thru the DirectCost class
     st_rc_ft_zg_age0 = pd.Series(sales_bca['alt_st_rc_ft_zg']).unique()
+    sourcetype_costs_vehs = pd.Series(sourcetype_costs['alt_st_rc_ft_zg']).unique()
     pkg_directcost_veh_zgtech_dict = dict()
     for veh in st_rc_ft_zg_age0:
-        if veh[4] == 0: # 4 being the index position for zgtech designation and 0 meaning ICE
+        if veh not in list(sourcetype_costs_vehs):
+        # if veh[4] == 0: # 4 being the index position for zgtech designation and 0 meaning ICE
             pkg_cost_veh_zgtech, pkg_seedvol = 0, 0
             techpen = 0 # this is the zgtech techpen on this vehicle, so ICE=0
             sales_to_pass = sales_bca.loc[sales_bca['alt_st_rc_ft_zg'] == veh, :]
@@ -408,6 +416,20 @@ def main():
             bca_costs.insert(len(bca_costs.columns), 'TotalCosts_' + mort_est + '_' + str(dr),
                              bca_costs[['Tech_TotalCost', 'OperatingCost_BCA_TotalCost', 'Criteria_Damage_' + mort_est + '_' + str(dr)]].sum(axis=1))
 
+    # adjust the 3 and 7 DR total costs as needed
+    for mort_est in ['low', 'high']:
+        bca_costs.loc[bca_costs['DiscountRate'] == 0.03, 'TotalCosts_' + mort_est + '_' + str(0.03)] \
+            = bca_costs[['Tech_TotalCost', 'OperatingCost_BCA_TotalCost', 'Criteria_Damage_' + mort_est + '_' + str(0.03)]].sum(axis=1)
+        bca_costs.loc[bca_costs['DiscountRate'] == 0.03, 'TotalCosts_' + mort_est + '_' + str(0.07)] = np.nan
+        bca_costs.loc[bca_costs['DiscountRate'] == 0.07, 'TotalCosts_' + mort_est + '_' + str(0.07)] \
+            = bca_costs[['Tech_TotalCost', 'OperatingCost_BCA_TotalCost', 'Criteria_Damage_' + mort_est + '_' + str(0.07)]].sum(axis=1)
+        bca_costs.loc[bca_costs['DiscountRate'] == 0.07, 'TotalCosts_' + mort_est + '_' + str(0.03)] = np.nan
+
+    # for dr in [0.03, 0.07]:
+    #     for mort_est in ['low', 'high']:
+    #         bca_costs.insert(len(bca_costs.columns), 'TotalCosts_' + mort_est + '_' + str(dr),
+    #                          bca_costs[['Tech_TotalCost', 'OperatingCost_BCA_TotalCost', 'Criteria_Damage_' + mort_est + '_' + str(dr)]].sum(axis=1))
+
     techcost_all, emission_costs_all, operating_costs_all = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
     for dr in [0, discrate_social_low, discrate_social_high]:
         techcost_all = pd.concat([techcost_all, techcost_dict[dr]], axis=0, ignore_index=True)
@@ -424,7 +446,7 @@ def main():
     Fleet(emission_costs_all).insert_option_name(options, number_alts)
     Fleet(operating_costs_all).insert_option_name(options, number_alts)
     Fleet(bca_costs).insert_option_name(options, number_alts)
-    Fleet(moves).insert_option_name(options, number_alts)
+    Fleet(moves_adjusted).insert_option_name(options, number_alts)
 
     # now set a standard row header for use in grouping along with metrics to group
     techcost_metrics_to_sum = ['VPOP'] + [col for col in techcost_all.columns if 'TotalCost' in col]
@@ -433,7 +455,7 @@ def main():
     operating_costs_metrics_to_sum = [col for col in operating_costs_all.columns if 'Gallons' in col or 'TotalCost' in col]
     operating_costs_metrics_to_avg = [col for col in operating_costs_all.columns if 'AvgPerVeh' in col or '_CPM' in col]
     bca_costs_metrics_to_sum = [col for col in bca_costs.columns if 'TotalCost' in col or 'Damage' in col or 'low' in col or 'high' in col]
-    moves_metrics_to_sum = [col for col in moves.columns if 'PM25' in col or 'NOx' in col]
+    moves_metrics_to_sum = [col for col in moves_adjusted.columns if 'PM25' in col or 'NOx' in col]
 
     # create a dict of lists for passing thru grouping methods
     groups = 3 # increment this consistent with row_headers created
@@ -478,7 +500,7 @@ def main():
         bca_costs_sum[group] = GroupMetrics(bca_costs, row_header_group[group]).group_sum(bca_costs_metrics_to_sum)
         bca_costs_sum[group] = bca_costs_sum[group].join(GroupMetrics(bca_costs_sum[group], row_header_group_cumsum[group]).group_cumsum(bca_costs_metrics_to_sum))
 
-    moves_sum = GroupMetrics(moves, ['optionID', 'OptionName', 'yearID']).group_sum(moves_metrics_to_sum)
+    moves_sum = GroupMetrics(moves_adjusted, ['optionID', 'OptionName', 'yearID']).group_sum(moves_metrics_to_sum)
 
     # now annualize the cumsum metrics
     for group in range(1, groups + 1):
@@ -528,8 +550,8 @@ def main():
     techcost_per_veh_cols = ['DiscountRate', 'yearID', 'regclass', 'fueltype', 'OptionName'] + [col for col in techcost_summary[2] if 'AvgPerVeh' in col and 'ZG' not in col and '20' not in col]
     discount_rates = [0]
     techcost_years = [2027, 2030, 2036, 2045]
-    regclasses = ['LHD45', 'MHD67', 'HHD8', 'Urban Bus']
-    fueltypes = ['Gasoline', 'Diesel']
+    regclasses = ['LHD', 'LHD45', 'MHD67', 'HHD8', 'Urban Bus']
+    fueltypes = ['Diesel', 'Gasoline']
     techcost_per_veh_file = pd.ExcelWriter(path_of_outputs_folder.joinpath('techcosts_AvgPerVeh.xlsx'))
     DocTables(techcost_summary[2]).techcost_per_veh_table(discount_rates, techcost_years, regclasses, fueltypes, techcost_per_veh_cols, techcost_per_veh_file)
     techcost_per_veh_file.save()

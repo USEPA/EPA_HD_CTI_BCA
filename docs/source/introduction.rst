@@ -1,4 +1,4 @@
-.. image :: https://www.epa.gov/sites/production/files/2013-06/epa_seal_verysmall.gif
+.. image:: https://www.epa.gov/sites/production/files/2013-06/epa_seal_verysmall.gif
 
 
 Introduction

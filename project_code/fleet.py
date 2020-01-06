@@ -7,30 +7,41 @@ class Fleet:
     """
     The Fleet class creates vehicle identifiers used by the Vehicle class. It also returns a fleet consisting of sales (ageID=0) data only.
     The Fleet class also takes in zero/low gram tech data and adjusts MOVES populations and VMT accordingly.
+
+    :param fleet: A DataFrame representing a fleet of vehicles and associated data.
     """
 
     def __init__(self, fleet):
         self.fleet = fleet
         
     def define_bca_regclass(self):
-        """Add identifier column to the passed fleet dataframe consisting of a tuple providing optionID, regClassID, fuelTypeID."""
+        """
+
+        :return: Add an identifier column to the passed fleet DataFrame consisting of a tuple providing optionID, regClassID, fuelTypeID.
+        """
         self.fleet.insert(0, 'alt_rc_ft', pd.Series(zip(self.fleet['optionID'], self.fleet['regClassID'], self.fleet['fuelTypeID'])))
         return self.fleet
 
     def define_bca_sourcetype(self):
-        """Add identifier column to the passed fleet dataframe consisting of a tuple providing optionID, sourcetypeID, regClassID, fuelTypeID."""
+        """
+
+        :return: Add identifier column to the passed fleet DataFrame consisting of a tuple providing optionID, sourcetypeID, regClassID, fuelTypeID.
+        """
         self.fleet.insert(0, 'alt_st_rc_ft', pd.Series(zip(self.fleet['optionID'], self.fleet['sourcetypeID'], self.fleet['regClassID'], self.fleet['fuelTypeID'])))
         return self.fleet
 
     def define_bca_sourcetype_zg(self):
-        """Add identifier column to the passed fleet dataframe consisting of a tuple providing optionID, sourcetypeID, regClassID, fuelTypeID, zgtechID."""
+        """
+
+        :return: Add identifier column to the passed fleet DataFrame consisting of a tuple providing optionID, sourcetypeID, regClassID, fuelTypeID, zgtechID.
+        """
         self.fleet.insert(0, 'alt_st_rc_ft_zg', pd.Series(zip(self.fleet['optionID'], self.fleet['sourcetypeID'], self.fleet['regClassID'], self.fleet['fuelTypeID'], self.fleet['zerogramTechID'])))
         return self.fleet
 
     def sales(self):
         """
 
-        :return: A new DataFrame consisting of only sales from the passed fleet DataFrame (ageID=0).
+        :return: A new DataFrame consisting of only sales from the passed fleet DataFrame (i.e., ageID=0).
         """
         _sales = self.fleet.loc[self.fleet['ageID'] == 0, :]
         _sales.reset_index(drop=True, inplace=True)
@@ -50,11 +61,9 @@ class Fleet:
     def fleet_with_0gtech(self, _zgtech, _zgtech_max):
         """Return fleet with MOVES results shifted from ICE-only and into zero gram techs according to the percentages and growths provided in the inputs.
 
-        :param _zgtech: from the inputs providing direct costs for different sourcetypes and zero/low gram techs
-        :type _zgtech: dataframe
-
-        :param _zgtech_max: the maximum number of zero/low gram techs being considered (may be zero)
-        :type _zgtech_max: float
+        :param _zgtech: A DataFrame providing direct costs for different sourcetypes and zero/low gram techs
+        :param _zgtech_max: The maximum number of zero/low gram techs being considered (may be zero)
+        :return: A fleet DataFrame with ICE sales dispersed into various zerogram tech sales.
         """
         pd.set_option('mode.chained_assignment', 'raise')
 
@@ -79,22 +88,21 @@ class Fleet:
         for tech in range(1, _zgtech_max + 1):
             fleet_with_zgtech['VPOP'] = fleet_with_zgtech['VPOP'] - fleet_zgtech[tech]['VPOP']
         for tech in range(1, _zgtech_max + 1):
-            fleet_with_zgtech = fleet_with_zgtech.append(fleet_zgtech[tech], ignore_index=True, sort=False)
+            fleet_with_zgtech = pd.concat([fleet_with_zgtech, fleet_zgtech[tech]], axis=0, ignore_index=True)
+            # fleet_with_zgtech = fleet_with_zgtech.append(fleet_zgtech[tech], ignore_index=True, sort=False)
         fleet_with_zgtech.reset_index(drop=True, inplace=True)
-        # fleet_with_zgtech['VMT'] = fleet_with_zgtech['VMT/vehicle'] * fleet_with_zgtech['VPOP'] # this correctly sets VMT to zero where VPOP is zero, but leaves VMT/vehicle=moves
-        # fleet_with_zgtech.loc[fleet_with_zgtech['VMT'] == 0, 'VMT/vehicle'] = 0 # this sets VMT/vehicle = 0 where VMT=0
-        # fleet_with_zgtech['Gallons'] = fleet_with_zgtech['Gallons/mile'] * fleet_with_zgtech['VMT']
-        # fleet_with_zgtech.loc[fleet_with_zgtech['Gallons'] == 0, 'Gallons/mile'] = 0
+        fleet_with_zgtech['VMT'] = fleet_with_zgtech['VMT_AvgPerVeh'] * fleet_with_zgtech['VPOP'] # this correctly sets VMT to zero where VPOP is zero, but leaves VMT/vehicle=moves
+        fleet_with_zgtech.loc[fleet_with_zgtech['VMT'] == 0, 'VMT_AvgPerVeh'] = 0 # this sets VMT/vehicle = 0 where VMT=0
+        fleet_with_zgtech['Gallons'] = fleet_with_zgtech['VMT'] / fleet_with_zgtech['MPG_AvgPerVeh']
+        fleet_with_zgtech.loc[fleet_with_zgtech['Gallons'] == 0, 'MPG_AvgPerVeh'] = 0
         return fleet_with_zgtech
 
     def insert_option_name(self, _options, _number_alts):
-        """Return a new column called OptionName in the passed fleet dataframe and populate with the name associated with the optionID column of the passed fleet.
+        """
 
-        :param _options: from the input file providing optionID and OptionName
-        :type _options: dataframe
-
-        :param _number_alts: the maximum number of options or alternatives in the MOVES input file
-        :type _number_alts: int
+        :param _options: A DataFrame providing the OptionName for each optionID.
+        :param _number_alts: The maximum number of options or alternatives in the fleet input file.
+        :return: The passed fleet DataFrame with a new and populated column called OptionName.
         """
         # First create a dictionary of options from the dataframe of options.
         options_dict = dict()
@@ -107,3 +115,17 @@ class Fleet:
         for option in range(0, _number_alts):
             self.fleet.loc[self.fleet['optionID'] == option, 'OptionName'] = options_dict[option]
         return self.fleet
+
+    def adjust_moves(self, moves_adjustments_df):
+        """
+
+        :param moves_adjustments_df: A DataFrame of adjustments to be made to MOVES values
+        :return: The MOVES fleet adjusted to account for the adjustments needed in the analysis.
+        """
+        moves_df = self.fleet.copy()
+        for index, row in moves_adjustments_df.iterrows():
+            veh = row['alt_st_rc_ft']
+            percent_adjustment = row['percent']
+            for metric in ['VPOP', 'VMT', 'Gallons']:
+                moves_df.loc[moves_df['alt_st_rc_ft'] == veh, metric] = moves_df[metric] * percent_adjustment
+        return moves_df

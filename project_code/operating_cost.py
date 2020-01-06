@@ -5,17 +5,20 @@ GRAMSperSHORTTON = 907185
 GALLONSperML = 0.000264172
 
 class OperatingCost:
-    """The OperatingCost class calculates the operating costs (DEF (urea), fuel, etc.).
+    """
+    The OperatingCost class calculates the operating costs (DEF (urea), fuel, etc.).
 
-    :param input_df: The data that provides the necessary physical parameters.
-    :type input_df: DataFrame
+    :param input_df: A DataFrame that provides the necessary physical parameters.
     """
 
     def __init__(self, input_df):
         self.input_df = input_df
 
     def def_doserate_scaling_factor(self):
-        """Return the dose rate scaling factor to apply to fuel consumption in calculating urea operating costs."""
+        """
+
+        :return: A DataFrame of dose rate scaling factors to apply to fuel consumption in calculating urea operating costs.
+        """
         def_doserates = self.input_df.copy()
         def_doserates.insert(len(def_doserates.columns), 'DEFDoseRate_PercentOfFuel', 0)
         def_doserates['DEFDoseRate_PercentOfFuel'] = ((def_doserates['standard_NOx'] - def_doserates['engineout_NOx'])
@@ -27,10 +30,8 @@ class OperatingCost:
     def def_cost_df(self, def_doserates, prices):
         """
 
-        :param def_doserates: DEF scaling factors (dose rate inputs).
-        :type def_doserates: DataFrame
-        :param prices: DEF prices.
-        :type prices: DataFrame
+        :param def_doserates: A DataFrame of DEF scaling factors (dose rate inputs).
+        :param prices: A DataFrame of DEF prices.
         :return: The passed DataFrame after adding the DEF operating cost metrics:
                 ['DoseRate_PercentOfFuel', 'DEF_USDperGal', 'OperatingCost_Urea_TotalCost']
         """
@@ -47,8 +48,7 @@ class OperatingCost:
     def orvr_fuel_impacts_pct(self, _fuelchanges):
         """
 
-        :param _fuelchanges: Adjustments to the MOVES run values to account for fuel impacts not captured in MOVES.
-        :type _fuelchanges: DataFrame
+        :param _fuelchanges: A DataFrame of the adjustments to the MOVES run values to account for fuel impacts not captured in MOVES.
         :return: The passed DataFrame after adding the fuel consumption metrics:
                 ['Change_PercentOfFuel', 'Gallons' (adjusted)]
         """
@@ -62,8 +62,7 @@ class OperatingCost:
     def orvr_fuel_impacts_mlpergram(self, orvr_fuelchanges):
         """
 
-        :param _fuelchanges: Adjustments to the MOVES run values to account for fuel impacts not captured in MOVES.
-        :type _fuelchanges: DataFrame
+        :param _fuelchanges: A DataFrame of the adjustments to the MOVES run values to account for fuel impacts not captured in MOVES.
         :return: The passed DataFrame after adding the fuel consumption metrics:
                 ['Change_PercentOfFuel', 'Gallons' (adjusted)]
         """
@@ -83,8 +82,7 @@ class OperatingCost:
     def fuel_costs(self, _prices):
         """
 
-        :param _prices:  The fuel prices being used for the given run.
-        :type _prices: DataFrame
+        :param _prices:  A DataFrame of the fuel prices being used for the given run.
         :return: The passed DataFrame after adding the fuel cost metrics:
                  ['pretax_fuelprice', 'retail_fuelprice', 'OperatingCost_Fuel_Pretax_TotalCost', 'OperatingCost_Fuel_Retail_TotalCost']
         """
