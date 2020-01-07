@@ -30,7 +30,6 @@ PATH_PROJECT_CODE = PATH_PROJECT.joinpath('project_code')
 PATH_INPUTS = PATH_PROJECT.joinpath('inputs')
 PATH_OUTPUTS = PATH_PROJECT.joinpath('outputs')
 
-# fuel_price_metrics = ['gasoline_retail', 'gasoline_pretax', 'diesel_retail', 'diesel_pretax']
 
 def inputs_filenames(input_files_pathlist):
     """
@@ -90,7 +89,7 @@ def main():
     CREATE_ALL_FILES = input('Create all output files? (y)es or (n)o?')
     start_time = time.time()
     start_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')
-    # these can be returned to interactive once further along, but for now just hardcoding the inputs for ease of testing
+    # these can be returned to interactive once further along, but for now just hardcoding the inputs
     run_settings_file = PATH_INPUTS.joinpath('1_RunSettings.csv')
     bca_inputs_file = PATH_INPUTS.joinpath('BCA_General_Inputs.csv')
     regclass_costs_file = PATH_INPUTS.joinpath('DirectCostInputs_byRegClass_byFuelType.csv')
@@ -107,20 +106,16 @@ def main():
     def_doserate_inputs_file = PATH_INPUTS.joinpath('DEF_DoseRateInputs.csv')
     def_prices_file = PATH_INPUTS.joinpath('DEF_Prices.csv')
     orvr_fuelchange_file = PATH_INPUTS.joinpath('ORVR_FuelChangeInputs.csv')
-    criteria_emission_costs_file = PATH_INPUTS.joinpath('CriteriaEmissionCost_Inputs.csv')
-# TODO make the rest more flexible to include or exclude sourcetype data/calcs
     # add input files as needed for copy to path_to_results folder
     input_files_pathlist = [run_settings_file, bca_inputs_file, regclass_costs_file, regclass_learningscalars_file,
                             markups_file, markups_vmt_scalars_file, sourcetype_costs_file, moves_file, moves_adjustments_file, options_file,
-                            orvr_fuelchange_file, criteria_emission_costs_file]
-    inputs_filename_list = inputs_filenames(input_files_pathlist)
+                            orvr_fuelchange_file]
 
     # read input files
     print("Reading input files....")
     start_time_read = time.time()
     bca_inputs = pd.read_csv(bca_inputs_file, index_col=0)
     regclass_costs = pd.read_csv(regclass_costs_file)
-    # pkg_techpens = pd.read_csv(regclass_techpens_file)
     regclass_learningscalars = pd.read_csv(regclass_learningscalars_file)
     sourcetype_costs = pd.read_csv(sourcetype_costs_file)
     markups = pd.read_csv(markups_file)
@@ -132,7 +127,6 @@ def main():
     def_doserate_inputs = pd.read_csv(def_doserate_inputs_file)
     def_prices = pd.read_csv(def_prices_file)
     orvr_fuelchanges = pd.read_csv(orvr_fuelchange_file)
-    # criteria_emission_costs = pd.read_csv(criteria_emission_costs_file)
 
     markups.drop('Notes', axis=1, inplace=True)
     markups_vmt_scalars.drop('Notes', axis=1, inplace=True)
@@ -175,7 +169,6 @@ def main():
         deflators_gdp[number] = pd.to_numeric(bca_inputs.at['gdp_deflator_' + str(dollar_basis_years_gdp[number]), 'Value'])
     bca_dollar_basis = dollar_basis_years_gdp[[k for k, v in deflators_gdp.items() if v == 1][0]] # this is a list containing one item reflecting the key in deflators where value=1; the [0] returns that 1 item
     regclass_costs_years = [col for col in regclass_costs.columns if '20' in col]
-    # regclass_costs = convert_dollars_to_bca_basis(regclass_costs, deflators_gdp, dollar_basis_years_gdp, 'TechPackageCost', bca_dollar_basis)
     regclass_costs_modified = convert_dollars_to_bca_basis(regclass_costs, deflators_gdp, dollar_basis_years_gdp, [step for step in regclass_costs_years], bca_dollar_basis)
     sourcetype_costs = convert_dollars_to_bca_basis(sourcetype_costs, deflators_gdp, dollar_basis_years_gdp, 'TechPackageCost', bca_dollar_basis)
     def_prices = convert_dollars_to_bca_basis(def_prices, deflators_gdp, dollar_basis_years_gdp, 'DEF_USDperGal', bca_dollar_basis)
@@ -193,6 +186,7 @@ def main():
 
     # read and reshape criteria costs if pollution effects are being calculated
     if calc_pollution_effects == 'Y':
+        criteria_emission_costs_file = PATH_INPUTS.joinpath('CriteriaEmissionCost_Inputs.csv')
         criteria_emission_costs = pd.read_csv(criteria_emission_costs_file)
         criteria_emission_costs_list = [col for col in criteria_emission_costs.columns if 'tailpipe' in col]
         criteria_emission_costs_reshaped = reshape_df(criteria_emission_costs, ['yearID', 'MortalityEstimate', 'DR', 'DollarBasis'],
@@ -201,6 +195,7 @@ def main():
         criteria_emission_costs_reshaped['Key'] = criteria_emission_costs_reshaped['Pollutant_source'] + '_' \
                                                   + criteria_emission_costs_reshaped['MortalityEstimate'] + '_' \
                                                   + criteria_emission_costs_reshaped['DR'].map(str)
+        input_files_pathlist += [criteria_emission_costs_file]
 
     # add the identifier metrics, alt_rc_ft and alt_st_rc_ft, to specific DataFrames
     for df in [regclass_costs_modified, regclass_learningscalars, moves, moves_adjustments, sourcetype_costs]:
@@ -469,17 +464,11 @@ def main():
     row_header_group[1] = common_metrics + ['yearID']
     row_header_group[2] = common_metrics + ['yearID', 'regClassID', 'fuelTypeID']
     row_header_group[3] = common_metrics + ['yearID', 'sourcetypeID', 'fuelTypeID']
-    # row_header_group[4] = common_metrics + ['yearID', 'regClassID']
-    # row_header_group[5] = common_metrics + ['yearID', 'sourcetypeID']
-    # row_header_group[6] = common_metrics + ['yearID', 'TechPackageDescription']
 
     row_header_group_cumsum = dict()
     row_header_group_cumsum[1] = common_metrics
     row_header_group_cumsum[2] = common_metrics + ['regClassID', 'fuelTypeID']
     row_header_group_cumsum[3] = common_metrics + ['sourcetypeID', 'fuelTypeID']
-    # row_header_group_cumsum[4] = common_metrics + ['regClassID']
-    # row_header_group_cumsum[5] = common_metrics + ['sourcetypeID']
-    # row_header_group_cumsum[6] = common_metrics + ['TechPackageDescription']
 
     # create some dicts to store the groupby.sum, groupby.cumsum and groupby.mean results
     techcost_sum = dict()
@@ -574,7 +563,7 @@ def main():
         DocTables(bca_costs_sum[1]).bca_yearID_tables('', 0, 'Criteria_Damage_low_0.07', 'Criteria_Damage_high_0.03', bca_years,
                                                       'billions', bca_cols, bca_annual)
     else:
-        DocTables(bca_costs_sum[1]).bca_yearID_tables('', 0, 'TotalCosts', 'TotalCosts', bca_years,
+        DocTables(bca_costs_sum[1]).bca_yearID_tables('', 0, 'TotalCosts', '', bca_years,
                                                       'billions', bca_cols, bca_annual)
     bca_annual.save()
 
@@ -585,9 +574,9 @@ def main():
         DocTables(bca_costs_sum[1]).bca_yearID_tables('_CumSum', 0.07, 'Criteria_Damage_low_0.07', 'Criteria_Damage_high_0.07', bca_years,
                                                       'billions', bca_cols, bca_npv)
     else:
-        DocTables(bca_costs_sum[1]).bca_yearID_tables('_CumSum', 0.03, 'TotalCosts', 'TotalCosts', bca_years,
+        DocTables(bca_costs_sum[1]).bca_yearID_tables('_CumSum', 0.03, 'TotalCosts', '', bca_years,
                                                       'billions', bca_cols, bca_npv)
-        DocTables(bca_costs_sum[1]).bca_yearID_tables('_CumSum', 0.07, 'TotalCosts', 'TotalCosts', bca_years,
+        DocTables(bca_costs_sum[1]).bca_yearID_tables('_CumSum', 0.07, 'TotalCosts', '', bca_years,
                                                       'billions', bca_cols, bca_npv)
     bca_npv.save()
 
@@ -598,9 +587,9 @@ def main():
         DocTables(bca_costs_sum[1]).bca_yearID_tables('_Annualized', 0.07, 'Criteria_Damage_low_0.07', 'Criteria_Damage_high_0.07', bca_years,
                                                       'billions', bca_cols, bca_annualized)
     else:
-        DocTables(bca_costs_sum[1]).bca_yearID_tables('_Annualized', 0.03, 'TotalCosts', 'TotalCosts', bca_years,
+        DocTables(bca_costs_sum[1]).bca_yearID_tables('_Annualized', 0.03, 'TotalCosts', '', bca_years,
                                                       'billions', bca_cols, bca_annualized)
-        DocTables(bca_costs_sum[1]).bca_yearID_tables('_Annualized', 0.07, 'TotalCosts', 'TotalCosts', bca_years,
+        DocTables(bca_costs_sum[1]).bca_yearID_tables('_Annualized', 0.07, 'TotalCosts', '', bca_years,
                                                       'billions', bca_cols, bca_annualized)
     bca_annualized.save()
 
@@ -618,6 +607,7 @@ def main():
         inventory_annual_moves.save()
 
     # copy input files into results folder; also save fuel_prices and reshaped files to this folder
+    inputs_filename_list = inputs_filenames(input_files_pathlist)
     if CREATE_ALL_FILES == 'y' or CREATE_ALL_FILES == 'Y':
         for file in inputs_filename_list:
             path_source = PATH_INPUTS.joinpath(file)
@@ -653,7 +643,6 @@ def main():
         bca_costs_sum[1].to_csv(path_of_outputs_folder.joinpath('bca_costs_by_yearID.csv'), index=False)
         bca_costs_sum[2].to_csv(path_of_outputs_folder.joinpath('bca_costs_by_regClass_fuelType.csv'), index=False)
         bca_costs_sum[3].to_csv(path_of_outputs_folder.joinpath('bca_costs_by_sourcetype_fuelType.csv'), index=False)
-
 
     elapsed_time_outputs = time.time() - start_time_outputs
     end_time = time.time()

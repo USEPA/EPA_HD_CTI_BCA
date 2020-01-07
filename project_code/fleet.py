@@ -89,7 +89,6 @@ class Fleet:
             fleet_with_zgtech['VPOP'] = fleet_with_zgtech['VPOP'] - fleet_zgtech[tech]['VPOP']
         for tech in range(1, _zgtech_max + 1):
             fleet_with_zgtech = pd.concat([fleet_with_zgtech, fleet_zgtech[tech]], axis=0, ignore_index=True)
-            # fleet_with_zgtech = fleet_with_zgtech.append(fleet_zgtech[tech], ignore_index=True, sort=False)
         fleet_with_zgtech.reset_index(drop=True, inplace=True)
         fleet_with_zgtech['VMT'] = fleet_with_zgtech['VMT_AvgPerVeh'] * fleet_with_zgtech['VPOP'] # this correctly sets VMT to zero where VPOP is zero, but leaves VMT/vehicle=moves
         fleet_with_zgtech.loc[fleet_with_zgtech['VMT'] == 0, 'VMT_AvgPerVeh'] = 0 # this sets VMT/vehicle = 0 where VMT=0

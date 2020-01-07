@@ -64,8 +64,8 @@ class DocTables:
             cols_new_units = [col for col in data.columns if 'OptionName' not in col and 'DiscountRate' not in col]
             for col in cols_new_units:
                 data[col] = (data[col] / divisor).round(1)
-            data.insert(len(data.columns), 'PM2.5_Damages_TotalCosts', '')
-            data['PM2.5_Damages_TotalCosts'] = data[low_series + suffix].astype(str) + ' to ' + data[high_series + suffix].astype(str)
+            # data.insert(len(data.columns), 'PM2.5_Damages_TotalCosts', '')
+            # data['PM2.5_Damages_TotalCosts'] = data[low_series + suffix].astype(str) + ' to ' + data[high_series + suffix].astype(str)
             data.loc[len(data.index), 'OptionName'] = 'Table values are in %s' % units
             sh_name = 'CY' + str(yr) + '_DR' + str(discrate)
             data.to_excel(writer, sheet_name=sh_name, index=False)
