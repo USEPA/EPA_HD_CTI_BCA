@@ -106,10 +106,11 @@ def main():
     def_doserate_inputs_file = PATH_INPUTS.joinpath('DEF_DoseRateInputs.csv')
     def_prices_file = PATH_INPUTS.joinpath('DEF_Prices.csv')
     orvr_fuelchange_file = PATH_INPUTS.joinpath('ORVR_FuelChangeInputs.csv')
+    repair_cost_per_mile_file = PATH_INPUTS.joinpath('Repair_and_Maintenance_Inputs.csv')
     # add input files as needed for copy to path_to_results folder
     input_files_pathlist = [run_settings_file, bca_inputs_file, regclass_costs_file, regclass_learningscalars_file,
                             markups_file, markups_vmt_scalars_file, sourcetype_costs_file, moves_file, moves_adjustments_file, options_file,
-                            orvr_fuelchange_file]
+                            orvr_fuelchange_file, repair_cost_per_mile_file]
 
     # read input files
     print("Reading input files....")
@@ -127,6 +128,7 @@ def main():
     def_doserate_inputs = pd.read_csv(def_doserate_inputs_file)
     def_prices = pd.read_csv(def_prices_file)
     orvr_fuelchanges = pd.read_csv(orvr_fuelchange_file)
+    repair_cost_per_mile = pd.read_csv(repair_cost_per_mile_file)
 
     markups.drop('Notes', axis=1, inplace=True)
     markups_vmt_scalars.drop('Notes', axis=1, inplace=True)
@@ -172,6 +174,7 @@ def main():
     regclass_costs_modified = convert_dollars_to_bca_basis(regclass_costs, deflators_gdp, dollar_basis_years_gdp, [step for step in regclass_costs_years], bca_dollar_basis)
     sourcetype_costs = convert_dollars_to_bca_basis(sourcetype_costs, deflators_gdp, dollar_basis_years_gdp, 'TechPackageCost', bca_dollar_basis)
     def_prices = convert_dollars_to_bca_basis(def_prices, deflators_gdp, dollar_basis_years_gdp, 'DEF_USDperGal', bca_dollar_basis)
+    repair_cost_per_mile = convert_dollars_to_bca_basis(repair_cost_per_mile, deflators_gdp, dollar_basis_years_gdp, 'maintenance_and_repair_cost_perMile', bca_dollar_basis)
 
     factors_cpiu = dict()
     for number in range(len(dollar_basis_years_cpiu)):
@@ -357,8 +360,9 @@ def main():
     def_doserates = OperatingCost(def_doserate_inputs).def_doserate_scaling_factor()
     operating_costs = OperatingCost(operating_costs).def_cost_df(def_doserates, def_prices)
     operating_costs = OperatingCost(operating_costs).fuel_costs(fuel_prices)
+    operating_costs = OperatingCost(operating_costs).emission_repair_costs(repair_cost_per_mile)
     operating_costs.insert(len(operating_costs.columns), 'OperatingCost_BCA_TotalCost',
-                           operating_costs[['OperatingCost_Urea_TotalCost', 'OperatingCost_Fuel_Pretax_TotalCost']].sum(axis=1))
+                           operating_costs[['OperatingCost_Urea_TotalCost', 'OperatingCost_Fuel_Pretax_TotalCost', 'EmissionRepair_TotalCost']].sum(axis=1))
     operating_costs.insert(len(operating_costs.columns), 'OperatingCost_BCA_CPM', operating_costs['OperatingCost_BCA_TotalCost'] / operating_costs['VMT'])
     operatingcost_metrics_to_discount = [col for col in operating_costs.columns if 'TotalCost' in col]
 

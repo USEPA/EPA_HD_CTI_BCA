@@ -103,3 +103,15 @@ class OperatingCost:
         df.insert(len(df.columns), 'OperatingCost_Fuel_Retail_TotalCost', df[['Gallons', 'retail_fuelprice']].product(axis=1))
         df.insert(len(df.columns), 'OperatingCost_Fuel_Retail_CPM', df['OperatingCost_Fuel_Retail_TotalCost'] / df['VMT'])
         return df
+
+    def emission_repair_costs(self, repair_cost_per_mile):
+        return_df = self.input_df.copy()
+        # cost_per_mile_df = pd.DataFrame(return_df, columns=['optionID', 'regClassID', 'fuelTypeID', 'ageID'])
+        repair_cost_per_mile.insert(0, 'emission_repair_CPM',
+                                    repair_cost_per_mile['emission_share']
+                                    * repair_cost_per_mile['repair_share']
+                                    * repair_cost_per_mile['maintenance_and_repair_cost_perMile'])
+        return_df = return_df.merge(repair_cost_per_mile[['ageID', 'emission_repair_CPM']], on=['ageID'])
+        return_df.insert(len(return_df.columns), 'EmissionRepair_TotalCost', return_df['VMT'] * return_df['emission_repair_CPM'])
+        return_df.insert(len(return_df.columns), 'EmissionRepair_AvgPerVeh', return_df['VMT_AvgPerVeh'] * return_df['emission_repair_CPM'])
+        return return_df
