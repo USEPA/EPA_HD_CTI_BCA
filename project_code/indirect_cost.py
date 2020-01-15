@@ -90,3 +90,29 @@ class IndirectCost:
         _techcost.insert(len(_techcost.columns), 'IndirectCost_AvgPerVeh', _techcost[[item + '_AvgPerVeh' for item in markup_factors]].sum(axis=1))
         _techcost.insert(len(_techcost.columns), 'IndirectCost_TotalCost', _techcost['IndirectCost_AvgPerVeh'] * _techcost['VPOP'])
         return _techcost
+
+
+class IndirectCostScalars:
+
+    def __init__(self, input_df):
+        self.input_df = input_df
+
+    def calc_vmt_scalars_absolute(self, identifier):
+        vmt_inputs = pd.DataFrame(self.input_df.loc[self.input_df['period'] == 'Miles'])
+        return_df = vmt_inputs.copy()
+        cols = [col for col in return_df.columns if '20' in col]
+        for col in cols[1:]:
+            return_df[col] = return_df[col] / return_df[cols[0]]
+        return_df[cols[0]] = 1.0
+        return_df.insert(1, 'Markup_Factor', identifier)
+        return return_df
+
+    def calc_vmt_scalars_relative(self, identifier):
+        vmt_inputs = pd.DataFrame(self.input_df.loc[self.input_df['period'] == 'Miles'])
+        return_df = vmt_inputs.copy()
+        cols = [col for col in return_df.columns if '20' in col]
+        for col_number in range(1, len(cols)):
+            return_df[cols[col_number]] = return_df[cols[col_number]] / vmt_inputs[cols[col_number - 1]]
+        return_df[cols[0]] = 1.0
+        return_df.insert(1, 'Markup_Factor', identifier)
+        return return_df

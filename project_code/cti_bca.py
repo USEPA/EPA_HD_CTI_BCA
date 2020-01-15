@@ -16,7 +16,7 @@ from project_code.fuel_prices_aeo import GetFuelPrices
 from project_code.fleet import Fleet
 from project_code.vehicle import Vehicle, sourcetypeID, regClassID, fuelTypeID
 from project_code.direct_cost import DirectCost
-from project_code.indirect_cost import IndirectCost
+from project_code.indirect_cost import IndirectCost, IndirectCostScalars
 from project_code.operating_cost import OperatingCost
 from project_code.discounting import DiscountValues
 from project_code.group_metrics import GroupMetrics
@@ -98,7 +98,9 @@ def main():
     # sourcetype_costs_file = PATH_INPUTS.joinpath('DirectCostInputs_bySourcetype_no_0gtech.csv')
     sourcetype_costs_file = PATH_INPUTS.joinpath('DirectCostInputs_bySourcetype.csv')
     markups_file = PATH_INPUTS.joinpath('IndirectCostInputs_byFuelType.csv')
-    markups_vmt_scalars_file = PATH_INPUTS.joinpath('IndirectCostInputs_VMTscalars_byRegClass_byFuelType.csv')
+    # markups_vmt_scalars_file = PATH_INPUTS.joinpath('IndirectCostInputs_VMTscalars_byRegClass_byFuelType.csv')
+    warranty_inputs_file = PATH_INPUTS.joinpath('Warranty_Inputs.csv')
+    usefullife_inputs_file = PATH_INPUTS.joinpath('UsefulLife_Inputs.csv')
     # markups_sourcetype_file = PATH_INPUTS.joinpath('IndirectCostInputs_bySourcetype.csv')
     moves_file = PATH_INPUTS.joinpath('WAIT_Alternatives.csv')
     moves_adjustments_file = PATH_INPUTS.joinpath('MOVES_Adjustments.csv')
@@ -106,11 +108,11 @@ def main():
     def_doserate_inputs_file = PATH_INPUTS.joinpath('DEF_DoseRateInputs.csv')
     def_prices_file = PATH_INPUTS.joinpath('DEF_Prices.csv')
     orvr_fuelchange_file = PATH_INPUTS.joinpath('ORVR_FuelChangeInputs.csv')
-    repair_cost_per_mile_file = PATH_INPUTS.joinpath('Repair_and_Maintenance_Inputs.csv')
+    repair_and_maintenance_file = PATH_INPUTS.joinpath('Repair_and_Maintenance_Inputs.csv')
     # add input files as needed for copy to path_to_results folder
     input_files_pathlist = [run_settings_file, bca_inputs_file, regclass_costs_file, regclass_learningscalars_file,
-                            markups_file, markups_vmt_scalars_file, sourcetype_costs_file, moves_file, moves_adjustments_file, options_file,
-                            orvr_fuelchange_file, repair_cost_per_mile_file]
+                            markups_file, sourcetype_costs_file, moves_file, moves_adjustments_file, options_file,
+                            orvr_fuelchange_file, repair_and_maintenance_file, warranty_inputs_file, usefullife_inputs_file]
 
     # read input files
     print("Reading input files....")
@@ -120,7 +122,9 @@ def main():
     regclass_learningscalars = pd.read_csv(regclass_learningscalars_file)
     sourcetype_costs = pd.read_csv(sourcetype_costs_file)
     markups = pd.read_csv(markups_file)
-    markups_vmt_scalars = pd.read_csv(markups_vmt_scalars_file)
+    # markups_vmt_scalars = pd.read_csv(markups_vmt_scalars_file)
+    warranty_inputs = pd.read_csv(warranty_inputs_file)
+    usefullife_inputs = pd.read_csv(usefullife_inputs_file)
     # sourcetype_markups = pd.read_csv(markups_sourcetype_file)
     moves = pd.read_csv(moves_file)
     moves_adjustments = pd.read_csv(moves_adjustments_file)
@@ -128,10 +132,10 @@ def main():
     def_doserate_inputs = pd.read_csv(def_doserate_inputs_file)
     def_prices = pd.read_csv(def_prices_file)
     orvr_fuelchanges = pd.read_csv(orvr_fuelchange_file)
-    repair_cost_per_mile = pd.read_csv(repair_cost_per_mile_file)
+    repair_and_maintenance_cpm = pd.read_csv(repair_and_maintenance_file)
 
     markups.drop('Notes', axis=1, inplace=True)
-    markups_vmt_scalars.drop('Notes', axis=1, inplace=True)
+    # markups_vmt_scalars.drop('Notes', axis=1, inplace=True)
     orvr_fuelchanges.drop('Notes', axis=1, inplace=True)
     regclass_costs.drop('Notes', axis=1, inplace=True)
     elapsed_time_read = time.time() - start_time_read
@@ -174,13 +178,19 @@ def main():
     regclass_costs_modified = convert_dollars_to_bca_basis(regclass_costs, deflators_gdp, dollar_basis_years_gdp, [step for step in regclass_costs_years], bca_dollar_basis)
     sourcetype_costs = convert_dollars_to_bca_basis(sourcetype_costs, deflators_gdp, dollar_basis_years_gdp, 'TechPackageCost', bca_dollar_basis)
     def_prices = convert_dollars_to_bca_basis(def_prices, deflators_gdp, dollar_basis_years_gdp, 'DEF_USDperGal', bca_dollar_basis)
-    repair_cost_per_mile = convert_dollars_to_bca_basis(repair_cost_per_mile, deflators_gdp, dollar_basis_years_gdp, 'maintenance_and_repair_cost_perMile', bca_dollar_basis)
+    repair_and_maintenance_cpm = convert_dollars_to_bca_basis(repair_and_maintenance_cpm, deflators_gdp, dollar_basis_years_gdp, 'maintenance_and_repair_cpm', bca_dollar_basis)
 
     factors_cpiu = dict()
     for number in range(len(dollar_basis_years_cpiu)):
         factors_cpiu[number] = pd.to_numeric(bca_inputs.at['cpiu_factor_' + str(dollar_basis_years_cpiu[number]), 'Value'])
 
     fuel_prices = GetFuelPrices(PATH_PROJECT).get_fuel_prices(aeo_case)
+
+    # Calculate the Indirect Cost VMT scalars based on the warranty_inputs and usefullife_inputs
+    warranty_scalars = IndirectCostScalars(warranty_inputs).calc_vmt_scalars_absolute('Warranty')
+    usefullife_scalars = IndirectCostScalars(usefullife_inputs).calc_vmt_scalars_relative('R_and_D')
+    markups_vmt_scalars = pd.concat([warranty_scalars, usefullife_scalars], ignore_index=True, axis=0)
+    markups_vmt_scalars.reset_index(drop=True, inplace=True)
 
     # Now, reshape some of the inputs for easier use
     markups_vmt_scalars_reshaped = reshape_df(markups_vmt_scalars, ['optionID', 'regClassID', 'fuelTypeID', 'Markup_Factor'],
@@ -360,7 +370,7 @@ def main():
     def_doserates = OperatingCost(def_doserate_inputs).def_doserate_scaling_factor()
     operating_costs = OperatingCost(operating_costs).def_cost_df(def_doserates, def_prices)
     operating_costs = OperatingCost(operating_costs).fuel_costs(fuel_prices)
-    operating_costs = OperatingCost(operating_costs).emission_repair_costs(repair_cost_per_mile)
+    operating_costs = OperatingCost(operating_costs).repair_and_maintenance_costs(repair_and_maintenance_cpm)
     operating_costs.insert(len(operating_costs.columns), 'OperatingCost_BCA_TotalCost',
                            operating_costs[['OperatingCost_Urea_TotalCost', 'OperatingCost_Fuel_Pretax_TotalCost', 'EmissionRepair_TotalCost']].sum(axis=1))
     operating_costs.insert(len(operating_costs.columns), 'OperatingCost_BCA_CPM', operating_costs['OperatingCost_BCA_TotalCost'] / operating_costs['VMT'])
