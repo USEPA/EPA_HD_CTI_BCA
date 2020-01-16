@@ -112,7 +112,7 @@ def main():
     # add input files as needed for copy to path_to_results folder
     input_files_pathlist = [run_settings_file, bca_inputs_file, regclass_costs_file, regclass_learningscalars_file,
                             markups_file, sourcetype_costs_file, moves_file, moves_adjustments_file, options_file,
-                            orvr_fuelchange_file, repair_and_maintenance_file, warranty_inputs_file, usefullife_inputs_file]
+                            def_doserate_inputs_file, orvr_fuelchange_file, repair_and_maintenance_file, warranty_inputs_file, usefullife_inputs_file]
 
     # read input files
     print("Reading input files....")
@@ -553,11 +553,13 @@ def main():
     # move this to earlier in main if results folder location is made user selectable so that the selection is made shortly after start of run
     # path_to_results = SetupFilesAndFolders('location for output folder').get_folder()
     PATH_OUTPUTS.mkdir(exist_ok=True)
-    path_of_results_folder = PATH_OUTPUTS.joinpath(start_time_readable + '_HDCTI-BCA-Results')
-    path_of_results_folder.mkdir(exist_ok=False)
-    path_of_outputs_folder = path_of_results_folder.joinpath('outputs')
-    path_of_outputs_folder.mkdir(exist_ok=False)
-    path_of_modified_inputs_folder = path_of_results_folder.joinpath('modified_inputs')
+    path_of_run_folder = PATH_OUTPUTS.joinpath(start_time_readable + '_HDCTI-BCA-Results')
+    path_of_run_folder.mkdir(exist_ok=False)
+    path_of_run_inputs_folder = path_of_run_folder.joinpath('run_inputs')
+    path_of_run_inputs_folder.mkdir(exist_ok=False)
+    path_of_run_results_folder = path_of_run_folder.joinpath('run_results')
+    path_of_run_results_folder.mkdir(exist_ok=False)
+    path_of_modified_inputs_folder = path_of_run_folder.joinpath('modified_inputs')
     path_of_modified_inputs_folder.mkdir(exist_ok=False)
 
     # first build some high level summary tables for copy/paste into slides/documents/etc.
@@ -566,13 +568,13 @@ def main():
     techcost_years = [2027, 2030, 2036, 2045]
     regclasses = ['LHD', 'LHD45', 'MHD67', 'HHD8', 'Urban Bus']
     fueltypes = ['Diesel', 'Gasoline']
-    techcost_per_veh_file = pd.ExcelWriter(path_of_outputs_folder.joinpath('techcosts_AvgPerVeh.xlsx'))
+    techcost_per_veh_file = pd.ExcelWriter(path_of_run_results_folder.joinpath('techcosts_AvgPerVeh.xlsx'))
     DocTables(techcost_summary[2]).techcost_per_veh_table(discount_rates, techcost_years, regclasses, fueltypes, techcost_per_veh_cols, techcost_per_veh_file)
     techcost_per_veh_file.save()
 
     bca_cols = ['OptionName', 'DiscountRate', 'Tech_TotalCost', 'OperatingCost_BCA_TotalCost']
     bca_years = [2036, 2045]
-    bca_annual = pd.ExcelWriter(path_of_outputs_folder.joinpath('bca_annual.xlsx'))
+    bca_annual = pd.ExcelWriter(path_of_run_results_folder.joinpath('bca_annual.xlsx'))
     if calc_pollution_effects == 'Y':
         DocTables(bca_costs_sum[1]).bca_yearID_tables('', 0, 'Criteria_Damage_low_0.07', 'Criteria_Damage_high_0.03', bca_years,
                                                       'billions', bca_cols, bca_annual)
@@ -581,7 +583,7 @@ def main():
                                                       'billions', bca_cols, bca_annual)
     bca_annual.save()
 
-    bca_npv = pd.ExcelWriter(path_of_outputs_folder.joinpath('bca_npv.xlsx'))
+    bca_npv = pd.ExcelWriter(path_of_run_results_folder.joinpath('bca_npv.xlsx'))
     if calc_pollution_effects == 'Y':
         DocTables(bca_costs_sum[1]).bca_yearID_tables('_CumSum', 0.03, 'Criteria_Damage_low_0.03', 'Criteria_Damage_high_0.03', bca_years,
                                                       'billions', bca_cols, bca_npv)
@@ -594,7 +596,7 @@ def main():
                                                       'billions', bca_cols, bca_npv)
     bca_npv.save()
 
-    bca_annualized = pd.ExcelWriter(path_of_outputs_folder.joinpath('bca_annualized.xlsx'))
+    bca_annualized = pd.ExcelWriter(path_of_run_results_folder.joinpath('bca_annualized.xlsx'))
     if calc_pollution_effects == 'Y':
         DocTables(bca_costs_sum[1]).bca_yearID_tables('_Annualized', 0.03, 'Criteria_Damage_low_0.03', 'Criteria_Damage_high_0.03', bca_years,
                                                       'billions', bca_cols, bca_annualized)
@@ -611,12 +613,12 @@ def main():
     if calc_pollution_effects == 'Y':
         inventory_cols = ['OptionName', 'DiscountRate', 'yearID', 'PM25_tailpipe', 'NOx_tailpipe']
         inventory_years = [2027, 2030, 2036, 2045]
-        inventory_annual = pd.ExcelWriter(path_of_outputs_folder.joinpath('inventory_annual_BCA_ModelYears.xlsx'))
+        inventory_annual = pd.ExcelWriter(path_of_run_results_folder.joinpath('inventory_annual_BCA_ModelYears.xlsx'))
         DocTables(emission_costs_sum[1]).inventory_tables1(inventory_years, inventory_cols, inventory_annual)
         inventory_annual.save()
 
         inventory_cols_moves = ['OptionName', 'yearID', 'PM25_tailpipe', 'NOx_tailpipe']
-        inventory_annual_moves = pd.ExcelWriter(path_of_outputs_folder.joinpath('inventory_annual_All_ModelYears.xlsx'))
+        inventory_annual_moves = pd.ExcelWriter(path_of_run_results_folder.joinpath('inventory_annual_All_ModelYears.xlsx'))
         DocTables(moves_sum).inventory_tables2(inventory_years, inventory_cols_moves, inventory_annual_moves)
         inventory_annual_moves.save()
 
@@ -625,7 +627,7 @@ def main():
     if CREATE_ALL_FILES == 'y' or CREATE_ALL_FILES == 'Y':
         for file in inputs_filename_list:
             path_source = PATH_INPUTS.joinpath(file)
-            path_destination = path_of_results_folder.joinpath(file)
+            path_destination = path_of_run_inputs_folder.joinpath(file)
             shutil.copy(path_source, path_destination)
         fuel_prices.to_csv(path_of_modified_inputs_folder.joinpath('fuel_prices_' + aeo_case + '.csv'), index=False)
         regclass_costs.to_csv(path_of_modified_inputs_folder.joinpath('regclass_costs.csv'), index=False)
@@ -637,26 +639,26 @@ def main():
             criteria_emission_costs_reshaped.to_csv(path_of_modified_inputs_folder.joinpath('criteria_emission_costs_reshaped.csv'), index=False)
 
         # write some output files
-        techcost_all.to_csv(path_of_outputs_folder.joinpath('techcosts.csv'), index=False)
-        techcost_summary[1].to_csv(path_of_outputs_folder.joinpath('techcosts_by_yearID.csv'), index=False)
-        techcost_summary[2].to_csv(path_of_outputs_folder.joinpath('techcosts_by_regClass_fuelType.csv'), index=False)
-        techcost_summary[3].to_csv(path_of_outputs_folder.joinpath('techcosts_by_sourcetype_fuelType.csv'), index=False)
+        techcost_all.to_csv(path_of_run_results_folder.joinpath('techcosts.csv'), index=False)
+        techcost_summary[1].to_csv(path_of_run_results_folder.joinpath('techcosts_by_yearID.csv'), index=False)
+        techcost_summary[2].to_csv(path_of_run_results_folder.joinpath('techcosts_by_regClass_fuelType.csv'), index=False)
+        techcost_summary[3].to_csv(path_of_run_results_folder.joinpath('techcosts_by_sourcetype_fuelType.csv'), index=False)
 
         if calc_pollution_effects == 'Y':
-            emission_costs_all.to_csv(path_of_outputs_folder.joinpath('criteria_emission_costs.csv'), index=False)
-            emission_costs_sum[1].to_csv(path_of_outputs_folder.joinpath('criteria_emission_costs_by_yearID.csv'), index=False)
-            emission_costs_sum[2].to_csv(path_of_outputs_folder.joinpath('criteria_emission_costs_by_regClass_fuelType.csv'), index=False)
-            emission_costs_sum[3].to_csv(path_of_outputs_folder.joinpath('criteria_emission_costs_by_sourcetype_fuelType.csv'), index=False)
+            emission_costs_all.to_csv(path_of_run_results_folder.joinpath('criteria_emission_costs.csv'), index=False)
+            emission_costs_sum[1].to_csv(path_of_run_results_folder.joinpath('criteria_emission_costs_by_yearID.csv'), index=False)
+            emission_costs_sum[2].to_csv(path_of_run_results_folder.joinpath('criteria_emission_costs_by_regClass_fuelType.csv'), index=False)
+            emission_costs_sum[3].to_csv(path_of_run_results_folder.joinpath('criteria_emission_costs_by_sourcetype_fuelType.csv'), index=False)
 
-        operating_costs_all.to_csv(path_of_outputs_folder.joinpath('operating_costs.csv'), index=False)
-        operating_costs_summary[1].to_csv(path_of_outputs_folder.joinpath('operating_costs_by_yearID.csv'), index=False)
-        operating_costs_summary[2].to_csv(path_of_outputs_folder.joinpath('operating_costs_by_regClass_fuelType.csv'), index=False)
-        operating_costs_summary[3].to_csv(path_of_outputs_folder.joinpath('operating_costs_by_sourcetype_fuelType.csv'), index=False)
+        operating_costs_all.to_csv(path_of_run_results_folder.joinpath('operating_costs.csv'), index=False)
+        operating_costs_summary[1].to_csv(path_of_run_results_folder.joinpath('operating_costs_by_yearID.csv'), index=False)
+        operating_costs_summary[2].to_csv(path_of_run_results_folder.joinpath('operating_costs_by_regClass_fuelType.csv'), index=False)
+        operating_costs_summary[3].to_csv(path_of_run_results_folder.joinpath('operating_costs_by_sourcetype_fuelType.csv'), index=False)
 
-        bca_costs.to_csv(path_of_outputs_folder.joinpath('bca_costs.csv'), index=False)
-        bca_costs_sum[1].to_csv(path_of_outputs_folder.joinpath('bca_costs_by_yearID.csv'), index=False)
-        bca_costs_sum[2].to_csv(path_of_outputs_folder.joinpath('bca_costs_by_regClass_fuelType.csv'), index=False)
-        bca_costs_sum[3].to_csv(path_of_outputs_folder.joinpath('bca_costs_by_sourcetype_fuelType.csv'), index=False)
+        bca_costs.to_csv(path_of_run_results_folder.joinpath('bca_costs.csv'), index=False)
+        bca_costs_sum[1].to_csv(path_of_run_results_folder.joinpath('bca_costs_by_yearID.csv'), index=False)
+        bca_costs_sum[2].to_csv(path_of_run_results_folder.joinpath('bca_costs_by_regClass_fuelType.csv'), index=False)
+        bca_costs_sum[3].to_csv(path_of_run_results_folder.joinpath('bca_costs_by_sourcetype_fuelType.csv'), index=False)
 
     elapsed_time_outputs = time.time() - start_time_outputs
     end_time = time.time()
@@ -666,7 +668,7 @@ def main():
     summary_log = pd.DataFrame(data={'Item': ['Version', 'Start of run', 'Elapsed time read inputs', 'Elapsed time calculations', 'Elapsed time save outputs', 'End of run', 'Elapsed runtime'],
                                      'Results': [project_code.__version__, start_time_readable, elapsed_time_read, elapsed_time_calcs, elapsed_time_outputs, end_time_readable, elapsed_time],
                                      'Units': ['', 'YYYYmmdd-HHMMSS', 'seconds', 'seconds', 'seconds', 'YYYYmmdd-HHMMSS', 'seconds']})
-    summary_log.to_csv(path_of_outputs_folder.joinpath('summary_log.csv'), index=False)
+    summary_log.to_csv(path_of_run_results_folder.joinpath('summary_log.csv'), index=False)
 
 
 if __name__ == '__main__':
