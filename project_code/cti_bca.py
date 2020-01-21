@@ -89,6 +89,8 @@ def main():
     CREATE_ALL_FILES = input('Create all output files? (y)es or (n)o?\n')
     start_time = time.time()
     start_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')
+    print(f'\nStart date and time:  {start_time_readable}\n')
+    print(f'\nCTI BCA tool version: {project_code.__version__}\n')
     # these can be returned to interactive once further along, but for now just hardcoding the inputs
     run_settings_file = PATH_INPUTS.joinpath('1_RunSettings.csv')
     bca_inputs_file = PATH_INPUTS.joinpath('BCA_General_Inputs.csv')
@@ -407,10 +409,13 @@ def main():
     operating_costs = DEFandFuelCost(operating_costs).def_cost_df(def_doserates, def_prices)
     operating_costs = DEFandFuelCost(operating_costs).fuel_costs(fuel_prices)
     # operating_costs = OperatingCost(operating_costs).repair_and_maintenance_costs(repair_and_maintenance_cpm)
-    cols = [col for col in operating_costs.columns if 'TotalCost' in col and 'Pretax' not in col]
-    operating_costs.insert(len(operating_costs.columns), 'OperatingCost_BCA_TotalCost', operating_costs[cols].sum(axis=1))
+    cols_retail = [col for col in operating_costs.columns if 'TotalCost' in col and 'Retail' in col]
+    cols_pretax = [col for col in operating_costs.columns if 'TotalCost' in col and 'Pretax' in col]
+    operating_costs.insert(len(operating_costs.columns), 'OperatingCost_usingRetailFuel_TotalCost', operating_costs[cols_retail].sum(axis=1))
+    operating_costs.insert(len(operating_costs.columns), 'OperatingCost_BCA_TotalCost', operating_costs[cols_pretax].sum(axis=1))
     # operating_costs.insert(len(operating_costs.columns), 'OperatingCost_BCA_TotalCost',
     #                        operating_costs[['OperatingCost_Urea_TotalCost', 'OperatingCost_Fuel_Pretax_TotalCost', 'EmissionRepair_TotalCost']].sum(axis=1))
+    operating_costs.insert(len(operating_costs.columns), 'OperatingCost_usingRetailFuel_CPM', operating_costs['OperatingCost_usingRetailFuel_TotalCost'] / operating_costs['VMT'])
     operating_costs.insert(len(operating_costs.columns), 'OperatingCost_BCA_CPM', operating_costs['OperatingCost_BCA_TotalCost'] / operating_costs['VMT'])
     operatingcost_metrics_to_discount = [col for col in operating_costs.columns if 'TotalCost' in col]
 
@@ -447,7 +452,8 @@ def main():
                                                                          'DirectCost_TotalCost', 'IndirectCost_TotalCost', 'Tech_TotalCost']],
                                                       on=['optionID', 'yearID', 'modelYearID', 'ageID', 'sourcetypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID'],
                                                       how='left')
-        bca_costs_dict[dr] = pd.concat([bca_costs_dict[dr], operating_costs_dict[dr]['OperatingCost_BCA_TotalCost']], axis=1, ignore_index=False)
+        # bca_costs_dict[dr] = pd.concat([bca_costs_dict[dr], operating_costs_dict[dr]['OperatingCost_BCA_TotalCost']], axis=1, ignore_index=False)
+        bca_costs_dict[dr] = pd.concat([bca_costs_dict[dr], operating_costs_dict[dr][operatingcost_metrics_to_discount]], axis=1, ignore_index=False)
         if calc_pollution_effects == 'Y':
             bca_costs_dict[dr] = pd.concat([bca_costs_dict[dr],
                                             emission_costs_dict[dr][criteria_damage_costs_list],
@@ -478,7 +484,7 @@ def main():
                 = bca_costs[['Tech_TotalCost', 'OperatingCost_BCA_TotalCost', 'Criteria_Damage_' + mort_est + '_' + str(0.07)]].sum(axis=1)
             bca_costs.loc[bca_costs['DiscountRate'] == 0.07, 'TotalCosts_' + mort_est + '_' + str(0.03)] = np.nan
 
-    # pull differenct discount rates together
+    # pull different discount rates together
     techcost_all, emission_costs_all, operating_costs_all = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
     for dr in [0, discrate_social_low, discrate_social_high]:
         techcost_all = pd.concat([techcost_all, techcost_dict[dr]], axis=0, ignore_index=True)
