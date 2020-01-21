@@ -4,7 +4,7 @@ from project_code.vehicle import fuelTypeID
 GRAMSperSHORTTON = 907185
 GALLONSperML = 0.000264172
 
-class OperatingCost:
+class DEFandFuelCost:
     """
     The OperatingCost class calculates the operating costs (DEF (urea), fuel, etc.).
 
@@ -104,8 +104,23 @@ class OperatingCost:
         df.insert(len(df.columns), 'OperatingCost_Fuel_Retail_CPM', df['OperatingCost_Fuel_Retail_TotalCost'] / df['VMT'])
         return df
 
-    def repair_and_maintenance_costs(self, repair_and_maintenance_cpm):
-        return_df = self.input_df.copy()
+
+class RepairAndMaintenanceCost:
+    """
+        The RepairAndMaintenance class calculates the repair & maintenance costs.
+
+        :param passed_object: A DataFrame that provides the necessary physical parameters; or a vehicle tuple.
+        """
+    def __init__(self, passed_object):
+        self.passed_object = passed_object
+
+    def repair_and_maintenance_costs_byAge(self, repair_and_maintenance_cpm):
+        """
+
+        :param repair_and_maintenance_cpm: A DataFrame of cost per mile input values by ageID.
+        :return: The passed DataFrame (which must contain vehicles and vehicle ageID) with maintenance & repair costs along with emission-related maintenance & repair costs added in.
+        """
+        return_df = self.passed_object.copy()
         # cost_per_mile_df = pd.DataFrame(return_df, columns=['optionID', 'regClassID', 'fuelTypeID', 'ageID'])
         repair_and_maintenance_cpm.insert(0, 'emission_repair_cpm',
                                           repair_and_maintenance_cpm['emission_share']
@@ -117,3 +132,94 @@ class OperatingCost:
         return_df.insert(len(return_df.columns), 'MaintenanceAndRepair_AvgPerVeh', return_df['VMT_AvgPerVeh'] * return_df['maintenance_and_repair_cpm'])
         return_df.insert(len(return_df.columns), 'EmissionRepair_AvgPerVeh', return_df['VMT_AvgPerVeh'] * return_df['emission_repair_cpm'])
         return return_df
+
+    def repair_and_maintenance_costs_curve(self, metrics_repair_and_maint_dict):
+        df_return = self.passed_object.copy()
+        emission_repair_share = metrics_repair_and_maint_dict['repair_and_maintenance_emission_share'] \
+                                * metrics_repair_and_maint_dict['repair_and_maintenance_repair_share']
+        vehicles = set(df_return['alt_rc_ft'])
+        df_return.insert(len(df_return.columns), 'EmissionRepair_CPM', 0)
+        for veh in vehicles:
+            if veh[2] == 1:
+                scalar = metrics_repair_and_maint_dict['scalar_gasoline']
+            else:
+                scalar = 1
+            df_return.loc[(df_return['alt_rc_ft'] == veh)
+                          & (df_return['VMT_AvgPerVeh_CumSum'] <= df_return['Warranty_Miles']),
+                          'EmissionRepair_CPM'] \
+                = metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_cpm'] \
+                  * scalar \
+                  * emission_repair_share
+            df_return.loc[(df_return['alt_rc_ft'] == veh)
+                          & (df_return['VMT_AvgPerVeh_CumSum'] > df_return['Warranty_Miles'])
+                          & (df_return['VMT_AvgPerVeh_CumSum'] <= df_return['UsefulLife_Miles']),
+                          'EmissionRepair_CPM'] \
+                = ((df_return['VMT_AvgPerVeh_CumSum'] - df_return['Warranty_Miles']) \
+                    * metrics_repair_and_maint_dict['slope_repair_and_maintenance_cpm'] \
+                    + metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_cpm']) \
+                  * scalar \
+                  * emission_repair_share
+            df_return.loc[(df_return['alt_rc_ft'] == veh)
+                          & (df_return['VMT_AvgPerVeh_CumSum'] > df_return['UsefulLife_Miles']),
+                          'EmissionRepair_CPM'] \
+                = ((df_return['UsefulLife_Miles'] - df_return['Warranty_Miles']) \
+                    * metrics_repair_and_maint_dict['slope_repair_and_maintenance_cpm'] \
+                    + metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_cpm']) \
+                  * scalar \
+                  * emission_repair_share \
+                  * (1 + metrics_repair_and_maint_dict['repair_and_maintenance_increase_beyond_usefullife'])
+        df_return.insert(len(df_return.columns), 'EmissionRepair_AvgPerVeh', df_return['VMT_AvgPerVeh'] * df_return['EmissionRepair_CPM'])
+        df_return.insert(len(df_return.columns), 'EmissionRepair_TotalCost', df_return['VMT'] * df_return['EmissionRepair_CPM'])
+        return df_return
+
+    def repair_and_maintenance_costs_curve2(self, metrics_repair_and_maint_dict):
+        df_return = self.passed_object.copy()
+        emission_repair_share = metrics_repair_and_maint_dict['repair_and_maintenance_emission_share'] \
+                                * metrics_repair_and_maint_dict['repair_and_maintenance_repair_share']
+        vehicles = set(df_return['alt_rc_ft'])
+        df_return.insert(len(df_return.columns), 'EmissionRepair_CPM', 0)
+        for veh in vehicles:
+            if veh[2] == 1:
+                scalar = metrics_repair_and_maint_dict['scalar_gasoline']
+            else:
+                scalar = 1
+            warranty_miles = df_return.loc[df_return['alt_rc_ft'] == veh, 'Warranty_Miles'].mean()
+            usefullife_miles = df_return.loc[df_return['alt_rc_ft'] == veh, 'UsefulLife_Miles'].mean()
+            slope = (metrics_repair_and_maint_dict['atusefullife_repair_and_maintenance_cpm'] - metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_cpm']) \
+                    / (usefullife_miles - warranty_miles)
+            df_return.loc[(df_return['alt_rc_ft'] == veh)
+                          & (df_return['VMT_AvgPerVeh_CumSum'] <= df_return['Warranty_Miles']),
+                          'EmissionRepair_CPM'] \
+                = metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_cpm'] \
+                  * scalar \
+                  * emission_repair_share
+            df_return.loc[(df_return['alt_rc_ft'] == veh)
+                          & (df_return['VMT_AvgPerVeh_CumSum'] > df_return['Warranty_Miles'])
+                          & (df_return['VMT_AvgPerVeh_CumSum'] <= df_return['UsefulLife_Miles']),
+                          'EmissionRepair_CPM'] \
+                = ((df_return['VMT_AvgPerVeh_CumSum'] - df_return['Warranty_Miles']) \
+                    * slope \
+                    + metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_cpm']) \
+                  * scalar \
+                  * emission_repair_share
+            df_return.loc[(df_return['alt_rc_ft'] == veh)
+                          & (df_return['VMT_AvgPerVeh_CumSum'] > df_return['UsefulLife_Miles']),
+                          'EmissionRepair_CPM'] \
+                = metrics_repair_and_maint_dict['atusefullife_repair_and_maintenance_cpm'] \
+                  * scalar \
+                  * emission_repair_share \
+                  * (1 + metrics_repair_and_maint_dict['repair_and_maintenance_increase_beyond_usefullife'])
+                # = (((df_return['UsefulLife_Miles'] - df_return['Warranty_Miles']) \
+                #     * slope \
+                #     + metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_cpm']) \
+                #   * scalar \
+                #   * emission_repair_share \
+                #   * (1 + metrics_repair_and_maint_dict['repair_and_maintenance_increase_beyond_usefullife']), \
+        # set baseline max CPM as the max CPM for each alternative
+        for veh in vehicles:
+            baseline_veh = (0, veh[1], veh[2])
+            max_cpm_baseline = df_return.loc[df_return['alt_rc_ft'] == baseline_veh, 'EmissionRepair_CPM'].max()
+            df_return.loc[(df_return['alt_rc_ft'] == veh) & (df_return['EmissionRepair_CPM'] > max_cpm_baseline), 'EmissionRepair_CPM'] = max_cpm_baseline
+        df_return.insert(len(df_return.columns), 'EmissionRepair_AvgPerVeh', df_return['VMT_AvgPerVeh'] * df_return['EmissionRepair_CPM'])
+        df_return.insert(len(df_return.columns), 'EmissionRepair_TotalCost', df_return['VMT'] * df_return['EmissionRepair_CPM'])
+        return df_return
