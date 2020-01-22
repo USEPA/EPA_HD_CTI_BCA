@@ -183,38 +183,37 @@ class RepairAndMaintenanceCost:
                 scalar = metrics_repair_and_maint_dict['scalar_gasoline']
             else:
                 scalar = 1
-            warranty_miles = df_return.loc[df_return['alt_rc_ft'] == veh, 'Warranty_Miles'].mean()
-            usefullife_miles = df_return.loc[df_return['alt_rc_ft'] == veh, 'UsefulLife_Miles'].mean()
-            slope = (metrics_repair_and_maint_dict['atusefullife_repair_and_maintenance_cpm'] - metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_cpm']) \
-                    / (usefullife_miles - warranty_miles)
-            df_return.loc[(df_return['alt_rc_ft'] == veh)
-                          & (df_return['VMT_AvgPerVeh_CumSum'] <= df_return['Warranty_Miles']),
-                          'EmissionRepair_CPM'] \
-                = metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_cpm'] \
-                  * scalar \
-                  * emission_repair_share
-            df_return.loc[(df_return['alt_rc_ft'] == veh)
-                          & (df_return['VMT_AvgPerVeh_CumSum'] > df_return['Warranty_Miles'])
-                          & (df_return['VMT_AvgPerVeh_CumSum'] <= df_return['UsefulLife_Miles']),
-                          'EmissionRepair_CPM'] \
-                = ((df_return['VMT_AvgPerVeh_CumSum'] - df_return['Warranty_Miles']) \
-                    * slope \
-                    + metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_cpm']) \
-                  * scalar \
-                  * emission_repair_share
-            df_return.loc[(df_return['alt_rc_ft'] == veh)
-                          & (df_return['VMT_AvgPerVeh_CumSum'] > df_return['UsefulLife_Miles']),
-                          'EmissionRepair_CPM'] \
-                = metrics_repair_and_maint_dict['atusefullife_repair_and_maintenance_cpm'] \
-                  * scalar \
-                  * emission_repair_share \
-                  * (1 + metrics_repair_and_maint_dict['repair_and_maintenance_increase_beyond_usefullife'])
-                # = (((df_return['UsefulLife_Miles'] - df_return['Warranty_Miles']) \
-                #     * slope \
-                #     + metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_cpm']) \
-                #   * scalar \
-                #   * emission_repair_share \
-                #   * (1 + metrics_repair_and_maint_dict['repair_and_maintenance_increase_beyond_usefullife']), \
+            for model_year in range(df_return['modelYearID'].min(), df_return['modelYearID'].max() + 1):
+                warranty_miles = df_return.loc[(df_return['alt_rc_ft'] == veh) & (df_return['modelYearID'] == model_year), 'Warranty_Miles'].mean()
+                usefullife_miles = df_return.loc[(df_return['alt_rc_ft'] == veh) & (df_return['modelYearID'] == model_year), 'UsefulLife_Miles'].mean()
+                slope = ((metrics_repair_and_maint_dict['atusefullife_repair_and_maintenance_cpm'] - metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_cpm']) \
+                         / (usefullife_miles - warranty_miles)) \
+                         * scalar
+                df_return.loc[(df_return['alt_rc_ft'] == veh) & (df_return['modelYearID'] == model_year)
+                              & (df_return['VMT_AvgPerVeh_CumSum'] <= df_return['Warranty_Miles'])
+                              & (df_return['ageID'] + 1 <= df_return['Warranty_Age']), # +1 here because warranty/useful life inputs use year1 as 1 rather than 0
+                              'EmissionRepair_CPM'] \
+                    = metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_cpm'] \
+                      * scalar \
+                      * emission_repair_share
+                df_return.loc[(df_return['alt_rc_ft'] == veh) & (df_return['modelYearID'] == model_year)
+                              & (df_return['VMT_AvgPerVeh_CumSum'] > df_return['Warranty_Miles'])
+                              & (df_return['VMT_AvgPerVeh_CumSum'] <= df_return['UsefulLife_Miles'])
+                              & (df_return['ageID'] + 1 <= df_return['UsefulLife_Age']), # +1 here because warranty/useful life inputs use year1 as 1 rather than 0
+                              'EmissionRepair_CPM'] \
+                    = ((df_return['VMT_AvgPerVeh_CumSum'] - df_return['Warranty_Miles']) \
+                        * slope \
+                        + metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_cpm']) \
+                      * scalar \
+                      * emission_repair_share
+                df_return.loc[(df_return['alt_rc_ft'] == veh) & (df_return['modelYearID'] == model_year)
+                              & ((df_return['VMT_AvgPerVeh_CumSum'] > df_return['UsefulLife_Miles'])
+                              | (df_return['ageID'] + 1 > df_return['UsefulLife_Age'])), # +1 here because warranty/useful life inputs use year1 as 1 rather than 0
+                              'EmissionRepair_CPM'] \
+                    = metrics_repair_and_maint_dict['atusefullife_repair_and_maintenance_cpm'] \
+                      * scalar \
+                      * emission_repair_share \
+                      * (1 + metrics_repair_and_maint_dict['repair_and_maintenance_increase_beyond_usefullife'])
         # set baseline max CPM as the max CPM for each alternative
         for veh in vehicles:
             baseline_veh = (0, veh[1], veh[2])

@@ -86,6 +86,8 @@ def convert_dollars_to_bca_basis(df, deflators, dollar_basis_years, _metric, bca
 def main():
     """The main script."""
     # first, set the output files desired for QA/QC work
+    RUN_FOLDER_IDENTIFIER = input('Provide a run identifier for your output folder name (press return to use the default name)\n')
+    RUN_FOLDER_IDENTIFIER = RUN_FOLDER_IDENTIFIER if RUN_FOLDER_IDENTIFIER != '' else 'HDCTI-BCA-Results'
     CREATE_ALL_FILES = input('Create all output files? (y)es or (n)o?\n')
     start_time = time.time()
     start_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')
@@ -597,7 +599,7 @@ def main():
     # move this to earlier in main if results folder location is made user selectable so that the selection is made shortly after start of run
     # path_to_results = SetupFilesAndFolders('location for output folder').get_folder()
     PATH_OUTPUTS.mkdir(exist_ok=True)
-    path_of_run_folder = PATH_OUTPUTS.joinpath(start_time_readable + '_HDCTI-BCA-Results')
+    path_of_run_folder = PATH_OUTPUTS.joinpath(start_time_readable + '_' + RUN_FOLDER_IDENTIFIER)
     path_of_run_folder.mkdir(exist_ok=False)
     path_of_run_inputs_folder = path_of_run_folder.joinpath('run_inputs')
     path_of_run_inputs_folder.mkdir(exist_ok=False)
