@@ -389,9 +389,10 @@ def main():
         criteria_damage_costs_list = [col for col in emission_costs.columns if 'Criteria_Damage' in col]
         criteria_damage_costs_list_3 = [col for col in emission_costs.columns if 'Criteria_Damage' in col and '0.03' in col]
         criteria_damage_costs_list_7 = [col for col in emission_costs.columns if 'Criteria_Damage' in col and '0.07' in col]
-        criteria_emission_costs_list = [col for col in emission_costs.columns if 'tailpipe' in col]
+        criteria_emission_costs_list = [col for col in emission_costs.columns if 'tailpipe' in col and ('low' in col or 'high' in col)]
         criteria_emission_costs_list_3 = [col for col in emission_costs.columns if 'tailpipe' in col and '0.03' in col]
         criteria_emission_costs_list_7 = [col for col in emission_costs.columns if 'tailpipe' in col and '0.07' in col]
+        criteria_costs_list = criteria_damage_costs_list + criteria_emission_costs_list
 
     # work on operating costs
     # create DataFrame and then adjust MOVES fuel consumption as needed
@@ -429,8 +430,7 @@ def main():
         techcost_dict[dr] = DiscountValues(techcost, dr, discount_to_yearID, first_payment_at).discount(techcost_metrics_to_discount)
         operating_costs_dict[dr] = DiscountValues(operating_costs, dr, discount_to_yearID, first_payment_at).discount(operatingcost_metrics_to_discount)
         if calc_pollution_effects == 'Y':
-            emission_costs_dict[dr] = DiscountValues(emission_costs, dr, discount_to_yearID, first_payment_at).discount(criteria_damage_costs_list)
-            emission_costs_dict[dr] = DiscountValues(emission_costs, dr, discount_to_yearID, first_payment_at).discount(criteria_emission_costs_list)
+            emission_costs_dict[dr] = DiscountValues(emission_costs, dr, discount_to_yearID, first_payment_at).discount(criteria_costs_list)
 
     # now set to NaN discounted pollutant values using discount rates that are not consistent with the input values
     if calc_pollution_effects == 'Y':
