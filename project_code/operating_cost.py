@@ -41,8 +41,8 @@ class DEFandFuelCost:
         df.loc[df['fuelTypeID'] != 2, 'DEFDoseRate_PercentOfFuel'] = 0
         df['DEFDoseRate_PercentOfFuel'].fillna(0, inplace=True)
         df = df.merge(prices, on='yearID', how='left')
-        df.insert(len(df.columns), 'OperatingCost_Urea_TotalCost', df[['Gallons', 'DEFDoseRate_PercentOfFuel', 'DEF_USDperGal']].product(axis=1))
-        df.insert(len(df.columns), 'OperatingCost_Urea_CPM', df['OperatingCost_Urea_TotalCost'] / df['VMT'])
+        df.insert(len(df.columns), 'Urea_TotalCost', df[['Gallons', 'DEFDoseRate_PercentOfFuel', 'DEF_USDperGal']].product(axis=1))
+        df.insert(len(df.columns), 'Urea_CPM', df['Urea_TotalCost'] / df['VMT'])
         return df
 
     def orvr_fuel_impacts_pct(self, _fuelchanges):
@@ -99,9 +99,9 @@ class DEFandFuelCost:
         df = df.merge(prices, on=['yearID', 'fuelTypeID'], how='left')
         df['pretax_fuelprice'].fillna(method='ffill', inplace=True)
         df['retail_fuelprice'].fillna(method='ffill', inplace=True)
-        df.insert(len(df.columns), 'OperatingCost_Fuel_Pretax_TotalCost', df[['Gallons', 'pretax_fuelprice']].product(axis=1))
-        df.insert(len(df.columns), 'OperatingCost_Fuel_Retail_TotalCost', df[['Gallons', 'retail_fuelprice']].product(axis=1))
-        df.insert(len(df.columns), 'OperatingCost_Fuel_Retail_CPM', df['OperatingCost_Fuel_Retail_TotalCost'] / df['VMT'])
+        df.insert(len(df.columns), 'Fuel_Pretax_TotalCost', df[['Gallons', 'pretax_fuelprice']].product(axis=1))
+        df.insert(len(df.columns), 'Fuel_Retail_TotalCost', df[['Gallons', 'retail_fuelprice']].product(axis=1))
+        df.insert(len(df.columns), 'Fuel_Retail_CPM', df['Fuel_Retail_TotalCost'] / df['VMT'])
         return df
 
 
@@ -220,5 +220,6 @@ class RepairAndMaintenanceCost:
             max_cpm_baseline = df_return.loc[df_return['alt_rc_ft'] == baseline_veh, 'EmissionRepair_CPM'].max()
             df_return.loc[(df_return['alt_rc_ft'] == veh) & (df_return['EmissionRepair_CPM'] > max_cpm_baseline), 'EmissionRepair_CPM'] = max_cpm_baseline
         df_return.insert(len(df_return.columns), 'EmissionRepair_AvgPerVeh', df_return['VMT_AvgPerVeh'] * df_return['EmissionRepair_CPM'])
-        df_return.insert(len(df_return.columns), 'EmissionRepair_TotalCost', df_return['VMT'] * df_return['EmissionRepair_CPM'])
+        df_return.insert(len(df_return.columns), 'EmissionRepair_OwnerOperator_TotalCost', df_return['VMT'] * df_return['EmissionRepair_CPM'])
+        df_return.insert(len(df_return.columns), 'EmissionRepair_OEM_TotalCost', -df_return['EmissionRepair_OwnerOperator_TotalCost'])
         return df_return

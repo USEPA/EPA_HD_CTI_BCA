@@ -249,7 +249,11 @@ def main():
         df = Fleet(df).define_bca_sourcetype()
 
     # adjust MOVES VPOP/VMT/Gallons to reflect what's included in CTI (excluding what's not in CTI)
-    moves_adjusted = Fleet(moves).adjust_moves(moves_adjustments)
+    moves_adjusted = Fleet(moves).adjust_moves(moves_adjustments) # adjust (41, 2) to be engine cert only
+    moves_adjusted = moves_adjusted.loc[(moves_adjusted['regClassID'] != 41) | (moves_adjusted['fuelTypeID'] != 1), :] # eliminate (41, 1) keeping (41, 2)
+    moves_adjusted = moves_adjusted.loc[moves_adjusted['regClassID'] != 49, :] # eliminate Gliders
+    moves_adjusted = moves_adjusted.loc[(moves_adjusted['fuelTypeID'] != 3) & (moves_adjusted['fuelTypeID'] != 5), :] # eliminate CNG & E85
+    moves_adjusted.reset_index(drop=True, inplace=True)
 
     # add VMT/vehicle & Gallons/mile metrics to moves dataframe
     moves_adjusted.insert(len(moves_adjusted.columns), 'VMT_AvgPerVeh', moves_adjusted['VMT'] / moves_adjusted['VPOP'])
@@ -263,6 +267,7 @@ def main():
     year_min = sales_moves.loc[sales_moves['ageID'] == 0, 'yearID'].min()
 
     # calculate the direct mfg costs by passing vehicles, package costs/pens, sales and learning metrics thru the DirectCost class
+    print('Working on tech package costs....')
     pkg_directcost_veh_regclass_dict = dict()
     sales_for_learning = dict()
     rc_ft_age0 = dict()
@@ -380,6 +385,7 @@ def main():
     techcost_metrics_to_discount = [col for col in techcost.columns if 'Cost' in col or 'AvgPerVeh' in col]
 
     # work on pollution damage costs
+    print('Working on pollution costs....')
     if calc_pollution_effects == 'Y':
         emission_costs = pd.DataFrame(fleet_bca, columns=['optionID', 'yearID', 'modelYearID', 'ageID',
                                                           'sourcetypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
@@ -396,6 +402,7 @@ def main():
 
     # work on operating costs
     # create DataFrame and then adjust MOVES fuel consumption as needed
+    print('Working on operating costs....')
     operating_costs = pd.DataFrame(fleet_bca, columns=['optionID', 'yearID', 'modelYearID', 'ageID',
                                                        'sourcetypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
                                                        'alt_st_rc_ft_zg', 'alt_st_rc_ft', 'alt_rc_ft',
@@ -405,24 +412,30 @@ def main():
     for df in [warranty_miles_reshaped, warranty_age_reshaped, usefullife_miles_reshaped, usefullife_age_reshaped]:
         operating_costs = operating_costs.merge(df, on=['optionID', 'regClassID', 'fuelTypeID', 'modelYearID'], how='left')
     cols = [col for col in operating_costs.columns if 'Warranty' in col or 'UsefulLife' in col]
-    operating_costs.loc[:, cols] = operating_costs.loc[:, cols].ffill(axis=0)
+    regclasses_gasoline = set(operating_costs.loc[operating_costs['fuelTypeID'] == 1, 'regClassID'])
+    regclasses_diesel = set(operating_costs.loc[operating_costs['fuelTypeID'] == 2, 'regClassID'])
+    for regclass_id in regclasses_gasoline:
+        operating_costs.loc[(operating_costs['fuelTypeID'] == 1) & (operating_costs['regClassID'] == regclass_id), cols] \
+            = operating_costs.loc[(operating_costs['fuelTypeID'] == 1) & (operating_costs['regClassID'] == regclass_id), cols].ffill(axis=0)
+    for regclass_id in regclasses_diesel:
+        operating_costs.loc[(operating_costs['fuelTypeID'] == 2) & (operating_costs['regClassID'] == regclass_id), cols] \
+            = operating_costs.loc[(operating_costs['fuelTypeID'] == 2) & (operating_costs['regClassID'] == regclass_id), cols].ffill(axis=0)
+    # operating_costs.loc[:, cols].ffill(axis=0)
     operating_costs = RepairAndMaintenanceCost(operating_costs).repair_and_maintenance_costs_curve2(metrics_repair_and_maint_dict)
     operating_costs = DEFandFuelCost(operating_costs).orvr_fuel_impacts_mlpergram(orvr_fuelchanges)
     def_doserates = DEFandFuelCost(def_doserate_inputs).def_doserate_scaling_factor()
     operating_costs = DEFandFuelCost(operating_costs).def_cost_df(def_doserates, def_prices)
     operating_costs = DEFandFuelCost(operating_costs).fuel_costs(fuel_prices)
-    # operating_costs = OperatingCost(operating_costs).repair_and_maintenance_costs(repair_and_maintenance_cpm)
-    cols_retail = [col for col in operating_costs.columns if 'TotalCost' in col and 'Retail' in col]
-    cols_pretax = [col for col in operating_costs.columns if 'TotalCost' in col and 'Pretax' in col]
-    operating_costs.insert(len(operating_costs.columns), 'OperatingCost_usingRetailFuel_TotalCost', operating_costs[cols_retail].sum(axis=1))
-    operating_costs.insert(len(operating_costs.columns), 'OperatingCost_BCA_TotalCost', operating_costs[cols_pretax].sum(axis=1))
-    # operating_costs.insert(len(operating_costs.columns), 'OperatingCost_BCA_TotalCost',
-    #                        operating_costs[['OperatingCost_Urea_TotalCost', 'OperatingCost_Fuel_Pretax_TotalCost', 'EmissionRepair_TotalCost']].sum(axis=1))
-    operating_costs.insert(len(operating_costs.columns), 'OperatingCost_usingRetailFuel_CPM', operating_costs['OperatingCost_usingRetailFuel_TotalCost'] / operating_costs['VMT'])
-    operating_costs.insert(len(operating_costs.columns), 'OperatingCost_BCA_CPM', operating_costs['OperatingCost_BCA_TotalCost'] / operating_costs['VMT'])
+    cols_owner_operator = ['EmissionRepair_OwnerOperator_TotalCost', 'Urea_TotalCost', 'Fuel_Retail_TotalCost']
+    cols_bca = ['EmissionRepair_OwnerOperator_TotalCost', 'EmissionRepair_OEM_TotalCost', 'Urea_TotalCost', 'Fuel_Pretax_TotalCost']
+    operating_costs.insert(len(operating_costs.columns), 'OperatingCost_OwnerOperator_TotalCost', operating_costs[cols_owner_operator].sum(axis=1))
+    operating_costs.insert(len(operating_costs.columns), 'OperatingCost_BCA_TotalCost', operating_costs[cols_bca].sum(axis=1))
+    operating_costs.insert(len(operating_costs.columns), 'OperatingCost_OwnerOperator_CPM', operating_costs['OperatingCost_OwnerOperator_TotalCost'] / operating_costs['VMT'])
+    # operating_costs.insert(len(operating_costs.columns), 'OperatingCost_BCA_CPM', operating_costs['OperatingCost_BCA_TotalCost'] / operating_costs['VMT'])
     operatingcost_metrics_to_discount = [col for col in operating_costs.columns if 'TotalCost' in col]
 
     # pass each DataFrame thru the DiscountValues class and pass the list of metrics to be discounted for each thru the discount method
+    print('Working on discounting monetized values....')
     techcost_dict = dict()
     emission_costs_dict = dict()
     operating_costs_dict = dict()
@@ -443,6 +456,7 @@ def main():
         for col in criteria_emission_costs_list_7:
             emission_costs_dict[0.03][col] = np.nan
 
+    print('Working on benefit-cost analysis results and summarizing things....')
     bca_costs_dict = dict()
     for dr in [0, discrate_social_low, discrate_social_high]:
         bca_costs_dict[dr] = pd.DataFrame(fleet_bca, columns=['optionID', 'yearID', 'modelYearID', 'ageID',
@@ -711,9 +725,9 @@ def main():
     end_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')
     elapsed_time = end_time - start_time
 
-    summary_log = pd.DataFrame(data={'Item': ['Version', 'Start of run', 'Elapsed time read inputs', 'Elapsed time calculations', 'Elapsed time save outputs', 'End of run', 'Elapsed runtime'],
-                                     'Results': [project_code.__version__, start_time_readable, elapsed_time_read, elapsed_time_calcs, elapsed_time_outputs, end_time_readable, elapsed_time],
-                                     'Units': ['', 'YYYYmmdd-HHMMSS', 'seconds', 'seconds', 'seconds', 'YYYYmmdd-HHMMSS', 'seconds']})
+    summary_log = pd.DataFrame(data={'Item': ['Version', 'Run folder', 'Start of run', 'Elapsed time read inputs', 'Elapsed time calculations', 'Elapsed time save outputs', 'End of run', 'Elapsed runtime'],
+                                     'Results': [project_code.__version__, path_of_run_folder, start_time_readable, elapsed_time_read, elapsed_time_calcs, elapsed_time_outputs, end_time_readable, elapsed_time],
+                                     'Units': ['', '', 'YYYYmmdd-HHMMSS', 'seconds', 'seconds', 'seconds', 'YYYYmmdd-HHMMSS', 'seconds']})
     summary_log.to_csv(path_of_run_results_folder.joinpath('summary_log.csv'), index=False)
 
 

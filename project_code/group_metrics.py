@@ -15,7 +15,7 @@ class GroupMetrics:
         :param metrics_sum: A list of metrics to be grouped and summed.
         :return: A DataFrame of values grouped by the passed row header and summed.
         """
-        print('Doing groupby.sum')
+        # print('Doing groupby.sum')
         df_sum = self.data[self.row_header + metrics_sum].groupby(by=self.row_header, as_index=False).sum()
         return df_sum
 
