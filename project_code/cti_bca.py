@@ -208,7 +208,7 @@ def main():
 
     # Calculate the Indirect Cost VMT scalars based on the warranty_inputs and usefullife_inputs
     warranty_scalars = IndirectCostScalars(warranty_inputs).calc_vmt_scalars_absolute('Warranty')
-    usefullife_scalars = IndirectCostScalars(usefullife_inputs).calc_vmt_scalars_relative('R_and_D')
+    usefullife_scalars = IndirectCostScalars(usefullife_inputs).calc_vmt_scalars_relative('RnD')
     markups_vmt_scalars = pd.concat([warranty_scalars, usefullife_scalars], ignore_index=True, axis=0)
     markups_vmt_scalars.reset_index(drop=True, inplace=True)
 
@@ -233,9 +233,9 @@ def main():
     if calc_pollution_effects == 'Y':
         criteria_emission_costs_file = PATH_INPUTS.joinpath('CriteriaEmissionCost_Inputs.csv')
         criteria_emission_costs = pd.read_csv(criteria_emission_costs_file)
-        criteria_emission_costs_list = [col for col in criteria_emission_costs.columns if 'tailpipe' in col]
+        tailpipe_emission_costs_list = [col for col in criteria_emission_costs.columns if 'tailpipe' in col]
         criteria_emission_costs_reshaped = reshape_df(criteria_emission_costs, ['yearID', 'MortalityEstimate', 'DR', 'DollarBasis'],
-                                                      criteria_emission_costs_list, 'Pollutant_source', 'USDpShortTon')
+                                                      tailpipe_emission_costs_list, 'Pollutant_source', 'USDpShortTon')
         criteria_emission_costs_reshaped.insert(1, 'Key', '')
         criteria_emission_costs_reshaped['Key'] = criteria_emission_costs_reshaped['Pollutant_source'] + '_' \
                                                   + criteria_emission_costs_reshaped['MortalityEstimate'] + '_' \
@@ -377,12 +377,12 @@ def main():
 
     # pass directcosts_bca thru the IndirectCost class and apply the markups to get new dataframe that includes indirect costs
     techcost = IndirectCost(directcost_bca).indirect_cost_scaled(markups_merged, 'Warranty', warranty_vmt_share)
-    techcost = IndirectCost(techcost).indirect_cost_scaled(markups_merged, 'R_and_D', r_and_d_vmt_share)
+    techcost = IndirectCost(techcost).indirect_cost_scaled(markups_merged, 'RnD', r_and_d_vmt_share)
     techcost = IndirectCost(techcost).indirect_cost_unscaled(markups_merged)
     techcost = IndirectCost(techcost).indirect_cost_sum()
-    techcost.insert(len(techcost.columns), 'Tech_AvgPerVeh', techcost['DirectCost_AvgPerVeh'] + techcost['IndirectCost_AvgPerVeh'])
-    techcost.insert(len(techcost.columns), 'Tech_TotalCost', techcost['DirectCost_TotalCost'] + techcost['IndirectCost_TotalCost'])
-    techcost_metrics_to_discount = [col for col in techcost.columns if 'Cost' in col or 'AvgPerVeh' in col]
+    techcost.insert(len(techcost.columns), 'TechCost_AvgPerVeh', techcost['DirectCost_AvgPerVeh'] + techcost['IndirectCost_AvgPerVeh'])
+    techcost.insert(len(techcost.columns), 'TechCost_TotalCost', techcost['DirectCost_TotalCost'] + techcost['IndirectCost_TotalCost'])
+    techcost_metrics_to_discount = [col for col in techcost.columns if 'Cost' in col]
 
     # work on pollution damage costs
     print('Working on pollution costs....')
@@ -392,13 +392,13 @@ def main():
                                                           'alt_st_rc_ft_zg', 'alt_st_rc_ft', 'alt_rc_ft',
                                                           'PM25_tailpipe', 'NOx_tailpipe'])
         emission_costs = EmissionCost(emission_costs).calc_criteria_emission_costs_df(criteria_emission_costs_reshaped)
-        criteria_damage_costs_list = [col for col in emission_costs.columns if 'Criteria_Damage' in col]
-        criteria_damage_costs_list_3 = [col for col in emission_costs.columns if 'Criteria_Damage' in col and '0.03' in col]
-        criteria_damage_costs_list_7 = [col for col in emission_costs.columns if 'Criteria_Damage' in col and '0.07' in col]
-        criteria_emission_costs_list = [col for col in emission_costs.columns if 'tailpipe' in col and ('low' in col or 'high' in col)]
-        criteria_emission_costs_list_3 = [col for col in emission_costs.columns if 'tailpipe' in col and '0.03' in col]
-        criteria_emission_costs_list_7 = [col for col in emission_costs.columns if 'tailpipe' in col and '0.07' in col]
-        criteria_costs_list = criteria_damage_costs_list + criteria_emission_costs_list
+        criteria_costs_list = [col for col in emission_costs.columns if 'CriteriaCost' in col]
+        criteria_costs_list_3 = [col for col in emission_costs.columns if 'CriteriaCost' in col and '0.03' in col]
+        criteria_costs_list_7 = [col for col in emission_costs.columns if 'CriteriaCost' in col and '0.07' in col]
+        tailpipe_emission_costs_list = [col for col in emission_costs.columns if 'Cost_tailpipe' in col]
+        tailpipe_emission_costs_list_3 = [col for col in emission_costs.columns if 'Cost_tailpipe' in col and '0.03' in col]
+        tailpipe_emission_costs_list_7 = [col for col in emission_costs.columns if 'Cost_tailpipe' in col and '0.07' in col]
+        criteria_and_tailpipe_emission_costs_list = criteria_costs_list + tailpipe_emission_costs_list
 
     # work on operating costs
     # create DataFrame and then adjust MOVES fuel consumption as needed
@@ -420,19 +420,17 @@ def main():
     for regclass_id in regclasses_diesel:
         operating_costs.loc[(operating_costs['fuelTypeID'] == 2) & (operating_costs['regClassID'] == regclass_id), cols] \
             = operating_costs.loc[(operating_costs['fuelTypeID'] == 2) & (operating_costs['regClassID'] == regclass_id), cols].ffill(axis=0)
-    # operating_costs.loc[:, cols].ffill(axis=0)
     operating_costs = RepairAndMaintenanceCost(operating_costs).repair_and_maintenance_costs_curve2(metrics_repair_and_maint_dict)
     operating_costs = DEFandFuelCost(operating_costs).orvr_fuel_impacts_mlpergram(orvr_fuelchanges)
     def_doserates = DEFandFuelCost(def_doserate_inputs).def_doserate_scaling_factor()
     operating_costs = DEFandFuelCost(operating_costs).def_cost_df(def_doserates, def_prices)
     operating_costs = DEFandFuelCost(operating_costs).fuel_costs(fuel_prices)
-    cols_owner_operator = ['EmissionRepair_OwnerOperator_TotalCost', 'Urea_TotalCost', 'Fuel_Retail_TotalCost']
-    cols_bca = ['EmissionRepair_OwnerOperator_TotalCost', 'EmissionRepair_OEM_TotalCost', 'Urea_TotalCost', 'Fuel_Pretax_TotalCost']
+    cols_owner_operator = ['EmissionRepairCost_OwnerOperator_TotalCost', 'UreaCost_TotalCost', 'FuelCost_Retail_TotalCost']
+    cols_bca = ['EmissionRepairCost_OwnerOperator_TotalCost', 'EmissionRepairCost_OEM_TotalCost', 'UreaCost_TotalCost', 'FuelCost_Pretax_TotalCost']
     operating_costs.insert(len(operating_costs.columns), 'OperatingCost_OwnerOperator_TotalCost', operating_costs[cols_owner_operator].sum(axis=1))
     operating_costs.insert(len(operating_costs.columns), 'OperatingCost_BCA_TotalCost', operating_costs[cols_bca].sum(axis=1))
-    operating_costs.insert(len(operating_costs.columns), 'OperatingCost_OwnerOperator_CPM', operating_costs['OperatingCost_OwnerOperator_TotalCost'] / operating_costs['VMT'])
-    # operating_costs.insert(len(operating_costs.columns), 'OperatingCost_BCA_CPM', operating_costs['OperatingCost_BCA_TotalCost'] / operating_costs['VMT'])
-    operatingcost_metrics_to_discount = [col for col in operating_costs.columns if 'TotalCost' in col]
+    operating_costs.insert(len(operating_costs.columns), 'OperatingCost_OwnerOperator_AvgPerMile', operating_costs['OperatingCost_OwnerOperator_TotalCost'] / operating_costs['VMT'])
+    operatingcost_metrics_to_discount = [col for col in operating_costs.columns if 'Cost' in col]
 
     # pass each DataFrame thru the DiscountValues class and pass the list of metrics to be discounted for each thru the discount method
     print('Working on discounting monetized values....')
@@ -443,17 +441,17 @@ def main():
         techcost_dict[dr] = DiscountValues(techcost, dr, discount_to_yearID, first_payment_at).discount(techcost_metrics_to_discount)
         operating_costs_dict[dr] = DiscountValues(operating_costs, dr, discount_to_yearID, first_payment_at).discount(operatingcost_metrics_to_discount)
         if calc_pollution_effects == 'Y':
-            emission_costs_dict[dr] = DiscountValues(emission_costs, dr, discount_to_yearID, first_payment_at).discount(criteria_costs_list)
+            emission_costs_dict[dr] = DiscountValues(emission_costs, dr, discount_to_yearID, first_payment_at).discount(criteria_and_tailpipe_emission_costs_list)
 
     # now set to NaN discounted pollutant values using discount rates that are not consistent with the input values
     if calc_pollution_effects == 'Y':
-        for col in criteria_damage_costs_list_3:
+        for col in criteria_costs_list_3:
             emission_costs_dict[0.07][col] = np.nan
-        for col in criteria_damage_costs_list_7:
+        for col in criteria_costs_list_7:
             emission_costs_dict[0.03][col] = np.nan
-        for col in criteria_emission_costs_list_3:
+        for col in tailpipe_emission_costs_list_3:
             emission_costs_dict[0.07][col] = np.nan
-        for col in criteria_emission_costs_list_7:
+        for col in tailpipe_emission_costs_list_7:
             emission_costs_dict[0.03][col] = np.nan
 
     print('Working on benefit-cost analysis results and summarizing things....')
@@ -465,16 +463,12 @@ def main():
         bca_costs_dict[dr] = bca_costs_dict[dr].merge(techcost_dict[dr][['optionID', 'yearID', 'modelYearID', 'ageID',
                                                                          'sourcetypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
                                                                          'Vehicle_Name_RC', 'Vehicle_Name_BCA',
-                                                                         'DirectCost_TotalCost', 'IndirectCost_TotalCost', 'Tech_TotalCost']],
+                                                                         'DirectCost_TotalCost', 'IndirectCost_TotalCost', 'TechCost_TotalCost']],
                                                       on=['optionID', 'yearID', 'modelYearID', 'ageID', 'sourcetypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID'],
                                                       how='left')
-        # bca_costs_dict[dr] = pd.concat([bca_costs_dict[dr], operating_costs_dict[dr]['OperatingCost_BCA_TotalCost']], axis=1, ignore_index=False)
         bca_costs_dict[dr] = pd.concat([bca_costs_dict[dr], operating_costs_dict[dr][operatingcost_metrics_to_discount]], axis=1, ignore_index=False)
         if calc_pollution_effects == 'Y':
-            bca_costs_dict[dr] = pd.concat([bca_costs_dict[dr],
-                                            emission_costs_dict[dr][criteria_damage_costs_list],
-                                            emission_costs_dict[dr][criteria_emission_costs_list]],
-                                           axis=1, ignore_index=False)
+            bca_costs_dict[dr] = pd.concat([bca_costs_dict[dr], emission_costs_dict[dr][criteria_and_tailpipe_emission_costs_list]], axis=1, ignore_index=False)
         bca_costs_dict[dr].insert(0, 'DiscountRate', dr)
 
     bca_costs = pd.DataFrame()
@@ -485,20 +479,20 @@ def main():
     if calc_pollution_effects == 'Y':
         for dr in [0.03, 0.07]:
             for mort_est in ['low', 'high']:
-                bca_costs.insert(len(bca_costs.columns), 'TotalCosts_' + mort_est + '_' + str(dr),
-                                 bca_costs[['Tech_TotalCost', 'OperatingCost_BCA_TotalCost', 'Criteria_Damage_' + mort_est + '_' + str(dr)]].sum(axis=1))
+                bca_costs.insert(len(bca_costs.columns), 'TotalCost_' + mort_est + '_' + str(dr),
+                                 bca_costs[['TechCost_TotalCost', 'OperatingCost_BCA_TotalCost', 'CriteriaCost_' + mort_est + '_' + str(dr)]].sum(axis=1))
     else:
-        bca_costs.insert(len(bca_costs.columns), 'TotalCosts', bca_costs[['Tech_TotalCost', 'OperatingCost_BCA_TotalCost']].sum(axis=1))
+        bca_costs.insert(len(bca_costs.columns), 'TotalCost', bca_costs[['TechCost_TotalCost', 'OperatingCost_BCA_TotalCost']].sum(axis=1))
 
     # adjust the 3 and 7 DR total costs as needed
     if calc_pollution_effects == 'Y':
         for mort_est in ['low', 'high']:
-            bca_costs.loc[bca_costs['DiscountRate'] == 0.03, 'TotalCosts_' + mort_est + '_' + str(0.03)] \
-                = bca_costs[['Tech_TotalCost', 'OperatingCost_BCA_TotalCost', 'Criteria_Damage_' + mort_est + '_' + str(0.03)]].sum(axis=1)
-            bca_costs.loc[bca_costs['DiscountRate'] == 0.03, 'TotalCosts_' + mort_est + '_' + str(0.07)] = np.nan
-            bca_costs.loc[bca_costs['DiscountRate'] == 0.07, 'TotalCosts_' + mort_est + '_' + str(0.07)] \
-                = bca_costs[['Tech_TotalCost', 'OperatingCost_BCA_TotalCost', 'Criteria_Damage_' + mort_est + '_' + str(0.07)]].sum(axis=1)
-            bca_costs.loc[bca_costs['DiscountRate'] == 0.07, 'TotalCosts_' + mort_est + '_' + str(0.03)] = np.nan
+            bca_costs.loc[bca_costs['DiscountRate'] == 0.03, 'TotalCost_' + mort_est + '_' + str(0.03)] \
+                = bca_costs[['TechCost_TotalCost', 'OperatingCost_BCA_TotalCost', 'CriteriaCost_' + mort_est + '_' + str(0.03)]].sum(axis=1)
+            bca_costs.loc[bca_costs['DiscountRate'] == 0.03, 'TotalCost_' + mort_est + '_' + str(0.07)] = np.nan
+            bca_costs.loc[bca_costs['DiscountRate'] == 0.07, 'TotalCost_' + mort_est + '_' + str(0.07)] \
+                = bca_costs[['TechCost_TotalCost', 'OperatingCost_BCA_TotalCost', 'CriteriaCost_' + mort_est + '_' + str(0.07)]].sum(axis=1)
+            bca_costs.loc[bca_costs['DiscountRate'] == 0.07, 'TotalCost_' + mort_est + '_' + str(0.03)] = np.nan
 
     # pull different discount rates together
     techcost_all, emission_costs_all, operating_costs_all = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
@@ -525,11 +519,11 @@ def main():
     techcost_metrics_to_sum = ['VPOP'] + [col for col in techcost_all.columns if 'TotalCost' in col]
     techcost_metrics_to_avg = [col for col in techcost_all.columns if 'AvgPerVeh' in col]
     operating_costs_metrics_to_sum = [col for col in operating_costs_all.columns if 'Gallons' in col or 'TotalCost' in col]
-    operating_costs_metrics_to_avg = [col for col in operating_costs_all.columns if 'AvgPerVeh' in col or '_CPM' in col]
-    bca_costs_metrics_to_sum = [col for col in bca_costs.columns if 'TotalCost' in col or 'Damage' in col or 'low' in col or 'high' in col]
+    operating_costs_metrics_to_avg = [col for col in operating_costs_all.columns if 'AvgPerVeh' in col or 'AvgPerMile' in col]
+    bca_costs_metrics_to_sum = [col for col in bca_costs.columns if 'TotalCost' in col or 'low' in col or 'high' in col]
     moves_metrics_to_sum = [col for col in moves_adjusted.columns if 'PM25' in col or 'NOx' in col]
     if calc_pollution_effects == 'Y':
-        emission_costs_metrics_to_sum = [col for col in emission_costs_all.columns if 'PM25' in col or 'NOx' in col or 'Damage' in col]
+        emission_costs_metrics_to_sum = [col for col in emission_costs_all.columns if 'PM25' in col or 'NOx' in col or 'Criteria' in col]
 
     # create a dict of lists for passing thru grouping methods
     groups = 3 # increment this consistent with row_headers created
@@ -632,40 +626,40 @@ def main():
     DocTables(techcost_summary[2]).techcost_per_veh_table(discount_rates, techcost_years, regclasses, fueltypes, techcost_per_veh_cols, techcost_per_veh_file)
     techcost_per_veh_file.save()
 
-    bca_cols = ['OptionName', 'DiscountRate', 'Tech_TotalCost', 'OperatingCost_BCA_TotalCost']
+    bca_cols = ['OptionName', 'DiscountRate', 'TechCost_TotalCost', 'OperatingCost_BCA_TotalCost']
     bca_years = [2036, 2045]
     bca_annual = pd.ExcelWriter(path_of_run_results_folder.joinpath('bca_annual.xlsx'))
     if calc_pollution_effects == 'Y':
-        DocTables(bca_costs_sum[1]).bca_yearID_tables('', 0, 'Criteria_Damage_low_0.07', 'Criteria_Damage_high_0.03', bca_years,
+        DocTables(bca_costs_sum[1]).bca_yearID_tables('', 0, 'CriteriaCost_low_0.07', 'CriteriaCost_high_0.03', bca_years,
                                                       'billions', bca_cols, bca_annual)
     else:
-        DocTables(bca_costs_sum[1]).bca_yearID_tables('', 0, 'TotalCosts', '', bca_years,
+        DocTables(bca_costs_sum[1]).bca_yearID_tables('', 0, 'TotalCost', '', bca_years,
                                                       'billions', bca_cols, bca_annual)
     bca_annual.save()
 
     bca_npv = pd.ExcelWriter(path_of_run_results_folder.joinpath('bca_npv.xlsx'))
     if calc_pollution_effects == 'Y':
-        DocTables(bca_costs_sum[1]).bca_yearID_tables('_CumSum', 0.03, 'Criteria_Damage_low_0.03', 'Criteria_Damage_high_0.03', bca_years,
+        DocTables(bca_costs_sum[1]).bca_yearID_tables('_CumSum', 0.03, 'CriteriaCost_low_0.03', 'CriteriaCost_high_0.03', bca_years,
                                                       'billions', bca_cols, bca_npv)
-        DocTables(bca_costs_sum[1]).bca_yearID_tables('_CumSum', 0.07, 'Criteria_Damage_low_0.07', 'Criteria_Damage_high_0.07', bca_years,
+        DocTables(bca_costs_sum[1]).bca_yearID_tables('_CumSum', 0.07, 'CriteriaCost_low_0.07', 'CriteriaCost_high_0.07', bca_years,
                                                       'billions', bca_cols, bca_npv)
     else:
-        DocTables(bca_costs_sum[1]).bca_yearID_tables('_CumSum', 0.03, 'TotalCosts', '', bca_years,
+        DocTables(bca_costs_sum[1]).bca_yearID_tables('_CumSum', 0.03, 'TotalCost', '', bca_years,
                                                       'billions', bca_cols, bca_npv)
-        DocTables(bca_costs_sum[1]).bca_yearID_tables('_CumSum', 0.07, 'TotalCosts', '', bca_years,
+        DocTables(bca_costs_sum[1]).bca_yearID_tables('_CumSum', 0.07, 'TotalCost', '', bca_years,
                                                       'billions', bca_cols, bca_npv)
     bca_npv.save()
 
     bca_annualized = pd.ExcelWriter(path_of_run_results_folder.joinpath('bca_annualized.xlsx'))
     if calc_pollution_effects == 'Y':
-        DocTables(bca_costs_sum[1]).bca_yearID_tables('_Annualized', 0.03, 'Criteria_Damage_low_0.03', 'Criteria_Damage_high_0.03', bca_years,
+        DocTables(bca_costs_sum[1]).bca_yearID_tables('_Annualized', 0.03, 'CriteriaCost_low_0.03', 'CriteriaCost_high_0.03', bca_years,
                                                       'billions', bca_cols, bca_annualized)
-        DocTables(bca_costs_sum[1]).bca_yearID_tables('_Annualized', 0.07, 'Criteria_Damage_low_0.07', 'Criteria_Damage_high_0.07', bca_years,
+        DocTables(bca_costs_sum[1]).bca_yearID_tables('_Annualized', 0.07, 'CriteriaCost_low_0.07', 'CriteriaCost_high_0.07', bca_years,
                                                       'billions', bca_cols, bca_annualized)
     else:
-        DocTables(bca_costs_sum[1]).bca_yearID_tables('_Annualized', 0.03, 'TotalCosts', '', bca_years,
+        DocTables(bca_costs_sum[1]).bca_yearID_tables('_Annualized', 0.03, 'TotalCost', '', bca_years,
                                                       'billions', bca_cols, bca_annualized)
-        DocTables(bca_costs_sum[1]).bca_yearID_tables('_Annualized', 0.07, 'TotalCosts', '', bca_years,
+        DocTables(bca_costs_sum[1]).bca_yearID_tables('_Annualized', 0.07, 'TotalCost', '', bca_years,
                                                       'billions', bca_cols, bca_annualized)
     bca_annualized.save()
 

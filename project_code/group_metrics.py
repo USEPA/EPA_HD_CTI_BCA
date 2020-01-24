@@ -34,7 +34,7 @@ class GroupMetrics:
         :param metrics_cumsum: A list of metrics to be grouped and for which cumulative sums are to be calculated.
         :return: A DataFrame of values grouped by the passed row header and cumulative summed.
         """
-        print('Doing groupby.cumsum')
+        # print('Doing groupby.cumsum')
         df_cumsum = self.data[self.row_header + metrics_cumsum].groupby(by=self.row_header, as_index=False).cumsum()
         for metric in metrics_cumsum:
             df_cumsum.rename(columns={metric: metric + '_CumSum'}, inplace=True)

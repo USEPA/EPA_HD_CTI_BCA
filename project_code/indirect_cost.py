@@ -1,9 +1,9 @@
 import pandas as pd
 
 # create a list of markup factors to be included
-# markup_factors = ['Warranty', 'R_and_D', 'Other', 'Profit', 'IndirectCost']
-markup_factors = ['Warranty', 'R_and_D', 'Other', 'Profit']
-markup_factors_with_vmt_scalars = ['Warranty', 'R_and_D']
+# markup_factors = ['Warranty', 'RnD', 'Other', 'Profit', 'IndirectCost']
+markup_factors = ['Warranty', 'RnD', 'Other', 'Profit']
+markup_factors_with_vmt_scalars = ['Warranty', 'RnD']
 
 
 class IndirectCost:
@@ -51,8 +51,8 @@ class IndirectCost:
         """
         _techcost = self._pkg_directcost.copy()
         for markup_factor in markup_factors:
-            _techcost.insert(len(_techcost.columns), markup_factor + '_AvgPerVeh', _techcost['DirectCost_AvgPerVeh'] * merged_df[markup_factor])
-            _techcost.insert(len(_techcost.columns), markup_factor + '_TotalCost', _techcost[markup_factor + '_AvgPerVeh'] * _techcost['VPOP'])
+            _techcost.insert(len(_techcost.columns), markup_factor + 'Cost_AvgPerVeh', _techcost['DirectCost_AvgPerVeh'] * merged_df[markup_factor])
+            _techcost.insert(len(_techcost.columns), markup_factor + 'Cost_TotalCost', _techcost[markup_factor + 'Cost_AvgPerVeh'] * _techcost['VPOP'])
         return _techcost
 
     def indirect_cost_unscaled(self, merged_df):
@@ -64,8 +64,8 @@ class IndirectCost:
         _techcost = self._pkg_directcost.copy()
         temp = [item for item in markup_factors if item not in markup_factors_with_vmt_scalars]
         for factor in temp:
-            _techcost.insert(len(_techcost.columns), factor + '_AvgPerVeh', _techcost['DirectCost_AvgPerVeh'] * merged_df[factor])
-            _techcost.insert(len(_techcost.columns), factor + '_TotalCost', _techcost[factor + '_AvgPerVeh'] * _techcost['VPOP'])
+            _techcost.insert(len(_techcost.columns), factor + 'Cost_AvgPerVeh', _techcost['DirectCost_AvgPerVeh'] * merged_df[factor])
+            _techcost.insert(len(_techcost.columns), factor + 'Cost_TotalCost', _techcost[factor + 'Cost_AvgPerVeh'] * _techcost['VPOP'])
         return _techcost
 
     def indirect_cost_scaled(self, merged_df, factor, vmt_share):
@@ -77,8 +77,8 @@ class IndirectCost:
         :return: A DataFrame of indirect costs per vehicle and total costs with VMT scalars applied.
         """
         _techcost = self._pkg_directcost.copy()
-        _techcost.insert(len(_techcost.columns), factor + '_AvgPerVeh', _techcost['DirectCost_AvgPerVeh'] * (merged_df[factor] * (1 - vmt_share) + merged_df[factor] * vmt_share * merged_df[factor + '_scalar']))
-        _techcost.insert(len(_techcost.columns), factor + '_TotalCost', _techcost[factor + '_AvgPerVeh'] * _techcost['VPOP'])
+        _techcost.insert(len(_techcost.columns), factor + 'Cost_AvgPerVeh', _techcost['DirectCost_AvgPerVeh'] * (merged_df[factor] * (1 - vmt_share) + merged_df[factor] * vmt_share * merged_df[factor + '_scalar']))
+        _techcost.insert(len(_techcost.columns), factor + 'Cost_TotalCost', _techcost[factor + 'Cost_AvgPerVeh'] * _techcost['VPOP'])
         return _techcost
 
     def indirect_cost_sum(self):
@@ -87,7 +87,7 @@ class IndirectCost:
         :return: A DataFrame of full tech costs with direct and indirect costs per vehicle and in total.
         """
         _techcost = self._pkg_directcost.copy()
-        _techcost.insert(len(_techcost.columns), 'IndirectCost_AvgPerVeh', _techcost[[item + '_AvgPerVeh' for item in markup_factors]].sum(axis=1))
+        _techcost.insert(len(_techcost.columns), 'IndirectCost_AvgPerVeh', _techcost[[item + 'Cost_AvgPerVeh' for item in markup_factors]].sum(axis=1))
         _techcost.insert(len(_techcost.columns), 'IndirectCost_TotalCost', _techcost['IndirectCost_AvgPerVeh'] * _techcost['VPOP'])
         return _techcost
 

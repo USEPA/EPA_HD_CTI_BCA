@@ -30,11 +30,12 @@ class EmissionCost:
                         df['USDpShortTon'].fillna(method='ffill', inplace=True)
                         new_metric_series = pd.Series(df[[pollutant + '_' + source, 'USDpShortTon']].product(axis=1), name=key)
                         df = pd.concat([df, new_metric_series], axis=1)
+                        df.rename(columns={key: pollutant + 'Cost_' + source + '_' + mortality_est + '_' + str(dr)}, inplace=True)
                         df.drop(columns='USDpShortTon', inplace=True)
         for dr in [0.03, 0.07]:
             for mortality_est in ['low', 'high']:
                 cols = [col for col in df.columns if mortality_est + '_' + str(dr) in col]
-                df.insert(len(df.columns), 'Criteria_Damage_' + mortality_est + '_' + str(dr), df[cols].sum(axis=1))
+                df.insert(len(df.columns), 'CriteriaCost_' + mortality_est + '_' + str(dr), df[cols].sum(axis=1))
         return df
 
     def calc_criteria_damage_costs(self, cost_df):
@@ -56,10 +57,11 @@ class EmissionCost:
                         df['USDpShortTon'].fillna(method='ffill', inplace=True)
                         new_metric_series = pd.Series(df[[pollutant + '_' + source, 'USDpShortTon']].product(axis=1), name=key)
                         df = pd.concat([df, new_metric_series], axis=1)
+                        df.rename(columns={key: pollutant + 'Cost_' + source + '_' + mortality_est + '_' + str(dr)}, inplace=True)
                         df.drop(columns='USDpShortTon', inplace=True)
         df2 = self._fleet.copy()
         for dr in [0.03, 0.07]:
             for mortality_est in ['low', 'average', 'high']:
                 cols = [col for col in df.columns if mortality_est + '_' + str(dr) in col]
-                df2.insert(len(df2.columns), 'Criteria_Damage_' + mortality_est + '_' + str(dr), df[cols].sum(axis=1))
+                df2.insert(len(df2.columns), 'CriteriaCost_' + mortality_est + '_' + str(dr), df[cols].sum(axis=1))
         return df2
