@@ -185,15 +185,19 @@ def main():
     repair_and_maintenance = convert_dollars_to_bca_basis(repair_and_maintenance, deflators_gdp, dollar_basis_years_gdp, 'Value', bca_dollar_basis)
 
     # now get specific inputs from repair_and_maintenance
-    inwarranty_repair_and_maintenance_cpm = repair_and_maintenance.at['in-warranty_R&M_CPM', 'Value']
-    atusefullife_repair_and_maintenance_cpm = repair_and_maintenance.at['at-usefullife_R&M_CPM', 'Value']
+    inwarranty_repair_and_maintenance_ownop_cpm = repair_and_maintenance.at['in-warranty_R&M_OwnerOperator_CPM', 'Value']
+    atusefullife_repair_and_maintenance_ownop_cpm = repair_and_maintenance.at['at-usefullife_R&M_OwnerOperator_CPM', 'Value']
+    inwarranty_repair_and_maintenance_oem_cpm = repair_and_maintenance.at['in-warranty_R&M_OEM_CPM', 'Value']
+    atusefullife_repair_and_maintenance_oem_cpm = repair_and_maintenance.at['at-usefullife_R&M_OEM_CPM', 'Value']
     slope_repair_and_maintenance_cpm = repair_and_maintenance.at['slope_R&M_CPM', 'Value']
     scalar_gasoline = repair_and_maintenance.at['scalar_gasoline', 'Value']
     repair_and_maintenance_increase_beyond_usefullife = repair_and_maintenance.at['increase_beyond_usefullife', 'Value']
     repair_and_maintenance_emission_share = repair_and_maintenance.at['emission_share_of_R&M', 'Value']
     repair_and_maintenance_repair_share = repair_and_maintenance.at['repair_share_of_R&M', 'Value']
-    metrics_repair_and_maint_dict = {'inwarranty_repair_and_maintenance_cpm': inwarranty_repair_and_maintenance_cpm,
-                                     'atusefullife_repair_and_maintenance_cpm': atusefullife_repair_and_maintenance_cpm,
+    metrics_repair_and_maint_dict = {'inwarranty_repair_and_maintenance_ownop_cpm': inwarranty_repair_and_maintenance_ownop_cpm,
+                                     'atusefullife_repair_and_maintenance_ownop_cpm': atusefullife_repair_and_maintenance_ownop_cpm,
+                                     'inwarranty_repair_and_maintenance_oem_cpm': inwarranty_repair_and_maintenance_oem_cpm,
+                                     'atusefullife_repair_and_maintenance_oem_cpm': atusefullife_repair_and_maintenance_oem_cpm,
                                      'slope_repair_and_maintenance_cpm': slope_repair_and_maintenance_cpm,
                                      'scalar_gasoline': scalar_gasoline,
                                      'repair_and_maintenance_increase_beyond_usefullife': repair_and_maintenance_increase_beyond_usefullife,
@@ -569,6 +573,15 @@ def main():
     for group in range(1, groups + 1):
         bca_costs_sum[group] = GroupMetrics(bca_costs_sum[group], row_header_group[group]).annualize_cumsum(bca_costs_metrics_to_sum, year_min)
 
+    # now group model year data for the operating costs
+    row_header_modelyear = common_metrics + ['modelYearID', 'regClassID', 'fuelTypeID']
+    row_header_modelyear_cumsum = row_header_group_cumsum[2].copy()
+    operating_costs_modelyear_metrics_to_avg = [col for col in operating_costs_all.columns if 'MPG_AvgPerVeh' in col or 'AvgPerMile' in col]
+    operating_costs_modelyear_metrics_to_sum = [col for col in operating_costs_all.columns if 'Gallons' in col or 'VMT' in col or 'TotalCost' in col or ('AvgPerVeh' in col and 'MPG' not in col)]
+    operating_costs_modelyear_sum = GroupMetrics(operating_costs_all, row_header_modelyear).group_sum(operating_costs_modelyear_metrics_to_sum)
+    operating_costs_modelyear_mean = GroupMetrics(operating_costs_all, row_header_modelyear).group_mean(operating_costs_modelyear_metrics_to_avg)
+    operating_costs_modelyear_summary = operating_costs_modelyear_sum.merge(operating_costs_modelyear_mean, on=row_header_modelyear)
+
     # calc the deltas relative to alt0
     techcost_metrics_for_deltas = techcost_metrics_to_sum + techcost_metrics_to_avg
     operating_cost_metrics_for_deltas = operating_costs_metrics_to_sum + operating_costs_metrics_to_avg
@@ -585,6 +598,8 @@ def main():
             emission_costs_sum[group] = pd.concat([emission_costs_sum[group], CalcDeltas(emission_costs_sum[group]).
                                                   calc_delta(number_alts, emission_costs_metrics_to_sum)], axis=0, ignore_index=True)
     moves_sum = pd.concat([moves_sum, CalcDeltas(moves_sum).calc_delta(number_alts, moves_metrics_to_sum)], axis=0, ignore_index=True)
+    operating_costs_modelyear_summary = pd.concat([operating_costs_modelyear_summary, CalcDeltas(operating_costs_modelyear_summary).
+                                                  calc_delta(number_alts, operating_cost_metrics_for_deltas)], axis=0, ignore_index=True)
 
     # add some identifier columns to the grouped output files
     if calc_pollution_effects == 'Y':
@@ -596,6 +611,8 @@ def main():
         df[2].insert(7, 'fueltype', pd.Series(fuelTypeID[number] for number in df[2]['fuelTypeID']))
         df[3].insert(6, 'sourcetype', pd.Series(sourcetypeID[number] for number in df[3]['sourcetypeID']))
         df[3].insert(7, 'fueltype', pd.Series(fuelTypeID[number] for number in df[3]['fuelTypeID']))
+    operating_costs_modelyear_summary.insert(6, 'regclass', pd.Series(regClassID[number] for number in operating_costs_modelyear_summary['regClassID']))
+    operating_costs_modelyear_summary.insert(7, 'fueltype', pd.Series(fuelTypeID[number] for number in operating_costs_modelyear_summary['fuelTypeID']))
 
     elapsed_time_calcs = time.time() - start_time_calcs
 
@@ -708,6 +725,7 @@ def main():
         operating_costs_summary[1].to_csv(path_of_run_results_folder.joinpath('operating_costs_by_yearID.csv'), index=False)
         operating_costs_summary[2].to_csv(path_of_run_results_folder.joinpath('operating_costs_by_regClass_fuelType.csv'), index=False)
         operating_costs_summary[3].to_csv(path_of_run_results_folder.joinpath('operating_costs_by_sourcetype_fuelType.csv'), index=False)
+        operating_costs_modelyear_summary.to_csv(path_of_run_results_folder.joinpath('operating_costs_by_modelYearID_regClass_fuelType.csv'), index=False)
 
         bca_costs.to_csv(path_of_run_results_folder.joinpath('bca_costs.csv'), index=False)
         bca_costs_sum[1].to_csv(path_of_run_results_folder.joinpath('bca_costs_by_yearID.csv'), index=False)
