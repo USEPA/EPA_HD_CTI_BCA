@@ -325,6 +325,7 @@ def main():
 
     fleet_bca = Fleet(moves_adjusted).fleet_with_0gtech(sourcetype_costs, zgtech_max)
     fleet_bca = pd.DataFrame(fleet_bca.loc[fleet_bca['modelYearID'] >= year_min])
+    fleet_bca.sort_values(by=['optionID', 'regClassID', 'fuelTypeID', 'sourcetypeID', 'zerogramTechID', 'yearID', 'ageID'], ascending=True, inplace=True, axis=0)
     fleet_bca.reset_index(drop=True, inplace=True)
     # add the identifier metric, alt_st_rc_ft_zg, to the dataframes
     for df in [sourcetype_costs, fleet_bca]:
@@ -389,8 +390,8 @@ def main():
     techcost_metrics_to_discount = [col for col in techcost.columns if 'Cost' in col]
 
     # work on pollution damage costs
-    print('Working on pollution costs....')
     if calc_pollution_effects == 'Y':
+        print('Working on pollution costs....')
         emission_costs = pd.DataFrame(fleet_bca, columns=['optionID', 'yearID', 'modelYearID', 'ageID',
                                                           'sourcetypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
                                                           'alt_st_rc_ft_zg', 'alt_st_rc_ft', 'alt_rc_ft',
@@ -467,7 +468,8 @@ def main():
         bca_costs_dict[dr] = bca_costs_dict[dr].merge(techcost_dict[dr][['optionID', 'yearID', 'modelYearID', 'ageID',
                                                                          'sourcetypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
                                                                          'Vehicle_Name_RC', 'Vehicle_Name_BCA',
-                                                                         'DirectCost_TotalCost', 'IndirectCost_TotalCost', 'TechCost_TotalCost']],
+                                                                         'DirectCost_TotalCost', 'WarrantyCost_TotalCost', 'RnDCost_TotalCost', 'OtherCost_TotalCost', 'ProfitCost_TotalCost',
+                                                                         'IndirectCost_TotalCost', 'TechCost_TotalCost']],
                                                       on=['optionID', 'yearID', 'modelYearID', 'ageID', 'sourcetypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID'],
                                                       how='left')
         bca_costs_dict[dr] = pd.concat([bca_costs_dict[dr], operating_costs_dict[dr][operatingcost_metrics_to_discount]], axis=1, ignore_index=False)
@@ -575,7 +577,7 @@ def main():
 
     # now group model year data for the operating costs
     row_header_modelyear = common_metrics + ['modelYearID', 'regClassID', 'fuelTypeID']
-    row_header_modelyear_cumsum = row_header_group_cumsum[2].copy()
+    # row_header_modelyear_cumsum = row_header_group_cumsum[2].copy()
     operating_costs_modelyear_metrics_to_avg = [col for col in operating_costs_all.columns if 'MPG_AvgPerVeh' in col or 'AvgPerMile' in col]
     operating_costs_modelyear_metrics_to_sum = [col for col in operating_costs_all.columns if 'Gallons' in col or 'VMT' in col or 'TotalCost' in col or ('AvgPerVeh' in col and 'MPG' not in col)]
     operating_costs_modelyear_sum = GroupMetrics(operating_costs_all, row_header_modelyear).group_sum(operating_costs_modelyear_metrics_to_sum)
@@ -603,9 +605,9 @@ def main():
 
     # add some identifier columns to the grouped output files
     if calc_pollution_effects == 'Y':
-        df_list = [techcost_summary, emission_costs_sum, operating_costs_sum, bca_costs_sum]
+        df_list = [techcost_summary, emission_costs_sum, operating_costs_summary, bca_costs_sum]
     else:
-        df_list = [techcost_summary, operating_costs_sum, bca_costs_sum]
+        df_list = [techcost_summary, operating_costs_summary, bca_costs_sum]
     for df in df_list:
         df[2].insert(6, 'regclass', pd.Series(regClassID[number] for number in df[2]['regClassID']))
         df[2].insert(7, 'fueltype', pd.Series(fuelTypeID[number] for number in df[2]['fuelTypeID']))
@@ -613,6 +615,12 @@ def main():
         df[3].insert(7, 'fueltype', pd.Series(fuelTypeID[number] for number in df[3]['fuelTypeID']))
     operating_costs_modelyear_summary.insert(6, 'regclass', pd.Series(regClassID[number] for number in operating_costs_modelyear_summary['regClassID']))
     operating_costs_modelyear_summary.insert(7, 'fueltype', pd.Series(fuelTypeID[number] for number in operating_costs_modelyear_summary['fuelTypeID']))
+
+    # calc the deltas relative to alt0 for the main operating costs DataFrame
+    new_metrics = [metric for metric in operating_costs_all.columns if 'VMT' in metric or 'Warranty' in metric or 'Useful' in metric or 'tons' in metric]
+    operating_cost_metrics_for_deltas = operating_cost_metrics_for_deltas + new_metrics
+    operating_costs_all = pd.concat([operating_costs_all, CalcDeltas(operating_costs_all).calc_delta(number_alts, operating_cost_metrics_for_deltas)], axis=0, ignore_index=True)
+    bca_costs = pd.concat([bca_costs, CalcDeltas(bca_costs).calc_delta(number_alts, [col for col in bca_costs.columns if 'Cost' in col])], axis=0, ignore_index=True)
 
     elapsed_time_calcs = time.time() - start_time_calcs
 
