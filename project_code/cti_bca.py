@@ -192,8 +192,7 @@ def main():
     slope_repair_and_maintenance_cpm = repair_and_maintenance.at['slope_R&M_CPM', 'Value']
     scalar_gasoline = repair_and_maintenance.at['scalar_gasoline', 'Value']
     repair_and_maintenance_increase_beyond_usefullife = repair_and_maintenance.at['increase_beyond_usefullife', 'Value']
-    repair_and_maintenance_emission_share = repair_and_maintenance.at['emission_share_of_R&M', 'Value']
-    repair_and_maintenance_repair_share = repair_and_maintenance.at['repair_share_of_R&M', 'Value']
+    emission_repair_share = repair_and_maintenance.at['emission_repair_share', 'Value']
     metrics_repair_and_maint_dict = {'inwarranty_repair_and_maintenance_ownop_cpm': inwarranty_repair_and_maintenance_ownop_cpm,
                                      'atusefullife_repair_and_maintenance_ownop_cpm': atusefullife_repair_and_maintenance_ownop_cpm,
                                      'inwarranty_repair_and_maintenance_oem_cpm': inwarranty_repair_and_maintenance_oem_cpm,
@@ -201,8 +200,7 @@ def main():
                                      'slope_repair_and_maintenance_cpm': slope_repair_and_maintenance_cpm,
                                      'scalar_gasoline': scalar_gasoline,
                                      'repair_and_maintenance_increase_beyond_usefullife': repair_and_maintenance_increase_beyond_usefullife,
-                                     'repair_and_maintenance_emission_share': repair_and_maintenance_emission_share,
-                                     'repair_and_maintenance_repair_share': repair_and_maintenance_repair_share}
+                                     'emission_repair_share': emission_repair_share}
 
     factors_cpiu = dict()
     for number in range(len(dollar_basis_years_cpiu)):
@@ -417,14 +415,14 @@ def main():
     for df in [warranty_miles_reshaped, warranty_age_reshaped, usefullife_miles_reshaped, usefullife_age_reshaped]:
         operating_costs = operating_costs.merge(df, on=['optionID', 'regClassID', 'fuelTypeID', 'modelYearID'], how='left')
     cols = [col for col in operating_costs.columns if 'Warranty' in col or 'UsefulLife' in col]
-    regclasses_gasoline = set(operating_costs.loc[operating_costs['fuelTypeID'] == 1, 'regClassID'])
-    regclasses_diesel = set(operating_costs.loc[operating_costs['fuelTypeID'] == 2, 'regClassID'])
-    for regclass_id in regclasses_gasoline:
-        operating_costs.loc[(operating_costs['fuelTypeID'] == 1) & (operating_costs['regClassID'] == regclass_id), cols] \
-            = operating_costs.loc[(operating_costs['fuelTypeID'] == 1) & (operating_costs['regClassID'] == regclass_id), cols].ffill(axis=0)
-    for regclass_id in regclasses_diesel:
-        operating_costs.loc[(operating_costs['fuelTypeID'] == 2) & (operating_costs['regClassID'] == regclass_id), cols] \
-            = operating_costs.loc[(operating_costs['fuelTypeID'] == 2) & (operating_costs['regClassID'] == regclass_id), cols].ffill(axis=0)
+    vehs = set(operating_costs['alt_rc_ft'])
+    for veh in vehs:
+        operating_costs.loc[(operating_costs['alt_rc_ft'] == veh) & (operating_costs['ageID'] == 0), cols] \
+            = operating_costs.loc[(operating_costs['alt_rc_ft'] == veh) & (operating_costs['ageID'] == 0), cols].ffill(axis=0)
+    for veh in vehs:
+        for year in range(operating_costs['modelYearID'].min(), operating_costs['modelYearID'].max() + 1):
+            operating_costs.loc[(operating_costs['alt_rc_ft'] == veh) & (operating_costs['modelYearID'] == year), cols] \
+                = operating_costs.loc[(operating_costs['alt_rc_ft'] == veh) & (operating_costs['modelYearID'] == year), cols].ffill(axis=0)
     operating_costs = RepairAndMaintenanceCost(operating_costs).repair_and_maintenance_costs_curve2(metrics_repair_and_maint_dict)
     operating_costs = DEFandFuelCost(operating_costs).orvr_fuel_impacts_mlpergram(orvr_fuelchanges)
     def_doserates = DEFandFuelCost(def_doserate_inputs).def_doserate_scaling_factor()
@@ -719,26 +717,26 @@ def main():
 
         # write some output files
         techcost_all.to_csv(path_of_run_results_folder.joinpath('techcosts.csv'), index=False)
-        techcost_summary[1].to_csv(path_of_run_results_folder.joinpath('techcosts_by_yearID.csv'), index=False)
-        techcost_summary[2].to_csv(path_of_run_results_folder.joinpath('techcosts_by_regClass_fuelType.csv'), index=False)
-        techcost_summary[3].to_csv(path_of_run_results_folder.joinpath('techcosts_by_sourcetype_fuelType.csv'), index=False)
+        # techcost_summary[1].to_csv(path_of_run_results_folder.joinpath('techcosts_by_yearID.csv'), index=False)
+        # techcost_summary[2].to_csv(path_of_run_results_folder.joinpath('techcosts_by_regClass_fuelType.csv'), index=False)
+        # techcost_summary[3].to_csv(path_of_run_results_folder.joinpath('techcosts_by_sourcetype_fuelType.csv'), index=False)
 
         if calc_pollution_effects == 'Y':
             emission_costs_all.to_csv(path_of_run_results_folder.joinpath('criteria_emission_costs.csv'), index=False)
-            emission_costs_sum[1].to_csv(path_of_run_results_folder.joinpath('criteria_emission_costs_by_yearID.csv'), index=False)
-            emission_costs_sum[2].to_csv(path_of_run_results_folder.joinpath('criteria_emission_costs_by_regClass_fuelType.csv'), index=False)
-            emission_costs_sum[3].to_csv(path_of_run_results_folder.joinpath('criteria_emission_costs_by_sourcetype_fuelType.csv'), index=False)
+            # emission_costs_sum[1].to_csv(path_of_run_results_folder.joinpath('criteria_emission_costs_by_yearID.csv'), index=False)
+            # emission_costs_sum[2].to_csv(path_of_run_results_folder.joinpath('criteria_emission_costs_by_regClass_fuelType.csv'), index=False)
+            # emission_costs_sum[3].to_csv(path_of_run_results_folder.joinpath('criteria_emission_costs_by_sourcetype_fuelType.csv'), index=False)
 
         operating_costs_all.to_csv(path_of_run_results_folder.joinpath('operating_costs.csv'), index=False)
-        operating_costs_summary[1].to_csv(path_of_run_results_folder.joinpath('operating_costs_by_yearID.csv'), index=False)
-        operating_costs_summary[2].to_csv(path_of_run_results_folder.joinpath('operating_costs_by_regClass_fuelType.csv'), index=False)
-        operating_costs_summary[3].to_csv(path_of_run_results_folder.joinpath('operating_costs_by_sourcetype_fuelType.csv'), index=False)
-        operating_costs_modelyear_summary.to_csv(path_of_run_results_folder.joinpath('operating_costs_by_modelYearID_regClass_fuelType.csv'), index=False)
+        # operating_costs_summary[1].to_csv(path_of_run_results_folder.joinpath('operating_costs_by_yearID.csv'), index=False)
+        # operating_costs_summary[2].to_csv(path_of_run_results_folder.joinpath('operating_costs_by_regClass_fuelType.csv'), index=False)
+        # operating_costs_summary[3].to_csv(path_of_run_results_folder.joinpath('operating_costs_by_sourcetype_fuelType.csv'), index=False)
+        # operating_costs_modelyear_summary.to_csv(path_of_run_results_folder.joinpath('operating_costs_by_modelYearID_regClass_fuelType.csv'), index=False)
 
         bca_costs.to_csv(path_of_run_results_folder.joinpath('bca_costs.csv'), index=False)
-        bca_costs_sum[1].to_csv(path_of_run_results_folder.joinpath('bca_costs_by_yearID.csv'), index=False)
-        bca_costs_sum[2].to_csv(path_of_run_results_folder.joinpath('bca_costs_by_regClass_fuelType.csv'), index=False)
-        bca_costs_sum[3].to_csv(path_of_run_results_folder.joinpath('bca_costs_by_sourcetype_fuelType.csv'), index=False)
+        # bca_costs_sum[1].to_csv(path_of_run_results_folder.joinpath('bca_costs_by_yearID.csv'), index=False)
+        # bca_costs_sum[2].to_csv(path_of_run_results_folder.joinpath('bca_costs_by_regClass_fuelType.csv'), index=False)
+        # bca_costs_sum[3].to_csv(path_of_run_results_folder.joinpath('bca_costs_by_sourcetype_fuelType.csv'), index=False)
 
     elapsed_time_outputs = time.time() - start_time_outputs
     end_time = time.time()

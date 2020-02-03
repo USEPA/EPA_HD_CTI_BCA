@@ -174,8 +174,8 @@ class RepairAndMaintenanceCost:
 
     def repair_and_maintenance_costs_curve2(self, metrics_repair_and_maint_dict):
         df_return = self.passed_object.copy()
-        emission_repair_share = metrics_repair_and_maint_dict['repair_and_maintenance_emission_share'] \
-                                * metrics_repair_and_maint_dict['repair_and_maintenance_repair_share']
+        # emission_repair_share = metrics_repair_and_maint_dict['repair_and_maintenance_emission_share'] \
+        #                         * metrics_repair_and_maint_dict['repair_and_maintenance_repair_share']
         # vehicles = set(df_return['alt_rc_ft'])
         # df_return.insert(len(df_return.columns), 'EmissionRepairCost_AvgPerMile', 0)
         vehicles = pd.Series(df_return['alt_rc_ft']).unique()
@@ -200,7 +200,7 @@ class RepairAndMaintenanceCost:
                               & (df_return['ageID'] + 1 <= df_return['UsefulLife_Age']), # ageID <= useful life here due to low VMT vehicles
                               'EmissionRepairCost_OEM_AvgPerMile'] \
                     = metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_oem_cpm'] \
-                      * scalar * emission_repair_share
+                      * scalar * metrics_repair_and_maint_dict['emission_repair_share']
                 # determine "in-warranty" cost per mile for owner/operator
                 df_return.loc[(df_return['alt_rc_ft'] == veh) & (df_return['modelYearID'] == model_year)
                               & (df_return['VMT_AvgPerVeh_CumSum'] <= df_return['Warranty_Miles']),
@@ -215,7 +215,7 @@ class RepairAndMaintenanceCost:
                         * slope
                         + metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_ownop_cpm']) \
                       * scalar \
-                      * emission_repair_share
+                      * metrics_repair_and_maint_dict['emission_repair_share']
                 # determine beyond-useful-life cost per mile for owner/operator (this case is 0 for OEM)
                 df_return.loc[(df_return['alt_rc_ft'] == veh) & (df_return['modelYearID'] == model_year)
                               & ((df_return['VMT_AvgPerVeh_CumSum'] > df_return['UsefulLife_Miles'])
@@ -223,7 +223,7 @@ class RepairAndMaintenanceCost:
                               'EmissionRepairCost_OwnerOperator_AvgPerMile'] \
                     = metrics_repair_and_maint_dict['atusefullife_repair_and_maintenance_ownop_cpm'] \
                       * scalar \
-                      * emission_repair_share \
+                      * metrics_repair_and_maint_dict['emission_repair_share'] \
                       * (1 + metrics_repair_and_maint_dict['repair_and_maintenance_increase_beyond_usefullife'])
                 # set beyond-warranty cost per mile for OEM to 0
                 df_return['EmissionRepairCost_OEM_AvgPerMile'].fillna(0, inplace=True)
