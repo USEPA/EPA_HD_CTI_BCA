@@ -83,6 +83,15 @@ def convert_dollars_to_bca_basis(df, deflators, dollar_basis_years, _metric, bca
     return df
 
 
+def weighted_result(df, metric, weightby_metric, veh, year_metric, year_list):
+    weighted_results = dict()
+    for year in year_list:
+        df_temp = pd.DataFrame(df.loc[(df['alt_rc_ft'] == veh) & (df[year_metric] == year), :])
+        weighted_value = (df_temp[metric] * df_temp[weightby_metric]).sum() / df_temp[weightby_metric].sum()
+        weighted_results[year] = weighted_value
+    return weighted_results
+
+
 def main():
     """The main script."""
     # first, set the output files desired for QA/QC work
@@ -435,6 +444,21 @@ def main():
     operating_costs.insert(len(operating_costs.columns), 'OperatingCost_OwnerOperator_AvgPerMile', operating_costs['OperatingCost_OwnerOperator_TotalCost'] / operating_costs['VMT'])
     operatingcost_metrics_to_discount = [col for col in operating_costs.columns if 'Cost' in col]
 
+    # now create some weighted results of operating costs
+    vehs_operating_costs = pd.Series(operating_costs['alt_rc_ft']).unique()
+    weighted_repair_ownop_cpm = dict()
+    weighted_def_cpm = dict()
+    weighted_fuel_cpm = dict()
+    year_list = [2027, 2030, 2035, 2040, 2045]
+    for veh in vehs_operating_costs:
+        weighted_repair_ownop_cpm[veh] = weighted_result(operating_costs, 'EmissionRepairCost_OwnerOperator_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list)
+        weighted_def_cpm[veh] = weighted_result(operating_costs, 'UreaCost_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list)
+        weighted_fuel_cpm[veh] = weighted_result(operating_costs, 'FuelCost_Retail_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list)
+
+    weighted_repair_ownop_cpm_df = pd.DataFrame(weighted_repair_ownop_cpm).transpose()
+    weighted_def_cpm_df = pd.DataFrame(weighted_def_cpm).transpose()
+    weighted_fuel_cpm_df = pd.DataFrame(weighted_fuel_cpm).transpose()
+
     # pass each DataFrame thru the DiscountValues class and pass the list of metrics to be discounted for each thru the discount method
     print('Working on discounting monetized values....')
     techcost_dict = dict()
@@ -728,6 +752,9 @@ def main():
             # emission_costs_sum[3].to_csv(path_of_run_results_folder.joinpath('criteria_emission_costs_by_sourcetype_fuelType.csv'), index=False)
 
         operating_costs_all.to_csv(path_of_run_results_folder.joinpath('operating_costs.csv'), index=False)
+        weighted_repair_ownop_cpm_df.to_csv(path_of_run_results_folder.joinpath('vmt_weighted_emission_repair_ownop_cpm.csv'))
+        weighted_def_cpm_df.to_csv(path_of_run_results_folder.joinpath('vmt_weighted_urea_cpm.csv'))
+        weighted_fuel_cpm_df.to_csv(path_of_run_results_folder.joinpath('vmt_weighted_fuel_cpm.csv'))
         # operating_costs_summary[1].to_csv(path_of_run_results_folder.joinpath('operating_costs_by_yearID.csv'), index=False)
         # operating_costs_summary[2].to_csv(path_of_run_results_folder.joinpath('operating_costs_by_regClass_fuelType.csv'), index=False)
         # operating_costs_summary[3].to_csv(path_of_run_results_folder.joinpath('operating_costs_by_sourcetype_fuelType.csv'), index=False)

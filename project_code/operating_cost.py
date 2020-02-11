@@ -172,17 +172,11 @@ class RepairAndMaintenanceCost:
         df_return.insert(len(df_return.columns), 'EmissionRepairCost_TotalCost', df_return['VMT'] * df_return['EmissionRepairCost_AvgPerMile'])
         return df_return
 
-    def repair_and_maintenance_costs_curve2(self, metrics_repair_and_maint_dict):
+    def repair_and_maintenance_costs_curve2(self, metrics_repair_and_maint_dict): # TODO this needs to be simplified
         df_return = self.passed_object.copy()
-        # emission_repair_share = metrics_repair_and_maint_dict['repair_and_maintenance_emission_share'] \
-        #                         * metrics_repair_and_maint_dict['repair_and_maintenance_repair_share']
-        # vehicles = set(df_return['alt_rc_ft'])
-        # df_return.insert(len(df_return.columns), 'EmissionRepairCost_AvgPerMile', 0)
         vehicles = pd.Series(df_return['alt_rc_ft']).unique()
         df_return.insert(len(df_return.columns), 'EmissionRepairCost_OwnerOperator_AvgPerMile', 0)
         df_return.insert(len(df_return.columns), 'EmissionRepairCost_OEM_AvgPerMile', 0)
-        # determine emission repair cost per mile
-        # df_return['EmissionRepairCost_AvgPerMile'] =
         for veh in vehicles:
             if veh[2] == 1:
                 scalar = metrics_repair_and_maint_dict['scalar_gasoline']
@@ -201,7 +195,7 @@ class RepairAndMaintenanceCost:
                               'EmissionRepairCost_OEM_AvgPerMile'] \
                     = metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_oem_cpm'] \
                       * scalar * metrics_repair_and_maint_dict['emission_repair_share']
-                # determine "in-warranty" cost per mile for owner/operator
+                # determine in-warranty cost per mile for owner/operator
                 df_return.loc[(df_return['alt_rc_ft'] == veh) & (df_return['modelYearID'] == model_year)
                               & (df_return['VMT_AvgPerVeh_CumSum'] <= df_return['Warranty_Miles']),
                               'EmissionRepairCost_OwnerOperator_AvgPerMile'] \
