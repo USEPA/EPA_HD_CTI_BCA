@@ -263,7 +263,8 @@ def main():
     moves_adjusted = Fleet(moves).adjust_moves(moves_adjustments) # adjust (41, 2) to be engine cert only
     moves_adjusted = moves_adjusted.loc[(moves_adjusted['regClassID'] != 41) | (moves_adjusted['fuelTypeID'] != 1), :] # eliminate (41, 1) keeping (41, 2)
     moves_adjusted = moves_adjusted.loc[moves_adjusted['regClassID'] != 49, :] # eliminate Gliders
-    moves_adjusted = moves_adjusted.loc[(moves_adjusted['fuelTypeID'] != 3) & (moves_adjusted['fuelTypeID'] != 5), :] # eliminate CNG & E85
+    # moves_adjusted = moves_adjusted.loc[(moves_adjusted['fuelTypeID'] != 3) & (moves_adjusted['fuelTypeID'] != 5), :] # eliminate CNG & E85
+    moves_adjusted = moves_adjusted.loc[moves_adjusted['fuelTypeID'] != 5, :]  # eliminate CNG
     moves_adjusted.reset_index(drop=True, inplace=True)
 
     # add VMT/vehicle & Gallons/mile metrics to moves dataframe
@@ -638,11 +639,13 @@ def main():
     operating_costs_modelyear_summary.insert(6, 'regclass', pd.Series(regClassID[number] for number in operating_costs_modelyear_summary['regClassID']))
     operating_costs_modelyear_summary.insert(7, 'fueltype', pd.Series(fuelTypeID[number] for number in operating_costs_modelyear_summary['fuelTypeID']))
 
-    # calc the deltas relative to alt0 for the main operating costs DataFrame
+    # calc the deltas relative to alt0 for the main DataFrames
     new_metrics = [metric for metric in operating_costs_all.columns if 'VMT' in metric or 'Warranty' in metric or 'Useful' in metric or 'tons' in metric]
     operating_cost_metrics_for_deltas = operating_cost_metrics_for_deltas + new_metrics
     operating_costs_all = pd.concat([operating_costs_all, CalcDeltas(operating_costs_all).calc_delta(number_alts, operating_cost_metrics_for_deltas)], axis=0, ignore_index=True)
     bca_costs = pd.concat([bca_costs, CalcDeltas(bca_costs).calc_delta(number_alts, [col for col in bca_costs.columns if 'Cost' in col])], axis=0, ignore_index=True)
+    if calc_pollution_effects == 'Y':
+        emission_costs_all = pd.concat([emission_costs_all, CalcDeltas(emission_costs_all).calc_delta(number_alts, criteria_and_tailpipe_emission_costs_list)], axis=0, ignore_index=True)
 
     elapsed_time_calcs = time.time() - start_time_calcs
 
@@ -668,7 +671,7 @@ def main():
     discount_rates = [0]
     techcost_years = [2027, 2030, 2036, 2045]
     regclasses = ['LHD', 'LHD45', 'MHD67', 'HHD8', 'Urban Bus']
-    fueltypes = ['Diesel', 'Gasoline']
+    fueltypes = ['Diesel', 'Gasoline', 'CNG']
     techcost_per_veh_file = pd.ExcelWriter(path_of_run_results_folder.joinpath('techcosts_AvgPerVeh.xlsx'))
     DocTables(techcost_summary[2]).techcost_per_veh_table(discount_rates, techcost_years, regclasses, fueltypes, techcost_per_veh_cols, techcost_per_veh_file)
     techcost_per_veh_file.save()
