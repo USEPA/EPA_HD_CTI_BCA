@@ -194,16 +194,16 @@ def main():
     repair_and_maintenance = convert_dollars_to_bca_basis(repair_and_maintenance, deflators_gdp, dollar_basis_years_gdp, 'Value', bca_dollar_basis)
 
     # now get specific inputs from repair_and_maintenance
-    inwarranty_repair_and_maintenance_ownop_cpm = repair_and_maintenance.at['in-warranty_R&M_OwnerOperator_CPM', 'Value']
-    atusefullife_repair_and_maintenance_ownop_cpm = repair_and_maintenance.at['at-usefullife_R&M_OwnerOperator_CPM', 'Value']
+    inwarranty_repair_and_maintenance_owner_cpm = repair_and_maintenance.at['in-warranty_R&M_Owner_CPM', 'Value']
+    atusefullife_repair_and_maintenance_owner_cpm = repair_and_maintenance.at['at-usefullife_R&M_Owner_CPM', 'Value']
     inwarranty_repair_and_maintenance_oem_cpm = repair_and_maintenance.at['in-warranty_R&M_OEM_CPM', 'Value']
     atusefullife_repair_and_maintenance_oem_cpm = repair_and_maintenance.at['at-usefullife_R&M_OEM_CPM', 'Value']
     slope_repair_and_maintenance_cpm = repair_and_maintenance.at['slope_R&M_CPM', 'Value']
     scalar_gasoline = repair_and_maintenance.at['scalar_gasoline', 'Value']
     repair_and_maintenance_increase_beyond_usefullife = repair_and_maintenance.at['increase_beyond_usefullife', 'Value']
     emission_repair_share = repair_and_maintenance.at['emission_repair_share', 'Value']
-    metrics_repair_and_maint_dict = {'inwarranty_repair_and_maintenance_ownop_cpm': inwarranty_repair_and_maintenance_ownop_cpm,
-                                     'atusefullife_repair_and_maintenance_ownop_cpm': atusefullife_repair_and_maintenance_ownop_cpm,
+    metrics_repair_and_maint_dict = {'inwarranty_repair_and_maintenance_owner_cpm': inwarranty_repair_and_maintenance_owner_cpm,
+                                     'atusefullife_repair_and_maintenance_owner_cpm': atusefullife_repair_and_maintenance_owner_cpm,
                                      'inwarranty_repair_and_maintenance_oem_cpm': inwarranty_repair_and_maintenance_oem_cpm,
                                      'atusefullife_repair_and_maintenance_oem_cpm': atusefullife_repair_and_maintenance_oem_cpm,
                                      'slope_repair_and_maintenance_cpm': slope_repair_and_maintenance_cpm,
@@ -438,25 +438,25 @@ def main():
     def_doserates = DEFandFuelCost(def_doserate_inputs).def_doserate_scaling_factor()
     operating_costs = DEFandFuelCost(operating_costs).def_cost_df(def_doserates, def_prices)
     operating_costs = DEFandFuelCost(operating_costs).fuel_costs(fuel_prices)
-    cols_owner_operator = ['EmissionRepairCost_OwnerOperator_TotalCost', 'UreaCost_TotalCost', 'FuelCost_Retail_TotalCost']
-    cols_bca = ['EmissionRepairCost_OwnerOperator_TotalCost', 'EmissionRepairCost_OEM_TotalCost', 'UreaCost_TotalCost', 'FuelCost_Pretax_TotalCost']
-    operating_costs.insert(len(operating_costs.columns), 'OperatingCost_OwnerOperator_TotalCost', operating_costs[cols_owner_operator].sum(axis=1))
+    cols_owner = ['EmissionRepairCost_Owner_TotalCost', 'UreaCost_TotalCost', 'FuelCost_Retail_TotalCost']
+    cols_bca = ['EmissionRepairCost_Owner_TotalCost', 'EmissionRepairCost_OEM_TotalCost', 'UreaCost_TotalCost', 'FuelCost_Pretax_TotalCost']
+    operating_costs.insert(len(operating_costs.columns), 'OperatingCost_Owner_TotalCost', operating_costs[cols_owner].sum(axis=1))
     operating_costs.insert(len(operating_costs.columns), 'OperatingCost_BCA_TotalCost', operating_costs[cols_bca].sum(axis=1))
-    operating_costs.insert(len(operating_costs.columns), 'OperatingCost_OwnerOperator_AvgPerMile', operating_costs['OperatingCost_OwnerOperator_TotalCost'] / operating_costs['VMT'])
+    operating_costs.insert(len(operating_costs.columns), 'OperatingCost_Owner_AvgPerMile', operating_costs['OperatingCost_Owner_TotalCost'] / operating_costs['VMT'])
     operatingcost_metrics_to_discount = [col for col in operating_costs.columns if 'Cost' in col]
 
     # now create some weighted results of operating costs
     vehs_operating_costs = pd.Series(operating_costs['alt_rc_ft']).unique()
-    weighted_repair_ownop_cpm = dict()
+    weighted_repair_owner_cpm = dict()
     weighted_def_cpm = dict()
     weighted_fuel_cpm = dict()
     year_list = [2027, 2030, 2035, 2040, 2045]
     for veh in vehs_operating_costs:
-        weighted_repair_ownop_cpm[veh] = weighted_result(operating_costs, 'EmissionRepairCost_OwnerOperator_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list)
+        weighted_repair_owner_cpm[veh] = weighted_result(operating_costs, 'EmissionRepairCost_Owner_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list)
         weighted_def_cpm[veh] = weighted_result(operating_costs, 'UreaCost_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list)
         weighted_fuel_cpm[veh] = weighted_result(operating_costs, 'FuelCost_Retail_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list)
 
-    weighted_repair_ownop_cpm_df = pd.DataFrame(weighted_repair_ownop_cpm).transpose()
+    weighted_repair_owner_cpm_df = pd.DataFrame(weighted_repair_owner_cpm).transpose()
     weighted_def_cpm_df = pd.DataFrame(weighted_def_cpm).transpose()
     weighted_fuel_cpm_df = pd.DataFrame(weighted_fuel_cpm).transpose()
 
@@ -755,7 +755,7 @@ def main():
             # emission_costs_sum[3].to_csv(path_of_run_results_folder.joinpath('criteria_emission_costs_by_sourcetype_fuelType.csv'), index=False)
 
         operating_costs_all.to_csv(path_of_run_results_folder.joinpath('operating_costs.csv'), index=False)
-        weighted_repair_ownop_cpm_df.to_csv(path_of_run_results_folder.joinpath('vmt_weighted_emission_repair_ownop_cpm.csv'))
+        weighted_repair_owner_cpm_df.to_csv(path_of_run_results_folder.joinpath('vmt_weighted_emission_repair_owner_cpm.csv'))
         weighted_def_cpm_df.to_csv(path_of_run_results_folder.joinpath('vmt_weighted_urea_cpm.csv'))
         weighted_fuel_cpm_df.to_csv(path_of_run_results_folder.joinpath('vmt_weighted_fuel_cpm.csv'))
         # operating_costs_summary[1].to_csv(path_of_run_results_folder.joinpath('operating_costs_by_yearID.csv'), index=False)
