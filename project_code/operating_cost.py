@@ -37,7 +37,16 @@ class DEFandFuelCost:
         """
         df = self.input_df.copy()
         df = df.merge(def_doserates, on=['optionID', 'modelYearID', 'regClassID', 'fuelTypeID'], how='left')
-        df['DEFDoseRate_PercentOfFuel'].fillna(method='ffill', inplace=True)
+        vehs = set(df['alt_rc_ft'])
+        # since the merge of DEF dose rates is only for select MYs and alt_rc_ft vehicles, filling in for other ages/years has to be done via the following two loops
+        for veh in vehs:
+            df.loc[(df['alt_rc_ft'] == veh) & (df['ageID'] == 0), 'DEFDoseRate_PercentOfFuel'] \
+                = df.loc[(df['alt_rc_ft'] == veh) & (df['ageID'] == 0), 'DEFDoseRate_PercentOfFuel'].ffill(axis=0)
+        for veh in vehs:
+            for year in range(df['modelYearID'].min(), df['modelYearID'].max() + 1):
+                df.loc[(df['alt_rc_ft'] == veh) & (df['modelYearID'] == year), 'DEFDoseRate_PercentOfFuel'] \
+                    = df.loc[(df['alt_rc_ft'] == veh) & (df['modelYearID'] == year), 'DEFDoseRate_PercentOfFuel'].ffill(axis=0)
+        # set non-diesel dose rates to zero and any NaNs to zero just for certainty
         df.loc[df['fuelTypeID'] != 2, 'DEFDoseRate_PercentOfFuel'] = 0
         df['DEFDoseRate_PercentOfFuel'].fillna(0, inplace=True)
         df = df.merge(prices, on='yearID', how='left')
@@ -45,19 +54,19 @@ class DEFandFuelCost:
         df.insert(len(df.columns), 'UreaCost_AvgPerMile', df['UreaCost_TotalCost'] / df['VMT'])
         return df
 
-    def orvr_fuel_impacts_pct(self, _fuelchanges):
-        """
-
-        :param _fuelchanges: A DataFrame of the adjustments to the MOVES run values to account for fuel impacts not captured in MOVES.
-        :return: The passed DataFrame after adding the fuel consumption metrics:
-                ['Change_PercentOfFuel', 'Gallons' (adjusted)]
-        """
-        _fuelchanges.drop(columns='ml/g', inplace=True)
-        df = self.input_df.copy()
-        df = df.merge(_fuelchanges, on=['optionID', 'fuelTypeID'], how='left')
-        df['Change_PercentOfFuel'].fillna(0, inplace=True)
-        df['Gallons'] = df['Gallons'] * (1 + df['Change_PercentOfFuel'])
-        return df
+    # def orvr_fuel_impacts_pct(self, _fuelchanges):
+    #     """
+    #
+    #     :param _fuelchanges: A DataFrame of the adjustments to the MOVES run values to account for fuel impacts not captured in MOVES.
+    #     :return: The passed DataFrame after adding the fuel consumption metrics:
+    #             ['Change_PercentOfFuel', 'Gallons' (adjusted)]
+    #     """
+    #     _fuelchanges.drop(columns='ml/g', inplace=True)
+    #     df = self.input_df.copy()
+    #     df = df.merge(_fuelchanges, on=['optionID', 'fuelTypeID'], how='left')
+    #     df['Change_PercentOfFuel'].fillna(0, inplace=True)
+    #     df['Gallons'] = df['Gallons'] * (1 + df['Change_PercentOfFuel'])
+    #     return df
 
     def orvr_fuel_impacts_mlpergram(self, orvr_fuelchanges):
         """

@@ -426,6 +426,7 @@ def main():
         operating_costs = operating_costs.merge(df, on=['optionID', 'regClassID', 'fuelTypeID', 'modelYearID'], how='left')
     cols = [col for col in operating_costs.columns if 'Warranty' in col or 'UsefulLife' in col]
     vehs = set(operating_costs['alt_rc_ft'])
+    # since the merge of warranty & useful life metrics is only for select MYs and alt_rc_ft vehicles, filling in for other ages/years has to be done via the following two loops
     for veh in vehs:
         operating_costs.loc[(operating_costs['alt_rc_ft'] == veh) & (operating_costs['ageID'] == 0), cols] \
             = operating_costs.loc[(operating_costs['alt_rc_ft'] == veh) & (operating_costs['ageID'] == 0), cols].ffill(axis=0)
