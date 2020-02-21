@@ -160,7 +160,7 @@ def main():
     discrate_social_low = pd.to_numeric(bca_inputs.at['discrate_social_low', 'Value'])
     discrate_social_high = pd.to_numeric(bca_inputs.at['discrate_social_high', 'Value'])
     discount_to_yearID = pd.to_numeric(bca_inputs.at['discount_to_yearID', 'Value'])
-    first_payment_at = bca_inputs.at['first_payment_at', 'Value']
+    discount_to = bca_inputs.at['discount_to', 'Value']
     learning_rate = pd.to_numeric(bca_inputs.at['learning_rate', 'Value'])
     dollar_basis_years_gdp = bca_inputs.at['dollar_basis_years_gdp', 'Value']
     # convert dollar_basis_years_gdp to numeric rather than string
@@ -466,10 +466,10 @@ def main():
     emission_costs_dict = dict()
     operating_costs_dict = dict()
     for dr in [0, discrate_social_low, discrate_social_high]:
-        techcost_dict[dr] = DiscountValues(techcost, dr, discount_to_yearID, first_payment_at).discount(techcost_metrics_to_discount)
-        operating_costs_dict[dr] = DiscountValues(operating_costs, dr, discount_to_yearID, first_payment_at).discount(operatingcost_metrics_to_discount)
+        techcost_dict[dr] = DiscountValues(techcost, dr, discount_to_yearID, discount_to).discount(techcost_metrics_to_discount)
+        operating_costs_dict[dr] = DiscountValues(operating_costs, dr, discount_to_yearID, discount_to).discount(operatingcost_metrics_to_discount)
         if calc_pollution_effects == 'Y':
-            emission_costs_dict[dr] = DiscountValues(emission_costs, dr, discount_to_yearID, first_payment_at).discount(criteria_and_tailpipe_emission_costs_list)
+            emission_costs_dict[dr] = DiscountValues(emission_costs, dr, discount_to_yearID, discount_to).discount(criteria_and_tailpipe_emission_costs_list)
 
     # now set to NaN discounted pollutant values using discount rates that are not consistent with the input values
     if calc_pollution_effects == 'Y':
