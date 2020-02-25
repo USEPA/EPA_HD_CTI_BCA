@@ -1,7 +1,7 @@
 alabaster==0.7.12
 astroid==2.2.5
 Babel==2.7.0
-bump2version==0.5.10
+bump2version==1.0.0
 certifi==2019.6.16
 chardet==3.0.4
 colorama==0.4.1

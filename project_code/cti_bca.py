@@ -83,10 +83,10 @@ def convert_dollars_to_bca_basis(df, deflators, dollar_basis_years, _metric, bca
     return df
 
 
-def weighted_result(df, metric, weightby_metric, veh, year_metric, year_list):
+def weighted_result(df, metric, weightby_metric, veh, year_metric, year_list, max_age_included):
     weighted_results = dict()
     for year in year_list:
-        df_temp = pd.DataFrame(df.loc[(df['alt_rc_ft'] == veh) & (df[year_metric] == year), :])
+        df_temp = pd.DataFrame(df.loc[(df['alt_rc_ft'] == veh) & (df[year_metric] == year) & (df['ageID'] <= max_age_included), :])
         weighted_value = (df_temp[metric] * df_temp[weightby_metric]).sum() / df_temp[weightby_metric].sum()
         weighted_results[year] = weighted_value
     return weighted_results
@@ -451,11 +451,12 @@ def main():
     weighted_repair_owner_cpm = dict()
     weighted_def_cpm = dict()
     weighted_fuel_cpm = dict()
-    year_list = [2027, 2030, 2035, 2040, 2045]
+    year_list = [2027, 2030, 2035]
+    max_age_included = 9
     for veh in vehs_operating_costs:
-        weighted_repair_owner_cpm[veh] = weighted_result(operating_costs, 'EmissionRepairCost_Owner_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list)
-        weighted_def_cpm[veh] = weighted_result(operating_costs, 'UreaCost_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list)
-        weighted_fuel_cpm[veh] = weighted_result(operating_costs, 'FuelCost_Retail_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list)
+        weighted_repair_owner_cpm[veh] = weighted_result(operating_costs, 'EmissionRepairCost_Owner_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list, max_age_included)
+        weighted_def_cpm[veh] = weighted_result(operating_costs, 'UreaCost_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list, max_age_included)
+        weighted_fuel_cpm[veh] = weighted_result(operating_costs, 'FuelCost_Retail_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list, max_age_included)
 
     weighted_repair_owner_cpm_df = pd.DataFrame(weighted_repair_owner_cpm).transpose()
     weighted_def_cpm_df = pd.DataFrame(weighted_def_cpm).transpose()
