@@ -27,7 +27,7 @@ class Fleet:
 
         :return: Add identifier column to the passed fleet DataFrame consisting of a tuple providing optionID, sourcetypeID, regClassID, fuelTypeID.
         """
-        self.fleet.insert(0, 'alt_st_rc_ft', pd.Series(zip(self.fleet['optionID'], self.fleet['sourcetypeID'], self.fleet['regClassID'], self.fleet['fuelTypeID'])))
+        self.fleet.insert(0, 'alt_st_rc_ft', pd.Series(zip(self.fleet['optionID'], self.fleet['sourceTypeID'], self.fleet['regClassID'], self.fleet['fuelTypeID'])))
         return self.fleet
 
     def define_bca_sourcetype_zg(self):
@@ -35,7 +35,7 @@ class Fleet:
 
         :return: Add identifier column to the passed fleet DataFrame consisting of a tuple providing optionID, sourcetypeID, regClassID, fuelTypeID, zgtechID.
         """
-        self.fleet.insert(0, 'alt_st_rc_ft_zg', pd.Series(zip(self.fleet['optionID'], self.fleet['sourcetypeID'], self.fleet['regClassID'], self.fleet['fuelTypeID'], self.fleet['zerogramTechID'])))
+        self.fleet.insert(0, 'alt_st_rc_ft_zg', pd.Series(zip(self.fleet['optionID'], self.fleet['sourceTypeID'], self.fleet['regClassID'], self.fleet['fuelTypeID'], self.fleet['zerogramTechID'])))
         return self.fleet
 
     def sales(self):
@@ -69,11 +69,11 @@ class Fleet:
 
         fleet_zgtech = dict()
         for tech in range(0, _zgtech_max + 1):
-            _zgtech_bytech = _zgtech.loc[_zgtech['zerogramTechID'] == tech, ['optionID', 'sourcetypeID', 'regClassID', 'fuelTypeID',
+            _zgtech_bytech = _zgtech.loc[_zgtech['zerogramTechID'] == tech, ['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID',
                                                                              'alt_rc_ft', 'alt_st_rc_ft', 'TechPackageDescription',
                                                                              'percent', 'growth', 'SeedVolumeFactor']]
             year_min = int(_zgtech.loc[_zgtech['zerogramTechID'] == tech, 'yearID'].min())
-            fleet_zgtech[tech] = self.fleet.merge(_zgtech_bytech, on=['optionID', 'sourcetypeID', 'regClassID', 'fuelTypeID',
+            fleet_zgtech[tech] = self.fleet.merge(_zgtech_bytech, on=['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID',
                                                                       'alt_rc_ft', 'alt_st_rc_ft'], how='left', sort=False)
             for metric in ['percent', 'growth']:
                 fleet_zgtech[tech][metric].fillna(0, inplace=True)
@@ -123,8 +123,8 @@ class Fleet:
         """
         moves_df = self.fleet.copy()
         for index, row in moves_adjustments_df.iterrows():
-            veh = row['alt_st_rc_ft']
+            veh = row['alt_rc_ft']
             percent_adjustment = row['percent']
             for metric in ['VPOP', 'VMT', 'Gallons']:
-                moves_df.loc[moves_df['alt_st_rc_ft'] == veh, metric] = moves_df[metric] * percent_adjustment
+                moves_df.loc[moves_df['alt_rc_ft'] == veh, metric] = moves_df[metric] * percent_adjustment
         return moves_df

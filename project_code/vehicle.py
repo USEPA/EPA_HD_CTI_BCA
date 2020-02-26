@@ -18,7 +18,7 @@ regClassID = {10: 'MC',
               48: 'Urban Bus',
               49: 'Gliders',
               }
-sourcetypeID = {0:  'NotApplicable',
+sourceTypeID = {0:  'NotApplicable',
                 11: 'Motorcycles',
                 21: 'Passenger Cars',
                 31: 'Passenger Trucks',
@@ -74,7 +74,7 @@ class Vehicle:
         source_type_id = self._veh[1]
         reg_class_id = self._veh[2]
         fuel_type_id = self._veh[3]
-        veh_name = sourcetypeID[source_type_id] + '_' + regClassID[reg_class_id] + '_' + fuelTypeID[fuel_type_id]
+        veh_name = sourceTypeID[source_type_id] + '_' + regClassID[reg_class_id] + '_' + fuelTypeID[fuel_type_id]
         return veh_name
 
     def name_bca(self):
@@ -86,7 +86,7 @@ class Vehicle:
         reg_class_id = self._veh[2]
         fuel_type_id = self._veh[3]
         zgtech_id = self._veh[4]
-        veh_name = sourcetypeID[source_type_id] + '_' + regClassID[reg_class_id] \
+        veh_name = sourceTypeID[source_type_id] + '_' + regClassID[reg_class_id] \
                    + '_' + fuelTypeID[fuel_type_id] + '_' + zerogramTechID[zgtech_id]
         return veh_name
 

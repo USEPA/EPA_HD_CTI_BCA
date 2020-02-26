@@ -14,7 +14,7 @@ import time
 import project_code
 from project_code.fuel_prices_aeo import GetFuelPrices
 from project_code.fleet import Fleet
-from project_code.vehicle import Vehicle, sourcetypeID, regClassID, fuelTypeID
+from project_code.vehicle import Vehicle, sourceTypeID, regClassID, fuelTypeID
 from project_code.direct_cost import DirectCost
 from project_code.indirect_cost import IndirectCost, IndirectCostScalars
 from project_code.operating_cost import DEFandFuelCost, RepairAndMaintenanceCost
@@ -115,7 +115,7 @@ def main():
     warranty_inputs_file = PATH_INPUTS.joinpath('Warranty_Inputs.csv')
     usefullife_inputs_file = PATH_INPUTS.joinpath('UsefulLife_Inputs.csv')
     # markups_sourcetype_file = PATH_INPUTS.joinpath('IndirectCostInputs_bySourcetype.csv')
-    moves_file = PATH_INPUTS.joinpath('WAIT_Alternatives.csv')
+    moves_file = PATH_INPUTS.joinpath('CTI_NPRM_CY2027_2045_NewGRID_for_Todd.csv')
     moves_adjustments_file = PATH_INPUTS.joinpath('MOVES_Adjustments.csv')
     options_file = PATH_INPUTS.joinpath('options.csv')
     def_doserate_inputs_file = PATH_INPUTS.joinpath('DEF_DoseRateInputs.csv')
@@ -176,7 +176,9 @@ def main():
     r_and_d_vmt_share = pd.to_numeric(bca_inputs.at['r_and_d_vmt_share', 'Value'])
     calc_pollution_effects = bca_inputs.at['calculate_pollution_effects', 'Value']
 
-    # how many alternatives are there?
+    # how many alternatives are there? But first, be sure that optionID is the header for optionID.
+    if 'Alternative' in moves.columns.tolist():
+        moves.rename(columns={'Alternative': 'optionID'}, inplace=True)
     if 0 in moves['optionID']:
         number_alts = int(moves['optionID'].max()) + 1
     else:
@@ -244,9 +246,9 @@ def main():
     if calc_pollution_effects == 'Y':
         criteria_emission_costs_file = PATH_INPUTS.joinpath('CriteriaEmissionCost_Inputs.csv')
         criteria_emission_costs = pd.read_csv(criteria_emission_costs_file)
-        tailpipe_emission_costs_list = [col for col in criteria_emission_costs.columns if 'tailpipe' in col]
+        tailpipe_emission_costs_list = [col for col in criteria_emission_costs.columns if 'onroad' in col]
         criteria_emission_costs_reshaped = reshape_df(criteria_emission_costs, ['yearID', 'MortalityEstimate', 'DR', 'DollarBasis'],
-                                                      tailpipe_emission_costs_list, 'Pollutant_source', 'USDpShortTon')
+                                                      tailpipe_emission_costs_list, 'Pollutant_source', 'USDpUSton')
         criteria_emission_costs_reshaped.insert(1, 'Key', '')
         criteria_emission_costs_reshaped['Key'] = criteria_emission_costs_reshaped['Pollutant_source'] + '_' \
                                                   + criteria_emission_costs_reshaped['MortalityEstimate'] + '_' \
@@ -256,7 +258,7 @@ def main():
     # add the identifier metrics, alt_rc_ft and alt_st_rc_ft, to specific DataFrames
     for df in [regclass_costs_modified, regclass_learningscalars, moves, moves_adjustments, sourcetype_costs]:
         df = Fleet(df).define_bca_regclass()
-    for df in [moves, moves_adjustments, sourcetype_costs]:
+    for df in [moves, sourcetype_costs]:
         df = Fleet(df).define_bca_sourcetype()
 
     # adjust MOVES VPOP/VMT/Gallons to reflect what's included in CTI (excluding what's not in CTI)
@@ -264,12 +266,17 @@ def main():
     moves_adjusted = moves_adjusted.loc[(moves_adjusted['regClassID'] != 41) | (moves_adjusted['fuelTypeID'] != 1), :] # eliminate (41, 1) keeping (41, 2)
     moves_adjusted = moves_adjusted.loc[moves_adjusted['regClassID'] != 49, :] # eliminate Gliders
     # moves_adjusted = moves_adjusted.loc[(moves_adjusted['fuelTypeID'] != 3) & (moves_adjusted['fuelTypeID'] != 5), :] # eliminate CNG & E85
-    moves_adjusted = moves_adjusted.loc[moves_adjusted['fuelTypeID'] != 5, :]  # eliminate CNG
+    moves_adjusted = moves_adjusted.loc[moves_adjusted['fuelTypeID'] != 5, :]  # eliminate E85
+    moves_adjusted = moves_adjusted.loc[moves_adjusted['regClassID'] >= 41, :]  # eliminate non-CTI regclasses
+    cols = [col for col in moves_adjusted.columns if 'PM25' in col]
+    moves_adjusted.insert(len(moves_adjusted.columns), 'PM25_onroad', moves_adjusted[cols].sum(axis=1)) # sum PM25 metrics
+    moves_adjusted.insert(len(moves_adjusted.columns), 'ageID', moves_adjusted['yearID'] - moves_adjusted['modelYearID'])
+    moves_adjusted.rename(columns={'NOx_UStons': 'NOx_onroad'}, inplace=True)
     moves_adjusted.reset_index(drop=True, inplace=True)
 
     # add VMT/vehicle & Gallons/mile metrics to moves dataframe
     moves_adjusted.insert(len(moves_adjusted.columns), 'VMT_AvgPerVeh', moves_adjusted['VMT'] / moves_adjusted['VPOP'])
-    moves_adjusted = moves_adjusted.join(GroupMetrics(moves_adjusted, ['optionID', 'regClassID', 'fuelTypeID', 'modelYearID']).group_cumsum(['VMT_AvgPerVeh']))
+    moves_adjusted = moves_adjusted.join(GroupMetrics(moves_adjusted, ['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'modelYearID']).group_cumsum(['VMT_AvgPerVeh']))
     moves_adjusted.insert(len(moves_adjusted.columns), 'MPG_AvgPerVeh', moves_adjusted['VMT'] / moves_adjusted['Gallons'])
 
     # pass moves thru Fleet.sales to get sales (population ageID=0) of everything in the moves runs by both sourcetype and by regclass
@@ -333,7 +340,7 @@ def main():
 
     fleet_bca = Fleet(moves_adjusted).fleet_with_0gtech(sourcetype_costs, zgtech_max)
     fleet_bca = pd.DataFrame(fleet_bca.loc[fleet_bca['modelYearID'] >= year_min])
-    fleet_bca.sort_values(by=['optionID', 'regClassID', 'fuelTypeID', 'sourcetypeID', 'zerogramTechID', 'yearID', 'ageID'], ascending=True, inplace=True, axis=0)
+    fleet_bca.sort_values(by=['optionID', 'regClassID', 'fuelTypeID', 'sourceTypeID', 'zerogramTechID', 'yearID', 'ageID'], ascending=True, inplace=True, axis=0)
     fleet_bca.reset_index(drop=True, inplace=True)
     # add the identifier metric, alt_st_rc_ft_zg, to the dataframes
     for df in [sourcetype_costs, fleet_bca]:
@@ -401,26 +408,26 @@ def main():
     if calc_pollution_effects == 'Y':
         print('Working on pollution costs....')
         emission_costs = pd.DataFrame(fleet_bca, columns=['optionID', 'yearID', 'modelYearID', 'ageID',
-                                                          'sourcetypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
+                                                          'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
                                                           'alt_st_rc_ft_zg', 'alt_st_rc_ft', 'alt_rc_ft',
-                                                          'PM25_tailpipe', 'NOx_tailpipe'])
+                                                          'PM25_onroad', 'NOx_onroad'])
         emission_costs = EmissionCost(emission_costs).calc_criteria_emission_costs_df(criteria_emission_costs_reshaped)
         criteria_costs_list = [col for col in emission_costs.columns if 'CriteriaCost' in col]
         criteria_costs_list_3 = [col for col in emission_costs.columns if 'CriteriaCost' in col and '0.03' in col]
         criteria_costs_list_7 = [col for col in emission_costs.columns if 'CriteriaCost' in col and '0.07' in col]
-        tailpipe_emission_costs_list = [col for col in emission_costs.columns if 'Cost_tailpipe' in col]
-        tailpipe_emission_costs_list_3 = [col for col in emission_costs.columns if 'Cost_tailpipe' in col and '0.03' in col]
-        tailpipe_emission_costs_list_7 = [col for col in emission_costs.columns if 'Cost_tailpipe' in col and '0.07' in col]
+        tailpipe_emission_costs_list = [col for col in emission_costs.columns if 'Cost_onroad' in col]
+        tailpipe_emission_costs_list_3 = [col for col in emission_costs.columns if 'Cost_onroad' in col and '0.03' in col]
+        tailpipe_emission_costs_list_7 = [col for col in emission_costs.columns if 'Cost_onroad' in col and '0.07' in col]
         criteria_and_tailpipe_emission_costs_list = criteria_costs_list + tailpipe_emission_costs_list
 
     # work on operating costs
     # create DataFrame and then adjust MOVES fuel consumption as needed
     print('Working on operating costs....')
     operating_costs = pd.DataFrame(fleet_bca, columns=['optionID', 'yearID', 'modelYearID', 'ageID',
-                                                       'sourcetypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
+                                                       'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
                                                        'alt_st_rc_ft_zg', 'alt_st_rc_ft', 'alt_rc_ft',
                                                        'Gallons', 'MPG_AvgPerVeh', 'VMT', 'VMT_AvgPerVeh', 'VMT_AvgPerVeh_CumSum',
-                                                       'THC (US tons)'])
+                                                       'THC_UStons'])
     # merge in the warranty and useful life inputs
     for df in [warranty_miles_reshaped, warranty_age_reshaped, usefullife_miles_reshaped, usefullife_age_reshaped]:
         operating_costs = operating_costs.merge(df, on=['optionID', 'regClassID', 'fuelTypeID', 'modelYearID'], how='left')
@@ -488,14 +495,14 @@ def main():
     bca_costs_dict = dict()
     for dr in [0, discrate_social_low, discrate_social_high]:
         bca_costs_dict[dr] = pd.DataFrame(fleet_bca, columns=['optionID', 'yearID', 'modelYearID', 'ageID',
-                                                              'sourcetypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
+                                                              'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
                                                               'TechPackageDescription'])
         bca_costs_dict[dr] = bca_costs_dict[dr].merge(techcost_dict[dr][['optionID', 'yearID', 'modelYearID', 'ageID',
-                                                                         'sourcetypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
+                                                                         'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
                                                                          'Vehicle_Name_RC', 'Vehicle_Name_BCA',
                                                                          'DirectCost_TotalCost', 'WarrantyCost_TotalCost', 'RnDCost_TotalCost', 'OtherCost_TotalCost', 'ProfitCost_TotalCost',
                                                                          'IndirectCost_TotalCost', 'TechCost_TotalCost']],
-                                                      on=['optionID', 'yearID', 'modelYearID', 'ageID', 'sourcetypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID'],
+                                                      on=['optionID', 'yearID', 'modelYearID', 'ageID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID'],
                                                       how='left')
         bca_costs_dict[dr] = pd.concat([bca_costs_dict[dr], operating_costs_dict[dr][operatingcost_metrics_to_discount]], axis=1, ignore_index=False)
         if calc_pollution_effects == 'Y':
@@ -562,12 +569,12 @@ def main():
     common_metrics = ['optionID', 'OptionName', 'DiscountRate']
     row_header_group[1] = common_metrics + ['yearID']
     row_header_group[2] = common_metrics + ['yearID', 'regClassID', 'fuelTypeID']
-    row_header_group[3] = common_metrics + ['yearID', 'sourcetypeID', 'fuelTypeID']
+    row_header_group[3] = common_metrics + ['yearID', 'sourceTypeID', 'fuelTypeID']
 
     row_header_group_cumsum = dict()
     row_header_group_cumsum[1] = common_metrics
     row_header_group_cumsum[2] = common_metrics + ['regClassID', 'fuelTypeID']
-    row_header_group_cumsum[3] = common_metrics + ['sourcetypeID', 'fuelTypeID']
+    row_header_group_cumsum[3] = common_metrics + ['sourceTypeID', 'fuelTypeID']
 
     # create some dicts to store the groupby.sum, groupby.cumsum and groupby.mean results
     techcost_sum = dict()
@@ -636,7 +643,7 @@ def main():
     for df in df_list:
         df[2].insert(6, 'regclass', pd.Series(regClassID[number] for number in df[2]['regClassID']))
         df[2].insert(7, 'fueltype', pd.Series(fuelTypeID[number] for number in df[2]['fuelTypeID']))
-        df[3].insert(6, 'sourcetype', pd.Series(sourcetypeID[number] for number in df[3]['sourcetypeID']))
+        df[3].insert(6, 'sourceype', pd.Series(sourceTypeID[number] for number in df[3]['sourceTypeID']))
         df[3].insert(7, 'fueltype', pd.Series(fuelTypeID[number] for number in df[3]['fuelTypeID']))
     operating_costs_modelyear_summary.insert(6, 'regclass', pd.Series(regClassID[number] for number in operating_costs_modelyear_summary['regClassID']))
     operating_costs_modelyear_summary.insert(7, 'fueltype', pd.Series(fuelTypeID[number] for number in operating_costs_modelyear_summary['fuelTypeID']))

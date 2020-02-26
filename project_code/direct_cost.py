@@ -163,7 +163,7 @@ class DirectCost:
                                                             ** _learning_rate)
         df['DirectCost_TotalCost_ZG'] = df['DirectCost_WithLearning_ZG'] * df['VPOP_Complying_ZG']
         df['DirectCost_AvgPerVeh_ZG'] = df['DirectCost_TotalCost_ZG'] / df['VPOP']
-        df = df[['optionID', 'yearID', 'modelYearID', 'ageID', 'sourcetypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
+        df = df[['optionID', 'yearID', 'modelYearID', 'ageID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
                  'alt_rc_ft', 'alt_st_rc_ft', 'alt_st_rc_ft_zg',
                  'VPOP', 'VPOP_Complying_ZG', 'VPOP_Complying_Cumulative_ZG',
                  'DirectCost_WithLearning_ZG', 'DirectCost_AvgPerVeh_ZG', 'DirectCost_TotalCost_ZG']]
