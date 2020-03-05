@@ -27,8 +27,6 @@ from project_code.doc_tables import DocTables
 # path_project = Path.cwd()
 PATH_PROJECT = Path.cwd()
 PATH_PROJECT_CODE = PATH_PROJECT.joinpath('project_code')
-PATH_INPUTS = PATH_PROJECT.joinpath('inputs')
-PATH_OUTPUTS = PATH_PROJECT.joinpath('outputs')
 
 
 def inputs_filenames(input_files_pathlist):
@@ -95,6 +93,13 @@ def weighted_result(df, metric, weightby_metric, veh, year_metric, year_list, ma
 def main():
     """The main script."""
     # first, set the output files desired for QA/QC work
+    TEST_RUN = input('Use full CTI BCA inputs (<ENTER>) or use test inputs (t)?\n')
+    if TEST_RUN == 't':
+        PATH_INPUTS = PATH_PROJECT.joinpath('test/inputs')
+        PATH_OUTPUTS = PATH_PROJECT.joinpath('test/outputs')
+    else:
+        PATH_INPUTS = PATH_PROJECT.joinpath('inputs')
+        PATH_OUTPUTS = PATH_PROJECT.joinpath('outputs')
     RUN_FOLDER_IDENTIFIER = input('Provide a run identifier for your output folder name (press return to use the default name)\n')
     RUN_FOLDER_IDENTIFIER = RUN_FOLDER_IDENTIFIER if RUN_FOLDER_IDENTIFIER != '' else 'HDCTI-BCA-Results'
     CREATE_ALL_FILES = input('Create all output files? (y)es or (n)o?\n')
@@ -198,19 +203,15 @@ def main():
     # now get specific inputs from repair_and_maintenance
     inwarranty_repair_and_maintenance_owner_cpm = repair_and_maintenance.at['in-warranty_R&M_Owner_CPM', 'Value']
     atusefullife_repair_and_maintenance_owner_cpm = repair_and_maintenance.at['at-usefullife_R&M_Owner_CPM', 'Value']
-    inwarranty_repair_and_maintenance_oem_cpm = repair_and_maintenance.at['in-warranty_R&M_OEM_CPM', 'Value']
-    atusefullife_repair_and_maintenance_oem_cpm = repair_and_maintenance.at['at-usefullife_R&M_OEM_CPM', 'Value']
-    slope_repair_and_maintenance_cpm = repair_and_maintenance.at['slope_R&M_CPM', 'Value']
-    scalar_gasoline = repair_and_maintenance.at['scalar_gasoline', 'Value']
-    repair_and_maintenance_increase_beyond_usefullife = repair_and_maintenance.at['increase_beyond_usefullife', 'Value']
+    mile_increase_beyond_usefullife = repair_and_maintenance.at['mile_increase_beyond_usefullife', 'Value']
+    max_repair_and_maintenance_CPM = repair_and_maintenance.at['max_R&M_Owner_CPM', 'Value']
+    cpm_increase_beyond_usefullife = repair_and_maintenance.at['CPM_increase_beyond_usefullife', 'Value']
     emission_repair_share = repair_and_maintenance.at['emission_repair_share', 'Value']
     metrics_repair_and_maint_dict = {'inwarranty_repair_and_maintenance_owner_cpm': inwarranty_repair_and_maintenance_owner_cpm,
                                      'atusefullife_repair_and_maintenance_owner_cpm': atusefullife_repair_and_maintenance_owner_cpm,
-                                     'inwarranty_repair_and_maintenance_oem_cpm': inwarranty_repair_and_maintenance_oem_cpm,
-                                     'atusefullife_repair_and_maintenance_oem_cpm': atusefullife_repair_and_maintenance_oem_cpm,
-                                     'slope_repair_and_maintenance_cpm': slope_repair_and_maintenance_cpm,
-                                     'scalar_gasoline': scalar_gasoline,
-                                     'repair_and_maintenance_increase_beyond_usefullife': repair_and_maintenance_increase_beyond_usefullife,
+                                     'mile_increase_beyond_usefullife': mile_increase_beyond_usefullife,
+                                     'max_repair_and_maintenance_cpm': max_repair_and_maintenance_CPM,
+                                     'cpm_increase_beyond_usefullife': cpm_increase_beyond_usefullife,
                                      'emission_repair_share': emission_repair_share}
 
     factors_cpiu = dict()
@@ -265,7 +266,6 @@ def main():
     moves_adjusted = Fleet(moves).adjust_moves(moves_adjustments) # adjust (41, 2) to be engine cert only
     moves_adjusted = moves_adjusted.loc[(moves_adjusted['regClassID'] != 41) | (moves_adjusted['fuelTypeID'] != 1), :] # eliminate (41, 1) keeping (41, 2)
     moves_adjusted = moves_adjusted.loc[moves_adjusted['regClassID'] != 49, :] # eliminate Gliders
-    # moves_adjusted = moves_adjusted.loc[(moves_adjusted['fuelTypeID'] != 3) & (moves_adjusted['fuelTypeID'] != 5), :] # eliminate CNG & E85
     moves_adjusted = moves_adjusted.loc[moves_adjusted['fuelTypeID'] != 5, :]  # eliminate E85
     moves_adjusted = moves_adjusted.loc[moves_adjusted['regClassID'] >= 41, :]  # eliminate non-CTI regclasses
     cols = [col for col in moves_adjusted.columns if 'PM25' in col]
@@ -441,13 +441,14 @@ def main():
         for year in range(operating_costs['modelYearID'].min(), operating_costs['modelYearID'].max() + 1):
             operating_costs.loc[(operating_costs['alt_rc_ft'] == veh) & (operating_costs['modelYearID'] == year), cols] \
                 = operating_costs.loc[(operating_costs['alt_rc_ft'] == veh) & (operating_costs['modelYearID'] == year), cols].ffill(axis=0)
-    operating_costs = RepairAndMaintenanceCost(operating_costs).repair_and_maintenance_costs_curve2(metrics_repair_and_maint_dict)
+    operating_costs = RepairAndMaintenanceCost(operating_costs).repair_and_maintenance_costs_curve(metrics_repair_and_maint_dict, pkg_directcost_veh_regclass_dict)
     operating_costs = DEFandFuelCost(operating_costs).orvr_fuel_impacts_mlpergram(orvr_fuelchanges)
     def_doserates = DEFandFuelCost(def_doserate_inputs).def_doserate_scaling_factor()
     operating_costs = DEFandFuelCost(operating_costs).def_cost_df(def_doserates, def_prices)
     operating_costs = DEFandFuelCost(operating_costs).fuel_costs(fuel_prices)
     cols_owner = ['EmissionRepairCost_Owner_TotalCost', 'UreaCost_TotalCost', 'FuelCost_Retail_TotalCost']
-    cols_bca = ['EmissionRepairCost_Owner_TotalCost', 'EmissionRepairCost_OEM_TotalCost', 'UreaCost_TotalCost', 'FuelCost_Pretax_TotalCost']
+    # cols_bca = ['EmissionRepairCost_Owner_TotalCost', 'EmissionRepairCost_OEM_TotalCost', 'UreaCost_TotalCost', 'FuelCost_Pretax_TotalCost']
+    cols_bca = ['EmissionRepairCost_Owner_TotalCost', 'UreaCost_TotalCost', 'FuelCost_Pretax_TotalCost']
     operating_costs.insert(len(operating_costs.columns), 'OperatingCost_Owner_TotalCost', operating_costs[cols_owner].sum(axis=1))
     operating_costs.insert(len(operating_costs.columns), 'OperatingCost_BCA_TotalCost', operating_costs[cols_bca].sum(axis=1))
     operating_costs.insert(len(operating_costs.columns), 'OperatingCost_Owner_AvgPerMile', operating_costs['OperatingCost_Owner_TotalCost'] / operating_costs['VMT'])
@@ -458,7 +459,10 @@ def main():
     weighted_repair_owner_cpm = dict()
     weighted_def_cpm = dict()
     weighted_fuel_cpm = dict()
-    year_list = [2027, 2030, 2035]
+    if TEST_RUN == 't':
+        year_list = [2027, 2030]
+    else:
+        year_list = [2027, 2030, 2035]
     max_age_included = 9
     for veh in vehs_operating_costs:
         weighted_repair_owner_cpm[veh] = weighted_result(operating_costs, 'EmissionRepairCost_Owner_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list, max_age_included)
@@ -493,20 +497,25 @@ def main():
 
     print('Working on benefit-cost analysis results and summarizing things....')
     bca_costs_dict = dict()
+    techcost_metrics_for_bca = ['optionID', 'yearID', 'modelYearID', 'ageID',
+                                'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
+                                'Vehicle_Name_RC', 'Vehicle_Name_BCA',
+                                'DirectCost_TotalCost', 'WarrantyCost_TotalCost', 'RnDCost_TotalCost', 'OtherCost_TotalCost', 'ProfitCost_TotalCost',
+                                'IndirectCost_TotalCost', 'TechCost_TotalCost']
+    operating_metrics_for_bca = ['optionID', 'yearID', 'modelYearID', 'ageID',
+                                 'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID'] \
+                                + operatingcost_metrics_to_discount
+    merge_metrics = ['optionID', 'yearID', 'modelYearID', 'ageID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID']
     for dr in [0, discrate_social_low, discrate_social_high]:
         bca_costs_dict[dr] = pd.DataFrame(fleet_bca, columns=['optionID', 'yearID', 'modelYearID', 'ageID',
                                                               'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
                                                               'TechPackageDescription'])
-        bca_costs_dict[dr] = bca_costs_dict[dr].merge(techcost_dict[dr][['optionID', 'yearID', 'modelYearID', 'ageID',
-                                                                         'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
-                                                                         'Vehicle_Name_RC', 'Vehicle_Name_BCA',
-                                                                         'DirectCost_TotalCost', 'WarrantyCost_TotalCost', 'RnDCost_TotalCost', 'OtherCost_TotalCost', 'ProfitCost_TotalCost',
-                                                                         'IndirectCost_TotalCost', 'TechCost_TotalCost']],
-                                                      on=['optionID', 'yearID', 'modelYearID', 'ageID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID'],
-                                                      how='left')
-        bca_costs_dict[dr] = pd.concat([bca_costs_dict[dr], operating_costs_dict[dr][operatingcost_metrics_to_discount]], axis=1, ignore_index=False)
+        bca_costs_dict[dr] = bca_costs_dict[dr].merge(techcost_dict[dr][techcost_metrics_for_bca], on=merge_metrics, how='left')
+        bca_costs_dict[dr] = bca_costs_dict[dr].merge(operating_costs_dict[dr][operating_metrics_for_bca], on=merge_metrics, how='left')
         if calc_pollution_effects == 'Y':
-            bca_costs_dict[dr] = pd.concat([bca_costs_dict[dr], emission_costs_dict[dr][criteria_and_tailpipe_emission_costs_list]], axis=1, ignore_index=False)
+            pollution_metrics_for_bca = ['optionID', 'yearID', 'modelYearID', 'ageID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID'] \
+                                        + criteria_and_tailpipe_emission_costs_list
+            bca_costs_dict[dr] = bca_costs_dict[dr].merge(emission_costs_dict[dr][pollution_metrics_for_bca], on=merge_metrics, how='left')
         bca_costs_dict[dr].insert(0, 'DiscountRate', dr)
 
     bca_costs = pd.DataFrame()
