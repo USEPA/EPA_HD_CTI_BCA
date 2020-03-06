@@ -97,8 +97,8 @@ class IndirectCostScalars:
     def __init__(self, input_df):
         self.input_df = input_df
 
-    def calc_vmt_scalars_absolute(self, identifier):
-        vmt_inputs = pd.DataFrame(self.input_df.loc[self.input_df['period'] == 'Age'])
+    def calc_scalars_absolute(self, identifier, period):
+        vmt_inputs = pd.DataFrame(self.input_df.loc[self.input_df['period'] == period])
         return_df = vmt_inputs.copy()
         cols = [col for col in return_df.columns if '20' in col]
         for col in cols[1:]:
@@ -107,8 +107,8 @@ class IndirectCostScalars:
         return_df.insert(1, 'Markup_Factor', identifier)
         return return_df
 
-    def calc_vmt_scalars_relative(self, identifier):
-        vmt_inputs = pd.DataFrame(self.input_df.loc[self.input_df['period'] == 'Age'])
+    def calc_scalars_relative(self, identifier, period):
+        vmt_inputs = pd.DataFrame(self.input_df.loc[self.input_df['period'] == period])
         return_df = vmt_inputs.copy()
         cols = [col for col in return_df.columns if '20' in col]
         for col_number in range(1, len(cols)):

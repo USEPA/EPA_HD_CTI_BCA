@@ -141,8 +141,8 @@ class RepairAndMaintenanceCost:
                 veh_regclass = (veh[0], veh[2], veh[3])
                 direct_cost_scalar = pkg_directcost_veh_regclass_dict[veh_regclass].loc[pkg_directcost_veh_regclass_dict[veh_regclass]['modelYearID'] == model_year, 'DirectCost_AvgPerVeh'][index_loc] / \
                                      pkg_directcost_veh_regclass_dict[0, 47, 2].loc[pkg_directcost_veh_regclass_dict[0, 47, 2]['modelYearID'] == model_year, 'DirectCost_AvgPerVeh'][index_loc]
-                warranty_age = df_temp.loc[(df_temp['alt_rc_ft'] == veh_regclass) & (df_temp['modelYearID'] == model_year), 'Warranty_Age'].mean()
-                usefullife_age = df_temp.loc[(df_temp['alt_rc_ft'] == veh_regclass) & (df_temp['modelYearID'] == model_year), 'UsefulLife_Age'].mean()
+                warranty_age = df_temp.loc[(df_temp['alt_st_rc_ft'] == veh) & (df_temp['modelYearID'] == model_year), 'EstimatedAge_Warranty'].mean()
+                usefullife_age = df_temp.loc[(df_temp['alt_st_rc_ft'] == veh) & (df_temp['modelYearID'] == model_year), 'EstimatedAge_UsefulLife'].mean()
                 slope_within_usefullife = (metrics_repair_and_maint_dict['atusefullife_repair_and_maintenance_owner_cpm'] - metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_owner_cpm']) \
                                            * direct_cost_scalar \
                                           / (usefullife_age - 1)

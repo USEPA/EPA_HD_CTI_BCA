@@ -23,8 +23,9 @@ from project_code.group_metrics import GroupMetrics
 from project_code.calc_deltas import CalcDeltas
 from project_code.emission_cost import EmissionCost
 from project_code.doc_tables import DocTables
+from project_code.estimated_age import EstimatedAge
 
-# path_project = Path.cwd()
+
 PATH_PROJECT = Path.cwd()
 PATH_PROJECT_CODE = PATH_PROJECT.joinpath('project_code')
 
@@ -205,13 +206,13 @@ def main():
     atusefullife_repair_and_maintenance_owner_cpm = repair_and_maintenance.at['at-usefullife_R&M_Owner_CPM', 'Value']
     mile_increase_beyond_usefullife = repair_and_maintenance.at['mile_increase_beyond_usefullife', 'Value']
     max_repair_and_maintenance_CPM = repair_and_maintenance.at['max_R&M_Owner_CPM', 'Value']
-    cpm_increase_beyond_usefullife = repair_and_maintenance.at['CPM_increase_beyond_usefullife', 'Value']
+    typical_vmt_thru_age = repair_and_maintenance.at['typical_vmt_thru_ageID', 'Value']
     emission_repair_share = repair_and_maintenance.at['emission_repair_share', 'Value']
     metrics_repair_and_maint_dict = {'inwarranty_repair_and_maintenance_owner_cpm': inwarranty_repair_and_maintenance_owner_cpm,
                                      'atusefullife_repair_and_maintenance_owner_cpm': atusefullife_repair_and_maintenance_owner_cpm,
                                      'mile_increase_beyond_usefullife': mile_increase_beyond_usefullife,
                                      'max_repair_and_maintenance_cpm': max_repair_and_maintenance_CPM,
-                                     'cpm_increase_beyond_usefullife': cpm_increase_beyond_usefullife,
+                                     'typical_vmt_thru_ageID': typical_vmt_thru_age,
                                      'emission_repair_share': emission_repair_share}
 
     factors_cpiu = dict()
@@ -221,8 +222,8 @@ def main():
     fuel_prices = GetFuelPrices(PATH_PROJECT).get_fuel_prices(aeo_case)
 
     # Calculate the Indirect Cost VMT scalars based on the warranty_inputs and usefullife_inputs
-    warranty_scalars = IndirectCostScalars(warranty_inputs).calc_vmt_scalars_absolute('Warranty')
-    usefullife_scalars = IndirectCostScalars(usefullife_inputs).calc_vmt_scalars_relative('RnD')
+    warranty_scalars = IndirectCostScalars(warranty_inputs).calc_scalars_absolute('Warranty', 'Age')
+    usefullife_scalars = IndirectCostScalars(usefullife_inputs).calc_scalars_relative('RnD', 'Age')
     markups_vmt_scalars = pd.concat([warranty_scalars, usefullife_scalars], ignore_index=True, axis=0)
     markups_vmt_scalars.reset_index(drop=True, inplace=True)
 
@@ -428,19 +429,24 @@ def main():
                                                        'alt_st_rc_ft_zg', 'alt_st_rc_ft', 'alt_rc_ft',
                                                        'Gallons', 'MPG_AvgPerVeh', 'VMT', 'VMT_AvgPerVeh', 'VMT_AvgPerVeh_CumSum',
                                                        'THC_UStons'])
-    # merge in the warranty and useful life inputs
-    for df in [warranty_miles_reshaped, warranty_age_reshaped, usefullife_miles_reshaped, usefullife_age_reshaped]:
-        operating_costs = operating_costs.merge(df, on=['optionID', 'regClassID', 'fuelTypeID', 'modelYearID'], how='left')
-    cols = [col for col in operating_costs.columns if 'Warranty' in col or 'UsefulLife' in col]
-    vehs = set(operating_costs['alt_rc_ft'])
+    # determine sourcetype-based estimated ages when warranty and useful life are reached
+    repair_warranty_ages = EstimatedAge(operating_costs).ages_by_identifier(warranty_miles_reshaped, warranty_age_reshaped, typical_vmt_thru_age, 'Warranty')
+    repair_usefullife_ages = EstimatedAge(operating_costs).ages_by_identifier(usefullife_miles_reshaped, usefullife_age_reshaped, typical_vmt_thru_age, 'UsefulLife')
+    # merge in the estimated warranty and useful life ages for estimating repair costs
+    for df in [repair_warranty_ages, repair_usefullife_ages]:
+        operating_costs = operating_costs.merge(df, on=['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'modelYearID'], how='left')
+    # for df in [warranty_miles_reshaped, warranty_age_reshaped, usefullife_miles_reshaped, usefullife_age_reshaped]:
+    #     operating_costs = operating_costs.merge(df, on=['optionID', 'regClassID', 'fuelTypeID', 'modelYearID'], how='left')
+    # cols = [col for col in operating_costs.columns if 'Warranty' in col or 'UsefulLife' in col]
+    # vehs = set(operating_costs['alt_rc_ft'])
     # since the merge of warranty & useful life metrics is only for select MYs and alt_rc_ft vehicles, filling in for other ages/years has to be done via the following two loops
-    for veh in vehs:
-        operating_costs.loc[(operating_costs['alt_rc_ft'] == veh) & (operating_costs['ageID'] == 0), cols] \
-            = operating_costs.loc[(operating_costs['alt_rc_ft'] == veh) & (operating_costs['ageID'] == 0), cols].ffill(axis=0)
-    for veh in vehs:
-        for year in range(operating_costs['modelYearID'].min(), operating_costs['modelYearID'].max() + 1):
-            operating_costs.loc[(operating_costs['alt_rc_ft'] == veh) & (operating_costs['modelYearID'] == year), cols] \
-                = operating_costs.loc[(operating_costs['alt_rc_ft'] == veh) & (operating_costs['modelYearID'] == year), cols].ffill(axis=0)
+    # for veh in vehs:
+    #     operating_costs.loc[(operating_costs['alt_rc_ft'] == veh) & (operating_costs['ageID'] == 0), cols] \
+    #         = operating_costs.loc[(operating_costs['alt_rc_ft'] == veh) & (operating_costs['ageID'] == 0), cols].ffill(axis=0)
+    # for veh in vehs:
+    #     for year in range(operating_costs['modelYearID'].min(), operating_costs['modelYearID'].max() + 1):
+    #         operating_costs.loc[(operating_costs['alt_rc_ft'] == veh) & (operating_costs['modelYearID'] == year), cols] \
+    #             = operating_costs.loc[(operating_costs['alt_rc_ft'] == veh) & (operating_costs['modelYearID'] == year), cols].ffill(axis=0)
     operating_costs = RepairAndMaintenanceCost(operating_costs).repair_and_maintenance_costs_curve(metrics_repair_and_maint_dict, pkg_directcost_veh_regclass_dict)
     operating_costs = DEFandFuelCost(operating_costs).orvr_fuel_impacts_mlpergram(orvr_fuelchanges)
     def_doserates = DEFandFuelCost(def_doserate_inputs).def_doserate_scaling_factor()
