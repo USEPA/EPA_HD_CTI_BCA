@@ -180,6 +180,7 @@ def main():
         dollar_basis_years_cpiu[item] = pd.to_numeric(dollar_basis_years_cpiu[item])
     warranty_vmt_share = pd.to_numeric(bca_inputs.at['warranty_vmt_share', 'Value'])
     r_and_d_vmt_share = pd.to_numeric(bca_inputs.at['r_and_d_vmt_share', 'Value'])
+    indirect_cost_scaling_metric = pd.to_numeric(bca_inputs.at['scale_indirect_costs_by', 'Value'])
     calc_pollution_effects = bca_inputs.at['calculate_pollution_effects', 'Value']
 
     # how many alternatives are there? But first, be sure that optionID is the header for optionID.
@@ -221,9 +222,9 @@ def main():
 
     fuel_prices = GetFuelPrices(PATH_PROJECT).get_fuel_prices(aeo_case)
 
-    # Calculate the Indirect Cost VMT scalars based on the warranty_inputs and usefullife_inputs
-    warranty_scalars = IndirectCostScalars(warranty_inputs).calc_scalars_absolute('Warranty', 'Age')
-    usefullife_scalars = IndirectCostScalars(usefullife_inputs).calc_scalars_relative('RnD', 'Age')
+    # Calculate the Indirect Cost scalars based on the warranty_inputs and usefullife_inputs
+    warranty_scalars = IndirectCostScalars(warranty_inputs).calc_scalars_absolute('Warranty', indirect_cost_scaling_metric)
+    usefullife_scalars = IndirectCostScalars(usefullife_inputs).calc_scalars_relative('RnD', indirect_cost_scaling_metric)
     markups_vmt_scalars = pd.concat([warranty_scalars, usefullife_scalars], ignore_index=True, axis=0)
     markups_vmt_scalars.reset_index(drop=True, inplace=True)
 
@@ -435,25 +436,12 @@ def main():
     # merge in the estimated warranty and useful life ages for estimating repair costs
     for df in [repair_warranty_ages, repair_usefullife_ages]:
         operating_costs = operating_costs.merge(df, on=['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'modelYearID'], how='left')
-    # for df in [warranty_miles_reshaped, warranty_age_reshaped, usefullife_miles_reshaped, usefullife_age_reshaped]:
-    #     operating_costs = operating_costs.merge(df, on=['optionID', 'regClassID', 'fuelTypeID', 'modelYearID'], how='left')
-    # cols = [col for col in operating_costs.columns if 'Warranty' in col or 'UsefulLife' in col]
-    # vehs = set(operating_costs['alt_rc_ft'])
-    # since the merge of warranty & useful life metrics is only for select MYs and alt_rc_ft vehicles, filling in for other ages/years has to be done via the following two loops
-    # for veh in vehs:
-    #     operating_costs.loc[(operating_costs['alt_rc_ft'] == veh) & (operating_costs['ageID'] == 0), cols] \
-    #         = operating_costs.loc[(operating_costs['alt_rc_ft'] == veh) & (operating_costs['ageID'] == 0), cols].ffill(axis=0)
-    # for veh in vehs:
-    #     for year in range(operating_costs['modelYearID'].min(), operating_costs['modelYearID'].max() + 1):
-    #         operating_costs.loc[(operating_costs['alt_rc_ft'] == veh) & (operating_costs['modelYearID'] == year), cols] \
-    #             = operating_costs.loc[(operating_costs['alt_rc_ft'] == veh) & (operating_costs['modelYearID'] == year), cols].ffill(axis=0)
     operating_costs = RepairAndMaintenanceCost(operating_costs).repair_and_maintenance_costs_curve(metrics_repair_and_maint_dict, pkg_directcost_veh_regclass_dict)
     operating_costs = DEFandFuelCost(operating_costs).orvr_fuel_impacts_mlpergram(orvr_fuelchanges)
     def_doserates = DEFandFuelCost(def_doserate_inputs).def_doserate_scaling_factor()
     operating_costs = DEFandFuelCost(operating_costs).def_cost_df(def_doserates, def_prices)
     operating_costs = DEFandFuelCost(operating_costs).fuel_costs(fuel_prices)
     cols_owner = ['EmissionRepairCost_Owner_TotalCost', 'UreaCost_TotalCost', 'FuelCost_Retail_TotalCost']
-    # cols_bca = ['EmissionRepairCost_Owner_TotalCost', 'EmissionRepairCost_OEM_TotalCost', 'UreaCost_TotalCost', 'FuelCost_Pretax_TotalCost']
     cols_bca = ['EmissionRepairCost_Owner_TotalCost', 'UreaCost_TotalCost', 'FuelCost_Pretax_TotalCost']
     operating_costs.insert(len(operating_costs.columns), 'OperatingCost_Owner_TotalCost', operating_costs[cols_owner].sum(axis=1))
     operating_costs.insert(len(operating_costs.columns), 'OperatingCost_BCA_TotalCost', operating_costs[cols_bca].sum(axis=1))

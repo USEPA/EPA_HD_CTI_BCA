@@ -26,4 +26,6 @@ class EstimatedAge:
             estimated_age.append(min_age)
         df_return.insert(len(df_return.columns), 'EstimatedAge_' + identifier, estimated_age)
         df_return.drop(columns=['alt_rc_ft', 'VMT_AvgPerVeh_CumSum'], inplace=True) # drop for easier merge
+        if identifier == 'UsefulLife':
+            df_return.drop(columns=['TypicalVMTperYear'], inplace=True)  # drop for easier merge since metric is in 'Warranty' DataFrame
         return df_return
