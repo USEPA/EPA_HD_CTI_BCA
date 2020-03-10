@@ -143,9 +143,16 @@ class RepairAndMaintenanceCost:
                                      pkg_directcost_veh_regclass_dict[0, 47, 2].loc[pkg_directcost_veh_regclass_dict[0, 47, 2]['modelYearID'] == model_year, 'DirectCost_AvgPerVeh'][index_loc]
                 warranty_age = df_temp.loc[(df_temp['alt_st_rc_ft'] == veh) & (df_temp['modelYearID'] == model_year), 'EstimatedAge_Warranty'].mean()
                 usefullife_age = df_temp.loc[(df_temp['alt_st_rc_ft'] == veh) & (df_temp['modelYearID'] == model_year), 'EstimatedAge_UsefulLife'].mean()
-                slope_within_usefullife = (metrics_repair_and_maint_dict['atusefullife_repair_and_maintenance_owner_cpm'] - metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_owner_cpm']) \
-                                           * direct_cost_scalar \
-                                          / (usefullife_age - 1)
+                if usefullife_age != warranty_age:
+                    slope_within_usefullife = (metrics_repair_and_maint_dict['atusefullife_repair_and_maintenance_owner_cpm'] - metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_owner_cpm']) \
+                                               * direct_cost_scalar \
+                                               * metrics_repair_and_maint_dict['emission_repair_share'] \
+                                              / (usefullife_age - warranty_age)
+                else:
+                    slope_within_usefullife = (metrics_repair_and_maint_dict['atusefullife_repair_and_maintenance_owner_cpm'] - metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_owner_cpm']) \
+                                               * direct_cost_scalar \
+                                               * metrics_repair_and_maint_dict['emission_repair_share'] \
+                                              / (usefullife_age - 1)
                 max_cpm = metrics_repair_and_maint_dict['max_repair_and_maintenance_cpm'] \
                           * metrics_repair_and_maint_dict['emission_repair_share'] \
                           * direct_cost_scalar

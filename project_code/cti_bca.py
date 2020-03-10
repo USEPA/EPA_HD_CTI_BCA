@@ -180,7 +180,7 @@ def main():
         dollar_basis_years_cpiu[item] = pd.to_numeric(dollar_basis_years_cpiu[item])
     warranty_vmt_share = pd.to_numeric(bca_inputs.at['warranty_vmt_share', 'Value'])
     r_and_d_vmt_share = pd.to_numeric(bca_inputs.at['r_and_d_vmt_share', 'Value'])
-    indirect_cost_scaling_metric = pd.to_numeric(bca_inputs.at['scale_indirect_costs_by', 'Value'])
+    indirect_cost_scaling_metric = bca_inputs.at['scale_indirect_costs_by', 'Value']
     calc_pollution_effects = bca_inputs.at['calculate_pollution_effects', 'Value']
 
     # how many alternatives are there? But first, be sure that optionID is the header for optionID.
