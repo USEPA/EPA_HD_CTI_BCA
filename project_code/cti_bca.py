@@ -250,7 +250,7 @@ def main():
         criteria_emission_costs_file = PATH_INPUTS.joinpath('CriteriaEmissionCost_Inputs.csv')
         criteria_emission_costs = pd.read_csv(criteria_emission_costs_file)
         tailpipe_emission_costs_list = [col for col in criteria_emission_costs.columns if 'onroad' in col]
-        criteria_emission_costs_reshaped = reshape_df(criteria_emission_costs, ['yearID', 'MortalityEstimate', 'DR', 'DollarBasis'],
+        criteria_emission_costs_reshaped = reshape_df(criteria_emission_costs, ['yearID', 'MortalityEstimate', 'DR', 'fuelTypeID', 'DollarBasis'],
                                                       tailpipe_emission_costs_list, 'Pollutant_source', 'USDpUSton')
         criteria_emission_costs_reshaped.insert(1, 'Key', '')
         criteria_emission_costs_reshaped['Key'] = criteria_emission_costs_reshaped['Pollutant_source'] + '_' \
@@ -657,7 +657,8 @@ def main():
     operating_costs_all = pd.concat([operating_costs_all, CalcDeltas(operating_costs_all).calc_delta(number_alts, operating_cost_metrics_for_deltas)], axis=0, ignore_index=True)
     bca_costs = pd.concat([bca_costs, CalcDeltas(bca_costs).calc_delta(number_alts, [col for col in bca_costs.columns if 'Cost' in col])], axis=0, ignore_index=True)
     if calc_pollution_effects == 'Y':
-        emission_costs_all = pd.concat([emission_costs_all, CalcDeltas(emission_costs_all).calc_delta(number_alts, criteria_and_tailpipe_emission_costs_list)], axis=0, ignore_index=True)
+        emission_cost_metrics_for_deltas = criteria_and_tailpipe_emission_costs_list + ['PM25_onroad', 'NOx_onroad']
+        emission_costs_all = pd.concat([emission_costs_all, CalcDeltas(emission_costs_all).calc_delta(number_alts, emission_cost_metrics_for_deltas)], axis=0, ignore_index=True)
 
     elapsed_time_calcs = time.time() - start_time_calcs
 
