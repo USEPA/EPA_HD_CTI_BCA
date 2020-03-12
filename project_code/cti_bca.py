@@ -91,6 +91,13 @@ def weighted_result(df, metric, weightby_metric, veh, year_metric, year_list, ma
     return weighted_results
 
 
+def round_metrics(df, metrics, round_by):
+    df[metrics] = df[metrics].round(round_by)
+    # for metric in metrics:
+    #     df[metric].round(round_by)
+    return df
+
+
 def main():
     """The main script."""
     # first, set the output files desired for QA/QC work
@@ -182,6 +189,7 @@ def main():
     r_and_d_vmt_share = pd.to_numeric(bca_inputs.at['r_and_d_vmt_share', 'Value'])
     indirect_cost_scaling_metric = bca_inputs.at['scale_indirect_costs_by', 'Value']
     calc_pollution_effects = bca_inputs.at['calculate_pollution_effects', 'Value']
+    round_moves_ustons_by = pd.to_numeric(bca_inputs.at['round_moves_ustons_by', 'Value'])
 
     # how many alternatives are there? But first, be sure that optionID is the header for optionID.
     if 'Alternative' in moves.columns.tolist():
@@ -264,6 +272,9 @@ def main():
     for df in [moves, sourcetype_costs]:
         df = Fleet(df).define_bca_sourcetype()
 
+    # round MOVES values
+    uston_list = [metric for metric in moves.columns if 'UStons' in metric]
+    moves = round_metrics(moves, uston_list, round_moves_ustons_by)
     # adjust MOVES VPOP/VMT/Gallons to reflect what's included in CTI (excluding what's not in CTI)
     moves_adjusted = Fleet(moves).adjust_moves(moves_adjustments) # adjust (41, 2) to be engine cert only
     moves_adjusted = moves_adjusted.loc[(moves_adjusted['regClassID'] != 41) | (moves_adjusted['fuelTypeID'] != 1), :] # eliminate (41, 1) keeping (41, 2)
