@@ -190,6 +190,7 @@ def main():
     indirect_cost_scaling_metric = bca_inputs.at['scale_indirect_costs_by', 'Value']
     calc_pollution_effects = bca_inputs.at['calculate_pollution_effects', 'Value']
     round_moves_ustons_by = pd.to_numeric(bca_inputs.at['round_moves_ustons_by', 'Value'])
+    round_costs_by = pd.to_numeric(bca_inputs.at['round_costs_by', 'Value'])
 
     # how many alternatives are there? But first, be sure that optionID is the header for optionID.
     if 'Alternative' in moves.columns.tolist():
@@ -273,8 +274,8 @@ def main():
         df = Fleet(df).define_bca_sourcetype()
 
     # round MOVES values
-    uston_list = [metric for metric in moves.columns if 'UStons' in metric]
-    moves = round_metrics(moves, uston_list, round_moves_ustons_by)
+    # uston_list = [metric for metric in moves.columns if 'UStons' in metric]
+    # moves = round_metrics(moves, uston_list, round_moves_ustons_by)
     # adjust MOVES VPOP/VMT/Gallons to reflect what's included in CTI (excluding what's not in CTI)
     moves_adjusted = Fleet(moves).adjust_moves(moves_adjustments) # adjust (41, 2) to be engine cert only
     moves_adjusted = moves_adjusted.loc[(moves_adjusted['regClassID'] != 41) | (moves_adjusted['fuelTypeID'] != 1), :] # eliminate (41, 1) keeping (41, 2)
@@ -670,6 +671,16 @@ def main():
     if calc_pollution_effects == 'Y':
         emission_cost_metrics_for_deltas = criteria_and_tailpipe_emission_costs_list + ['PM25_onroad', 'NOx_onroad']
         emission_costs_all = pd.concat([emission_costs_all, CalcDeltas(emission_costs_all).calc_delta(number_alts, emission_cost_metrics_for_deltas)], axis=0, ignore_index=True)
+
+    # now do some rounding of monetized values
+    techcosts_metrics_to_round = [metric for metric in techcost_all.columns if 'Cost' in metric]
+    operating_costs_metrics_to_round = [metric for metric in operating_costs_all.columns if 'Cost' in metric]
+    emission_costs_metrics_to_round = [metric for metric in emission_costs_all.columns if 'Cost' in metric]
+    bca_costs_metrics_to_round = [metric for metric in bca_costs.columns if 'Cost' in metric]
+    techcost_all = round_metrics(techcost_all, techcosts_metrics_to_round, round_costs_by)
+    operating_costs_all = round_metrics(operating_costs_all, operating_costs_metrics_to_round, round_costs_by)
+    emission_costs_all = round_metrics(emission_costs_all, emission_costs_metrics_to_round, round_costs_by)
+    bca_costs = round_metrics(bca_costs, bca_costs_metrics_to_round, round_costs_by)
 
     elapsed_time_calcs = time.time() - start_time_calcs
 
