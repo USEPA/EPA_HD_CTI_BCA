@@ -674,9 +674,9 @@ def main():
 
     # now do some rounding of monetized values
     techcosts_metrics_to_round = [metric for metric in techcost_all.columns if 'Cost' in metric]
-    operating_costs_metrics_to_round = [metric for metric in operating_costs_all.columns if 'Cost' in metric]
+    operating_costs_metrics_to_round = [metric for metric in operating_costs_all.columns if 'Cost' in metric and 'PerMile' not in metric]
     emission_costs_metrics_to_round = [metric for metric in emission_costs_all.columns if 'Cost' in metric]
-    bca_costs_metrics_to_round = [metric for metric in bca_costs.columns if 'Cost' in metric]
+    bca_costs_metrics_to_round = [metric for metric in bca_costs.columns if 'Cost' in metric and 'PerMile' not in metric]
     techcost_all = round_metrics(techcost_all, techcosts_metrics_to_round, round_costs_by)
     operating_costs_all = round_metrics(operating_costs_all, operating_costs_metrics_to_round, round_costs_by)
     emission_costs_all = round_metrics(emission_costs_all, emission_costs_metrics_to_round, round_costs_by)
