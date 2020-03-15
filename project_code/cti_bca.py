@@ -448,6 +448,9 @@ def main():
     # merge in the estimated warranty and useful life ages for estimating repair costs
     for df in [repair_warranty_ages, repair_usefullife_ages]:
         operating_costs = operating_costs.merge(df, on=['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'modelYearID'], how='left')
+    # for those MYs without ageID data within the range specified in BCA_Inputs, we'll do a forward fill to fill their data with the last MY having ageID data within the range
+    operating_costs.loc[operating_costs['modelYearID'] >= operating_costs['modelYearID'].max() - typical_vmt_thru_age] = \
+        operating_costs.loc[operating_costs['modelYearID'] >= operating_costs['modelYearID'].max() - typical_vmt_thru_age].ffill(axis=0)
     operating_costs = RepairAndMaintenanceCost(operating_costs).repair_and_maintenance_costs_curve(metrics_repair_and_maint_dict, pkg_directcost_veh_regclass_dict)
     operating_costs = DEFandFuelCost(operating_costs).orvr_fuel_impacts_mlpergram(orvr_fuelchanges)
     def_doserates = DEFandFuelCost(def_doserate_inputs).def_doserate_scaling_factor()
