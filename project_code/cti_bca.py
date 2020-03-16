@@ -83,6 +83,17 @@ def convert_dollars_to_bca_basis(df, deflators, dollar_basis_years, _metric, bca
 
 
 def weighted_result(df, metric, weightby_metric, veh, year_metric, year_list, max_age_included):
+    """
+
+    :param df: DataFrame containing values to be weighted.
+    :param metric: The specific metric (or series) of data to be weighted.
+    :param weightby_metric:  The metric by which the data is being weighted.
+    :param veh: The specific vehicle (tuple) for which weighting is requested.
+    :param year_metric:  "yearID" or "modelYearID"
+    :param year_list: List of years for which weighted results are requested.
+    :param max_age_included: The age through which data is to be weighted (i.e., can be less than full life)
+    :return: DataFrame containing weighted results for the passed vehicle.
+    """
     weighted_results = dict()
     for year in year_list:
         df_temp = pd.DataFrame(df.loc[(df['alt_rc_ft'] == veh) & (df[year_metric] == year) & (df['ageID'] <= max_age_included), :])
@@ -92,9 +103,14 @@ def weighted_result(df, metric, weightby_metric, veh, year_metric, year_list, ma
 
 
 def round_metrics(df, metrics, round_by):
+    """
+
+    :param df: DataFrame containing data to be rounded.
+    :param metrics: List of metrics within the passed DataFrame for which rounding is requested.
+    :param round_by: A value entered via the BCA_Inputs sheet contained in the inputs folder that sets the level of rounding.
+    :return: The passed DataFrame with 'metrics' rounded by 'round_by'
+    """
     df[metrics] = df[metrics].round(round_by)
-    # for metric in metrics:
-    #     df[metric].round(round_by)
     return df
 
 

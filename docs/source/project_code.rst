@@ -9,6 +9,7 @@ usepa-cti-bca project code
    direct_cost
    discounting
    emission_cost
+   estimated_age
    fleet
    fuel_prices_aeo
    group_metrics

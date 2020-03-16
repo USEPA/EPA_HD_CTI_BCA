@@ -102,33 +102,22 @@ class DEFandFuelCost:
 
 class RepairAndMaintenanceCost:
     """
-        The RepairAndMaintenance class calculates the repair & maintenance costs.
+    The RepairAndMaintenance class calculates the repair & maintenance costs.
 
-        :param passed_object: A DataFrame that provides the necessary physical parameters; or a vehicle tuple.
-        """
+    :param passed_object: A DataFrame that provides the necessary physical parameters: a vehicle tuple; cumulative VMT/veh/year;
+                          estimated ages when warranty & useful life is reached.
+    """
     def __init__(self, passed_object):
         self.passed_object = passed_object
 
-    def repair_and_maintenance_costs_byAge(self, repair_and_maintenance_cpm):
-        """
-
-        :param repair_and_maintenance_cpm: A DataFrame of cost per mile input values by ageID.
-        :return: The passed DataFrame (which must contain vehicles and vehicle ageID) with maintenance & repair costs along with emission-related maintenance & repair costs added in.
-        """
-        return_df = self.passed_object.copy()
-        # cost_per_mile_df = pd.DataFrame(return_df, columns=['optionID', 'regClassID', 'fuelTypeID', 'ageID'])
-        repair_and_maintenance_cpm.insert(0, 'emission_repair_cpm',
-                                          repair_and_maintenance_cpm['emission_share']
-                                          * repair_and_maintenance_cpm['repair_share']
-                                          * repair_and_maintenance_cpm['maintenance_and_repair_cpm'])
-        return_df = return_df.merge(repair_and_maintenance_cpm[['ageID', 'maintenance_and_repair_cpm', 'emission_repair_cpm']], on=['ageID'])
-        return_df.insert(len(return_df.columns), 'MaintenanceAndRepairCost_TotalCost', return_df['VMT'] * return_df['maintenance_and_repair_cpm'])
-        return_df.insert(len(return_df.columns), 'EmissionRepairCost_TotalCost', return_df['VMT'] * return_df['emission_repair_cpm'])
-        return_df.insert(len(return_df.columns), 'MaintenanceAndRepairCost_AvgPerVeh', return_df['VMT_AvgPerVeh'] * return_df['maintenance_and_repair_cpm'])
-        return_df.insert(len(return_df.columns), 'EmissionRepairCost_AvgPerVeh', return_df['VMT_AvgPerVeh'] * return_df['emission_repair_cpm'])
-        return return_df
-
     def repair_and_maintenance_costs_curve(self, metrics_repair_and_maint_dict, pkg_directcost_veh_regclass_dict):
+        """
+
+        :param metrics_repair_and_maint_dict: The repair and maintenance cost curve inputs contained in the inputs folder; the dictionary is created in code
+        :param pkg_directcost_veh_regclass_dict: The dictionary of package direct costs, year-over-year, created in code
+        :return: The passed DataFrame (operating_costs expected) with emission repair metrics included (cost/mile, cost/veh, total costs)
+        """
+
         df_temp = self.passed_object.copy()
         vehicles = pd.Series(df_temp['alt_st_rc_ft']).unique()
         repair_cost_dict = dict()

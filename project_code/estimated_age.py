@@ -2,10 +2,23 @@ import pandas as pd
 
 
 class EstimatedAge:
+    """
+    The EstimatedAge class calculates the age at which warranty and useful life are reached given the alt_st_rc_ft vehicle
+
+    :param passed_df: A DataFrame that provides the necessary physical parameters: a vehicle tuple; cumulative VMT/veh/year
+    """
     def __init__(self, passed_df):
         self.passed_df = passed_df
 
     def ages_by_identifier(self, miles_df, age_df, vmt_thru_ageID, identifier):
+        """
+
+        :param miles_df: Warranty or Useful life miles; a DataFrame generated in code from files in the inputs folder.
+        :param age_df: Warranty or Useful life ages; a DataFrame generated in code from files in the inputs folder.
+        :param vmt_thru_ageID: A single entry in the BCA_Inputs file contained in the inputs folder.
+        :param identifier: A string: "Warranty" or "UsefulLife" expected.
+        :return: A DataFrame of estimated ages at which warranty or useful life are expected to be reached.
+        """
         df_return = pd.DataFrame(self.passed_df.loc[self.passed_df['ageID'] == vmt_thru_ageID],
                                  columns=['optionID', 'modelYearID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'alt_rc_ft', 'VMT_AvgPerVeh_CumSum'])
         df_return.insert(len(df_return.columns), 'TypicalVMTperYear', df_return['VMT_AvgPerVeh_CumSum'] / (vmt_thru_ageID + 1))

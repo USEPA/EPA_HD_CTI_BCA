@@ -7,7 +7,9 @@ markup_factors_with_vmt_scalars = ['Warranty', 'RnD']
 
 
 class IndirectCost:
-    """The IndirectCost class takes a DataFrame of direct costs and applies markups as provided by the merge_markups_and_directcosts method and provided in the markups_factors list."""
+    """
+    The IndirectCost class takes a DataFrame of direct costs and applies markups as provided by the merge_markups_and_directcosts method and provided in the markups_factors list.
+    """
 
     def __init__(self, _pkg_directcost):
         self._pkg_directcost = _pkg_directcost
@@ -93,11 +95,23 @@ class IndirectCost:
 
 
 class IndirectCostScalars:
+    """
+    The IndirectCostScalars class calculates the scaling factors to be applied to indirect cost contributors. The scaling factors can be absolute
+    or relative to the prior scaling factor.
+
+    :param: input_df: A DataFrame of warranty or useful life miles and ages by optionID.
+    """
 
     def __init__(self, input_df):
         self.input_df = input_df
 
     def calc_scalars_absolute(self, identifier, period):
+        """
+
+        :param identifier: String; "Warranty" or "UsefulLife" expected.
+        :param period: String; "Miles" or "Ages" expected via input cell in the BCA_Inputs sheet contained in the inputs folder.
+        :return: DatFrame of scaling factors.
+        """
         scaling_inputs = pd.DataFrame(self.input_df.loc[self.input_df['period'] == period])
         return_df = scaling_inputs.copy()
         cols = [col for col in return_df.columns if '20' in col]
@@ -108,6 +122,12 @@ class IndirectCostScalars:
         return return_df
 
     def calc_scalars_relative(self, identifier, period):
+        """
+
+        :param identifier: String; "Warranty" or "UsefulLife" expected.
+        :param period: String; "Miles" or "Ages" expected via input cell in the BCA_Inputs sheet contained in the inputs folder.
+        :return: DatFrame of scaling factors.
+        """
         scaling_inputs = pd.DataFrame(self.input_df.loc[self.input_df['period'] == period])
         return_df = scaling_inputs.copy()
         cols = [col for col in return_df.columns if '20' in col]
