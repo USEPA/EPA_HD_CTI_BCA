@@ -94,9 +94,15 @@ def weighted_result(df, metric, weightby_metric, veh, year_metric, year_list, ma
     :param max_age_included: The age through which data is to be weighted (i.e., can be less than full life)
     :return: DataFrame containing weighted results for the passed vehicle.
     """
+    if len(veh) == 3:
+        veh_id = 'alt_rc_ft'
+    elif len(veh) == 4:
+        veh_id = 'alt_st_rc_ft'
+    else:
+        veh_id = 'alt_st_rc_ft_zg'
     weighted_results = dict()
     for year in year_list:
-        df_temp = pd.DataFrame(df.loc[(df['alt_rc_ft'] == veh) & (df[year_metric] == year) & (df['ageID'] <= max_age_included), :])
+        df_temp = pd.DataFrame(df.loc[(df[veh_id] == veh) & (df[year_metric] == year) & (df['ageID'] <= max_age_included), :])
         weighted_value = (df_temp[metric] * df_temp[weightby_metric]).sum() / df_temp[weightby_metric].sum()
         weighted_results[year] = weighted_value
     return weighted_results
@@ -481,6 +487,7 @@ def main():
 
     # now create some weighted results of operating costs
     vehs_operating_costs = pd.Series(operating_costs['alt_rc_ft']).unique()
+    vehs_repair_costs = pd.Series(operating_costs['alt_st_rc_ft']).unique()
     weighted_repair_owner_cpm = dict()
     weighted_def_cpm = dict()
     weighted_fuel_cpm = dict()
@@ -490,10 +497,11 @@ def main():
         year_list = [2027, 2030, 2035]
     max_age_included = 9
     for veh in vehs_operating_costs:
-        weighted_repair_owner_cpm[veh] = weighted_result(operating_costs, 'EmissionRepairCost_Owner_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list, max_age_included)
+        # weighted_repair_owner_cpm[veh] = weighted_result(operating_costs, 'EmissionRepairCost_Owner_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list, max_age_included)
         weighted_def_cpm[veh] = weighted_result(operating_costs, 'UreaCost_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list, max_age_included)
         weighted_fuel_cpm[veh] = weighted_result(operating_costs, 'FuelCost_Retail_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list, max_age_included)
-
+    for veh in vehs_repair_costs:
+        weighted_repair_owner_cpm[veh] = weighted_result(operating_costs, 'EmissionRepairCost_Owner_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list, max_age_included)
     weighted_repair_owner_cpm_df = pd.DataFrame(weighted_repair_owner_cpm).transpose()
     weighted_def_cpm_df = pd.DataFrame(weighted_def_cpm).transpose()
     weighted_fuel_cpm_df = pd.DataFrame(weighted_fuel_cpm).transpose()
