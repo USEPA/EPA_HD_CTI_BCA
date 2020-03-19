@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path, PurePath
 import shutil
-# import os
+import os
 from datetime import datetime
 import time
 # from tqdm import tqdm
@@ -120,6 +120,13 @@ def round_metrics(df, metrics, round_by):
     return df
 
 
+def get_file_datetime(list_of_files):
+    file_datetime = pd.DataFrame()
+    file_datetime.insert(0, 'Item', [path_to_file for path_to_file in list_of_files])
+    file_datetime.insert(1, 'Results', [time.ctime(os.path.getmtime(path_to_file)) for path_to_file in list_of_files])
+    return file_datetime
+
+
 def main():
     """The main script."""
     # first, set the output files desired for QA/QC work
@@ -160,7 +167,8 @@ def main():
     # add input files as needed for copy to path_to_results folder
     input_files_pathlist = [run_settings_file, bca_inputs_file, regclass_costs_file, regclass_learningscalars_file,
                             markups_file, sourcetype_costs_file, moves_file, moves_adjustments_file, options_file,
-                            def_doserate_inputs_file, orvr_fuelchange_file, repair_and_maintenance_file, warranty_inputs_file, usefullife_inputs_file]
+                            def_doserate_inputs_file, def_prices_file, orvr_fuelchange_file, repair_and_maintenance_file,
+                            warranty_inputs_file, usefullife_inputs_file]
 
     # read input files
     print("Reading input files....")
@@ -838,6 +846,7 @@ def main():
     summary_log = pd.DataFrame(data={'Item': ['Version', 'Run folder', 'Start of run', 'Elapsed time read inputs', 'Elapsed time calculations', 'Elapsed time save outputs', 'End of run', 'Elapsed runtime'],
                                      'Results': [project_code.__version__, path_of_run_folder, start_time_readable, elapsed_time_read, elapsed_time_calcs, elapsed_time_outputs, end_time_readable, elapsed_time],
                                      'Units': ['', '', 'YYYYmmdd-HHMMSS', 'seconds', 'seconds', 'seconds', 'YYYYmmdd-HHMMSS', 'seconds']})
+    summary_log = pd.concat([summary_log, get_file_datetime(input_files_pathlist)], axis=0, sort=False, ignore_index=True)
     summary_log.to_csv(path_of_run_results_folder.joinpath('summary_log.csv'), index=False)
 
 
