@@ -20,8 +20,8 @@ class DEFandFuelCost:
         :return: A DataFrame of dose rate scaling factors to apply to fuel consumption in calculating urea operating costs.
         """
         def_doserates = self.input_df.copy()
-        def_doserates.insert(len(def_doserates.columns), 'DEFDoseRate_PercentOfFuel', 0)
-        def_doserates['DEFDoseRate_PercentOfFuel'] = ((def_doserates['standard_NOx'] - def_doserates['engineout_NOx'])
+        def_doserates.insert(len(def_doserates.columns), 'DEF_PercentOfFuel_Baseline', 0)
+        def_doserates['DEF_PercentOfFuel_Baseline'] = ((def_doserates['standard_NOx'] - def_doserates['engineout_NOx'])
                                                       - def_doserates['intercept_DEFdoserate']) \
                                                      / def_doserates['slope_DEFdoserate']
         def_doserates.drop(columns=['engineout_NOx', 'standard_NOx', 'intercept_DEFdoserate', 'slope_DEFdoserate'], inplace=True)
@@ -42,16 +42,16 @@ class DEFandFuelCost:
         vehs = set(df['alt_rc_ft'])
         # since the merge of DEF dose rates is only for select MYs and alt_rc_ft vehicles, filling in for other ages/years has to be done via the following two loops
         for veh in vehs:
-            df.loc[(df['alt_rc_ft'] == veh) & (df['ageID'] == 0), 'DEFDoseRate_PercentOfFuel'] \
-                = df.loc[(df['alt_rc_ft'] == veh) & (df['ageID'] == 0), 'DEFDoseRate_PercentOfFuel'].ffill(axis=0)
+            df.loc[(df['alt_rc_ft'] == veh) & (df['ageID'] == 0), 'DEF_PercentOfFuel_Baseline'] \
+                = df.loc[(df['alt_rc_ft'] == veh) & (df['ageID'] == 0), 'DEF_PercentOfFuel_Baseline'].ffill(axis=0)
         for veh in vehs:
             for year in range(df['modelYearID'].min(), df['modelYearID'].max() + 1):
-                df.loc[(df['alt_rc_ft'] == veh) & (df['modelYearID'] == year), 'DEFDoseRate_PercentOfFuel'] \
-                    = df.loc[(df['alt_rc_ft'] == veh) & (df['modelYearID'] == year), 'DEFDoseRate_PercentOfFuel'].ffill(axis=0)
+                df.loc[(df['alt_rc_ft'] == veh) & (df['modelYearID'] == year), 'DEF_PercentOfFuel_Baseline'] \
+                    = df.loc[(df['alt_rc_ft'] == veh) & (df['modelYearID'] == year), 'DEF_PercentOfFuel_Baseline'].ffill(axis=0)
         # set non-diesel dose rates to zero and any NaNs to zero just for certainty
-        df.loc[df['fuelTypeID'] != 2, 'DEFDoseRate_PercentOfFuel'] = 0
-        df['DEFDoseRate_PercentOfFuel'].fillna(0, inplace=True)
-        df.insert(len(df.columns), 'Gallons_DEF', df['Gallons'] * df['DEFDoseRate_PercentOfFuel'] + df['NOx_onroad_Reductions'] * def_gallons_perTonNOxReduction)
+        df.loc[df['fuelTypeID'] != 2, 'DEF_PercentOfFuel_Baseline'] = 0
+        df['DEF_PercentOfFuel_Baseline'].fillna(0, inplace=True)
+        df.insert(len(df.columns), 'Gallons_DEF', df['Gallons'] * df['DEF_PercentOfFuel_Baseline'] + df['NOx_onroad_Reductions'] * def_gallons_perTonNOxReduction)
         df = df.merge(prices, on='yearID', how='left')
         df.insert(len(df.columns), 'UreaCost_TotalCost', df[['Gallons_DEF', 'DEF_USDperGal']].product(axis=1))
         df.insert(len(df.columns), 'UreaCost_AvgPerMile', df['UreaCost_TotalCost'] / df['VMT'])
