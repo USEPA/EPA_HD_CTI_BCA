@@ -27,16 +27,18 @@ class DEFandFuelCost:
         def_doserates.drop(columns=['engineout_NOx', 'standard_NOx', 'intercept_DEFdoserate', 'slope_DEFdoserate'], inplace=True)
         return def_doserates
 
-    def def_cost_df(self, def_doserates, prices):
+    def def_cost_df(self, def_doserates, prices, def_gallons_perTonNOxReduction):
         """
 
         :param def_doserates: A DataFrame of DEF scaling factors (dose rate inputs).
         :param prices: A DataFrame of DEF prices.
+        :param def_gallons_perTonNOxReduction: The gallons of DEF consumed for each ton of NOx reduced
         :return: The passed DataFrame after adding the DEF operating cost metrics:
                 ['DoseRate_PercentOfFuel', 'DEF_USDperGal', 'OperatingCost_Urea_TotalCost']
         """
         df = self.input_df.copy()
-        df = df.merge(def_doserates, on=['optionID', 'modelYearID', 'regClassID', 'fuelTypeID'], how='left')
+        df = df.merge(def_doserates, on=['modelYearID', 'regClassID', 'fuelTypeID'], how='left')
+        # df = df.merge(def_doserates, on=['optionID', 'modelYearID', 'regClassID', 'fuelTypeID'], how='left')
         vehs = set(df['alt_rc_ft'])
         # since the merge of DEF dose rates is only for select MYs and alt_rc_ft vehicles, filling in for other ages/years has to be done via the following two loops
         for veh in vehs:
@@ -49,8 +51,9 @@ class DEFandFuelCost:
         # set non-diesel dose rates to zero and any NaNs to zero just for certainty
         df.loc[df['fuelTypeID'] != 2, 'DEFDoseRate_PercentOfFuel'] = 0
         df['DEFDoseRate_PercentOfFuel'].fillna(0, inplace=True)
+        df.insert(len(df.columns), 'Gallons_DEF', df['Gallons'] * df['DEFDoseRate_PercentOfFuel'] + df['NOx_onroad_Reductions'] * def_gallons_perTonNOxReduction)
         df = df.merge(prices, on='yearID', how='left')
-        df.insert(len(df.columns), 'UreaCost_TotalCost', df[['Gallons', 'DEFDoseRate_PercentOfFuel', 'DEF_USDperGal']].product(axis=1))
+        df.insert(len(df.columns), 'UreaCost_TotalCost', df[['Gallons_DEF', 'DEF_USDperGal']].product(axis=1))
         df.insert(len(df.columns), 'UreaCost_AvgPerMile', df['UreaCost_TotalCost'] / df['VMT'])
         return df
 

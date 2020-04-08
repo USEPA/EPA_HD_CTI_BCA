@@ -10,7 +10,7 @@ class CalcDeltas:
     def __init__(self, data):
         self.data = data
 
-    def calc_delta(self, _number_alts, _list):
+    def calc_delta_and_new_alt_id(self, _number_alts, _list):
         """
 
         :param _number_alts: The number of alternatives, or options, being considered in the data.
@@ -31,10 +31,34 @@ class CalcDeltas:
             alt_delta = int(alt * 10)
             alternative[alt_delta] = pd.DataFrame(alternative[alt].copy())
             alternative[alt_delta]['optionID'] = alt_delta
-            alternative[alt_delta]['OptionName'] = alt_name + '_minus_' + alt0_name
+            alternative[alt_delta]['OptionName'] = str(f'{alt_name}_minus_{alt0_name}')
         for alt in range(1, _number_alts):
             alt_delta = int(alt * 10)
             for item in _list:
                 alternative[alt_delta][item] = alternative[alt][item] - alternative[0][item]
             return_df = return_df.append(alternative[alt_delta], ignore_index=True, sort=False)
+        return return_df
+
+    def calc_delta_and_keep_alt_id(self, _number_alts, _list):
+        """
+
+        :param _number_alts: The number of alternatives, or options, being considered in the data.
+        :type _number_alts: Integer
+        :param _list: List of metrics for which to calculate deltas.
+        :type _list: List
+        :return: The passed DataFrame with metrics in _list showing as reductions from baseline rather than the values contained in the passed DataFrame
+        """
+        return_df = pd.DataFrame(self.data.loc[self.data['optionID'] == 0, :])
+        alternative = dict()
+        alternative[0] = pd.DataFrame(self.data.loc[self.data['optionID'] == 0, :])
+        alternative[0].reset_index(drop=True, inplace=True)
+        for alt in range(1, _number_alts):
+            alternative[alt] = pd.DataFrame(self.data.loc[self.data['optionID'] == alt, :])
+            alternative[alt].reset_index(drop=True, inplace=True)
+            for item in _list:
+                alternative[alt][item] = alternative[0][item] - alternative[alt][item]
+            return_df = return_df.append(alternative[alt], ignore_index=True, sort=False)
+        for item in _list:
+            return_df.loc[return_df['optionID'] == 0, item] = 0
+            return_df.rename(columns={item: f'{item}_Reductions'}, inplace=True)
         return return_df
