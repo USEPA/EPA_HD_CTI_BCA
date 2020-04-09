@@ -51,7 +51,8 @@ class DEFandFuelCost:
         # set non-diesel dose rates to zero and any NaNs to zero just for certainty
         df.loc[df['fuelTypeID'] != 2, 'DEF_PercentOfFuel_Baseline'] = 0
         df['DEF_PercentOfFuel_Baseline'].fillna(0, inplace=True)
-        df.insert(len(df.columns), 'Gallons_DEF', df['Gallons'] * df['DEF_PercentOfFuel_Baseline'] + df['NOx_onroad_Reductions'] * def_gallons_perTonNOxReduction)
+        df.insert(len(df.columns), 'Gallons_DEF', 0)
+        df.loc[df['fuelTypeID'] == 2, 'Gallons_DEF'] = df['Gallons'] * df['DEF_PercentOfFuel_Baseline'] + df['NOx_onroad_Reductions'] * def_gallons_perTonNOxReduction
         df = df.merge(prices, on='yearID', how='left')
         df.insert(len(df.columns), 'UreaCost_TotalCost', df[['Gallons_DEF', 'DEF_USDperGal']].product(axis=1))
         df.insert(len(df.columns), 'UreaCost_AvgPerMile', df['UreaCost_TotalCost'] / df['VMT'])

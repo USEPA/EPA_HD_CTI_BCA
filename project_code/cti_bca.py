@@ -795,7 +795,7 @@ def main():
 
     # copy input files into results folder; also save fuel_prices and reshaped files to this folder
     inputs_filename_list = inputs_filenames(input_files_pathlist)
-    if CREATE_ALL_FILES == 'y' or CREATE_ALL_FILES == 'Y':
+    if CREATE_ALL_FILES == 'y' or CREATE_ALL_FILES == 'Y' or CREATE_ALL_FILES == '':
         for file in inputs_filename_list:
             path_source = PATH_INPUTS.joinpath(file)
             path_destination = path_of_run_inputs_folder.joinpath(file)
