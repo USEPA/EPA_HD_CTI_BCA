@@ -96,22 +96,22 @@ class Fleet:
         fleet_with_zgtech.loc[fleet_with_zgtech['Gallons'] == 0, 'MPG_AvgPerVeh'] = 0
         return fleet_with_zgtech
 
-    def insert_option_name(self, _options, _number_alts):
+    def insert_option_name(self, options, number_alts):
         """
 
-        :param _options: A DataFrame providing the OptionName for each optionID.
-        :param _number_alts: The maximum number of options or alternatives in the fleet input file.
+        :param options: A DataFrame providing the OptionName for each optionID.
+        :param number_alts: The maximum number of options or alternatives in the fleet input file.
         :return: The passed fleet DataFrame with a new and populated column called OptionName.
         """
         # First create a dictionary of options from the dataframe of options.
         options_dict = dict()
-        for index, row in _options.iterrows():
+        for index, row in options.iterrows():
             key = row['optionID']
             value = row['OptionName']
             options_dict[key] = value
         # This dictionary will work nicely in the following loop. But first insert the new column to be populated in the loop.
         self.fleet.insert(1, 'OptionName', '')
-        for option in range(0, _number_alts):
+        for option in range(0, number_alts):
             self.fleet.loc[self.fleet['optionID'] == option, 'OptionName'] = options_dict[option]
         return self.fleet
 

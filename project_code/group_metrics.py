@@ -40,13 +40,13 @@ class GroupMetrics:
             df_cumsum.rename(columns={metric: metric + '_CumSum'}, inplace=True)
         return df_cumsum
 
-    def annualize_cumsum(self, metrics_cumsum, _year_min):
+    def annualize_cumsum(self, metrics_cumsum, year_min):
         """
 
         :param metrics_cumsum: A list of cumulative summed metrics for which annualized values are to be calculated.
-        :param _year_min: Values will be annualized beginning in year_min.
+        :param year_min: Values will be annualized beginning in year_min.
         :return: The passed DataFrame with annualized values having been added.
         """
         for metric in metrics_cumsum:
-            self.data.insert(len(self.data.columns), metric + '_Annualized', self.data[metric + '_CumSum'] / (self.data['yearID'] - _year_min + 1))
+            self.data.insert(len(self.data.columns), metric + '_Annualized', self.data[metric + '_CumSum'] / (self.data['yearID'] - year_min + 1))
         return self.data

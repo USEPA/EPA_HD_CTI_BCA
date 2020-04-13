@@ -255,11 +255,14 @@ def main():
     for number in range(len(dollar_basis_years_cpiu)):
         factors_cpiu[number] = pd.to_numeric(bca_inputs.at['cpiu_factor_' + str(dollar_basis_years_cpiu[number]), 'Value'])
 
-    fuel_prices = GetFuelPrices(PATH_PROJECT).get_fuel_prices(aeo_case)
+    fuel_prices = GetFuelPrices(PATH_PROJECT, aeo_case)
+    fuel_prices = fuel_prices.get_fuel_prices()
 
     # Calculate the Indirect Cost scalars based on the warranty_inputs and usefullife_inputs
-    warranty_scalars = IndirectCostScalars(warranty_inputs).calc_scalars_absolute('Warranty', indirect_cost_scaling_metric)
-    usefullife_scalars = IndirectCostScalars(usefullife_inputs).calc_scalars_relative('RnD', indirect_cost_scaling_metric)
+    warranty_scalars = IndirectCostScalars(warranty_inputs, 'Warranty', indirect_cost_scaling_metric)
+    warranty_scalars = warranty_scalars.calc_scalars_absolute()
+    usefullife_scalars = IndirectCostScalars(usefullife_inputs, 'RnD', indirect_cost_scaling_metric)
+    usefullife_scalars = usefullife_scalars.calc_scalars_relative()
     markups_vmt_scalars = pd.concat([warranty_scalars, usefullife_scalars], ignore_index=True, axis=0)
     markups_vmt_scalars.reset_index(drop=True, inplace=True)
 
@@ -451,7 +454,8 @@ def main():
                                                           'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
                                                           'alt_st_rc_ft_zg', 'alt_st_rc_ft', 'alt_rc_ft',
                                                           'PM25_onroad', 'NOx_onroad'])
-        emission_costs = EmissionCost(emission_costs).calc_criteria_emission_costs_df(criteria_emission_costs_reshaped)
+        emission_cost_calcs = EmissionCost(emission_costs, criteria_emission_costs_reshaped)
+        emission_costs = emission_cost_calcs.calc_criteria_emission_costs_df()
         criteria_costs_list = [col for col in emission_costs.columns if 'CriteriaCost' in col]
         criteria_costs_list_3 = [col for col in emission_costs.columns if 'CriteriaCost' in col and '0.03' in col]
         criteria_costs_list_7 = [col for col in emission_costs.columns if 'CriteriaCost' in col and '0.07' in col]
@@ -477,8 +481,10 @@ def main():
     # for those MYs without ageID data within the range specified in BCA_Inputs, we'll do a forward fill to fill their data with the last MY having ageID data within the range
     operating_costs.loc[operating_costs['modelYearID'] >= operating_costs['modelYearID'].max() - typical_vmt_thru_age] = \
         operating_costs.loc[operating_costs['modelYearID'] >= operating_costs['modelYearID'].max() - typical_vmt_thru_age].ffill(axis=0)
-    operating_costs = RepairAndMaintenanceCost(operating_costs).repair_and_maintenance_costs_curve(metrics_repair_and_maint_dict, pkg_directcost_veh_regclass_dict)
-    operating_costs = CalcDeltas(operating_costs).calc_delta_and_keep_alt_id(number_alts, ['NOx_onroad'])
+    emission_repair_cost_calcs = RepairAndMaintenanceCost(operating_costs, metrics_repair_and_maint_dict, pkg_directcost_veh_regclass_dict)
+    operating_costs = emission_repair_cost_calcs.emission_repair_costs()
+    get_nox_reductions = CalcDeltas(operating_costs, number_alts, ['NOx_onroad'])
+    operating_costs = get_nox_reductions.calc_delta_and_keep_alt_id()
     operating_costs = DEFandFuelCost(operating_costs).orvr_fuel_impacts_mlpergram(orvr_fuelchanges)
     def_doserates = DEFandFuelCost(def_doserate_inputs).def_doserate_scaling_factor()
     operating_costs = DEFandFuelCost(operating_costs).def_cost_df(def_doserates, def_prices, def_gallons_perTonNOxReduction)
@@ -517,10 +523,13 @@ def main():
     emission_costs_dict = dict()
     operating_costs_dict = dict()
     for dr in [0, discrate_social_low, discrate_social_high]:
-        techcost_dict[dr] = DiscountValues(techcost, dr, discount_to_yearID, discount_to).discount(techcost_metrics_to_discount)
-        operating_costs_dict[dr] = DiscountValues(operating_costs, dr, discount_to_yearID, discount_to).discount(operatingcost_metrics_to_discount)
+        techcost_dict[dr] = DiscountValues(techcost, techcost_metrics_to_discount, dr, discount_to_yearID, discount_to)
+        techcost_dict[dr] = techcost_dict[dr].discount()
+        operating_costs_dict[dr] = DiscountValues(operating_costs, operatingcost_metrics_to_discount, dr, discount_to_yearID, discount_to)
+        operating_costs_dict[dr] = operating_costs_dict[dr].discount()
         if calc_pollution_effects == 'Y':
-            emission_costs_dict[dr] = DiscountValues(emission_costs, dr, discount_to_yearID, discount_to).discount(criteria_and_tailpipe_emission_costs_list)
+            emission_costs_dict[dr] = DiscountValues(emission_costs, criteria_and_tailpipe_emission_costs_list, dr, discount_to_yearID, discount_to)
+            emission_costs_dict[dr] = emission_costs_dict[dr].discount()
 
     # now set to NaN discounted pollutant values using discount rates that are not consistent with the input values
     if calc_pollution_effects == 'Y':
@@ -669,18 +678,23 @@ def main():
     bca_costs_metrics_for_deltas = bca_costs_metrics_to_sum + [metric + '_CumSum' for metric in bca_costs_metrics_to_sum] \
                                    + [metric + '_Annualized' for metric in bca_costs_metrics_to_sum]
     for group in range(1, groups + 1):
-        techcost_summary[group] = pd.concat([techcost_summary[group], CalcDeltas(techcost_summary[group]).
-                                            calc_delta_and_new_alt_id(number_alts, techcost_metrics_for_deltas)], axis=0, ignore_index=True)
-        operating_costs_summary[group] = pd.concat([operating_costs_summary[group], CalcDeltas(operating_costs_summary[group]).
-                                                   calc_delta_and_new_alt_id(number_alts, operating_cost_metrics_for_deltas)], axis=0, ignore_index=True)
-        bca_costs_sum[group] = pd.concat([bca_costs_sum[group], CalcDeltas(bca_costs_sum[group]).
-                                         calc_delta_and_new_alt_id(number_alts, bca_costs_metrics_for_deltas)], axis=0, ignore_index=True)
+        techcost_summary[group] = pd.concat([techcost_summary[group],
+                                             CalcDeltas(techcost_summary[group], number_alts, techcost_metrics_for_deltas).calc_delta_and_new_alt_id()],
+                                            axis=0, ignore_index=True)
+        operating_costs_summary[group] = pd.concat([operating_costs_summary[group],
+                                                    CalcDeltas(operating_costs_summary[group], number_alts, operating_cost_metrics_for_deltas).calc_delta_and_new_alt_id()],
+                                                   axis=0, ignore_index=True)
+        bca_costs_sum[group] = pd.concat([bca_costs_sum[group],
+                                          CalcDeltas(bca_costs_sum[group], number_alts, bca_costs_metrics_for_deltas).calc_delta_and_new_alt_id()],
+                                         axis=0, ignore_index=True)
         if calc_pollution_effects == 'Y':
-            emission_costs_sum[group] = pd.concat([emission_costs_sum[group], CalcDeltas(emission_costs_sum[group]).
-                                                  calc_delta_and_new_alt_id(number_alts, emission_costs_metrics_to_sum)], axis=0, ignore_index=True)
-    moves_sum = pd.concat([moves_sum, CalcDeltas(moves_sum).calc_delta_and_new_alt_id(number_alts, moves_metrics_to_sum)], axis=0, ignore_index=True)
-    operating_costs_modelyear_summary = pd.concat([operating_costs_modelyear_summary, CalcDeltas(operating_costs_modelyear_summary).
-                                                  calc_delta_and_new_alt_id(number_alts, operating_cost_metrics_for_deltas)], axis=0, ignore_index=True)
+            emission_costs_sum[group] = pd.concat([emission_costs_sum[group],
+                                                   CalcDeltas(emission_costs_sum[group], number_alts, emission_costs_metrics_to_sum).calc_delta_and_new_alt_id()],
+                                                  axis=0, ignore_index=True)
+    moves_sum = pd.concat([moves_sum, CalcDeltas(moves_sum, number_alts, moves_metrics_to_sum).calc_delta_and_new_alt_id()], axis=0, ignore_index=True)
+    operating_costs_modelyear_summary = pd.concat([operating_costs_modelyear_summary,
+                                                   CalcDeltas(operating_costs_modelyear_summary, number_alts, operating_cost_metrics_for_deltas).calc_delta_and_new_alt_id()],
+                                                  axis=0, ignore_index=True)
 
     # add some identifier columns to the grouped output files
     if calc_pollution_effects == 'Y':
@@ -698,11 +712,17 @@ def main():
     # calc the deltas relative to alt0 for the main DataFrames
     new_metrics = [metric for metric in operating_costs_all.columns if 'VMT' in metric or 'Warranty' in metric or 'Useful' in metric or 'tons' in metric]
     operating_cost_metrics_for_deltas = operating_cost_metrics_for_deltas + new_metrics
-    operating_costs_all = pd.concat([operating_costs_all, CalcDeltas(operating_costs_all).calc_delta_and_new_alt_id(number_alts, operating_cost_metrics_for_deltas)], axis=0, ignore_index=True)
-    bca_costs = pd.concat([bca_costs, CalcDeltas(bca_costs).calc_delta_and_new_alt_id(number_alts, [col for col in bca_costs.columns if 'Cost' in col])], axis=0, ignore_index=True)
+    operating_costs_all = pd.concat([operating_costs_all,
+                                     CalcDeltas(operating_costs_all, number_alts, operating_cost_metrics_for_deltas).calc_delta_and_new_alt_id()],
+                                    axis=0, ignore_index=True)
+    bca_costs = pd.concat([bca_costs,
+                           CalcDeltas(bca_costs, number_alts, [col for col in bca_costs.columns if 'Cost' in col]).calc_delta_and_new_alt_id()],
+                          axis=0, ignore_index=True)
     if calc_pollution_effects == 'Y':
         emission_cost_metrics_for_deltas = criteria_and_tailpipe_emission_costs_list + ['PM25_onroad', 'NOx_onroad']
-        emission_costs_all = pd.concat([emission_costs_all, CalcDeltas(emission_costs_all).calc_delta_and_new_alt_id(number_alts, emission_cost_metrics_for_deltas)], axis=0, ignore_index=True)
+        emission_costs_all = pd.concat([emission_costs_all,
+                                        CalcDeltas(emission_costs_all, number_alts, emission_cost_metrics_for_deltas).calc_delta_and_new_alt_id()],
+                                       axis=0, ignore_index=True)
 
     # now do some rounding of monetized values
     techcosts_metrics_to_round = [metric for metric in techcost_all.columns if 'Cost' in metric]
