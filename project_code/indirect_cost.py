@@ -8,7 +8,7 @@ markup_factors_with_vmt_scalars = ['Warranty', 'RnD']
 
 class IndirectCost:
     """
-    The IndirectCost class takes a DataFrame of direct costs and applies markups as provided by the merge_markups_and_directcosts method and provided in the markups_factors list.
+    The IndirectCost class takes a DataFrame of direct costs and applies markups as provided by the merge_markups_and_directcosts method and provided in the markup_factors list.
     """
 
     def __init__(self, pkg_directcost):

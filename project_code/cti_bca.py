@@ -482,7 +482,7 @@ def main():
     operating_costs.loc[operating_costs['modelYearID'] >= operating_costs['modelYearID'].max() - typical_vmt_thru_age] = \
         operating_costs.loc[operating_costs['modelYearID'] >= operating_costs['modelYearID'].max() - typical_vmt_thru_age].ffill(axis=0)
     emission_repair_cost_calcs = RepairAndMaintenanceCost(operating_costs, metrics_repair_and_maint_dict, pkg_directcost_veh_regclass_dict)
-    operating_costs = emission_repair_cost_calcs.emission_repair_costs()
+    operating_costs = emission_repair_cost_calcs.emission_repair_costs2()
     get_nox_reductions = CalcDeltas(operating_costs, number_alts, ['NOx_onroad'])
     operating_costs = get_nox_reductions.calc_delta_and_keep_alt_id()
     operating_costs = DEFandFuelCost(operating_costs).orvr_fuel_impacts_mlpergram(orvr_fuelchanges)

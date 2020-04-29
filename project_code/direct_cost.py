@@ -15,7 +15,7 @@ class DirectCost:
     A single vehicle is the object of the class and the class methods bring in the appropriate costing elements.
 
     :param _veh: A unique vehicle object.
-    :type _veh: tuple of 3 to 5 integers, where the first entry is always the optionID.
+    :typle _veh: tuple of 3 to 5 integers, where the first entry is always the optionID.
     """
     def __init__(self, _veh):
         self._veh = _veh
