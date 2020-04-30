@@ -232,14 +232,14 @@ class RepairAndMaintenanceCost:
                 repair_cost_dict[veh, model_year].insert(len(repair_cost_dict[veh, model_year].columns), 'EmissionRepairCost_Owner_AvgPerMile',
                                                          in_warranty_cpm)
                 # determine out-of-warranty but within-useful-life cost per mile for owner
-                repair_cost_dict[veh, model_year].loc[(repair_cost_dict[veh, model_year]['ageID'] + 1 > warranty_age), 'EmissionRepairCost_Owner_AvgPerMile'] \
-                    = slope_within_usefullife * (repair_cost_dict[veh, model_year]['ageID'] - warranty_age) \
+                repair_cost_dict[veh, model_year].loc[(repair_cost_dict[veh, model_year]['ageID'] > (warranty_age - 1)), 'EmissionRepairCost_Owner_AvgPerMile'] \
+                    = slope_within_usefullife * (repair_cost_dict[veh, model_year]['ageID'] - (warranty_age - 1)) \
                       + in_warranty_cpm
                 # determine at-usefullife cost per mile
-                repair_cost_dict[veh, model_year].loc[(repair_cost_dict[veh, model_year]['ageID'] + 1 >= usefullife_age), 'EmissionRepairCost_Owner_AvgPerMile'] \
+                repair_cost_dict[veh, model_year].loc[(repair_cost_dict[veh, model_year]['ageID'] >= (usefullife_age - 1)), 'EmissionRepairCost_Owner_AvgPerMile'] \
                     = at_usefullife_cpm
                 # determine beyond-useful-life cost per mile for owner
-                repair_cost_dict[veh, model_year].loc[(repair_cost_dict[veh, model_year]['ageID'] + 1 > usefullife_age),
+                repair_cost_dict[veh, model_year].loc[(repair_cost_dict[veh, model_year]['ageID'] > (usefullife_age - 1)),
                                                       'EmissionRepairCost_Owner_AvgPerMile'] \
                     = max_cpm
                 index_loc += 1
