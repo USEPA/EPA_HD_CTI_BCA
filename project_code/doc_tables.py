@@ -83,7 +83,7 @@ class DocTables:
             data = pd.DataFrame(self.input_df.loc[(self.input_df['DiscountRate'] == 0)
                                                   & (self.input_df['yearID'] == yr)],
                                 columns=df_cols)
-            data = data.round({'PM25_tailpipe': -1, 'NOx_tailpipe': -3})
+            data = data.round({'PM25_onroad': -1, 'NOx_onroad': -3})
             data.loc[len(data.index), 'OptionName'] = 'Table values are in short tons'
             sh_name = 'CY' + str(yr)
             data.to_excel(writer, sheet_name=sh_name, index=False)

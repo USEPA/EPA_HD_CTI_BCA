@@ -58,7 +58,7 @@ class DEFandFuelCost:
         df.insert(len(df.columns), 'UreaCost_AvgPerMile', df['UreaCost_TotalCost'] / df['VMT'])
         return df
 
-    def orvr_fuel_impacts_mlpergram(self, orvr_fuelchanges):
+    def orvr_fuel_impacts_mlpergram(self, orvr_fuelchanges, calc_sourcetype_costs):
         """
 
         :param orvr_fuelchanges: A DataFrame of the adjustments to the MOVES run values to account for fuel impacts not captured in MOVES.
@@ -68,9 +68,13 @@ class DEFandFuelCost:
         fuelchanges = orvr_fuelchanges.copy()
         fuelchanges.drop(columns='Change_PercentOfFuel', inplace=True)
         df = self.input_df.copy()
-        df2 = pd.DataFrame(df.loc[df['optionID'] == 0, ['yearID', 'modelYearID', 'ageID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID', 'THC_UStons']])
+        cols = ['yearID', 'modelYearID', 'ageID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID', 'THC_UStons']
+        if calc_sourcetype_costs == 'N':
+            cols.remove('zerogramTechID')
+        df2 = pd.DataFrame(df.loc[df['optionID'] == 0, cols])
         df2.rename(columns={'THC_UStons': 'THC_Option0'}, inplace=True)
-        df = df.merge(df2, on=['yearID', 'modelYearID', 'ageID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID'], how='left')
+        cols.remove('THC_UStons')
+        df = df.merge(df2, on=cols, how='left')
         df.insert(len(df.columns), 'THC_delta', df['THC_UStons'] - df['THC_Option0'])
         df = df.merge(fuelchanges, on=['optionID', 'regClassID', 'fuelTypeID'], how='left')
         df['ml/g'].fillna(0, inplace=True)
