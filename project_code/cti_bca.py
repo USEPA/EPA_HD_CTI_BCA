@@ -534,8 +534,8 @@ def main():
     operatingcost_metrics_to_discount = [col for col in operating_costs.columns if 'Cost' in col]
 
     # now create some weighted results of operating costs
-    vehs_operating_costs = pd.Series(operating_costs['alt_rc_ft']).unique()
-    vehs_repair_costs = pd.Series(operating_costs['alt_st_rc_ft']).unique()
+    vehs_operating_costs = pd.Series(operating_costs['alt_st_rc_ft']).unique()
+    vehs_operating_rc_costs = pd.Series(operating_costs['alt_rc_ft']).unique()
     weighted_repair_owner_cpm = dict()
     weighted_def_cpm = dict()
     weighted_fuel_cpm = dict()
@@ -547,8 +547,9 @@ def main():
     for veh in vehs_operating_costs:
         weighted_def_cpm[veh] = weighted_result(operating_costs, 'UreaCost_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list, max_age_included)
         weighted_fuel_cpm[veh] = weighted_result(operating_costs, 'FuelCost_Retail_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list, max_age_included)
-    for veh in vehs_repair_costs:
         weighted_repair_owner_cpm[veh] = weighted_result(operating_costs, 'EmissionRepairCost_Owner_AvgPerMile', 'VMT_AvgPerVeh', veh, 'modelYearID', year_list, max_age_included)
+    for veh in vehs_operating_rc_costs:
+        pass
     weighted_repair_owner_cpm_df = pd.DataFrame(weighted_repair_owner_cpm).transpose()
     weighted_def_cpm_df = pd.DataFrame(weighted_def_cpm).transpose()
     weighted_fuel_cpm_df = pd.DataFrame(weighted_fuel_cpm).transpose()

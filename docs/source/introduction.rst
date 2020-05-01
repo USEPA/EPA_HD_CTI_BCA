@@ -45,6 +45,7 @@ The list of necessary input files contained in the "aeo" folder is (must have at
 What are the output files?
 --------------------------
 The output files are pretty self-explanatory by their file names. Some are always generated while some are optional. The BCA_General_Inputs file contains a toggle to control generation of optional files.
+
 Output files always generated are:
     - bca_annual.xlsx which contains benefit and cost summaries for specific calendar years as specified in the BCA_General_Inputs file.
     - bca_annualized.xlsx which contains annualized benefit and cost summaries through specific calendar years as specified in the BCA_General_Inputs file.
@@ -52,6 +53,7 @@ Output files always generated are:
     - inventory_annual_IncludedModelYears.xlsx which contains annual inventory summaries for specific calendar years as specified in the BCA_General_Inputs file (for model years included in the analysis).
     - techcostAvgPerVeh.xlsx which contains average tech costs for specific model years as specified in the BCA_General_Inputs file.
     - summary_log.csv which contains the version number of the tool, date and time statistics for the run and input file data specific to the run.
+
 Optional output files are:
     - bca_costs.csv which contains data for every calendar year (yearID) and vehicle age (ageID) by sourcetype/regclass/fueltype.
     - criteria_emission_costs.csv which contains emission cost data by sourcetype/regclass/fueltype.
@@ -61,6 +63,7 @@ Optional output files are:
     - vmt_weighted_fuel_cpm.csv which contains weighted cost per mile fuel costs results by sourcetype/regclass/fueltype.
     - vmt_weighted_urea_cpm.csv which contains weighted cost per mile diesel exhaust fluid costs results by sourcetype/regclass/fueltype.
 
-A folder called "modified inputs" is also created which holds modified versions of the input files. Those modifications include reshaping of the input files along with conversions of the
+A folder call "run_results" will be created within the outputs folder that contains the output files described above.
+A folder called "modified_inputs" is also created which holds modified versions of the input files. Those modifications include reshaping of the input files along with conversions of the
 dollar-based inputs into a consistent dollar basis.
 A folder called "run_inputs" is also created which holds a direct copy/paste of all input files used for the given run.
