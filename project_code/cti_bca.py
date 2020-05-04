@@ -738,7 +738,7 @@ def main():
             emission_costs_sum[group] = pd.concat([emission_costs_sum[group],
                                                    CalcDeltas(emission_costs_sum[group], number_alts, emission_costs_metrics_to_sum).calc_delta_and_new_alt_id()],
                                                   axis=0, ignore_index=True)
-    moves_sum = pd.concat([moves_sum, CalcDeltas(moves_sum, number_alts, moves_metrics_to_sum).calc_delta_and_new_alt_id()], axis=0, ignore_index=True)
+    # moves_sum = pd.concat([moves_sum, CalcDeltas(moves_sum, number_alts, moves_metrics_to_sum).calc_delta_and_new_alt_id()], axis=0, ignore_index=True)
     operating_costs_modelyear_summary = pd.concat([operating_costs_modelyear_summary,
                                                    CalcDeltas(operating_costs_modelyear_summary, number_alts, operating_cost_metrics_for_deltas).calc_delta_and_new_alt_id()],
                                                   axis=0, ignore_index=True)
@@ -853,11 +853,6 @@ def main():
         inventory_annual = pd.ExcelWriter(path_of_run_results_folder.joinpath('inventory_annual_IncludedModelYears.xlsx'))
         DocTables(emission_costs_sum[1]).inventory_tables1(inventory_years, inventory_cols, inventory_annual)
         inventory_annual.save()
-
-        # inventory_cols_moves = ['OptionName', 'yearID', 'PM25_onroad', 'NOx_onroad']
-        # inventory_annual_moves = pd.ExcelWriter(path_of_run_results_folder.joinpath('inventory_annual_All_ModelYears.xlsx'))
-        # DocTables(moves_sum).inventory_tables2(inventory_years, inventory_cols_moves, inventory_annual_moves)
-        # inventory_annual_moves.save()
 
     # copy input files into results folder; also save fuel_prices and reshaped files to this folder
     inputs_filename_list = inputs_filenames(input_files_pathlist)
