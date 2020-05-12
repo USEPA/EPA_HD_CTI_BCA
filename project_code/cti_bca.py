@@ -667,17 +667,20 @@ def main():
         emission_costs_metrics_to_sum = [col for col in emission_costs_all.columns if 'PM25' in col or 'NOx' in col or 'Criteria' in col]
 
     # create a dict of lists for passing thru grouping methods
-    groups = 3 # increment this consistent with row_headers created
     row_header_group = dict()
     common_metrics = ['optionID', 'OptionName', 'DiscountRate']
     row_header_group[1] = common_metrics + ['yearID']
     row_header_group[2] = common_metrics + ['yearID', 'regClassID', 'fuelTypeID']
-    row_header_group[3] = common_metrics + ['yearID', 'sourceTypeID', 'fuelTypeID']
+    groups = 2 # increment this consistent with row_headers created
+    if calc_sourcetype_costs == 'Y':
+        row_header_group[3] = common_metrics + ['yearID', 'sourceTypeID', 'fuelTypeID']
+        groups = 3 # increment this consistent with row_headers created
 
     row_header_group_cumsum = dict()
     row_header_group_cumsum[1] = common_metrics
     row_header_group_cumsum[2] = common_metrics + ['regClassID', 'fuelTypeID']
-    row_header_group_cumsum[3] = common_metrics + ['sourceTypeID', 'fuelTypeID']
+    if calc_sourcetype_costs == 'Y':
+        row_header_group_cumsum[3] = common_metrics + ['sourceTypeID', 'fuelTypeID']
 
     # create some dicts to store the groupby.sum, groupby.cumsum and groupby.mean results
     techcost_sum = dict()
@@ -751,8 +754,9 @@ def main():
     for df in df_list:
         df[2].insert(6, 'regclass', pd.Series(regClassID[number] for number in df[2]['regClassID']))
         df[2].insert(7, 'fueltype', pd.Series(fuelTypeID[number] for number in df[2]['fuelTypeID']))
-        df[3].insert(6, 'sourceype', pd.Series(sourceTypeID[number] for number in df[3]['sourceTypeID']))
-        df[3].insert(7, 'fueltype', pd.Series(fuelTypeID[number] for number in df[3]['fuelTypeID']))
+        if calc_sourcetype_costs == 'Y':
+            df[3].insert(6, 'sourceype', pd.Series(sourceTypeID[number] for number in df[3]['sourceTypeID']))
+            df[3].insert(7, 'fueltype', pd.Series(fuelTypeID[number] for number in df[3]['fuelTypeID']))
     operating_costs_modelyear_summary.insert(6, 'regclass', pd.Series(regClassID[number] for number in operating_costs_modelyear_summary['regClassID']))
     operating_costs_modelyear_summary.insert(7, 'fueltype', pd.Series(fuelTypeID[number] for number in operating_costs_modelyear_summary['fuelTypeID']))
 
