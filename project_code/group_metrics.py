@@ -48,5 +48,9 @@ class GroupMetrics:
         :return: The passed DataFrame with annualized values having been added.
         """
         for metric in metrics_cumsum:
-            self.data.insert(len(self.data.columns), metric + '_Annualized', self.data[metric + '_CumSum'] / (self.data['yearID'] - year_min + 1))
+            self.data.insert(len(self.data.columns), metric + '_Annualized', 0)
+            self.data.loc[self.data['DiscountRate'] != 0, [metric + '_Annualized']] = \
+                self.data[metric + '_CumSum'] * (1 + self.data['DiscountRate']) ** (self.data['yearID'] - year_min + 1) \
+                / ((1 + self.data['DiscountRate']) * ((1 + self.data['DiscountRate']) ** (self.data['yearID'] - year_min + 1) - 1)
+                   / self.data['DiscountRate'])
         return self.data
