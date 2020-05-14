@@ -42,6 +42,6 @@ class EmissionCost:
             df_return = pd.concat([df_return, df_fuel[fuel_id]], axis=0, ignore_index=True, sort=False)
         for dr in [0.03, 0.07]:
             for mortality_est in ['low', 'high']:
-                cols = [col for col in df_return.columns if mortality_est + '_' + str(dr) in col]
+                cols = [col for col in df_return.columns if mortality_est + '_' + str(dr) in col and 'USDpUSton' not in col]
                 df_return.insert(len(df_return.columns), 'CriteriaCost_' + mortality_est + '_' + str(dr), df_return[cols].sum(axis=1))
         return df_return
