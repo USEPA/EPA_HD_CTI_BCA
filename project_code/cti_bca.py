@@ -193,7 +193,7 @@ def main():
     discrate_social_low = pd.to_numeric(bca_inputs.at['discrate_social_low', 'Value'])
     discrate_social_high = pd.to_numeric(bca_inputs.at['discrate_social_high', 'Value'])
     discount_to_yearID = pd.to_numeric(bca_inputs.at['discount_to_yearID', 'Value'])
-    discount_to = bca_inputs.at['discount_to', 'Value']
+    costs_start = bca_inputs.at['costs_start', 'Value']
     learning_rate = pd.to_numeric(bca_inputs.at['learning_rate', 'Value'])
     dollar_basis_years_gdp = bca_inputs.at['dollar_basis_years_gdp', 'Value']
     # convert dollar_basis_years_gdp to numeric rather than string
@@ -560,12 +560,12 @@ def main():
     emission_costs_dict = dict()
     operating_costs_dict = dict()
     for dr in [0, discrate_social_low, discrate_social_high]:
-        techcost_dict[dr] = DiscountValues(techcost, techcost_metrics_to_discount, dr, discount_to_yearID, discount_to)
+        techcost_dict[dr] = DiscountValues(techcost, techcost_metrics_to_discount, dr, discount_to_yearID, costs_start)
         techcost_dict[dr] = techcost_dict[dr].discount()
-        operating_costs_dict[dr] = DiscountValues(operating_costs, operatingcost_metrics_to_discount, dr, discount_to_yearID, discount_to)
+        operating_costs_dict[dr] = DiscountValues(operating_costs, operatingcost_metrics_to_discount, dr, discount_to_yearID, costs_start)
         operating_costs_dict[dr] = operating_costs_dict[dr].discount()
         if calc_pollution_effects == 'Y':
-            emission_costs_dict[dr] = DiscountValues(emission_costs, criteria_and_tailpipe_emission_costs_list, dr, discount_to_yearID, discount_to)
+            emission_costs_dict[dr] = DiscountValues(emission_costs, criteria_and_tailpipe_emission_costs_list, dr, discount_to_yearID, costs_start)
             emission_costs_dict[dr] = emission_costs_dict[dr].discount()
 
     # now set to NaN discounted pollutant values using discount rates that are not consistent with the input values
@@ -662,7 +662,6 @@ def main():
     operating_costs_metrics_to_sum = [col for col in operating_costs_all.columns if 'Gallons' in col or 'TotalCost' in col]
     operating_costs_metrics_to_avg = [col for col in operating_costs_all.columns if 'AvgPerVeh' in col or 'AvgPerMile' in col]
     bca_costs_metrics_to_sum = [col for col in bca_costs.columns if 'TotalCost' in col or 'low' in col or 'high' in col]
-    moves_metrics_to_sum = [col for col in moves_adjusted.columns if 'PM25' in col or 'NOx' in col]
     if calc_pollution_effects == 'Y':
         emission_costs_metrics_to_sum = [col for col in emission_costs_all.columns if 'PM25' in col or 'NOx' in col or 'Criteria' in col]
 
@@ -707,20 +706,9 @@ def main():
         if calc_pollution_effects == 'Y':
             emission_costs_sum[group] = GroupMetrics(emission_costs_all, row_header_group[group]).group_sum(emission_costs_metrics_to_sum)
 
-    moves_sum = GroupMetrics(moves_adjusted, ['optionID', 'OptionName', 'yearID']).group_sum(moves_metrics_to_sum)
-
     # now annualize the cumsum metrics
     for group in range(1, groups + 1):
-        bca_costs_sum[group] = GroupMetrics(bca_costs_sum[group], row_header_group[group]).annualize_cumsum(bca_costs_metrics_to_sum, year_min)
-
-    # now group model year data for the operating costs
-    row_header_modelyear = common_metrics + ['modelYearID', 'regClassID', 'fuelTypeID']
-    # row_header_modelyear_cumsum = row_header_group_cumsum[2].copy()
-    operating_costs_modelyear_metrics_to_avg = [col for col in operating_costs_all.columns if 'MPG_AvgPerVeh' in col or 'AvgPerMile' in col]
-    operating_costs_modelyear_metrics_to_sum = [col for col in operating_costs_all.columns if 'Gallons' in col or 'VMT' in col or 'TotalCost' in col or ('AvgPerVeh' in col and 'MPG' not in col)]
-    operating_costs_modelyear_sum = GroupMetrics(operating_costs_all, row_header_modelyear).group_sum(operating_costs_modelyear_metrics_to_sum)
-    operating_costs_modelyear_mean = GroupMetrics(operating_costs_all, row_header_modelyear).group_mean(operating_costs_modelyear_metrics_to_avg)
-    operating_costs_modelyear_summary = operating_costs_modelyear_sum.merge(operating_costs_modelyear_mean, on=row_header_modelyear)
+        bca_costs_sum[group] = GroupMetrics(bca_costs_sum[group], row_header_group[group]).annualize_cumsum(bca_costs_metrics_to_sum, year_min, costs_start)
 
     # calc the deltas relative to alt0
     techcost_metrics_for_deltas = techcost_metrics_to_sum + techcost_metrics_to_avg
@@ -741,10 +729,6 @@ def main():
             emission_costs_sum[group] = pd.concat([emission_costs_sum[group],
                                                    CalcDeltas(emission_costs_sum[group], number_alts, emission_costs_metrics_to_sum).calc_delta_and_new_alt_id()],
                                                   axis=0, ignore_index=True)
-    # moves_sum = pd.concat([moves_sum, CalcDeltas(moves_sum, number_alts, moves_metrics_to_sum).calc_delta_and_new_alt_id()], axis=0, ignore_index=True)
-    operating_costs_modelyear_summary = pd.concat([operating_costs_modelyear_summary,
-                                                   CalcDeltas(operating_costs_modelyear_summary, number_alts, operating_cost_metrics_for_deltas).calc_delta_and_new_alt_id()],
-                                                  axis=0, ignore_index=True)
 
     # add some identifier columns to the grouped output files
     if calc_pollution_effects == 'Y':
@@ -757,8 +741,6 @@ def main():
         if calc_sourcetype_costs == 'Y':
             df[3].insert(6, 'sourceype', pd.Series(sourceTypeID[number] for number in df[3]['sourceTypeID']))
             df[3].insert(7, 'fueltype', pd.Series(fuelTypeID[number] for number in df[3]['fuelTypeID']))
-    operating_costs_modelyear_summary.insert(6, 'regclass', pd.Series(regClassID[number] for number in operating_costs_modelyear_summary['regClassID']))
-    operating_costs_modelyear_summary.insert(7, 'fueltype', pd.Series(fuelTypeID[number] for number in operating_costs_modelyear_summary['fuelTypeID']))
 
     # calc the deltas relative to alt0 for the main DataFrames
     new_metrics = [metric for metric in operating_costs_all.columns if 'VMT' in metric or 'Warranty' in metric or 'Useful' in metric or 'tons' in metric]
@@ -877,29 +859,16 @@ def main():
 
         # write some output files
         techcost_all.to_csv(path_of_run_results_folder.joinpath('techcosts.csv'), index=False)
-        # techcost_summary[1].to_csv(path_of_run_results_folder.joinpath('techcosts_by_yearID.csv'), index=False)
-        # techcost_summary[2].to_csv(path_of_run_results_folder.joinpath('techcosts_by_regClass_fuelType.csv'), index=False)
-        # techcost_summary[3].to_csv(path_of_run_results_folder.joinpath('techcosts_by_sourcetype_fuelType.csv'), index=False)
-
         if calc_pollution_effects == 'Y':
             emission_costs_all.to_csv(path_of_run_results_folder.joinpath('criteria_emission_costs.csv'), index=False)
-            # emission_costs_sum[1].to_csv(path_of_run_results_folder.joinpath('criteria_emission_costs_by_yearID.csv'), index=False)
-            # emission_costs_sum[2].to_csv(path_of_run_results_folder.joinpath('criteria_emission_costs_by_regClass_fuelType.csv'), index=False)
-            # emission_costs_sum[3].to_csv(path_of_run_results_folder.joinpath('criteria_emission_costs_by_sourcetype_fuelType.csv'), index=False)
 
         operating_costs_all.to_csv(path_of_run_results_folder.joinpath('operating_costs.csv'), index=False)
         weighted_repair_owner_cpm_df.to_csv(path_of_run_results_folder.joinpath('vmt_weighted_emission_repair_owner_cpm.csv'))
         weighted_def_cpm_df.to_csv(path_of_run_results_folder.joinpath('vmt_weighted_urea_cpm.csv'))
         weighted_fuel_cpm_df.to_csv(path_of_run_results_folder.joinpath('vmt_weighted_fuel_cpm.csv'))
-        # operating_costs_summary[1].to_csv(path_of_run_results_folder.joinpath('operating_costs_by_yearID.csv'), index=False)
-        # operating_costs_summary[2].to_csv(path_of_run_results_folder.joinpath('operating_costs_by_regClass_fuelType.csv'), index=False)
-        # operating_costs_summary[3].to_csv(path_of_run_results_folder.joinpath('operating_costs_by_sourcetype_fuelType.csv'), index=False)
-        # operating_costs_modelyear_summary.to_csv(path_of_run_results_folder.joinpath('operating_costs_by_modelYearID_regClass_fuelType.csv'), index=False)
 
         bca_costs.to_csv(path_of_run_results_folder.joinpath('bca_costs.csv'), index=False)
-        # bca_costs_sum[1].to_csv(path_of_run_results_folder.joinpath('bca_costs_by_yearID.csv'), index=False)
-        # bca_costs_sum[2].to_csv(path_of_run_results_folder.joinpath('bca_costs_by_regClass_fuelType.csv'), index=False)
-        # bca_costs_sum[3].to_csv(path_of_run_results_folder.joinpath('bca_costs_by_sourcetype_fuelType.csv'), index=False)
+        bca_costs_sum[1].to_csv(path_of_run_results_folder.joinpath('bca_costs_by_yearID.csv'), index=False)
 
     elapsed_time_outputs = time.time() - start_time_outputs
     end_time = time.time()
