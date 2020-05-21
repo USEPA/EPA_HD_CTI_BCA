@@ -1,7 +1,6 @@
 import pandas as pd
 
 # create a list of markup factors to be included
-# markup_factors = ['Warranty', 'RnD', 'Other', 'Profit', 'IndirectCost']
 markup_factors = ['Warranty', 'RnD', 'Other', 'Profit']
 markup_factors_with_vmt_scalars = ['Warranty', 'RnD']
 

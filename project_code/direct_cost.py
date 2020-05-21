@@ -1,6 +1,6 @@
 import pandas as pd
 
-# list of metrics to which to applying learning
+# list of metrics to which to applying learning; note that keys in the learning dict represent fuelTypeID
 tech_apply_learning_common = ['EngineHardware', 'CDA']
 tech_apply_learning_dict = {1: tech_apply_learning_common + ['Aftertreatment', 'ORVR'],
                             2: tech_apply_learning_common + ['CDPF', 'DOC', 'SCR', 'HCdosing', 'Canning', 'ClosedCrankcase'],

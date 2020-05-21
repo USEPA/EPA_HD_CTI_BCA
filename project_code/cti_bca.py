@@ -8,9 +8,6 @@ import shutil
 import os
 from datetime import datetime
 import time
-# from tqdm import tqdm
-# import input_output as io
-# from importlib import reload # for qa/qc to reload modules after revising
 import project_code
 from project_code.fuel_prices_aeo import GetFuelPrices
 from project_code.fleet import Fleet
@@ -24,10 +21,6 @@ from project_code.calc_deltas import CalcDeltas
 from project_code.emission_cost import EmissionCost
 from project_code.doc_tables import DocTables
 from project_code.estimated_age import EstimatedAge
-
-
-PATH_PROJECT = Path.cwd()
-PATH_PROJECT_CODE = PATH_PROJECT.joinpath('project_code')
 
 
 def inputs_filenames(input_files_pathlist):
@@ -61,24 +54,21 @@ def reshape_df(df, value_variable_list, cols_to_melt, melted_header, new_column_
     return df
 
 
-def convert_dollars_to_bca_basis(df, deflators, dollar_basis_years, _metric, bca_dollar_basis):
-    """Convert all input dollars values to a consistent dollar basis where that basis is the year for which the GDP Price Deflator is 1.
-
-    :param df: Data containing dollars values for conversion.
-    :type df: DataFrame
-    :param deflators: The GDP price deflators entered in the BCA inputs file.
-    :type deflators: Dictionary
-    :param dollar_basis_years: The years for which input dollar values are based, as entered in the BCA inputs file.
-    :type dollar_basis_years: List
-    :param _metric: The column heading of the dollar values to be converted.
-    :type _metric: String
-    :param bca_dollar_basis: The basis year for the analysis - the year for which the GDP Price Deflator is 1.
-    :type bca_dollar_basis: Integer
-    :return: A DataFrame consisting of the passed data but with dollar values in a single dollar basis year.
+def convert_dollars_to_analysis_basis(df, deflators, dollar_basis, *args):
     """
-    for number in range(len(dollar_basis_years)):
-        df.loc[df['DollarBasis'] == dollar_basis_years[number], _metric] = df[_metric] * deflators[number]
-        df.loc[df['DollarBasis'] == dollar_basis_years[number], 'DollarBasis'] = bca_dollar_basis
+
+    This function converts dollars into a consistent dollar basis as set in the Inputs workbook.
+    :param df: The passed DataFrame containing costs to convert.
+    :param deflators: A dictionary of gdp price deflators and adjustments to be multiplied by costs.
+    :param dollar_basis: The dollar basis of the analysis.
+    :param args: Metrics to be converted to dollar_basis dollars.
+    :return: The passed DataFrame with metric dollar values converted to dollar_basis dollars.
+    """
+    dollar_years = pd.Series(pd.DataFrame(df.loc[df['DollarBasis'] > 1])['DollarBasis']).unique()
+    for year in dollar_years:
+        for arg in args:
+            df.loc[df['DollarBasis'] == year, arg] = df[arg] * deflators[year]['adjustment']
+        df.loc[df['DollarBasis'] == year, 'DollarBasis'] = dollar_basis
     return df
 
 
@@ -129,6 +119,8 @@ def get_file_datetime(list_of_files):
 
 def main():
     """The main script."""
+    PATH_PROJECT = Path.cwd()
+
     # first, set the output files desired for QA/QC work
     TEST_RUN = input('Use full CTI BCA inputs (<ENTER>) or use test inputs (t)?\n')
     if TEST_RUN == 't':
@@ -158,11 +150,12 @@ def main():
     def_prices_file = PATH_INPUTS.joinpath('DEF_Prices.csv')
     orvr_fuelchange_file = PATH_INPUTS.joinpath('ORVR_FuelChangeInputs.csv')
     repair_and_maintenance_file = PATH_INPUTS.joinpath('Repair_and_Maintenance_Curve_Inputs.csv')
+    gdp_deflators_file = PATH_INPUTS.joinpath('gdp_deflators.xlsx')
     # add input files as needed for copy to path_to_results folder
     input_files_pathlist = [run_settings_file, bca_inputs_file, regclass_costs_file, regclass_learningscalars_file,
                             markups_file, moves_file, moves_adjustments_file, options_file,
                             def_doserate_inputs_file, def_prices_file, orvr_fuelchange_file, repair_and_maintenance_file,
-                            warranty_inputs_file, usefullife_inputs_file]
+                            gdp_deflators_file, warranty_inputs_file, usefullife_inputs_file]
 
     # read input files
     print("Reading input files....")
@@ -180,10 +173,13 @@ def main():
     def_prices = pd.read_csv(def_prices_file)
     orvr_fuelchanges = pd.read_csv(orvr_fuelchange_file)
     repair_and_maintenance = pd.read_csv(repair_and_maintenance_file, index_col=0)
+    gdp_deflators = pd.read_excel(gdp_deflators_file, index_col=0)
+    gdp_deflators.insert(len(gdp_deflators.columns), 'adjustment', 0)  # adjustment values are filled below
 
     markups.drop('Notes', axis=1, inplace=True)
     orvr_fuelchanges.drop('Notes', axis=1, inplace=True)
     regclass_costs.drop('Notes', axis=1, inplace=True)
+    repair_and_maintenance.drop('Notes', axis=1, inplace=True)
     elapsed_time_read = time.time() - start_time_read
 
     # get necessary inputs from the bca_inputs_file
@@ -195,16 +191,7 @@ def main():
     discount_to_yearID = pd.to_numeric(bca_inputs.at['discount_to_yearID', 'Value'])
     costs_start = bca_inputs.at['costs_start', 'Value']
     learning_rate = pd.to_numeric(bca_inputs.at['learning_rate', 'Value'])
-    dollar_basis_years_gdp = bca_inputs.at['dollar_basis_years_gdp', 'Value']
-    # convert dollar_basis_years_gdp to numeric rather than string
-    dollar_basis_years_gdp = dollar_basis_years_gdp.split(',')
-    for item in range(len(dollar_basis_years_gdp)):
-        dollar_basis_years_gdp[item] = pd.to_numeric(dollar_basis_years_gdp[item])
-    dollar_basis_years_cpiu = bca_inputs.at['dollar_basis_years_cpiu', 'Value']
-    # convert dollar_basis_years_cpiu to numeric rather than string
-    dollar_basis_years_cpiu = dollar_basis_years_cpiu.split(',')
-    for item in range(len(dollar_basis_years_cpiu)):
-        dollar_basis_years_cpiu[item] = pd.to_numeric(dollar_basis_years_cpiu[item])
+    dollar_basis_analysis = int(bca_inputs.at['dollar_basis_analysis', 'Value'])
     warranty_vmt_share = pd.to_numeric(bca_inputs.at['warranty_vmt_share', 'Value'])
     r_and_d_vmt_share = pd.to_numeric(bca_inputs.at['r_and_d_vmt_share', 'Value'])
     indirect_cost_scaling_metric = bca_inputs.at['scale_indirect_costs_by', 'Value']
@@ -234,15 +221,14 @@ def main():
     else:
         number_alts = int(moves['optionID'].max())
 
-    # generate a dictionary of gdp deflators and apply gdp_deflators to direct costs
-    deflators_gdp = dict()
-    for number in range(len(dollar_basis_years_gdp)):
-        deflators_gdp[number] = pd.to_numeric(bca_inputs.at['gdp_deflator_' + str(dollar_basis_years_gdp[number]), 'Value'])
-    bca_dollar_basis = dollar_basis_years_gdp[[k for k, v in deflators_gdp.items() if v == 1][0]] # this is a list containing one item reflecting the key in deflators where value=1; the [0] returns that 1 item
+    # generate a dictionary of gdp deflators, calc adjustment values and apply adjustment values to direct costs
+    gdp_deflators = gdp_deflators.to_dict('index')
+    for key in gdp_deflators:
+        gdp_deflators[key]['adjustment'] = gdp_deflators[dollar_basis_analysis]['factor'] / gdp_deflators[key]['factor']
     regclass_costs_years = [col for col in regclass_costs.columns if '20' in col]
-    regclass_costs_modified = convert_dollars_to_bca_basis(regclass_costs, deflators_gdp, dollar_basis_years_gdp, [step for step in regclass_costs_years], bca_dollar_basis)
-    def_prices = convert_dollars_to_bca_basis(def_prices, deflators_gdp, dollar_basis_years_gdp, 'DEF_USDperGal', bca_dollar_basis)
-    repair_and_maintenance = convert_dollars_to_bca_basis(repair_and_maintenance, deflators_gdp, dollar_basis_years_gdp, 'Value', bca_dollar_basis)
+    regclass_costs_modified = convert_dollars_to_analysis_basis(regclass_costs, gdp_deflators, dollar_basis_analysis, [step for step in regclass_costs_years])
+    def_prices = convert_dollars_to_analysis_basis(def_prices, gdp_deflators, dollar_basis_analysis, 'DEF_USDperGal')
+    repair_and_maintenance = convert_dollars_to_analysis_basis(repair_and_maintenance, gdp_deflators, dollar_basis_analysis, 'Value')
 
     # now get specific inputs from repair_and_maintenance
     inwarranty_repair_and_maintenance_owner_cpm = repair_and_maintenance.at['in-warranty_R&M_Owner_CPM', 'Value']
@@ -257,10 +243,6 @@ def main():
                                      'max_repair_and_maintenance_cpm': max_repair_and_maintenance_CPM,
                                      'typical_vmt_thru_ageID': typical_vmt_thru_age,
                                      'emission_repair_share': emission_repair_share}
-
-    factors_cpiu = dict()
-    for number in range(len(dollar_basis_years_cpiu)):
-        factors_cpiu[number] = pd.to_numeric(bca_inputs.at['cpiu_factor_' + str(dollar_basis_years_cpiu[number]), 'Value'])
 
     fuel_prices = GetFuelPrices(PATH_PROJECT, aeo_case)
     fuel_prices = fuel_prices.get_fuel_prices()
@@ -308,9 +290,6 @@ def main():
         df = Fleet(df).define_bca_regclass()
     moves = Fleet(moves).define_bca_sourcetype()
 
-    # round MOVES values
-    # uston_list = [metric for metric in moves.columns if 'UStons' in metric]
-    # moves = round_metrics(moves, uston_list, round_moves_ustons_by)
     # adjust MOVES VPOP/VMT/Gallons to reflect what's included in CTI (excluding what's not in CTI)
     moves_adjusted = Fleet(moves).adjust_moves(moves_adjustments) # adjust (41, 2) to be engine cert only
     moves_adjusted = moves_adjusted.loc[(moves_adjusted['regClassID'] != 41) | (moves_adjusted['fuelTypeID'] != 1), :] # eliminate (41, 1) keeping (41, 2)
@@ -398,7 +377,7 @@ def main():
         sourcetype_costs_file = PATH_INPUTS.joinpath('DirectCostInputs_bySourcetype.csv')
         input_files_pathlist += [sourcetype_costs_file]
         sourcetype_costs = pd.read_csv(sourcetype_costs_file)
-        sourcetype_costs = convert_dollars_to_bca_basis(sourcetype_costs, deflators_gdp, dollar_basis_years_gdp, 'TechPackageCost', bca_dollar_basis)
+        sourcetype_costs = convert_dollars_to_analysis_basis(sourcetype_costs, gdp_deflators, dollar_basis_analysis, 'TechPackageCost')
         sourcetype_costs = Fleet(sourcetype_costs).define_bca_regclass()
         sourcetype_costs = Fleet(sourcetype_costs).define_bca_sourcetype()
 
@@ -519,7 +498,7 @@ def main():
     operating_costs.loc[operating_costs['modelYearID'] >= operating_costs['modelYearID'].max() - typical_vmt_thru_age] = \
         operating_costs.loc[operating_costs['modelYearID'] >= operating_costs['modelYearID'].max() - typical_vmt_thru_age].ffill(axis=0)
     emission_repair_cost_calcs = RepairAndMaintenanceCost(operating_costs, metrics_repair_and_maint_dict, pkg_directcost_veh_regclass_dict)
-    operating_costs = emission_repair_cost_calcs.emission_repair_costs2()
+    operating_costs = emission_repair_cost_calcs.emission_repair_costs()
     get_nox_reductions = CalcDeltas(operating_costs, number_alts, ['NOx_onroad'])
     operating_costs = get_nox_reductions.calc_delta_and_keep_alt_id()
     operating_costs = DEFandFuelCost(operating_costs).orvr_fuel_impacts_mlpergram(orvr_fuelchanges, calc_sourcetype_costs)
@@ -853,7 +832,10 @@ def main():
             sourcetype_costs.to_csv(path_of_modified_inputs_folder.joinpath('sourcetype_costs.csv'), index=False)
         markups_vmt_scalars_reshaped.to_csv(path_of_modified_inputs_folder.joinpath('markups_vmt_scalars_reshaped.csv'), index=False)
         def_doserates.to_csv(path_of_modified_inputs_folder.joinpath('def_doserates.csv'), index=False)
+        repair_and_maintenance.to_csv(path_of_modified_inputs_folder.joinpath('repair_and_maintenance.csv'), index=False)
         def_prices.to_csv(path_of_modified_inputs_folder.joinpath('def_prices.csv'), index=False)
+        gdp_deflators = pd.DataFrame(gdp_deflators)  # from dict to df
+        gdp_deflators.to_csv(path_of_modified_inputs_folder.joinpath('gdp_deflators.csv'), index=True)
         if calc_pollution_effects == 'Y':
             criteria_emission_costs_reshaped.to_csv(path_of_modified_inputs_folder.joinpath('criteria_emission_costs_reshaped.csv'), index=False)
 
