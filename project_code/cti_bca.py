@@ -130,7 +130,7 @@ def main():
         PATH_INPUTS = PATH_PROJECT.joinpath('inputs')
         PATH_OUTPUTS = PATH_PROJECT.joinpath('outputs')
     RUN_FOLDER_IDENTIFIER = input('Provide a run identifier for your output folder name (press return to use the default name)\n')
-    RUN_FOLDER_IDENTIFIER = RUN_FOLDER_IDENTIFIER if RUN_FOLDER_IDENTIFIER != '' else 'HDCTI-BCA-Results'
+    RUN_FOLDER_IDENTIFIER = RUN_FOLDER_IDENTIFIER if RUN_FOLDER_IDENTIFIER != '' else 'BCA-Results'
     CREATE_ALL_FILES = input('Create all output files? (y)es or (n)o?\n')
     start_time = time.time()
     start_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')
@@ -150,7 +150,7 @@ def main():
     def_prices_file = PATH_INPUTS.joinpath('DEF_Prices.csv')
     orvr_fuelchange_file = PATH_INPUTS.joinpath('ORVR_FuelChangeInputs.csv')
     repair_and_maintenance_file = PATH_INPUTS.joinpath('Repair_and_Maintenance_Curve_Inputs.csv')
-    gdp_deflators_file = PATH_INPUTS.joinpath('gdp_deflators.xlsx')
+    gdp_deflators_file = PATH_INPUTS.joinpath('GDP_Deflators.xlsx')
     # add input files as needed for copy to path_to_results folder
     input_files_pathlist = [run_settings_file, bca_inputs_file, regclass_costs_file, regclass_learningscalars_file,
                             markups_file, moves_file, moves_adjustments_file, options_file,
@@ -539,13 +539,13 @@ def main():
     emission_costs_dict = dict()
     operating_costs_dict = dict()
     for dr in [0, discrate_social_low, discrate_social_high]:
-        techcost_dict[dr] = DiscountValues(techcost, techcost_metrics_to_discount, dr, discount_to_yearID, costs_start)
-        techcost_dict[dr] = techcost_dict[dr].discount()
-        operating_costs_dict[dr] = DiscountValues(operating_costs, operatingcost_metrics_to_discount, dr, discount_to_yearID, costs_start)
-        operating_costs_dict[dr] = operating_costs_dict[dr].discount()
+        techcost_dict[dr] = DiscountValues(techcost, techcost_metrics_to_discount, discount_to_yearID, costs_start)
+        techcost_dict[dr] = techcost_dict[dr].discount(dr)
+        operating_costs_dict[dr] = DiscountValues(operating_costs, operatingcost_metrics_to_discount, discount_to_yearID, costs_start)
+        operating_costs_dict[dr] = operating_costs_dict[dr].discount(dr)
         if calc_pollution_effects == 'Y':
-            emission_costs_dict[dr] = DiscountValues(emission_costs, criteria_and_tailpipe_emission_costs_list, dr, discount_to_yearID, costs_start)
-            emission_costs_dict[dr] = emission_costs_dict[dr].discount()
+            emission_costs_dict[dr] = DiscountValues(emission_costs, criteria_and_tailpipe_emission_costs_list, discount_to_yearID, costs_start)
+            emission_costs_dict[dr] = emission_costs_dict[dr].discount(dr)
 
     # now set to NaN discounted pollutant values using discount rates that are not consistent with the input values
     if calc_pollution_effects == 'Y':
@@ -687,7 +687,7 @@ def main():
 
     # now annualize the cumsum metrics
     for group in range(1, groups + 1):
-        bca_costs_sum[group] = GroupMetrics(bca_costs_sum[group], row_header_group[group]).annualize_cumsum(bca_costs_metrics_to_sum, year_min, costs_start)
+        bca_costs_sum[group] = DiscountValues(bca_costs_sum[group], bca_costs_metrics_to_sum, discount_to_yearID, costs_start).annualize()
 
     # calc the deltas relative to alt0
     techcost_metrics_for_deltas = techcost_metrics_to_sum + techcost_metrics_to_avg
@@ -755,7 +755,7 @@ def main():
     # and set output path in which to save all files created by this module; the output path will be in the results path
     # move this to earlier in main if results folder location is made user selectable so that the selection is made shortly after start of run
     PATH_OUTPUTS.mkdir(exist_ok=True)
-    path_of_run_folder = PATH_OUTPUTS.joinpath(start_time_readable + '_' + RUN_FOLDER_IDENTIFIER)
+    path_of_run_folder = PATH_OUTPUTS.joinpath(f'{start_time_readable}_CTI_{RUN_FOLDER_IDENTIFIER}')
     path_of_run_folder.mkdir(exist_ok=False)
     path_of_run_inputs_folder = path_of_run_folder.joinpath('run_inputs')
     path_of_run_inputs_folder.mkdir(exist_ok=False)

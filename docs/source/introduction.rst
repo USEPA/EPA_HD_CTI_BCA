@@ -19,7 +19,7 @@ What are the input files?
 
 The list of necessary input files contained in the "inputs" folder is:
     - 1_RunSettings.csv which provides a means of identifying specific runs (the user can use this or ignore it, but the tool will expect to find the file)
-    - BCA_General_Inputs.csv which specifies which AEO fuel prices to use, what calendar year to which to discount costs, GDP price deflators, among other parameters.
+    - BCA_General_Inputs.csv which specifies which AEO fuel prices to use, what calendar year to which to discount costs, the dollar basis year for all monetized values in the analysis, among other parameters.
     - options.csv which specifies the number of options to be run along with an Option Name for each optionID. Note that "option" and "alternative" and "scenario" tend to be used interchangeably.
     - A MOVES or fleet file which provides inventories and VMT, etc., to support the analysis.
     - MOVES_Adjustments.csv which provides adjustments to data in the MOVES data file that might be necessary within the BCA tool. Currently, this adjusts regclass 41 diesel data to reflect engine-certs only
@@ -33,6 +33,7 @@ The list of necessary input files contained in the "inputs" folder is:
     - Repair_and_Maintenance_Curve_Inputs.csv which provides inputs used in estimating emission repair costs.
     - UsefulLife_Inputs.csv which provides useful life miles and ages under each alternative.
     - Warranty_Inputs.csv which provides warranty miles and ages under each alternative.
+    - gdp_deflators.xlsx which provides the GDP price deflators to use (based on BEA's Table 1.1.4)
 
 The list of optional input files contained in the "inputs" folder is:
     - DirectCostInputs_bySourcetype.csv which provides the direct technology costs for zero/low gram technologies by MOVES sourcetype. Note that this feature is not tested and may not work well.
