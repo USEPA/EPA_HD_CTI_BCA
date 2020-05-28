@@ -176,10 +176,12 @@ def main():
     gdp_deflators = pd.read_excel(gdp_deflators_file, index_col=0)
     gdp_deflators.insert(len(gdp_deflators.columns), 'adjustment', 0)  # adjustment values are filled below
 
-    markups.drop('Notes', axis=1, inplace=True)
-    orvr_fuelchanges.drop('Notes', axis=1, inplace=True)
-    regclass_costs.drop('Notes', axis=1, inplace=True)
-    repair_and_maintenance.drop('Notes', axis=1, inplace=True)
+    for df in [markups, orvr_fuelchanges, regclass_costs, repair_and_maintenance]:
+        try:
+            df.drop('Notes', axis=1, inplace=True)
+        except:
+            pass
+
     elapsed_time_read = time.time() - start_time_read
 
     # get necessary inputs from the bca_inputs_file

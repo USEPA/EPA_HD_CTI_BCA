@@ -59,7 +59,9 @@ class Fleet:
         return sales_rcid_ftid
     
     def fleet_with_0gtech(self, _zgtech, _zgtech_max):
-        """Return fleet with MOVES results shifted from ICE-only and into zero gram techs according to the percentages and growths provided in the inputs.
+        """Return fleet with MOVES results shifted from ICE-only and into zero gram techs according to the percentages and growths provided in the inputs.\n
+        Note that use of this method has not been well tested since it's use has not been needed for CTI. Any attempted use may produce unexpected/invalid results.\n
+        This is especially true if passing its results through class/methods contained in the operating_cost module.
 
         :param _zgtech: A DataFrame providing direct costs for different sourcetypes and zero/low gram techs
         :param _zgtech_max: The maximum number of zero/low gram techs being considered (may be zero)
@@ -89,6 +91,7 @@ class Fleet:
             fleet_with_zgtech['VPOP'] = fleet_with_zgtech['VPOP'] - fleet_zgtech[tech]['VPOP']
         for tech in range(1, _zgtech_max + 1):
             fleet_with_zgtech = pd.concat([fleet_with_zgtech, fleet_zgtech[tech]], axis=0, ignore_index=True)
+        fleet_with_zgtech = fleet_with_zgtech.loc[fleet_with_zgtech['VPOP'] != 0]
         fleet_with_zgtech.reset_index(drop=True, inplace=True)
         fleet_with_zgtech['VMT'] = fleet_with_zgtech['VMT_AvgPerVeh'] * fleet_with_zgtech['VPOP'] # this correctly sets VMT to zero where VPOP is zero, but leaves VMT/vehicle=moves
         fleet_with_zgtech.loc[fleet_with_zgtech['VMT'] == 0, 'VMT_AvgPerVeh'] = 0 # this sets VMT/vehicle = 0 where VMT=0
