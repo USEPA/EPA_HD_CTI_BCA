@@ -820,7 +820,7 @@ def main():
         yearID_max = int(bca_costs['yearID'].max())
         path_figures = path_of_run_results_folder.joinpath('figures')
         path_figures.mkdir(exist_ok=True)
-        alts = pd.Series(bca_costs['optionID']).unique()
+        alts = pd.Series(bca_costs.loc[bca_costs['optionID'] < 10, 'optionID']).unique()
         args = ['TechCost_TotalCost',
                 'EmissionRepairCost_Owner_TotalCost',
                 'UreaCost_TotalCost',
