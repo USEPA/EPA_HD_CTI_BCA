@@ -66,9 +66,9 @@ class DiscountValues:
         if self.costs_start == 'end-year':
             discount_offset = 1
         for metric in self.metrics:
-            self.source_df.insert(len(self.source_df.columns), metric + '_Annualized', 0)
+            self.source_df.insert(len(self.source_df.columns), f'{metric}_Annualized', 0)
             periods = self.source_df['yearID'] - self.discount_to_cy + 1
-            self.source_df.loc[self.source_df['DiscountRate'] != 0, [metric + '_Annualized']] = \
-                self.source_df[metric + '_CumSum'] * self.source_df['DiscountRate'] * (1 + self.source_df['DiscountRate']) ** periods \
+            self.source_df.loc[self.source_df['DiscountRate'] != 0, [f'{metric}_Annualized']] = \
+                self.source_df[f'{metric}_CumSum'] * self.source_df['DiscountRate'] * (1 + self.source_df['DiscountRate']) ** periods \
                 / ((1 + self.source_df['DiscountRate']) ** (periods + discount_offset) - 1)
         return self.source_df

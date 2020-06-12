@@ -21,6 +21,7 @@ from project_code.calc_deltas import CalcDeltas
 from project_code.emission_cost import EmissionCost
 from project_code.doc_tables import DocTables
 from project_code.estimated_age import EstimatedAge
+from project_code.figures import CreateFigures
 
 
 def inputs_filenames(input_files_pathlist):
@@ -168,7 +169,8 @@ def main():
     usefullife_inputs = pd.read_csv(usefullife_inputs_file)
     moves = pd.read_csv(moves_file)
     moves_adjustments = pd.read_csv(moves_adjustments_file)
-    options = pd.read_csv(options_file)
+    options = pd.read_csv(options_file, index_col=0)
+    options_dict = options.to_dict('index')
     def_doserate_inputs = pd.read_csv(def_doserate_inputs_file)
     def_prices = pd.read_csv(def_prices_file)
     orvr_fuelchanges = pd.read_csv(orvr_fuelchange_file)
@@ -214,6 +216,9 @@ def main():
     bca_summary_years = bca_summary_years.split(',')
     for item in range(len(bca_summary_years)):
         bca_summary_years[item] = pd.to_numeric(bca_summary_years[item])
+    generate_emissionrepair_cpm_figures = bca_inputs.at['generate_emissionrepair_cpm_figures', 'Value']
+    generate_BCA_ArgsByOption_figures = bca_inputs.at['generate_BCA_ArgsByOption_figures', 'Value']
+    generate_BCA_ArgByOptions_figure = bca_inputs.at['generate_BCA_ArgByOptions_figure', 'Value']
 
     # how many alternatives are there? But first, be sure that optionID is the header for optionID.
     if 'Alternative' in moves.columns.tolist():
@@ -367,77 +372,17 @@ def main():
     for veh in rc_ft_age0:
         directcost_regclass = pd.concat([directcost_regclass, pkg_directcost_veh_regclass_dict[veh]], axis=0, ignore_index=True)
 
-    # fleet_bca created here but will be superseded below if sourcetype costs are calculated
+    # fleet_bca created here - the fleet of relevance to the bca, so >= starting MY
     fleet_bca = moves_adjusted.copy()
     fleet_bca = pd.DataFrame(fleet_bca.loc[fleet_bca['modelYearID'] >= year_min])
     fleet_bca.sort_values(by=['optionID', 'regClassID', 'fuelTypeID', 'sourceTypeID', 'yearID', 'ageID'], ascending=True, inplace=True, axis=0)
     fleet_bca.reset_index(drop=True, inplace=True)
     sales_bca = Fleet(fleet_bca).sales()
 
-    # work on sourcetype costs if there are any being calculated
-    if calc_sourcetype_costs == 'Y':
-        sourcetype_costs_file = PATH_INPUTS.joinpath('DirectCostInputs_bySourcetype.csv')
-        input_files_pathlist += [sourcetype_costs_file]
-        sourcetype_costs = pd.read_csv(sourcetype_costs_file)
-        sourcetype_costs = convert_dollars_to_analysis_basis(sourcetype_costs, gdp_deflators, dollar_basis_analysis, 'TechPackageCost')
-        sourcetype_costs = Fleet(sourcetype_costs).define_bca_regclass()
-        sourcetype_costs = Fleet(sourcetype_costs).define_bca_sourcetype()
-
-        # determine how many zgtechs are in the analysis and then calc VPOP of each, including reducing VPOP_MOVES accordingly
-        try:
-            zgtech_max = int(sourcetype_costs.loc[sourcetype_costs['percent'] > 0, 'zerogramTechID'].max()) # returns NaN if no zgtech
-        except ValueError:
-            zgtech_max = 0
-
-        fleet_bca = Fleet(moves_adjusted).fleet_with_0gtech(sourcetype_costs, zgtech_max)
-        fleet_bca = pd.DataFrame(fleet_bca.loc[fleet_bca['modelYearID'] >= year_min])
-        fleet_bca.sort_values(by=['optionID', 'regClassID', 'fuelTypeID', 'sourceTypeID', 'zerogramTechID', 'yearID', 'ageID'], ascending=True, inplace=True, axis=0)
-        fleet_bca.reset_index(drop=True, inplace=True)
-        # add the identifier metric, alt_st_rc_ft_zg, to the dataframes
-        for df in [sourcetype_costs, fleet_bca]:
-            df = Fleet(df).define_bca_sourcetype_zg()
-        sales_bca = Fleet(fleet_bca).sales()
-
-        # calculate the zero gram tech direct mfg costs by passing vehicles, package costs, sales and learning metrics thru the DirectCost class
-        st_rc_ft_zg_age0 = pd.Series(sales_bca['alt_st_rc_ft_zg']).unique()
-        sourcetype_costs_vehs = pd.Series(sourcetype_costs['alt_st_rc_ft_zg']).unique()
-        pkg_directcost_veh_zgtech_dict = dict()
-        for veh in st_rc_ft_zg_age0:
-            if veh not in list(sourcetype_costs_vehs):
-                pkg_cost_veh_zgtech, pkg_seedvol = 0, 0
-                techpen = 0 # this is the zgtech techpen on this vehicle, so ICE=0
-                sales_to_pass = sales_bca.loc[sales_bca['alt_st_rc_ft_zg'] == veh, :]
-                sales_to_pass.reset_index(inplace=True, drop=True)
-                pkg_directcost_veh_zgtech_dict[veh] = DirectCost(veh).pkg_cost_zgtech_withlearning(sales_to_pass, pkg_cost_veh_zgtech, techpen,
-                                                                                                   pkg_seedvol, learning_rate)
-            else:
-                pkg_cost_veh_zgtech, pkg_seedvol = DirectCost(veh).pkg_cost_vehicle_zgtech(sourcetype_costs)[0], \
-                                                   DirectCost(veh).pkg_cost_vehicle_zgtech(sourcetype_costs)[1]
-                techpen = 1 # this is the zgtech techpen on this vehicle, so non-ICE=1 since VPOP already includes the percentage having the zgtech
-                sales_to_pass = sales_bca.loc[sales_bca['alt_st_rc_ft_zg'] == veh, :]
-                sales_to_pass.reset_index(inplace=True, drop=True)
-                pkg_directcost_veh_zgtech_dict[veh] = DirectCost(veh).pkg_cost_zgtech_withlearning(sales_to_pass, pkg_cost_veh_zgtech, techpen,
-                                                                                                   pkg_seedvol, learning_rate)
-            pkg_directcost_veh_zgtech_dict[veh]['DirectCost_AvgPerVeh_ZG'].fillna(0, inplace=True)
-            pkg_directcost_veh_zgtech_dict[veh].insert(1, 'Vehicle_Name_BCA', Vehicle(veh).name_bca())
-
-        # create DataFrame into which the individual DataFrames in the above dictionaries can be appended
-        directcost_sourcetype = pd.DataFrame()
-        for veh in st_rc_ft_zg_age0:
-            directcost_sourcetype = pd.concat([directcost_sourcetype, pkg_directcost_veh_zgtech_dict[veh]], axis=0, ignore_index=True)
-        directcost_sourcetype.fillna(0, inplace=True)
-
     # merge the DataFrames into a new DataFrame, create and calculate some new metrics, drop some metrics
-    if calc_sourcetype_costs == 'Y':
-        directcost_regclass.drop(columns=['VPOP'], inplace=True) # this VPOP is now summed by regclass but we want sourcetype VPOP
-        directcost_bca = directcost_sourcetype.merge(directcost_regclass, on=['optionID', 'regClassID', 'fuelTypeID', 'alt_rc_ft', 'yearID', 'modelYearID', 'ageID'], how='left', sort='False')
-        directcost_bca['DirectCost_AvgPerVeh'] = directcost_bca[['DirectCost_AvgPerVeh', 'DirectCost_AvgPerVeh_ZG']].sum(axis=1)
-        # drop any columns that are confusing in the merged DataFrame
-        directcost_bca.drop(columns=['DirectCost_TotalCost_ZG'], inplace=True)
-    else:
-        directcost_regclass.drop(columns=['VPOP'], inplace=True) # this VPOP is now summed by regclass but we want sourcetype VPOP
-        cols = ['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'alt_st_rc_ft', 'alt_rc_ft', 'yearID', 'modelYearID', 'ageID', 'VPOP']
-        directcost_bca = sales_bca[cols].merge(directcost_regclass, on=['optionID', 'regClassID', 'fuelTypeID', 'alt_rc_ft', 'yearID', 'modelYearID', 'ageID'], how='left', sort='False')
+    directcost_regclass.drop(columns=['VPOP'], inplace=True) # this VPOP is now summed by regclass but we want sourcetype VPOP
+    cols = ['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'alt_st_rc_ft', 'alt_rc_ft', 'yearID', 'modelYearID', 'ageID', 'VPOP']
+    directcost_bca = sales_bca[cols].merge(directcost_regclass, on=['optionID', 'regClassID', 'fuelTypeID', 'alt_rc_ft', 'yearID', 'modelYearID', 'ageID'], how='left', sort='False')
     directcost_bca.loc[directcost_bca['VPOP'] == 0, 'DirectCost_AvgPerVeh'] = 0
     directcost_bca['DirectCost_TotalCost'] = directcost_bca[['DirectCost_AvgPerVeh', 'VPOP']].product(axis=1)
     directcost_bca.reset_index(drop=True, inplace=True)
@@ -461,12 +406,9 @@ def main():
     if calc_pollution_effects == 'Y':
         print('Working on pollution costs....')
         cols = ['optionID', 'yearID', 'modelYearID', 'ageID',
-                'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
-                'alt_st_rc_ft_zg', 'alt_st_rc_ft', 'alt_rc_ft',
+                'sourceTypeID', 'regClassID', 'fuelTypeID',
+                'alt_st_rc_ft', 'alt_rc_ft',
                 'PM25_onroad', 'NOx_onroad']
-        if calc_sourcetype_costs == 'N':
-            cols.remove('zerogramTechID')
-            cols.remove('alt_st_rc_ft_zg')
         emission_costs = pd.DataFrame(fleet_bca, columns=cols)
         emission_cost_calcs = EmissionCost(emission_costs, criteria_emission_costs_reshaped)
         emission_costs = emission_cost_calcs.calc_criteria_emission_costs_df()
@@ -482,13 +424,10 @@ def main():
     # create DataFrame and then adjust MOVES fuel consumption as needed
     print('Working on operating costs....')
     cols = ['optionID', 'yearID', 'modelYearID', 'ageID',
-            'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
-            'alt_st_rc_ft_zg', 'alt_st_rc_ft', 'alt_rc_ft',
+            'sourceTypeID', 'regClassID', 'fuelTypeID',
+            'alt_st_rc_ft', 'alt_rc_ft',
             'Gallons', 'MPG_AvgPerVeh', 'VMT', 'VMT_AvgPerVeh', 'VMT_AvgPerVeh_CumSum',
             'THC_UStons', 'NOx_onroad']
-    if calc_sourcetype_costs == 'N':
-        cols.remove('zerogramTechID')
-        cols.remove('alt_st_rc_ft_zg')
     operating_costs = pd.DataFrame(fleet_bca, columns=cols)
     # determine sourcetype-based estimated ages when warranty and useful life are reached
     repair_warranty_ages = EstimatedAge(operating_costs).ages_by_identifier(warranty_miles_reshaped, warranty_age_reshaped, typical_vmt_thru_age, 'Warranty')
@@ -535,6 +474,11 @@ def main():
     weighted_def_cpm_df = pd.DataFrame(weighted_def_cpm).transpose()
     weighted_fuel_cpm_df = pd.DataFrame(weighted_fuel_cpm).transpose()
 
+    # and now put the MOVES name identifier in the operating_costs DataFrame
+    operating_costs.insert(operating_costs.columns.get_loc('fuelTypeID') + 1, 'Vehicle_Name_MOVES', '')
+    for veh in vehs_operating_costs:
+        operating_costs.loc[operating_costs['alt_st_rc_ft'] == veh, 'Vehicle_Name_MOVES'] = Vehicle(veh).name_moves()
+
     # pass each DataFrame thru the DiscountValues class and pass the list of metrics to be discounted for each thru the discount method
     print('Working on discounting monetized values....')
     techcost_dict = dict()
@@ -563,32 +507,22 @@ def main():
     print('Working on benefit-cost analysis results and summarizing things....')
     bca_costs_dict = dict()
     techcost_metrics_for_bca = ['optionID', 'yearID', 'modelYearID', 'ageID',
-                                'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
-                                'Vehicle_Name_RC', 'Vehicle_Name_BCA',
+                                'sourceTypeID', 'regClassID', 'fuelTypeID', 'Vehicle_Name_RC',
                                 'DirectCost_TotalCost', 'WarrantyCost_TotalCost', 'RnDCost_TotalCost', 'OtherCost_TotalCost', 'ProfitCost_TotalCost',
                                 'IndirectCost_TotalCost', 'TechCost_TotalCost']
     operating_metrics_for_bca = ['optionID', 'yearID', 'modelYearID', 'ageID',
-                                 'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID'] \
+                                 'sourceTypeID', 'regClassID', 'fuelTypeID', 'Vehicle_Name_MOVES'] \
                                 + operatingcost_metrics_to_discount
-    merge_metrics = ['optionID', 'yearID', 'modelYearID', 'ageID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID']
+    merge_metrics = ['optionID', 'yearID', 'modelYearID', 'ageID', 'sourceTypeID', 'regClassID', 'fuelTypeID']
     cols = ['optionID', 'yearID', 'modelYearID', 'ageID',
-            'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
-            'TechPackageDescription']
-    if calc_sourcetype_costs == 'N':
-        techcost_metrics_for_bca.remove('zerogramTechID')
-        techcost_metrics_for_bca.remove('Vehicle_Name_BCA')
-        operating_metrics_for_bca.remove('zerogramTechID')
-        merge_metrics.remove('zerogramTechID')
-        cols.remove('zerogramTechID')
+            'sourceTypeID', 'regClassID', 'fuelTypeID']
     for dr in [0, discrate_social_low, discrate_social_high]:
         bca_costs_dict[dr] = pd.DataFrame(fleet_bca, columns=cols)
         bca_costs_dict[dr] = bca_costs_dict[dr].merge(techcost_dict[dr][techcost_metrics_for_bca], on=merge_metrics, how='left')
         bca_costs_dict[dr] = bca_costs_dict[dr].merge(operating_costs_dict[dr][operating_metrics_for_bca], on=merge_metrics, how='left')
         if calc_pollution_effects == 'Y':
-            pollution_metrics_for_bca = ['optionID', 'yearID', 'modelYearID', 'ageID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID'] \
+            pollution_metrics_for_bca = ['optionID', 'yearID', 'modelYearID', 'ageID', 'sourceTypeID', 'regClassID', 'fuelTypeID'] \
                                         + criteria_and_tailpipe_emission_costs_list
-            if calc_sourcetype_costs == 'N':
-                pollution_metrics_for_bca.remove('zerogramTechID')
             bca_costs_dict[dr] = bca_costs_dict[dr].merge(emission_costs_dict[dr][pollution_metrics_for_bca], on=merge_metrics, how='left')
         bca_costs_dict[dr].insert(0, 'DiscountRate', dr)
 
@@ -597,14 +531,15 @@ def main():
         bca_costs = pd.concat([bca_costs, bca_costs_dict[dr]], axis=0, ignore_index=True)
 
     # add some total cost columns
+    bca_costs.insert(len(bca_costs.columns), 'TechAndOperatingCost_BCA_TotalCost', bca_costs[['TechCost_TotalCost', 'OperatingCost_BCA_TotalCost']].sum(axis=1))
     if calc_pollution_effects == 'Y':
         for dr in [0.03, 0.07]:
             for mort_est in ['low', 'high']:
                 bca_costs.insert(len(bca_costs.columns), 'TotalCost_' + mort_est + '_' + str(dr),
                                  bca_costs[['TechCost_TotalCost', 'OperatingCost_BCA_TotalCost', 'CriteriaCost_' + mort_est + '_' + str(dr)]].sum(axis=1))
     else:
-        bca_costs.insert(len(bca_costs.columns), 'TotalCost', bca_costs[['TechCost_TotalCost', 'OperatingCost_BCA_TotalCost']].sum(axis=1))
-
+        pass
+        # bca_costs.insert(len(bca_costs.columns), 'TotalCost', bca_costs[['TechCost_TotalCost', 'OperatingCost_BCA_TotalCost']].sum(axis=1))
     # adjust the 3 and 7 DR total costs as needed
     if calc_pollution_effects == 'Y':
         for mort_est in ['low', 'high']:
@@ -625,17 +560,15 @@ def main():
 
     # Since vehicle names were added via the DirectCost class, they exist only for age=0
     # So, now fill in some missing vehicle names for age>0, just for clarity.
-    bca_costs['Vehicle_Name_RC'].fillna(method='ffill', inplace=True)
-    if calc_sourcetype_costs == 'Y':
-        bca_costs['Vehicle_Name_BCA'].fillna(method='ffill', inplace=True)
+    # bca_costs['Vehicle_Name_RC'].fillna(method='ffill', inplace=True)
 
     # Now add an OptionName column so that output files provide that information
-    Fleet(techcost_all).insert_option_name(options, number_alts)
-    Fleet(operating_costs_all).insert_option_name(options, number_alts)
-    Fleet(bca_costs).insert_option_name(options, number_alts)
-    Fleet(moves_adjusted).insert_option_name(options, number_alts)
+    Fleet(techcost_all).insert_option_name(options_dict, number_alts)
+    Fleet(operating_costs_all).insert_option_name(options_dict, number_alts)
+    Fleet(bca_costs).insert_option_name(options_dict, number_alts)
+    Fleet(moves_adjusted).insert_option_name(options_dict, number_alts)
     if calc_pollution_effects == 'Y':
-        Fleet(emission_costs_all).insert_option_name(options, number_alts)
+        Fleet(emission_costs_all).insert_option_name(options_dict, number_alts)
 
     # now set a standard row header for use in grouping along with metrics to group
     techcost_metrics_to_sum = ['VPOP'] + [col for col in techcost_all.columns if 'TotalCost' in col]
@@ -716,12 +649,9 @@ def main():
         df_list = [techcost_summary, emission_costs_sum, operating_costs_summary, bca_costs_sum]
     else:
         df_list = [techcost_summary, operating_costs_summary, bca_costs_sum]
-    for df in df_list:
+    for df in df_list: # inserts cols in techcost_summary[2], etc.
         df[2].insert(6, 'regclass', pd.Series(regClassID[number] for number in df[2]['regClassID']))
         df[2].insert(7, 'fueltype', pd.Series(fuelTypeID[number] for number in df[2]['fuelTypeID']))
-        if calc_sourcetype_costs == 'Y':
-            df[3].insert(6, 'sourceype', pd.Series(sourceTypeID[number] for number in df[3]['sourceTypeID']))
-            df[3].insert(7, 'fueltype', pd.Series(fuelTypeID[number] for number in df[3]['fuelTypeID']))
 
     # calc the deltas relative to alt0 for the main DataFrames
     new_metrics = [metric for metric in operating_costs_all.columns if 'VMT' in metric or 'Warranty' in metric or 'Useful' in metric or 'tons' in metric]
@@ -776,14 +706,14 @@ def main():
     DocTables(techcost_summary[2]).techcost_per_veh_table(discount_rates, techcost_years, regclasses, fueltypes, techcost_per_veh_cols, techcost_per_veh_file)
     techcost_per_veh_file.save()
 
-    bca_cols = ['OptionName', 'DiscountRate', 'TechCost_TotalCost', 'OperatingCost_BCA_TotalCost']
+    bca_cols = ['OptionName', 'DiscountRate', 'TechCost_TotalCost', 'OperatingCost_BCA_TotalCost', 'TechAndOperatingCost_BCA_TotalCost']
     bca_years = bca_summary_years
     bca_annual = pd.ExcelWriter(path_of_run_results_folder.joinpath('bca_annual.xlsx'))
     if calc_pollution_effects == 'Y':
         DocTables(bca_costs_sum[1]).bca_yearID_tables('', 0, 'CriteriaCost_low_0.07', 'CriteriaCost_high_0.03', bca_years,
                                                       'billions', bca_cols, bca_annual)
     else:
-        DocTables(bca_costs_sum[1]).bca_yearID_tables('', 0, 'TotalCost', '', bca_years,
+        DocTables(bca_costs_sum[1]).bca_yearID_tables('', 0, 'TechAndOperatingCost_BCA_TotalCost', '', bca_years,
                                                       'billions', bca_cols, bca_annual)
     bca_annual.save()
 
@@ -794,9 +724,9 @@ def main():
         DocTables(bca_costs_sum[1]).bca_yearID_tables('_CumSum', 0.07, 'CriteriaCost_low_0.07', 'CriteriaCost_high_0.07', bca_years,
                                                       'billions', bca_cols, bca_npv)
     else:
-        DocTables(bca_costs_sum[1]).bca_yearID_tables('_CumSum', 0.03, 'TotalCost', '', bca_years,
+        DocTables(bca_costs_sum[1]).bca_yearID_tables('_CumSum', 0.03, 'TechAndOperatingCost_BCA_TotalCost', '', bca_years,
                                                       'billions', bca_cols, bca_npv)
-        DocTables(bca_costs_sum[1]).bca_yearID_tables('_CumSum', 0.07, 'TotalCost', '', bca_years,
+        DocTables(bca_costs_sum[1]).bca_yearID_tables('_CumSum', 0.07, 'TechAndOperatingCost_BCA_TotalCost', '', bca_years,
                                                       'billions', bca_cols, bca_npv)
     bca_npv.save()
 
@@ -807,9 +737,9 @@ def main():
         DocTables(bca_costs_sum[1]).bca_yearID_tables('_Annualized', 0.07, 'CriteriaCost_low_0.07', 'CriteriaCost_high_0.07', bca_years,
                                                       'billions', bca_cols, bca_annualized)
     else:
-        DocTables(bca_costs_sum[1]).bca_yearID_tables('_Annualized', 0.03, 'TotalCost', '', bca_years,
+        DocTables(bca_costs_sum[1]).bca_yearID_tables('_Annualized', 0.03, 'TechAndOperatingCost_BCA_TotalCost', '', bca_years,
                                                       'billions', bca_cols, bca_annualized)
-        DocTables(bca_costs_sum[1]).bca_yearID_tables('_Annualized', 0.07, 'TotalCost', '', bca_years,
+        DocTables(bca_costs_sum[1]).bca_yearID_tables('_Annualized', 0.07, 'TechAndOperatingCost_BCA_TotalCost', '', bca_years,
                                                       'billions', bca_cols, bca_annualized)
     bca_annualized.save()
 
@@ -830,8 +760,6 @@ def main():
             shutil.copy(path_source, path_destination)
         fuel_prices.to_csv(path_of_modified_inputs_folder.joinpath('fuel_prices_' + aeo_case + '.csv'), index=False)
         regclass_costs.to_csv(path_of_modified_inputs_folder.joinpath('regclass_costs.csv'), index=False)
-        if calc_sourcetype_costs == 'Y':
-            sourcetype_costs.to_csv(path_of_modified_inputs_folder.joinpath('sourcetype_costs.csv'), index=False)
         markups_vmt_scalars_reshaped.to_csv(path_of_modified_inputs_folder.joinpath('markups_vmt_scalars_reshaped.csv'), index=False)
         def_doserates.to_csv(path_of_modified_inputs_folder.joinpath('def_doserates.csv'), index=False)
         repair_and_maintenance.to_csv(path_of_modified_inputs_folder.joinpath('repair_and_maintenance.csv'), index=False)
@@ -853,6 +781,54 @@ def main():
 
         bca_costs.to_csv(path_of_run_results_folder.joinpath('bca_costs.csv'), index=False)
         bca_costs_sum[1].to_csv(path_of_run_results_folder.joinpath('bca_costs_by_yearID.csv'), index=False)
+
+    # for figures, an updated options_dict would be nice
+    for alt_num in range(1, len(options_dict)):
+        k = alt_num * 10
+        alt0 = options_dict[0]['OptionName']
+        alt = options_dict[alt_num]['OptionName']
+        options_dict.update({k: {'OptionName': f'{alt}_minus_{alt0}'}})
+
+    if generate_emissionrepair_cpm_figures != 'N':
+        cpm_figure_years = generate_emissionrepair_cpm_figures.split(',')
+        for item in range(len(cpm_figure_years)):
+            cpm_figure_years[item] = pd.to_numeric(cpm_figure_years[item])
+        path_figures = path_of_run_results_folder.joinpath('figures')
+        path_figures.mkdir(exist_ok=True)
+        alts = pd.Series(bca_costs.loc[bca_costs['optionID'] < 10, 'optionID']).unique()
+        veh_names = pd.Series(bca_costs['Vehicle_Name_MOVES']).unique()
+        for veh_name in veh_names:
+            for cpm_figure_year in cpm_figure_years:
+                CreateFigures(bca_costs, options_dict, path_figures).line_chart_vs_age(0, alts, cpm_figure_year, veh_name, 'EmissionRepairCost_Owner_AvgPerMile')
+
+    if generate_BCA_ArgsByOption_figures == 'Y':
+        yearID_min = int(bca_costs['yearID'].min())
+        yearID_max = int(bca_costs['yearID'].max())
+        path_figures = path_of_run_results_folder.joinpath('figures')
+        path_figures.mkdir(exist_ok=True)
+        alts = pd.Series(bca_costs.loc[bca_costs['optionID'] >= 10, 'optionID']).unique()
+        for alt in alts:
+            CreateFigures(bca_costs_sum[1], options_dict, path_figures).line_chart_args_by_option(0, alt, yearID_min, yearID_max,
+                                                                                                  'TechCost_TotalCost',
+                                                                                                  'EmissionRepairCost_Owner_TotalCost',
+                                                                                                  'UreaCost_TotalCost',
+                                                                                                  'FuelCost_Pretax_TotalCost',
+                                                                                                  'TechAndOperatingCost_BCA_TotalCost'
+                                                                                                  )
+    if generate_BCA_ArgByOptions_figure == 'Y':
+        yearID_min = int(bca_costs['yearID'].min())
+        yearID_max = int(bca_costs['yearID'].max())
+        path_figures = path_of_run_results_folder.joinpath('figures')
+        path_figures.mkdir(exist_ok=True)
+        alts = pd.Series(bca_costs['optionID']).unique()
+        args = ['TechCost_TotalCost',
+                'EmissionRepairCost_Owner_TotalCost',
+                'UreaCost_TotalCost',
+                'FuelCost_Pretax_TotalCost',
+                'TechAndOperatingCost_BCA_TotalCost'
+                ]
+        for arg in args:
+            CreateFigures(bca_costs_sum[1], options_dict, path_figures).line_chart_arg_by_options(0, alts, yearID_min, yearID_max, arg)
 
     elapsed_time_outputs = time.time() - start_time_outputs
     end_time = time.time()

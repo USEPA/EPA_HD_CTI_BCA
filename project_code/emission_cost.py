@@ -33,15 +33,15 @@ class EmissionCost:
                         for fuel_id in fuel_ids:
                             df_fuel[fuel_id] = df_fuel[fuel_id].merge(cost_pollutant, on=['yearID', 'fuelTypeID'], how='left')
                             df_fuel[fuel_id]['USDpUSton'].fillna(method='ffill', inplace=True)
-                            new_metric_series = pd.Series(df_fuel[fuel_id][[pollutant + '_' + source, 'USDpUSton']].product(axis=1), name=key)
+                            new_metric_series = pd.Series(df_fuel[fuel_id][[f'{pollutant}_{source}', 'USDpUSton']].product(axis=1), name=key)
                             df_fuel[fuel_id] = pd.concat([df_fuel[fuel_id], new_metric_series], axis=1)
-                            df_fuel[fuel_id].rename(columns={key: pollutant + 'Cost_' + source + '_' + mortality_est + '_' + str(dr)}, inplace=True)
-                            df_fuel[fuel_id].rename(columns={'USDpUSton': key + '_USDpUSton'}, inplace=True)
+                            df_fuel[fuel_id].rename(columns={key: f'{pollutant}Cost_{source}_{mortality_est}_{dr}'}, inplace=True)
+                            df_fuel[fuel_id].rename(columns={'USDpUSton': f'{key}_USDpUSton'}, inplace=True)
         df_return = pd.DataFrame()
         for fuel_id in fuel_ids:
             df_return = pd.concat([df_return, df_fuel[fuel_id]], axis=0, ignore_index=True, sort=False)
         for dr in [0.03, 0.07]:
             for mortality_est in ['low', 'high']:
-                cols = [col for col in df_return.columns if mortality_est + '_' + str(dr) in col and 'USDpUSton' not in col]
-                df_return.insert(len(df_return.columns), 'CriteriaCost_' + mortality_est + '_' + str(dr), df_return[cols].sum(axis=1))
+                cols = [col for col in df_return.columns if f'{mortality_est}_{dr}' in col and 'USDpUSton' not in col]
+                df_return.insert(len(df_return.columns), f'CriteriaCost_{mortality_est}_{dr}', df_return[cols].sum(axis=1))
         return df_return

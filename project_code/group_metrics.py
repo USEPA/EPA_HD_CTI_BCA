@@ -37,5 +37,5 @@ class GroupMetrics:
         # print('Doing groupby.cumsum')
         df_cumsum = self.data[self.row_header + metrics_cumsum].groupby(by=self.row_header, as_index=False).cumsum()
         for metric in metrics_cumsum:
-            df_cumsum.rename(columns={metric: metric + '_CumSum'}, inplace=True)
+            df_cumsum.rename(columns={metric: f'{metric}_CumSum'}, inplace=True)
         return df_cumsum

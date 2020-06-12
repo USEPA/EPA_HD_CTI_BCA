@@ -45,18 +45,6 @@ class DirectCost:
         pkg_cost_veh_regclass = pkg_cost.at['Rollup', 'TechPackageCost']
         return pkg_cost_veh_regclass
 
-    def pkg_cost_vehicle_zgtech(self, _zgtech):
-        """
-        :param _zgtech: The direct cost inputs by sourcetype.
-        :type _zgtech: DataFrame
-        :return: A single zgtech package cost value and the seed volume for a specific optionID-sourcetypeID-regclassID-fueltypeID-zgtechID vehicle.
-        """
-        pkg_cost_veh = _zgtech.loc[_zgtech['alt_st_rc_ft_zg'] == self._veh, :]
-        pkg_cost_veh.reset_index(drop=True, inplace=True)
-        _pkg_cost_veh = pkg_cost_veh['TechPackageCost'][0]
-        _pkg_seedvol = pkg_cost_veh['SeedVolumeFactor'][0]
-        return _pkg_cost_veh, _pkg_seedvol
-
     def pkg_techpen_vehicle(self, _pkg_techpens):
         """
         :param _pkg_techpens: The tech penetration (or phase-in) inputs by reg class.
@@ -112,59 +100,20 @@ class DirectCost:
         # get VPOP at age0 for use in learning calc later
         vpop_age0 = pd.Series(df['VPOP'])[0]
         # insert some new columns, set to zero or empty string, then calc desired results
-        new_metric_numeric = ['VPOP_Complying_Cumulative_' + step, 'SeedVolumeFactor', 'CumulativeSalesScalar',
-                              'DirectCost_AvgPerVeh_' + step, 'DirectCost_TotalCost_' + step]
+        new_metric_numeric = [f'VPOP_Complying_Cumulative_{step}', 'SeedVolumeFactor', 'CumulativeSalesScalar',
+                              f'DirectCost_AvgPerVeh_{step}', f'DirectCost_TotalCost_{step}']
         for metric in new_metric_numeric:
             df.insert(len(df.columns), metric, 0)
         # now calculate results for these new metrics
-        df['VPOP_Complying_Cumulative_' + step] = df['VPOP'].cumsum()
+        df[f'VPOP_Complying_Cumulative_{step}'] = df['VPOP'].cumsum()
         df['SeedVolumeFactor'] = _pkg_seedvol
         df['SalesVolumeScalar'] = _pkg_sales_vol_scalar
-        df['DirectCost_AvgPerVeh_' + step] = _pkg_cost_veh * (((df['VPOP_Complying_Cumulative_' + step] * _pkg_sales_vol_scalar + (vpop_age0 * _pkg_seedvol))
+        df[f'DirectCost_AvgPerVeh_{step}'] = _pkg_cost_veh * (((df[f'VPOP_Complying_Cumulative_{step}'] * _pkg_sales_vol_scalar + (vpop_age0 * _pkg_seedvol))
                                                              / (vpop_age0 + (vpop_age0 * _pkg_seedvol)))
                                                             ** _learning_rate)
-        df['DirectCost_TotalCost_' + step] = df['DirectCost_AvgPerVeh_' + step] * df['VPOP']
+        df[f'DirectCost_TotalCost_{step}'] = df[f'DirectCost_AvgPerVeh_{step}'] * df['VPOP']
         df = df[['optionID', 'regClassID', 'fuelTypeID', 'yearID', 'modelYearID', 'ageID',
-                 'alt_rc_ft', 'VPOP', 'VPOP_Complying_Cumulative_' + step,
+                 'alt_rc_ft', 'VPOP', f'VPOP_Complying_Cumulative_{step}',
                  'SeedVolumeFactor', 'SalesVolumeScalar',
-                 'DirectCost_AvgPerVeh_' + step, 'DirectCost_TotalCost_' + step]]
-        return df
-
-    def pkg_cost_zgtech_withlearning(self, _sales, _pkg_cost_veh, _techpen, _pkg_seedvol, _learning_rate):
-        """
-        :param _sales: The sales by year for the fleet being considered.
-        :type _sales: DataFrame
-        :param _pkg_cost_veh: The direct cost of the package being applied to a unique optionID-sourcetypeID-regclassID-fueltypeID-zgtechID vehicle.
-        :type _pkg_cost_veh: Number
-        :param _techpen: The tech pen for a unique optionID-sourcetypeID-regclassID-fueltypeID-zgtechID vehicle; this is hardcoded as 0 where zgtechID=0 and 1 where zgtechID>0.
-        :type _techpen: Number
-        :param _pkg_seedvol: The seed volume factor for use in calculating learning effects for a unique optionID-sourcetypeID-regclassID-fueltypeID-zgtechID.
-        :type _pkg_seedvol: Number
-        :param _learning_rate: The learning rate entered in the BCA inputs sheet.
-        :type _learning_rate: Number
-        :return: A DataFrame of package costs per vehicle with learning applied and total costs with the column index:
-                ['optionID', 'yearID', 'modelYearID', 'ageID','sourcetypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID', 
-                'alt_rc_ft', 'alt_st_rc_ft', 'alt_st_rc_ft_zg',
-                'VPOP', 'VPOP_Complying_ZG', 'VPOP_Complying_Cumulative_ZG',
-                'DirectCost_WithLearning_ZG', 'DirectCost_AvgPerVeh_ZG', 'DirectCost_TotalCost_ZG']
-        """
-        df = _sales.copy()
-        df.reset_index(drop=True, inplace=True)
-        # get VPOP at age0 for use in learning calc later
-        vpop_age0 = pd.Series(df['VPOP'])[0]
-        new_metric_numeric = ['VPOP_Complying_ZG', 'VPOP_Complying_Cumulative_ZG', 'DirectCost_WithLearning_ZG', 'DirectCost_TotalCost_ZG', 'DirectCost_AvgPerVeh_ZG']
-        for metric in new_metric_numeric:
-            df.insert(len(df.columns), metric, 0)
-        # now calculate results for these new metrics
-        df['VPOP_Complying_ZG'] = df['VPOP'] * _techpen
-        df['VPOP_Complying_Cumulative_ZG'] = df['VPOP_Complying_ZG'].cumsum()
-        df['DirectCost_WithLearning_ZG'] = _pkg_cost_veh * (((df['VPOP_Complying_Cumulative_ZG'] + (vpop_age0 * _pkg_seedvol))
-                                                             / (vpop_age0 + (vpop_age0 * _pkg_seedvol)))
-                                                            ** _learning_rate)
-        df['DirectCost_TotalCost_ZG'] = df['DirectCost_WithLearning_ZG'] * df['VPOP_Complying_ZG']
-        df['DirectCost_AvgPerVeh_ZG'] = df['DirectCost_TotalCost_ZG'] / df['VPOP']
-        df = df[['optionID', 'yearID', 'modelYearID', 'ageID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID',
-                 'alt_rc_ft', 'alt_st_rc_ft', 'alt_st_rc_ft_zg',
-                 'VPOP', 'VPOP_Complying_ZG', 'VPOP_Complying_Cumulative_ZG',
-                 'DirectCost_WithLearning_ZG', 'DirectCost_AvgPerVeh_ZG', 'DirectCost_TotalCost_ZG']]
+                 f'DirectCost_AvgPerVeh_{step}', f'DirectCost_TotalCost_{step}']]
         return df

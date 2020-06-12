@@ -35,7 +35,7 @@ class DocTables:
                         cols_to_round = [col for col in data.columns if 'AvgPerVeh' in col]
                         for col in cols_to_round:
                             data[col] = data[col].round(0)
-                        sh_name = str(dr) + 'DR_MY' + str(yr) + '_' + regclass + '_' + fueltype
+                        sh_name = f'{dr}DR_MY{yr}_{regclass}_{fueltype}'
                         data.to_excel(writer, sheet_name=sh_name, index=False)
         return writer
 
@@ -66,8 +66,8 @@ class DocTables:
                 data[col] = (data[col] / divisor).round(1)
             # data.insert(len(data.columns), 'PM2.5_Damages_TotalCosts', '')
             # data['PM2.5_Damages_TotalCosts'] = data[low_series + suffix].astype(str) + ' to ' + data[high_series + suffix].astype(str)
-            data.loc[len(data.index), 'OptionName'] = 'Table values are in %s' % units
-            sh_name = 'CY' + str(yr) + '_DR' + str(discrate)
+            data.loc[len(data.index), 'OptionName'] = f'Table values are in {units}'
+            sh_name = f'CY{yr}_DR{discrate}'
             data.to_excel(writer, sheet_name=sh_name, index=False)
         return writer
 
@@ -85,7 +85,7 @@ class DocTables:
                                 columns=df_cols)
             data = data.round({'PM25_onroad': -1, 'NOx_onroad': -3})
             data.loc[len(data.index), 'OptionName'] = 'Table values are in short tons'
-            sh_name = 'CY' + str(yr)
+            sh_name = f'CY{yr}'
             data.to_excel(writer, sheet_name=sh_name, index=False)
         return writer
 
@@ -102,6 +102,6 @@ class DocTables:
                                 columns=df_cols)
             data = data.round({'PM25_tailpipe': -1, 'NOx_tailpipe': -3})
             data.loc[len(data.index), 'OptionName'] = 'Table values are in short tons'
-            sh_name = 'CY' + str(yr)
+            sh_name = f'CY{yr}'
             data.to_excel(writer, sheet_name=sh_name, index=False)
         return writer

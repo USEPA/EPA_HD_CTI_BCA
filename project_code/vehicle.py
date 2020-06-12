@@ -76,27 +76,3 @@ class Vehicle:
         fuel_type_id = self._veh[3]
         veh_name = sourceTypeID[source_type_id] + '_' + regClassID[reg_class_id] + '_' + fuelTypeID[fuel_type_id]
         return veh_name
-
-    def name_bca(self):
-        """
-
-        :return: The name of the passed vehicle in terms of sourcetype_regClass_fuelType_zerogramTech.
-        """
-        source_type_id = self._veh[1]
-        reg_class_id = self._veh[2]
-        fuel_type_id = self._veh[3]
-        zgtech_id = self._veh[4]
-        veh_name = sourceTypeID[source_type_id] + '_' + regClassID[reg_class_id] \
-                   + '_' + fuelTypeID[fuel_type_id] + '_' + zerogramTechID[zgtech_id]
-        return veh_name
-
-    def name_powertrain(self):
-        """
-
-        :return: The name of the passed vehicle in terns of regClass_fuelType_zerogramTech.
-        """
-        reg_class_id = self._veh[2]
-        fuel_type_id = self._veh[3]
-        zgtech_id = self._veh[4]
-        veh_name = regClassID[reg_class_id] + '_' + fuelTypeID[fuel_type_id] + '_' + zerogramTechID[zgtech_id]
-        return veh_name
