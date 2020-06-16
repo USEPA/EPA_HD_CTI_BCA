@@ -56,6 +56,7 @@ class DEFandFuelCost:
         df = df.merge(prices, on='yearID', how='left')
         df.insert(len(df.columns), 'UreaCost_TotalCost', df[['Gallons_DEF', 'DEF_USDperGal']].product(axis=1))
         df.insert(len(df.columns), 'UreaCost_AvgPerMile', df['UreaCost_TotalCost'] / df['VMT'])
+        df.insert(len(df.columns), 'UreaCost_AvgPerVeh', df[['UreaCost_AvgPerMile', 'VMT_AvgPerVeh']].product(axis=1))
         return df
 
     def orvr_fuel_impacts_mlpergram(self, orvr_fuelchanges, calc_sourcetype_costs):
@@ -105,6 +106,7 @@ class DEFandFuelCost:
         df.insert(len(df.columns), 'FuelCost_Pretax_TotalCost', df[['Gallons', 'pretax_fuelprice']].product(axis=1))
         df.insert(len(df.columns), 'FuelCost_Retail_TotalCost', df[['Gallons', 'retail_fuelprice']].product(axis=1))
         df.insert(len(df.columns), 'FuelCost_Retail_AvgPerMile', df['FuelCost_Retail_TotalCost'] / df['VMT'])
+        df.insert(len(df.columns), 'FuelCost_Retail_AvgPerVeh', df[['FuelCost_Retail_AvgPerMile', 'VMT_AvgPerVeh']].product(axis=1))
         return df
 
 

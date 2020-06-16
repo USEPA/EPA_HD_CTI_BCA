@@ -29,15 +29,15 @@ class EstimatedAge:
         # since the merge is only for select MYs and alt_rc_ft vehicles, filling in for other ages/years has to be done via the following loop
         for veh in vehs:
             df_return.loc[(df_return['alt_rc_ft'] == veh), cols] = df_return.loc[(df_return['alt_rc_ft'] == veh), cols].ffill(axis=0)
-        df_return.insert(len(df_return.columns), 'CalculatedAgeWhen' + identifier + 'Reached', round(df_return[identifier + '_Miles'] / df_return['TypicalVMTperYear']))
+        df_return.insert(len(df_return.columns), f'CalculatedAgeWhen{identifier}Reached', round(df_return[f'{identifier}_Miles'] / df_return['TypicalVMTperYear']))
 
         estimated_age = list()
         for index, row in df_return.iterrows():
             actual_age = row[identifier + '_Age']
-            calculated_age = row['CalculatedAgeWhen' + identifier + 'Reached']
+            calculated_age = row[f'CalculatedAgeWhen{identifier}Reached']
             min_age = min(actual_age, calculated_age)
             estimated_age.append(min_age)
-        df_return.insert(len(df_return.columns), 'EstimatedAge_' + identifier, estimated_age)
+        df_return.insert(len(df_return.columns), f'EstimatedAge_{identifier}', estimated_age)
         df_return.drop(columns=['alt_rc_ft', 'VMT_AvgPerVeh_CumSum'], inplace=True) # drop for easier merge
         if identifier == 'UsefulLife':
             df_return.drop(columns=['TypicalVMTperYear'], inplace=True)  # drop for easier merge since metric is in 'Warranty' DataFrame

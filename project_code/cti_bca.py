@@ -451,6 +451,7 @@ def main():
     operating_costs.insert(len(operating_costs.columns), 'OperatingCost_Owner_TotalCost', operating_costs[cols_owner].sum(axis=1))
     operating_costs.insert(len(operating_costs.columns), 'OperatingCost_BCA_TotalCost', operating_costs[cols_bca].sum(axis=1))
     operating_costs.insert(len(operating_costs.columns), 'OperatingCost_Owner_AvgPerMile', operating_costs['OperatingCost_Owner_TotalCost'] / operating_costs['VMT'])
+    operating_costs.insert(len(operating_costs.columns), 'OperatingCost_Owner_AvgPerVeh', operating_costs[['OperatingCost_Owner_AvgPerMile', 'VMT_AvgPerVeh']].product(axis=1))
     operatingcost_metrics_to_discount = [col for col in operating_costs.columns if 'Cost' in col]
 
     # now create some weighted results of operating costs
