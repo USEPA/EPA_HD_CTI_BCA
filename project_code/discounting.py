@@ -15,7 +15,7 @@ class DiscountValues:
     def discount(self, discrate):
         """
         The discount method takes the list of metrics to be discounted and does the discounting calculation to a given year and point within that year.
-        The costs_start entry of the BCA_General_Inputs file should be set to 'start-year', 'mid-year' or 'end-year', where start-year discounts to the start of the year
+        The costs_start entry of the BCA_General_Inputs file should be set to 'start-year' or 'end-year', where start-year discounts to the start of the year
         (i.e., costs begin at time t=0) and end-year discounts to the end of the year (i.e., costs begin at time t=1).
 
         :param discrate: The discount rate.
@@ -25,8 +25,6 @@ class DiscountValues:
         for metric in self.metrics:
             if self.costs_start == 'start-year':
                 discount_offset = 0
-            if self.costs_start == 'mid-year':
-                discount_offset = 0.5
             if self.costs_start == 'end-year':
                 discount_offset = 1
             discounted_years = self.source_df['yearID'] - self.discount_to_cy + discount_offset
@@ -44,31 +42,31 @@ class DiscountValues:
         The discount_offset is then added to the result to reflect costs beginning at the start of the year or the end of the year.
         The equation used here is shown below.
 
-        AC = PV * DR * (1+DR)^(period) / [(1+DR)^(period+Discount_Offset) - 1]
+        AC = PV * DR * (1+DR)^(period) / [(1+DR)^(period+Offset) - 1]
 
         where,\n
         AC = Annualized Cost\n
         PV = Present Value (here, the cumulative summary of discounted annual values)\n
         DR = Discount Rate\n
         CY = Calendar Year (yearID)\n
-        period = the current CY - the year to which to discount values + 1\n
-        Discount_Offset = 0 for costs at the start of the year, 1 for cost at the end of the year
+        period = the current CY - the year to which to discount values + discount_offset\n
+        Offset = 1 for costs at the start of the year, 0 for cost at the end of the year
 
         :param metrics_cumsum: A list of cumulative summed metrics for which annualized values are to be calculated.
         :param year_min: Values will be annualized beginning in year_min.
-        :param costs_start: The costs_start entry of the BCA_General_Inputs file should be set to 'start-year', 'mid-year' or 'end-year', where start-year discounts to the start of the year (i.e., costs begin at time t=0) and end-year discounts to the end of the year (i.e., costs begin at time t=1).
+        :param costs_start: The costs_start entry of the BCA_General_Inputs file should be set to 'start-year' or 'end-year', where start-year discounts to the start of the year (i.e., costs begin at time t=0) and end-year discounts to the end of the year (i.e., costs begin at time t=1).
         :return: The passed DataFrame with annualized values having been added.
         """
         if self.costs_start == 'start-year':
             discount_offset = 0
-        if self.costs_start == 'mid-year':
-            discount_offset = 0.5
+            annualized_offset = 1
         if self.costs_start == 'end-year':
             discount_offset = 1
+            annualized_offset = 0
         for metric in self.metrics:
             self.source_df.insert(len(self.source_df.columns), f'{metric}_Annualized', 0)
-            periods = self.source_df['yearID'] - self.discount_to_cy + 1
+            periods = self.source_df['yearID'] - self.discount_to_cy + discount_offset
             self.source_df.loc[self.source_df['DiscountRate'] != 0, [f'{metric}_Annualized']] = \
                 self.source_df[f'{metric}_CumSum'] * self.source_df['DiscountRate'] * (1 + self.source_df['DiscountRate']) ** periods \
-                / ((1 + self.source_df['DiscountRate']) ** (periods + discount_offset) - 1)
+                / ((1 + self.source_df['DiscountRate']) ** (periods + annualized_offset) - 1)
         return self.source_df
