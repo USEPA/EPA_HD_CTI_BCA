@@ -33,9 +33,9 @@ class EstimatedAge:
 
         estimated_age = list()
         for index, row in df_return.iterrows():
-            actual_age = row[identifier + '_Age']
+            required_age = row[identifier + '_Age']
             calculated_age = row[f'CalculatedAgeWhen{identifier}Reached']
-            min_age = min(actual_age, calculated_age)
+            min_age = min(required_age, calculated_age)
             estimated_age.append(min_age)
         df_return.insert(len(df_return.columns), f'EstimatedAge_{identifier}', estimated_age)
         df_return.drop(columns=['alt_rc_ft', 'VMT_AvgPerVeh_CumSum'], inplace=True) # drop for easier merge

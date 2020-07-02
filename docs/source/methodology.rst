@@ -23,3 +23,21 @@ Sensitivites
 The BCA_General_Inputs file contains several inputs that can be adjusted as indicated within the file. Input values in other files can also be adjusted. It is suggested
 that the structure of the input files not be changed and that the headers and names within the input files not be changed unless the user is willing to modify the Python
 code in the event that changes result in errors.
+
+
+Formulas Used
+^^^^^^^^^^^^^
+
+Emission repair costs
+_____________________
+
+:math:`DirectCostScalar_{optionID;vehicle;MY}=\frac{DirectCost_{optionID;vehicle;MY}} {DirectCost_{Baseline;HHDDE;MY}}`
+
+where,
+
+- *DirectCost* = the direct manufacturing cost absent indirect costs
+- *optionID* = the option considered (i.e, baseline or one of the action alternatives)
+- *HHDDE* = heavy heavy-duty diesel engine regulatory class
+- *MY* = the model year being considered
+- *vehicle* = a unique regclass-fueltype vehicle within MOVES
+
