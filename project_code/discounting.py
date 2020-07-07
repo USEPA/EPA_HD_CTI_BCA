@@ -22,11 +22,11 @@ class DiscountValues:
         :return: A DataFrame containing the passed list of monetized values after discounting.
         """
         destination_df = self.source_df.copy()
+        if self.costs_start == 'start-year':
+            discount_offset = 0
+        if self.costs_start == 'end-year':
+            discount_offset = 1
         for metric in self.metrics:
-            if self.costs_start == 'start-year':
-                discount_offset = 0
-            if self.costs_start == 'end-year':
-                discount_offset = 1
             discounted_years = self.source_df['yearID'] - self.discount_to_cy + discount_offset
             destination_df[metric] = self.source_df[metric] / ((1 + discrate) ** discounted_years)
         destination_df.insert(0, 'DiscountRate', discrate)

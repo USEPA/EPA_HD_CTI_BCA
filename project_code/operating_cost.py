@@ -1,4 +1,5 @@
 import pandas as pd
+from itertools import product
 from project_code.vehicle import fuelTypeID
 
 GRAMSperSHORTTON = 907185
@@ -44,10 +45,9 @@ class DEFandFuelCost:
         for veh in vehs:
             df.loc[(df['alt_rc_ft'] == veh) & (df['ageID'] == 0), 'DEF_PercentOfFuel_Baseline'] \
                 = df.loc[(df['alt_rc_ft'] == veh) & (df['ageID'] == 0), 'DEF_PercentOfFuel_Baseline'].ffill(axis=0)
-        for veh in vehs:
-            for year in range(df['modelYearID'].min(), df['modelYearID'].max() + 1):
-                df.loc[(df['alt_rc_ft'] == veh) & (df['modelYearID'] == year), 'DEF_PercentOfFuel_Baseline'] \
-                    = df.loc[(df['alt_rc_ft'] == veh) & (df['modelYearID'] == year), 'DEF_PercentOfFuel_Baseline'].ffill(axis=0)
+        for veh, year in product(vehs, range(df['modelYearID'].min(), df['modelYearID'].max() + 1)):
+            df.loc[(df['alt_rc_ft'] == veh) & (df['modelYearID'] == year), 'DEF_PercentOfFuel_Baseline'] \
+                = df.loc[(df['alt_rc_ft'] == veh) & (df['modelYearID'] == year), 'DEF_PercentOfFuel_Baseline'].ffill(axis=0)
         # set non-diesel dose rates to zero and any NaNs to zero just for certainty
         df.loc[df['fuelTypeID'] != 2, 'DEF_PercentOfFuel_Baseline'] = 0
         df['DEF_PercentOfFuel_Baseline'].fillna(0, inplace=True)
@@ -180,9 +180,8 @@ class RepairAndMaintenanceCost:
                     = max_cpm
                 index_loc += 1
         df_return = pd.DataFrame()
-        for veh in vehicles:
-            for model_year in range(df_temp['modelYearID'].min(), df_temp['modelYearID'].max() + 1):
-                df_return = pd.concat([df_return, repair_cost_dict[veh, model_year]], axis=0, ignore_index=True)
+        for veh, model_year in product(vehicles, range(df_temp['modelYearID'].min(), df_temp['modelYearID'].max() + 1)):
+            df_return = pd.concat([df_return, repair_cost_dict[veh, model_year]], axis=0, ignore_index=True)
         df_return.reset_index(drop=True, inplace=True)
         df_return.insert(len(df_return.columns),
                          'EmissionRepairCost_Owner_AvgPerVeh',

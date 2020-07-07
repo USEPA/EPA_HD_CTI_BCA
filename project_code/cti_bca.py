@@ -7,6 +7,7 @@ from pathlib import Path, PurePath
 import shutil
 import os
 from datetime import datetime
+from itertools import product
 import time
 import project_code
 from project_code.fuel_prices_aeo import GetFuelPrices
@@ -201,21 +202,21 @@ def main():
     indirect_cost_scaling_metric = bca_inputs.at['scale_indirect_costs_by', 'Value']
     calc_pollution_effects = bca_inputs.at['calculate_pollution_effects', 'Value']
     calc_sourcetype_costs = bca_inputs.at['calculate_sourcetype_costs', 'Value']
-    round_moves_ustons_by = pd.to_numeric(bca_inputs.at['round_moves_ustons_by', 'Value'])
+    # round_moves_ustons_by = pd.to_numeric(bca_inputs.at['round_moves_ustons_by', 'Value'])
     round_costs_by = pd.to_numeric(bca_inputs.at['round_costs_by', 'Value'])
     def_gallons_perTonNOxReduction = pd.to_numeric(bca_inputs.at['def_gallons_perTonNOxReduction', 'Value'])
     weighted_operating_cost_years = bca_inputs.at['weighted_operating_cost_years', 'Value']
     weighted_operating_cost_years = weighted_operating_cost_years.split(',')
-    for item in range(len(weighted_operating_cost_years)):
-        weighted_operating_cost_years[item] = pd.to_numeric(weighted_operating_cost_years[item])
+    for i, v in enumerate(weighted_operating_cost_years):
+        weighted_operating_cost_years[i] = pd.to_numeric(weighted_operating_cost_years[i])
     techcost_summary_years = bca_inputs.at['techcost_summary_years', 'Value']
     techcost_summary_years = techcost_summary_years.split(',')
-    for item in range(len(techcost_summary_years)):
-        techcost_summary_years[item] = pd.to_numeric(techcost_summary_years[item])
+    for i, v in enumerate(techcost_summary_years):
+        techcost_summary_years[i] = pd.to_numeric(techcost_summary_years[i])
     bca_summary_years = bca_inputs.at['bca_summary_years', 'Value']
     bca_summary_years = bca_summary_years.split(',')
-    for item in range(len(bca_summary_years)):
-        bca_summary_years[item] = pd.to_numeric(bca_summary_years[item])
+    for i, v in enumerate(bca_summary_years):
+        bca_summary_years[i] = pd.to_numeric(bca_summary_years[i])
     generate_emissionrepair_cpm_figures = bca_inputs.at['generate_emissionrepair_cpm_figures', 'Value']
     generate_BCA_ArgsByOption_figures = bca_inputs.at['generate_BCA_ArgsByOption_figures', 'Value']
     generate_BCA_ArgByOptions_figure = bca_inputs.at['generate_BCA_ArgByOptions_figure', 'Value']
@@ -228,14 +229,14 @@ def main():
     else:
         number_alts = int(moves['optionID'].max())
 
-    # generate a dictionary of gdp deflators, calc adjustment values and apply adjustment values to direct costs
+    # generate a dictionary of gdp deflators, calc adjustment values and apply adjustment values to cost inputs
     gdp_deflators = gdp_deflators.to_dict('index')
     for key in gdp_deflators:
         gdp_deflators[key]['adjustment'] = gdp_deflators[dollar_basis_analysis]['factor'] / gdp_deflators[key]['factor']
     regclass_costs_years = [col for col in regclass_costs.columns if '20' in col]
-    regclass_costs_modified = convert_dollars_to_analysis_basis(regclass_costs, gdp_deflators, dollar_basis_analysis, [step for step in regclass_costs_years])
-    def_prices = convert_dollars_to_analysis_basis(def_prices, gdp_deflators, dollar_basis_analysis, 'DEF_USDperGal')
-    repair_and_maintenance = convert_dollars_to_analysis_basis(repair_and_maintenance, gdp_deflators, dollar_basis_analysis, 'Value')
+    convert_dollars_to_analysis_basis(regclass_costs, gdp_deflators, dollar_basis_analysis, [step for step in regclass_costs_years])
+    convert_dollars_to_analysis_basis(def_prices, gdp_deflators, dollar_basis_analysis, 'DEF_USDperGal')
+    convert_dollars_to_analysis_basis(repair_and_maintenance, gdp_deflators, dollar_basis_analysis, 'Value')
 
     # now get specific inputs from repair_and_maintenance
     inwarranty_repair_and_maintenance_owner_cpm = repair_and_maintenance.at['in-warranty_R&M_Owner_CPM', 'Value']
@@ -293,7 +294,7 @@ def main():
         input_files_pathlist += [criteria_emission_costs_file]
 
     # add the identifier metrics, alt_rc_ft and alt_st_rc_ft, to specific DataFrames
-    for df in [regclass_costs_modified, regclass_learningscalars, moves, moves_adjustments]:
+    for df in [regclass_costs, regclass_learningscalars, moves, moves_adjustments]:
         df = Fleet(df).define_bca_regclass()
     moves = Fleet(moves).define_bca_sourcetype()
 
@@ -329,13 +330,12 @@ def main():
         sales_for_learning[step] = Fleet(moves_adjusted.loc[moves_adjusted['modelYearID'] >= pd.to_numeric(step)]).sales_by_alt_rc_ft()
         rc_ft_age0[step] = pd.Series(sales_for_learning[step]['alt_rc_ft']).unique()
     # Apply learning to direct costs
-    for step in regclass_costs_years:
-        for veh in rc_ft_age0[step]:
-            pkg_cost_veh_regclass = DirectCost(veh).pkg_cost_vehicle_regclass1(regclass_costs_modified, step)
-            pkg_seedvol = DirectCost(veh).seedvol_factor_regclass(regclass_learningscalars)
-            pkg_sales_vol_scalar = DirectCost(veh).cumulative_sales_scalar_regclass(regclass_learningscalars)
-            pkg_directcost_veh_regclass_dict[veh, step] = DirectCost(veh).pkg_cost_regclass_withlearning(sales_for_learning[step], step, pkg_cost_veh_regclass,
-                                                                                                         pkg_seedvol, pkg_sales_vol_scalar, learning_rate)
+    for step, veh in product(regclass_costs_years, rc_ft_age0[step]):
+        pkg_cost_veh_regclass = DirectCost(veh).pkg_cost_vehicle_regclass1(regclass_costs, step)
+        pkg_seedvol = DirectCost(veh).seedvol_factor_regclass(regclass_learningscalars)
+        pkg_sales_vol_scalar = DirectCost(veh).cumulative_sales_scalar_regclass(regclass_learningscalars)
+        pkg_directcost_veh_regclass_dict[veh, step] = DirectCost(veh).pkg_cost_regclass_withlearning(sales_for_learning[step], step, pkg_cost_veh_regclass,
+                                                                                                     pkg_seedvol, pkg_sales_vol_scalar, learning_rate)
 
     # Now merge the steps into a single DataFrame so that the costs can be summed into a single cost series. An outer merge is used in case there are different vehicles (unlikely).
     rc_ft_age0 = pd.Series(sales_moves['alt_rc_ft']).unique()
@@ -534,10 +534,9 @@ def main():
     # add some total cost columns
     bca_costs.insert(len(bca_costs.columns), 'TechAndOperatingCost_BCA_TotalCost', bca_costs[['TechCost_TotalCost', 'OperatingCost_BCA_TotalCost']].sum(axis=1))
     if calc_pollution_effects == 'Y':
-        for dr in [0.03, 0.07]:
-            for mort_est in ['low', 'high']:
-                bca_costs.insert(len(bca_costs.columns), 'TotalCost_' + mort_est + '_' + str(dr),
-                                 bca_costs[['TechCost_TotalCost', 'OperatingCost_BCA_TotalCost', 'CriteriaCost_' + mort_est + '_' + str(dr)]].sum(axis=1))
+        for dr, mort_est in product([0.03, 0.07], ['low', 'high']):
+            bca_costs.insert(len(bca_costs.columns), 'TotalCost_' + mort_est + '_' + str(dr),
+                             bca_costs[['TechCost_TotalCost', 'OperatingCost_BCA_TotalCost', 'CriteriaCost_' + mort_est + '_' + str(dr)]].sum(axis=1))
     else:
         pass
         # bca_costs.insert(len(bca_costs.columns), 'TotalCost', bca_costs[['TechCost_TotalCost', 'OperatingCost_BCA_TotalCost']].sum(axis=1))
@@ -792,8 +791,8 @@ def main():
 
     if generate_emissionrepair_cpm_figures != 'N':
         cpm_figure_years = generate_emissionrepair_cpm_figures.split(',')
-        for item in range(len(cpm_figure_years)):
-            cpm_figure_years[item] = pd.to_numeric(cpm_figure_years[item])
+        for i, v in enumerate(cpm_figure_years):
+            cpm_figure_years[i] = pd.to_numeric(cpm_figure_years[i])
         path_figures = path_of_run_results_folder.joinpath('figures')
         path_figures.mkdir(exist_ok=True)
         alts = pd.Series(bca_costs.loc[bca_costs['optionID'] < 10, 'optionID']).unique()
