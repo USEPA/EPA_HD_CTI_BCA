@@ -152,7 +152,7 @@ def main():
     def_prices_file = PATH_INPUTS.joinpath('DEF_Prices.csv')
     orvr_fuelchange_file = PATH_INPUTS.joinpath('ORVR_FuelChangeInputs.csv')
     repair_and_maintenance_file = PATH_INPUTS.joinpath('Repair_and_Maintenance_Curve_Inputs.csv')
-    gdp_deflators_file = PATH_INPUTS.joinpath('GDP_Deflators.xlsx')
+    gdp_deflators_file = PATH_INPUTS.joinpath('GDP_Deflators.csv')
     # add input files as needed for copy to path_to_results folder
     input_files_pathlist = [run_settings_file, bca_inputs_file, regclass_costs_file, regclass_learningscalars_file,
                             markups_file, moves_file, moves_adjustments_file, options_file,
@@ -176,7 +176,7 @@ def main():
     def_prices = pd.read_csv(def_prices_file)
     orvr_fuelchanges = pd.read_csv(orvr_fuelchange_file)
     repair_and_maintenance = pd.read_csv(repair_and_maintenance_file, index_col=0)
-    gdp_deflators = pd.read_excel(gdp_deflators_file, index_col=0)
+    gdp_deflators = pd.read_csv(gdp_deflators_file, index_col=0)
     gdp_deflators.insert(len(gdp_deflators.columns), 'adjustment', 0)  # adjustment values are filled below
 
     for df in [markups, orvr_fuelchanges, regclass_costs, repair_and_maintenance]:
@@ -219,7 +219,7 @@ def main():
         bca_summary_years[i] = pd.to_numeric(bca_summary_years[i])
     generate_emissionrepair_cpm_figures = bca_inputs.at['generate_emissionrepair_cpm_figures', 'Value']
     generate_BCA_ArgsByOption_figures = bca_inputs.at['generate_BCA_ArgsByOption_figures', 'Value']
-    generate_BCA_ArgByOptions_figure = bca_inputs.at['generate_BCA_ArgByOptions_figure', 'Value']
+    generate_BCA_ArgByOptions_figures = bca_inputs.at['generate_BCA_ArgByOptions_figures', 'Value']
 
     # how many alternatives are there? But first, be sure that optionID is the header for optionID.
     if 'Alternative' in moves.columns.tolist():
@@ -757,7 +757,7 @@ def main():
         for file in inputs_filename_list:
             path_source = PATH_INPUTS.joinpath(file)
             path_destination = path_of_run_inputs_folder.joinpath(file)
-            shutil.copy(path_source, path_destination)
+            shutil.copy2(path_source, path_destination)
         fuel_prices.to_csv(path_of_modified_inputs_folder.joinpath('fuel_prices_' + aeo_case + '.csv'), index=False)
         regclass_costs.to_csv(path_of_modified_inputs_folder.joinpath('regclass_costs.csv'), index=False)
         markups_vmt_scalars_reshaped.to_csv(path_of_modified_inputs_folder.joinpath('markups_vmt_scalars_reshaped.csv'), index=False)
@@ -815,7 +815,7 @@ def main():
                                                                                                   'FuelCost_Pretax_TotalCost',
                                                                                                   'TechAndOperatingCost_BCA_TotalCost'
                                                                                                   )
-    if generate_BCA_ArgByOptions_figure == 'Y':
+    if generate_BCA_ArgByOptions_figures == 'Y':
         yearID_min = int(bca_costs['yearID'].min())
         yearID_max = int(bca_costs['yearID'].max())
         path_figures = path_of_run_results_folder.joinpath('figures')

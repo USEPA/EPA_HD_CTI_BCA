@@ -37,9 +37,8 @@ class DiscountValues:
 
         See EPA Economic Guidelines (updated May 2014), Section 6.1.2, Equations 3 & 4.
         This method makes use of the CumSum which, in this case is a running present value, and then determines the annual value that equates to that CumSum
-        (present value) if that annual value were discounted at a given discount rate. Note that the exponent on the (1+rate) term is meant to represent the period. Given that the term is
-        calculated here as the yearID less the year to which to discount, the +1 is included so that period 1 will not be calculated as 0 in the event that yearID=2027 & discount_to=2027.
-        The discount_offset is then added to the result to reflect costs beginning at the start of the year or the end of the year.
+        (present value) if that annual value were discounted at a given discount rate. The Offset is included to reflect costs beginning at the start of the year (Offset=1) or the end of the year
+        (Offset=0).
         The equation used here is shown below.
 
         AC = PV * DR * (1+DR)^(period) / [(1+DR)^(period+Offset) - 1]
@@ -49,7 +48,7 @@ class DiscountValues:
         PV = Present Value (here, the cumulative summary of discounted annual values)\n
         DR = Discount Rate\n
         CY = Calendar Year (yearID)\n
-        period = the current CY - the year to which to discount values + discount_offset\n
+        period = the current CY minus the year to which to discount values + a discount_offset value where discount_offset equals the costs_start input value\n
         Offset = 1 for costs at the start of the year, 0 for cost at the end of the year
 
         :param metrics_cumsum: A list of cumulative summed metrics for which annualized values are to be calculated.
