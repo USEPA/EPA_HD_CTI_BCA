@@ -1,5 +1,5 @@
 """
-This is the primary module of the benefit cost analysis. This module reads input files, calls other modules and generates output files.
+This is the primary module of the benefit cost analysis tool. This module reads input files, calls other modules and generates output files.
 """
 import pandas as pd
 import numpy as np
@@ -88,10 +88,8 @@ def weighted_result(df, metric, weightby_metric, veh, year_metric, year_list, ma
     """
     if len(veh) == 3:
         veh_id = 'alt_rc_ft'
-    elif len(veh) == 4:
-        veh_id = 'alt_st_rc_ft'
     else:
-        veh_id = 'alt_st_rc_ft_zg'
+        veh_id = 'alt_st_rc_ft'
     weighted_results = dict()
     for year in year_list:
         df_temp = pd.DataFrame(df.loc[(df[veh_id] == veh) & (df[year_metric] == year) & (df['ageID'] <= max_age_included), :])

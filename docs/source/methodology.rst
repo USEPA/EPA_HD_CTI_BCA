@@ -42,14 +42,11 @@ on new vehicle sales.
 
 For step-1 and later direct costs (equations show step-1 occurring in MY2027):
 
-:math:`DirectCost_{optionID;vehicle;MY}\\
-=(\frac{CumulativeSales_{MY}+Sales_{MY2027}
-\times
-SeedVolumeFactor} {Sales_{MY2027}
-\times
-(1+SeedVolumeFactor)})^{b}
-\times
-DirectCost_{optionID;vehicle;MY2027}`
+.. math::
+    :label:
+
+    & DirectCost_{optionID;vehicle;MY} \\
+    & =\small(\frac{CumulativeSales_{2027+}+Sales_{MY2027} \times SeedVolumeFactor} {Sales_{MY2027} \times (1+SeedVolumeFactor)})^{b} \times DirectCost_{optionID;vehicle;MY2027}
 
 where,
 
@@ -59,23 +56,20 @@ where,
 - *optionID* = the option considered (i.e, baseline or one of the action alternatives)
 - *MY* = the model year being considered
 - *vehicle* = a unique regclass-fueltype vehicle within MOVES
-- *CumulativeSales* = cumulative sales of MY2027 and later vehicles in year, t, of implementation
+- *CumulativeSales* = cumulative sales of MY2027 and later vehicles in model year, MY, of implementation
 - *SeedVolumeFactor* = 0 or greater to represent the number of years of learning already having occurred on a technology
 
 For step-2 and later direct costs (equations show step-2 occurring in MY2030):
 
-:math:`DirectCost_{optionID;vehicle;MY}\\
-=(\frac{CumulativeSales_{MY2030+}+Sales_{MY2030}
-\times
-SeedVolumeFactor} {Sales_{MY2030}
-\times
-(1+SeedVolumeFactor)})^{b}
-\times
-DirectCost_{optionID;vehicle;MY2030}`
+.. math::
+    :label:
+
+    & DirectCost_{optionID;vehicle;MY} \\
+    & =\small(\frac{CumulativeSales_{2030+}+Sales_{MY2030} \times SeedVolumeFactor} {Sales_{MY2030} \times (1+SeedVolumeFactor)})^{b} \times DirectCost_{optionID;vehicle;MY2030}
 
 where,
 
-- *CumulativeSales* = cumulative sales of MY2030 and later vehicles in year, t, of implementation
+- *CumulativeSales* = cumulative sales of MY2030 and later vehicles in model year, MY, of implementation
 - *DirectCost* = marginal direct costs above those calculated for step-1 and later vehicles (i.e., the sum of individual tech costs for step-2 as input via the DirectCostInputs_byRegClass_byFuelType file)
 
 
@@ -85,7 +79,10 @@ Emission repair costs
 Direct cost scalars
 ...................
 
-:math:`DirectCostScalar_{optionID;vehicle;MY}=\frac{DirectCost_{optionID;vehicle;MY}} {DirectCost_{Baseline;HHDDE;MY}}`
+.. math::
+    :label:
+
+    DirectCostScalar_{optionID;vehicle;MY}=\small\frac{DirectCost_{optionID;vehicle;MY}} {DirectCost_{Baseline;HHDDE;MY}}
 
 where,
 
@@ -93,16 +90,23 @@ where,
 - *optionID* = the option considered (i.e, baseline or one of the action alternatives)
 - *HHDDE* = heavy heavy-duty diesel engine regulatory class
 - *MY* = the model year being considered
-- *vehicle* = a unique regclass-fueltype vehicle within MOVES\\
+- *vehicle* = a unique regclass-fueltype vehicle within MOVES
 
 Estimated warranty & useful life ages
 .....................................
 
-:math:`EstimatedWarrantyAge_{optionID;vehicle;MY} \\
-=\min(RequiredWarrantyAge_{optionID;vehicle;MY}, CalculatedWarrantyAge_{optionID;vehicle;MY})`
+.. math::
+    :label:
 
-:math:`EstimatedUsefulLifeAge_{optionID;vehicle;MY} \\
-=\min(RequiredUsefulLifeAge_{optionID;vehicle;MY}, CalculatedUsefulLifeAge_{optionID;vehicle;MY})`
+    & EstimatedWarrantyAge_{optionID;vehicle;MY}\\
+    & =\small\min(RequiredWarrantyAge_{optionID;vehicle;MY}, CalculatedWarrantyAge_{optionID;vehicle;MY})
+
+
+.. math::
+    :label:
+
+    & EstimatedUsefulLifeAge_{optionID;vehicle;MY}\\
+    & =\small\min(RequiredUsefulLifeAge_{optionID;vehicle;MY}, CalculatedUsefulLifeAge_{optionID;vehicle;MY})
 
 where,
 
@@ -121,68 +125,70 @@ mileage accumulations.
 Cost per mile by age (for emission-related repairs)
 ...................................................
 
-:math:`InWarrantyCPM_{optionID;vehicle;MY}\\
-=FleetAdvantageCPM_{Year1}
-\times
-EmissionRepairShare
-\times
-DirectCostScalar_{optionID;vehicle;MY}`
+.. math::
+    :label: inw_cpm
 
-:math:`AtUsefulLifeCPM_{optionID;vehicle;MY}\\
-=FleetAdvantageCPM_{Year6}
-\times
-EmissionRepairShare
-\times
-DirectCostScalar_{optionID;vehicle;MY}`
+    & InWarrantyCPM_{optionID;vehicle;MY}\\
+    & = \small FleetAdvantageCPM_{Year1} \times EmissionRepairShare \times DirectCostScalar_{optionID;vehicle;MY}
 
-:math:`MaxCPM_{optionID;vehicle;MY}\\
-=FleetAdvantageCPM_{Year7}
-\times
-EmissionRepairShare
-\times
-DirectCostScalar_{optionID;vehicle;MY}`
+.. math::
+    :label: atul_cpm
+
+    & AtUsefulLifeCPM_{optionID;vehicle;MY}\\
+    & = \small FleetAdvantageCPM_{Year6} \times EmissionRepairShare \times DirectCostScalar_{optionID;vehicle;MY}
+
+.. math::
+    :label: max_cpm
+
+    & MaxCPM_{optionID;vehicle;MY}\\
+    & = \small FleetAdvantageCPM_{Year7} \times EmissionRepairShare \times DirectCostScalar_{optionID;vehicle;MY}
+
+.. math::
+    :label: slope_cpm
+
+    & SlopeCPM_{optionID;vehicle;MY}\\
+    & =\small\frac{(AtUsefulLifeCPM_{optionID;vehicle;MY}-InWarrantyCPM_{optionID;vehicle;MY})} {(EstimatedUsefulLifeAge_{optionID;vehicle;MY}-EstimatedWarrantyAge_{optionID;vehicle;MY})}
 
 where,
 
-- *InWarrantyCPM* = in-warranty emission repair cost per mile
-- *AtUsefulLifeCPM* = at-usefule-life emission repair cost per mile
-- *MaxCPM* = the maximum emission repair cost per mile
+- *InWarrantyCPM* = in-warranty emission repair cost per mile for a given regclass-fueltype vehicle
+- *AtUsefulLifeCPM* = at-usefule-life emission repair cost per mile for a given regclass-fueltype vehicle
+- *MaxCPM* = the maximum emission repair cost per mile for a given regclass-fueltype vehicle
+- *SlopeCPM* = the cost per mile slope between the estimated warranty age and the estimated useful life age for a given sourcetype-regclass-fueltype vehicle
 - *optionID* = the option considered (i.e, baseline or one of the action alternatives)
 - *FleetAdvantageCPMYear1* = first year cost per mile from the Fleet Advantage white paper (2.07 cents/mile in 2018 dollars)
 - *FleetAdvantageCPMYear6* = year six cost per mile from the Fleet Advantage white paper (14.56 cents/mile in 2018 dollars)
 - *FleetAdvantageCPMYear7* = year seven cost per mile from the Fleet Advantage white paper (19.82 cents/mile in 2018 dollars)
 - *EmissionRepairShare* = EPA developed share of Fleet Advantage Maintenance and Repair costs that are emission-related (10.8%)
-- *vehicle* = a unique regclass-fueltype vehicle within MOVES
+- *vehicle* = a unique regclass-fueltype vehicle for equations :math:numref:`inw_cpm`, :math:numref:`atul_cpm` and :math:numref:`max_cpm` and a unique sourcetype-regclass-fueltype vehicle in equation :math:numref:`slope_cpm`
 
 Repair and maintenance cost per mile values—currently based on the Fleet Advantage whitepaper—are controlled via the “Repair_and_Maintenance_Curve_Inputs.csv”
 input file to the tool.
-
-:math:`SlopeCPM_{optionID;vehicle;MY}\\
-=\frac{(AtUsefulLifeCPM_{optionID;vehicle;MY}-InWarrantyCPM_{optionID;vehicle;MY})} {(EstimatedUsefulLifeAge_{optionID;vehicle;MY}-EstimatedWarrantyAge_{optionID;vehicle;MY})}`
-
-where,
-
-- *SlopeCPM* = the cost per mile slope between the estimated warranty age and the estimated useful life age for a given sourcetype-regclass-fueltype vehicle
-- *InWarrantyCPM* = in-warranty emission repair cost per mile
-- *AtUsefulLifeCPM* = at-usefule-life emission repair cost per mile
 
 For any given optionID/vehicle/MY where vehicle is a unique sourcetype-regclass-fueltype within MOVES, the emission-repair cost per mile (EmissionRepairCPM) at any given age would be calculated as:
 
 When Age<=EstimatedWarrantyAge:
 
-:math:`EmissionRepairCPM_{optionID;vehicle;MY;age}=InWarrantyCPM_{optionID;vehicle;MY}`
+.. math::
+    :label:
+
+    EmissionRepairCPM_{optionID;vehicle;MY;age}=InWarrantyCPM_{optionID;vehicle;MY}
 
 When EstimatedWarrantyAge<Age<=EstimatedUsefulLifeAge:
 
-:math:`EmissionRepairCPM_{optionID;vehicle;MY;age}\\
-=SlopeCPM_{optionID;vehicle;MY}
-\times
-(Age_{optionID;vehicle;MY}-EstimatedWarrantyAge_{optionID;vehicle;MY})\\
-+InWarrantyCPM_{optionID;vehicle;MY}`
+.. math::
+    :label:
+
+    & EmissionRepairCPM_{optionID;vehicle;MY;age}\\
+    & = \small SlopeCPM_{optionID;vehicle;MY} \times (Age_{optionID;vehicle;MY}-EstimatedWarrantyAge_{optionID;vehicle;MY})\\
+    & + \small InWarrantyCPM_{optionID;vehicle;MY}
 
 When Age>EstimatedUsefulLifeAge:
 
-:math:`EmissionRepairCPM_{optionID;vehicle;MY;age}=MaxCPM_{optionID;vehicle;MY}`
+.. math::
+    :label:
+
+    EmissionRepairCPM_{optionID;vehicle;MY;age}=MaxCPM_{optionID;vehicle;MY}
 
 Discounting
 -----------
@@ -190,7 +196,10 @@ Discounting
 Present value
 .............
 
-:math:`PV=\frac{AnnualValue_{0}} {(1+rate)^{(0+offset)}}+\frac{AnnualValue_{1}} {(1+rate)^{(1+offset)}} +⋯+\frac{AnnualValue_{n}} {(1+rate)^{(n+offset)}}`
+.. math::
+    :label: pv
+
+    PV=\frac{AnnualValue_{0}} {(1+rate)^{(0+offset)}}+\frac{AnnualValue_{1}} {(1+rate)^{(1+offset)}} +⋯+\frac{AnnualValue_{n}} {(1+rate)^{(n+offset)}}
 
 where,
 
@@ -203,13 +212,19 @@ where,
 Annualized value
 ................
 
-When the present value offset (above) equals 0:
+When the present value offset in equation :math:numref:`pv` equals 0:
 
-:math:`AV=PV\times\frac{rate\times(1+rate)^{n}} {(1+rate)^{(n+1)}-1}`
+.. math::
+    :label:
 
-When the present value offset (above) equals 1:
+    AV=PV\times\frac{rate\times(1+rate)^{n}} {(1+rate)^{(n+1)}-1}
 
-:math:`AV=PV\times\frac{rate\times(1+rate)^{n}} {(1+rate)^{n}-1}`
+When the present value offset in equation :math:numref:`pv` equals 1:
+
+.. math::
+    :label:
+
+    AV=PV\times\frac{rate\times(1+rate)^{n}} {(1+rate)^{n}-1}
 
 where,
 
