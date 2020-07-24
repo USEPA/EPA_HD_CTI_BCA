@@ -44,7 +44,7 @@ class Fleet:
 
         :return: A DataFrame of sales of vehicles by optionID, regClassID, fuelTypeID along with yearID for use in the DirectCost class.
         """
-        _sales = Fleet(self.fleet).sales()
+        _sales = Fleet(self.fleet).sales() # the sales method returns ageID=0 only
         groupby_metrics = ['optionID', 'regClassID', 'fuelTypeID', 'yearID', 'modelYearID', 'ageID', 'alt_rc_ft']
         sales_rcid_ftid = _sales[groupby_metrics + ['VPOP']].groupby(by=groupby_metrics, as_index=False).sum()
         sales_rcid_ftid.reset_index(drop=True, inplace=True)

@@ -55,5 +55,5 @@ class CalcDeltas:
             return_df = return_df.append(alternative[alt], ignore_index=True, sort=False)
         for item in self.list_for_deltas:
             return_df.loc[return_df['optionID'] == 0, item] = 0
-            return_df.rename(columns={item: f'{item}_Reductions'}, inplace=True)
+            # return_df.rename(columns={item: f'{item}_Reductions'}, inplace=True)
         return return_df

@@ -1,5 +1,5 @@
 import pandas as pd
-from pathlib import Path, PurePath
+from pathlib import PurePath
 
 
 class GetFuelPrices:
@@ -21,7 +21,11 @@ class GetFuelPrices:
         :return: A fuel_prices DataFrame.
         """
         fuel_prices_file = PurePath(str(self.aeo) + '/Components_of_Selected_Petroleum_Product_Prices_' + self.aeo_case + '.csv')
-        fuel_prices_full = pd.read_csv(fuel_prices_file, skiprows=4)
+        try:
+            pd.read_csv(fuel_prices_file, skiprows=4)
+            fuel_prices_full = pd.read_csv(fuel_prices_file, skiprows=4)
+        except FileNotFoundError:
+            print(f'File {fuel_prices_file} not found.')
         fuel_prices_full = fuel_prices_full[fuel_prices_full.columns[:-1]]
         fuel_prices_full.drop(labels=['full name', 'api key', 'units'], axis=1, inplace=True)
         fuel_df = fuel_prices_full.dropna(axis=0, how='any')
