@@ -51,9 +51,6 @@ class DiscountValues:
         period = the current CY minus the year to which to discount values + a discount_offset value where discount_offset equals the costs_start input value\n
         Offset = 1 for costs at the start of the year, 0 for cost at the end of the year
 
-        :param metrics_cumsum: A list of cumulative summed metrics for which annualized values are to be calculated.
-        :param year_min: Values will be annualized beginning in year_min.
-        :param costs_start: The costs_start entry of the BCA_General_Inputs file should be set to 'start-year' or 'end-year', where start-year discounts to the start of the year (i.e., costs begin at time t=0) and end-year discounts to the end of the year (i.e., costs begin at time t=1).
         :return: The passed DataFrame with annualized values having been added.
         """
         if self.costs_start == 'start-year':

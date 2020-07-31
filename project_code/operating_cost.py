@@ -5,6 +5,7 @@ from project_code.vehicle import fuelTypeID
 GRAMSperSHORTTON = 907185
 GALLONSperML = 0.000264172
 
+
 class DEFandFuelCost:
     """
     The OperatingCost class calculates the operating costs (DEF (urea), fuel, etc.).
@@ -23,17 +24,16 @@ class DEFandFuelCost:
         def_doserates = self.input_df.copy()
         def_doserates.insert(len(def_doserates.columns), 'DEF_PercentOfFuel_Baseline', 0)
         def_doserates['DEF_PercentOfFuel_Baseline'] = ((def_doserates['standard_NOx'] - def_doserates['engineout_NOx'])
-                                                      - def_doserates['intercept_DEFdoserate']) \
-                                                     / def_doserates['slope_DEFdoserate']
+                                                       - def_doserates['intercept_DEFdoserate']) / def_doserates['slope_DEFdoserate']
         def_doserates.drop(columns=['engineout_NOx', 'standard_NOx', 'intercept_DEFdoserate', 'slope_DEFdoserate'], inplace=True)
         return def_doserates
 
-    def def_cost_df(self, def_doserates, prices, def_gallons_perTonNOxReduction):
+    def def_cost_df(self, def_doserates, prices, def_gallons_per_ton_nox_reduction):
         """
 
         :param def_doserates: A DataFrame of DEF scaling factors (dose rate inputs).
         :param prices: A DataFrame of DEF prices.
-        :param def_gallons_perTonNOxReduction: The gallons of DEF consumed for each ton of NOx reduced
+        :param def_gallons_per_ton_nox_reduction: The gallons of DEF consumed for each ton of NOx reduced
         :return: The passed DataFrame after adding the DEF operating cost metrics:
                 ['DoseRate_PercentOfFuel', 'DEF_USDperGal', 'OperatingCost_Urea_TotalCost']
         """
@@ -52,14 +52,14 @@ class DEFandFuelCost:
         df.loc[df['fuelTypeID'] != 2, 'DEF_PercentOfFuel_Baseline'] = 0
         df['DEF_PercentOfFuel_Baseline'].fillna(0, inplace=True)
         df.insert(len(df.columns), 'Gallons_DEF', 0)
-        df.loc[df['fuelTypeID'] == 2, 'Gallons_DEF'] = df['Gallons'] * df['DEF_PercentOfFuel_Baseline'] + df['NOx_onroad_Reductions'] * def_gallons_perTonNOxReduction
+        df.loc[df['fuelTypeID'] == 2, 'Gallons_DEF'] = df['Gallons'] * df['DEF_PercentOfFuel_Baseline'] + df['NOx_onroad_Reductions'] * def_gallons_per_ton_nox_reduction
         df = df.merge(prices, on='yearID', how='left')
         df.insert(len(df.columns), 'UreaCost_TotalCost', df[['Gallons_DEF', 'DEF_USDperGal']].product(axis=1))
         df.insert(len(df.columns), 'UreaCost_AvgPerMile', df['UreaCost_TotalCost'] / df['VMT'])
         df.insert(len(df.columns), 'UreaCost_AvgPerVeh', df[['UreaCost_AvgPerMile', 'VMT_AvgPerVeh']].product(axis=1))
         return df
 
-    def orvr_fuel_impacts_mlpergram(self, orvr_fuelchanges, calc_sourcetype_costs):
+    def orvr_fuel_impacts_mlpergram(self, orvr_fuelchanges):
         """
 
         :param orvr_fuelchanges: A DataFrame of the adjustments to the MOVES run values to account for fuel impacts not captured in MOVES.
@@ -69,9 +69,7 @@ class DEFandFuelCost:
         fuelchanges = orvr_fuelchanges.copy()
         fuelchanges.drop(columns='Change_PercentOfFuel', inplace=True)
         df = self.input_df.copy()
-        cols = ['yearID', 'modelYearID', 'ageID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'zerogramTechID', 'THC_UStons']
-        if calc_sourcetype_costs == 'N':
-            cols.remove('zerogramTechID')
+        cols = ['yearID', 'modelYearID', 'ageID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'THC_UStons']
         df2 = pd.DataFrame(df.loc[df['optionID'] == 0, cols])
         df2.rename(columns={'THC_UStons': 'THC_Option0'}, inplace=True)
         cols.remove('THC_UStons')
@@ -80,6 +78,7 @@ class DEFandFuelCost:
         df = df.merge(fuelchanges, on=['optionID', 'regClassID', 'fuelTypeID'], how='left')
         df['ml/g'].fillna(0, inplace=True)
         df['Gallons'] = df['Gallons'] + df['THC_delta'] * df['ml/g'] * GRAMSperSHORTTON * GALLONSperML
+        df['MPG_AvgPerVeh'] = df['VMT'] / df['Gallons']
         df.drop(columns=['THC_Option0'], inplace=True)
         return df
 
@@ -95,8 +94,8 @@ class DEFandFuelCost:
         prices_diesel = pd.DataFrame(prices, columns=['yearID', 'diesel_retail', 'diesel_pretax'])
         prices_gasoline.rename(columns={'gasoline_retail': 'retail_fuelprice', 'gasoline_pretax': 'pretax_fuelprice'}, inplace=True)
         prices_diesel.rename(columns={'diesel_retail': 'retail_fuelprice', 'diesel_pretax': 'pretax_fuelprice'}, inplace=True)
-        id_gasoline = [k for k, v in fuelTypeID.items() if v == 'Gasoline'][0] # this determines the fuelTypeID of Gasoline
-        id_diesel = [k for k, v in fuelTypeID.items() if v == 'Diesel'][0] # this determines the fuelTypeID of Diesel
+        id_gasoline = [k for k, v in fuelTypeID.items() if v == 'Gasoline'][0]  # this determines the fuelTypeID of Gasoline
+        id_diesel = [k for k, v in fuelTypeID.items() if v == 'Diesel'][0]  # this determines the fuelTypeID of Diesel
         prices_gasoline.insert(0, 'fuelTypeID', id_gasoline)
         prices_diesel.insert(0, 'fuelTypeID', id_diesel)
         prices = pd.concat([prices_gasoline, prices_diesel], ignore_index=True)
@@ -119,6 +118,7 @@ class RepairAndMaintenanceCost:
     :param metrics_repair_and_maint_dict: The repair and maintenance cost curve inputs contained in the inputs folder; the dictionary is created in code
     :param pkg_directcost_veh_regclass_dict: The dictionary of package direct costs, year-over-year, created in code
     """
+
     def __init__(self, passed_object, metrics_repair_and_maint_dict, pkg_directcost_veh_regclass_dict):
         self.passed_object = passed_object
         self.metrics_repair_and_maint_dict = metrics_repair_and_maint_dict

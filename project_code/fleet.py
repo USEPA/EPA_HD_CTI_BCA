@@ -53,7 +53,7 @@ class Fleet:
     def insert_option_name(self, options_dict, number_alts):
         """
 
-        :param options: A DataFrame providing the OptionName for each optionID.
+        :param options_dict: A dictionary providing the OptionName for each optionID.
         :param number_alts: The maximum number of options or alternatives in the fleet input file.
         :return: The passed fleet DataFrame with a new and populated column called OptionName.
         """
