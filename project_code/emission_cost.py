@@ -1,3 +1,10 @@
+"""
+emission_cost.py
+
+Contains the EmissionCost class.
+
+"""
+
 import pandas as pd
 from itertools import product
 

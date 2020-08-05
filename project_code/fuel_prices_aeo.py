@@ -1,3 +1,10 @@
+"""
+fuel_prices_aeo.py
+
+Contains the GetFuelPrices class.
+
+"""
+
 import pandas as pd
 from pathlib import PurePath
 

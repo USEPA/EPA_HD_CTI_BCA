@@ -1,4 +1,9 @@
-import pandas as pd
+"""
+calc_deltas.py
+
+Contains the CalcDeltas class.
+
+"""
 
 
 class CalcDeltas:
@@ -57,3 +62,27 @@ class CalcDeltas:
             return_df.loc[return_df['optionID'] == 0, item] = 0
             # return_df.rename(columns={item: f'{item}_Reductions'}, inplace=True)
         return return_df
+
+
+if __name__ == '__main__':
+    """
+    This tests the CalcDeltas class to ensure that things are working properly.
+    If run as a script (python -m project_code.group_metrics) the created DataFrames should show metric values of -100 for optionID 10
+    and then metric_reductions values of 0 for optionID 0 and 100 for optionID 1.
+
+    """
+    import pandas as pd
+
+    df = pd.DataFrame({'optionID': [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,],
+                       'OptionName': ['Base', 'Base', 'Base', 'Base', 'Base', 'Base', 'Base', 'Base', 'Alt1', 'Alt1', 'Alt1', 'Alt1', 'Alt1', 'Alt1', 'Alt1', 'Alt1',],
+                       'modelYearID': [2027, 2027, 2027, 2027, 2028, 2028, 2028, 2028, 2027, 2027, 2027, 2027, 2028, 2028, 2028, 2028,],
+                       'regClassID': [46, 47, 46, 47, 46, 47, 46, 47, 46, 47, 46, 47, 46, 47, 46, 47,],
+                       'fuelTypeID': [1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2,],
+                       'metric': [200, 200, 200, 200, 300, 300, 300, 300, 100, 100, 100, 100, 200, 200, 200, 200,]})
+    number_alts = int(df['optionID'].max()) + 1
+    df = pd.concat([df, CalcDeltas(df, number_alts, ['metric']).calc_delta_and_new_alt_id()], axis=0, ignore_index=True) # modelYearID=2027,2028,2029; metric=400,800,1200
+    print(df)
+
+    df.insert(df.columns.get_loc('metric') + 1, 'metric_reductions', df['metric'])
+    df = CalcDeltas(df, number_alts, ['metric_reductions']).calc_delta_and_keep_alt_id()
+    print(df)

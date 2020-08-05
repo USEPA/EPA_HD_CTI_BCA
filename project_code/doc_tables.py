@@ -1,3 +1,10 @@
+"""
+doc_tables.py
+
+Contains the DocTables class.
+
+"""
+
 import pandas as pd
 
 

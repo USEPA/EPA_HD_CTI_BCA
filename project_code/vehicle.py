@@ -1,5 +1,9 @@
-"""The vehicle module contains the Vehicle class along with MOVES definitions of fueltypes,
-regclassess and sourcetypes."""
+"""
+vehicle.py
+
+Contains the Vehicle class along with MOVES definitions of fuel types, reg classes and source types.
+
+"""
 
 # define elements of the Vehicle class
 fuelTypeID = {1: 'Gasoline',
@@ -33,11 +37,6 @@ sourceTypeID = {0:  'NotApplicable',
                 61: 'Short-Haul Combination Trucks',
                 62: 'Long-Haul Combination Trucks',
                 }
-zerogramTechID = {0: 'ICE',
-                  1: 'HEV',
-                  2: 'PluginHEV',
-                  3: 'FuelCell',
-                  }
 
 
 class Vehicle:

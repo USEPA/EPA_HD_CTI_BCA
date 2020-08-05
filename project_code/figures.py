@@ -1,3 +1,10 @@
+"""
+figures.py
+
+Contains the CreateFigures class.
+
+"""
+
 import matplotlib.pyplot as plt
 
 

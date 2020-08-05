@@ -1,4 +1,9 @@
-"""The fleet module contains the Fleet class."""
+"""
+fleet.py
+
+Contains the Fleet class.
+
+"""
 
 import pandas as pd
 

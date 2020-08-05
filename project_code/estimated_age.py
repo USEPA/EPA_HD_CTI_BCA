@@ -1,3 +1,9 @@
+"""
+estimated_age.py
+
+Contains the EstimatedAge class.
+
+"""
 import pandas as pd
 
 

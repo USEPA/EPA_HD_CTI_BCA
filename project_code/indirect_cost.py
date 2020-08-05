@@ -1,3 +1,10 @@
+"""
+indirect_cost.py
+
+Contains the IndirectCost class and the IndirectCostScalars class.
+
+"""
+
 import pandas as pd
 
 # create a list of markup factors to be included

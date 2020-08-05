@@ -1,3 +1,11 @@
+"""
+group_metrics.py
+
+Contains the GroupMetrics class.
+
+"""
+
+
 class GroupMetrics:
     """The GroupMetrics class conducts groupby methods to get results by yearID and more.
 
@@ -39,3 +47,29 @@ class GroupMetrics:
         for metric in metrics_cumsum:
             df_cumsum.rename(columns={metric: f'{metric}_CumSum'}, inplace=True)
         return df_cumsum
+
+
+if __name__ == '__main__':
+    """
+    This tests the GroupMetrics class to ensure that things are working properly.
+    If run as a script (python -m project_code.group_metrics) the created DataFrames should show values of
+    400, 800, 1200
+    100, 200, 300
+    400, 1200, 2400.
+
+    """
+    import pandas as pd
+
+    df = pd.DataFrame({'optionID': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,],
+                       'modelYearID': [2027, 2027, 2027, 2027, 2028, 2028, 2028, 2028, 2029, 2029, 2029, 2029,],
+                       'regClassID': [46, 47, 46, 47, 46, 47, 46, 47, 46, 47, 46, 47,],
+                       'fuelTypeID': [1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2,],
+                       'metric': [100, 100, 100, 100, 200, 200, 200, 200, 300, 300, 300, 300,]})
+    row_header = ['optionID', 'modelYearID']
+    df_sum = GroupMetrics(df, row_header).group_sum(['metric']) # modelYearID=2027,2028,2029; metric=400,800,1200
+    print(df_sum)
+    df_mean = GroupMetrics(df, row_header).group_mean(['metric']) # modelYearID=2027,2028,2029; metric=100,200,300
+    print(df_mean)
+    row_header = ['optionID']
+    df_cumsum = df_sum.join(GroupMetrics(df_sum, row_header).group_cumsum(['metric'])) # modelYearID=2027,2028,2029; metric_sum=400,1200,2400
+    print(df_cumsum)

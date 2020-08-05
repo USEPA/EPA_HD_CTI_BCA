@@ -1,3 +1,10 @@
+"""
+operating_cost.py
+
+Contains the DEFandFuelCost class and the RepairAndMaintenanceCost class.
+
+"""
+
 import pandas as pd
 from itertools import product
 from project_code.vehicle import fuelTypeID
