@@ -17,9 +17,9 @@ gallons_per_ml = 0.000264172
 def get_reductions(inventory_df, *args):
     """
 
-    :param inventory_df:
-    :param args:
-    :return: The passed DataFrame with metrics in list_for_deltas showing as reductions from baseline rather than the values contained in the passed DataFrame
+    :param inventory_df: A DataFrame of inventory data for at least two alternatives for which reductions are to be calculated.
+    :param args: Metrics for which reductions are sought.
+    :return: The passed DataFrame with new metrics showing reductions from baseline.
     """
     alts = pd.Series(inventory_df['optionID'].unique())
     for arg in args:
@@ -38,19 +38,16 @@ def get_reductions(inventory_df, *args):
 
 
 class DEFCost:
-    """
-
-    The DEFCost class calculates the DEF (urea) costs.
-    """
     def __init__(self, _veh, cost_steps, inventory_df, def_doserate_inputs, def_gallons_per_ton_nox_reduction, def_prices):
         """
+        The DEFCost class calculates the DEF (urea) costs.
 
-        :param _veh: A sourcetype_regclass_fueltype (st_rc_ft) vehicle.
-        :param cost_steps:
-        :param inventory_df:
-        :param def_doserate_inputs:
-        :param def_gallons_per_ton_nox_reduction
-        :param def_prices
+        :param _veh: An alt_st_rc_ft vehicle.
+        :param cost_steps: A list of cost steps corresponding to model years in which new standards are set.
+        :param inventory_df: A vehicle-specifc DataFrame that provides NOx reductions.
+        :param def_doserate_inputs: A DataFrame containing the DEF dose rate inputs.
+        :param def_gallons_per_ton_nox_reduction: A single value included as an input.
+        :param def_prices: A DataFrame of the input DEF prices.
         """
         self._veh = _veh
         self.cost_steps = cost_steps
@@ -65,7 +62,7 @@ class DEFCost:
     def def_doserate_scaling_factor(self, step):
         """
 
-        :param step:
+        :param step: One of the steps included in the cost_steps metric.
         :return: The DEF dose rate scaling factor to apply to fuel consumption in calculating urea operating costs for the given vehicle in the given step.
         """
         def_doserates = pd.DataFrame(self.def_doserate_inputs.loc[(self.def_doserate_inputs['regClassID'] == self._veh[2]) &
@@ -79,7 +76,7 @@ class DEFCost:
     def insert_def_doserate(self):
         """
 
-        :return:
+        :return: The inventory DataFrame into which the DEF doserate has been inserted.
         """
         self.inventory_df.insert(len(self.inventory_df.columns), 'DEF_PercentOfFuel_Baseline', 0)
         for step_number in range(len(self.cost_steps)):
@@ -91,7 +88,8 @@ class DEFCost:
     def calc_gallons_def(self, gallons_df):
         """
 
-        :return:
+        :param gallons_df: A DataFrame that provides the gallons of fuel consumed by the given vehicle.
+        :return: The inventory DataFrame into which the gallons of DEF consumed has been inserted.
         """
         self.inventory_df = self.insert_def_doserate()
         # self.inventory_df = get_reductions(self.inventory_df, 'NOx_onroad')
@@ -104,7 +102,10 @@ class DEFCost:
     def calc_def_costs(self, gallons_df, vmt_df, per_veh_df):
         """
 
-        :return:
+        :param gallons_df: A DataFrame that provides the gallons of fuel consumed by the given vehicle.
+        :param vmt_df: A DataFrame of VMT values.
+        :param per_veh_df: A DataFrame of metrics on a per vehicle basis.
+        :return: The inventory DataFrame into which DEF cost metrics have been inserted.
         """
         self.inventory_df = self.inventory_df.merge(self.def_prices, on='yearID', how='left')
         self.inventory_df.drop(columns='DollarBasis', inplace=True)
@@ -122,19 +123,15 @@ class DEFCost:
 
 
 class ORVRadjust:
-    """
-
-    The ORVRadjust class adjusts the MOVES THC inventories and then gallons based on the ORVR impacts on THC emissions.
-    """
-
     def __init__(self, _vehs, orvr_fuelchanges, gallons_df, inventory_df, vmt_df):
         """
+        The ORVRadjust class adjusts the MOVES THC inventories and then gallons based on the ORVR impacts on THC emissions.
 
-        :param _vehs:
-        :param orvr_fuelchanges:
-        :param gallons_df:
-        :param inventory_df:
-        :param vmt_df:
+        :param _vehs: A list of all alt_st_rc_ft vehicles.
+        :param orvr_fuelchanges: The input ORVR impacts.
+        :param gallons_df: A DataFrame of gallons of fuel consumed for all passed vehicles.
+        :param inventory_df: A DataFrame of THC reductions associated with ORVR.
+        :param vmt_df: A DataFrame of VMT values.
         """
         self._vehs = _vehs
         self.orvr_fuelchanges = orvr_fuelchanges
@@ -148,9 +145,9 @@ class ORVRadjust:
     def get_orvr_impact(self, veh, alt):
         """
 
-        :param veh:
-        :param alt:
-        :return:
+        :param veh: An individual alt_st_rc_ft vehicle.
+        :param alt: A given alternative.
+        :return: A single ml/g value for the given vehicle.
         """
         impact = pd.DataFrame(self.orvr_fuelchanges.loc[(self.orvr_fuelchanges['optionID'] == alt) &
                                                         (self.orvr_fuelchanges['regClassID'] == veh[2]), 'ml/g'])
@@ -161,7 +158,7 @@ class ORVRadjust:
     def adjust_gallons(self):
         """
 
-        :return:
+        :return: The gallons_df DataFrame with gallons of fuel consumed having been adjusted since MOVES runs did not make the adjustment.
         """
         alts = pd.Series(self.gallons_df['optionID'].unique())
         self.gallons_df.insert(len(self.gallons_df.columns), 'ml/g', 0)
@@ -180,49 +177,67 @@ class ORVRadjust:
     def adjust_mpg(self, per_veh_df):
         """
 
-        :param per_veh_df:
-        :return:
+        :param per_veh_df: A DataFrame of metrics on a per vehicle basis.
+        :return: The per_veh_df DataFrame with MPG having been adjusted consistent with the adjusted gallons consumed.
         """
         per_veh_df['MPG_AvgPerVeh'] = self.vmt_df['VMT'] / self.gallons_df['Gallons']
         return per_veh_df
 
 
 class FuelCost:
-    """
-    The FuelCost class calculates the monetized fuel impacts.
-    """
-    def __init__(self, vehs, inventory_df, vmt_df, per_veh_df, fuel_prices):
+    def __init__(self, vehs, gallons_df, vmt_df, per_veh_df, fuel_prices):
         """
+        The FuelCost class calculates the monetized fuel impacts.
 
-        :param vehs: List of vehicles.
-        :param inventory_df: DataFrame with inventory (gallons) for all vehicles.
+        :param vehs: List of alt_st_rc_ft vehicles.
+        :param gallons_df: DataFrame with inventory (gallons) for all vehicles.
         :param vmt_df: DataFrame with VMT for all vehicles.
         :param per_veh_df: DataFrame with VMT/veh for all vehicles.
         :param fuel_prices: DataFrame of fuel prices for all fuels for all years.
         """
         self.vehs = vehs
-        self.inventory_df = inventory_df
+        self.gallons_df = gallons_df
         self.fuel_prices = fuel_prices
         self.vmt_df = vmt_df
         self.per_veh_df = per_veh_df
 
     def veh_inventory(self, veh):
-        return self.inventory_df.loc[self.inventory_df['alt_st_rc_ft'] == veh, ['static_id', 'yearID', 'Gallons']].reset_index(drop=True)
+        """
+
+        :param veh: A specific alt_st_rc_ft vehicle.
+        :return: A gallons_df DataFrame for the given vehicle.
+        """
+        return self.gallons_df.loc[self.gallons_df['alt_st_rc_ft'] == veh, ['static_id', 'yearID', 'Gallons']].reset_index(drop=True)
 
     def veh_vmt(self, veh):
+        """
+
+        :param veh: A specific alt_st_rc_ft vehicle.
+        :return: A VMT DataFrame for the given vehicle.
+        """
         return self.vmt_df.loc[self.vmt_df['alt_st_rc_ft'] == veh, 'VMT'].reset_index(drop=True)
 
     def veh_vmt_per_veh(self, veh):
+        """
+
+        :param veh: A specific alt_st_rc_ft vehicle.
+        :return: A VMT/vehicle DataFrame for the given vehicle.
+        """
         return self.per_veh_df.loc[self.per_veh_df['alt_st_rc_ft'] == veh, 'VMT_AvgPerVeh'].reset_index(drop=True)
 
     def veh_fuel_prices(self, veh):
+        """
+
+        :param veh: A specific alt_st_rc_ft vehicle.
+        :return: A DataFrame of fuel prices for the fueltype of the given vehicle.
+        """
         cols = [col for col in self.fuel_prices.columns if 'fuel_price' in col]
         return self.fuel_prices.loc[self.fuel_prices['fuelTypeID'] == veh[3], ['yearID'] + cols]
 
     def calc_fuel_costs(self):
         """
 
-        :return:
+        :return: A DataFrame of fuel cost metrics for all vehicles.
         """
         fuel_cost_dict = dict()
         fuel_cost_df = pd.DataFrame()
@@ -232,19 +247,12 @@ class FuelCost:
                 .merge(self.veh_fuel_prices(veh),
                        on=gen_fxns.get_common_metrics(self.veh_inventory(veh), self.veh_fuel_prices(veh)),
                        how='left')
-            # self.inventory_df = self.inventory_df.merge(self.fuel_prices, on=['yearID', 'fuelTypeID'], how='left')
             fuel_cost_dict[veh].insert(len(fuel_cost_dict[veh].columns),
                                        'FuelCost_Pretax_TotalCost',
                                        fuel_cost_dict[veh][['Gallons', 'pretax_fuel_price']].product(axis=1))
             fuel_cost_dict[veh].insert(len(fuel_cost_dict[veh].columns),
                                        'FuelCost_Retail_TotalCost',
                                        fuel_cost_dict[veh][['Gallons', 'retail_fuel_price']].product(axis=1))
-            # self.inventory_df.insert(len(self.inventory_df.columns),
-            #                          'FuelCost_Pretax_TotalCost',
-            #                          self.inventory_df[['Gallons', 'pretax_fuel_price']].product(axis=1))
-            # self.inventory_df.insert(len(self.inventory_df.columns),
-            #                          'FuelCost_Retail_TotalCost',
-            #                          self.inventory_df[['Gallons', 'retail_fuel_price']].product(axis=1))
             fuel_cost_dict[veh].insert(len(fuel_cost_dict[veh].columns),
                                        'FuelCost_Retail_AvgPerMile',
                                        fuel_cost_dict[veh]['FuelCost_Retail_TotalCost'] / self.veh_vmt(veh))
@@ -253,27 +261,22 @@ class FuelCost:
                                        fuel_cost_dict[veh]['FuelCost_Retail_AvgPerMile'] * self.veh_vmt_per_veh(veh))
             fuel_cost_dict[veh].drop(columns='Gallons', inplace=True)
             fuel_cost_df = pd.concat([fuel_cost_df, fuel_cost_dict[veh]], ignore_index=True, axis=0)
-            # self.inventory_df.insert(len(self.inventory_df.columns),
-            #                          'FuelCost_Retail_AvgPerMile',
-            #                          self.inventory_df['FuelCost_Retail_TotalCost'] / self.inventory_df['VMT'])
-            # self.inventory_df.insert(len(self.inventory_df.columns),
-            #                          'FuelCost_Retail_AvgPerVeh',
-            #                          self.inventory_df[['FuelCost_Retail_AvgPerMile', 'VMT_AvgPerVeh']].product(axis=1))
         return fuel_cost_df
 
 
 class RepairAndMaintenanceCost:
-    """
-    The RepairAndMaintenance class calculates the repair & maintenance costs.
+    def __init__(self, cost_df, metrics_repair_and_maint_dict, scaling_frame_of_reference_df, estimated_ages_df, per_veh_df, vmt_df):
+        """
+        The RepairAndMaintenance class calculates the repair & maintenance costs.
 
-    :param passed_df: A DataFrame that provides the necessary physical parameters: a vehicle tuple; cumulative VMT/veh/year;
-    estimated ages when warranty & useful life is reached.
-    :param metrics_repair_and_maint_dict: The repair and maintenance cost curve inputs contained in the inputs folder; the dictionary is created in code
-    :param pkg_directcost_veh_regclass_dict: The dictionary of package direct costs, year-over-year, created in code
-    """
-
-    def __init__(self, passed_df, metrics_repair_and_maint_dict, scaling_frame_of_reference_df, estimated_ages_df, per_veh_df, vmt_df):
-        self.passed_df = passed_df
+        :param cost_df: A DataFrame containing necessary direct costs by sourcetype.
+        :param metrics_repair_and_maint_dict: A dictionary generated in code that contains data from the repair and maintenance input file.
+        :param scaling_frame_of_reference_df: A DataFrame of direct costs for the scaling reference used in scaling repair costs.
+        :param estimated_ages_df: A DataFrame generated in code that contains the estimated ages at which warranty and useful life are reached.
+        :param per_veh_df: A DataFrame of metrics on a per vehicle basis.
+        :param vmt_df: A DataFrame of VMT values.
+        """
+        self.cost_df = cost_df
         self.metrics_repair_and_maint_dict = metrics_repair_and_maint_dict
         self.scaling_frame_of_reference_df = scaling_frame_of_reference_df
         self.estimated_ages_df = estimated_ages_df
@@ -281,39 +284,52 @@ class RepairAndMaintenanceCost:
         self.vmt_df = vmt_df
 
     def get_estimated_identifier_age(self, location, identifier):
+        """
+
+        :param location: The static_id value.
+        :param identifier: Warranty or UsefulLife identifier.
+        :return: A single estimated age value.
+        """
         temp = pd.DataFrame(self.estimated_ages_df.loc[self.estimated_ages_df['static_id'] == location, f'EstimatedAge_{identifier}']).reset_index(drop=True)
         return temp.at[0, f'EstimatedAge_{identifier}']
 
     def merge_vmt_avg_per_veh(self, df_return):
+        """
+
+        :param df_return: A vehicle-specific DataFrame with emission repair metrics included (cost/mile, cost/veh, total costs).
+        :return: The df_return DataFrame into which VMT/vehicle data has been merged.
+        """
         veh_vmt_per_veh_df = df_return[['static_id']].merge(self.per_veh_df[['static_id', 'VMT_AvgPerVeh']], on='static_id').reset_index(drop=True)
         return veh_vmt_per_veh_df
 
     def merge_vmt(self, df_return):
+        """
+
+        :param df_return: A vehicle-specific DataFrame with emission repair metrics included (cost/mile, cost/veh, total costs).
+        :return: The df_return DataFrame into which VMT data has been merged.
+        """
         veh_vmt_df = df_return[['static_id']].merge(self.vmt_df[['static_id', 'VMT']], on='static_id').reset_index(drop=True)
         return veh_vmt_df
 
     def emission_repair_costs(self, veh):
         """
 
-        :return: A vehicle-specific DataFrame with emission repair metrics included (cost/mile, cost/veh, total costs)
+        :param veh: An alt_st_rc_ft vehicle.
+        :return: A vehicle-specific DataFrame with emission repair metrics included (cost/mile, cost/veh, total costs).
         """
         print(f'Working on repair costs for {veh}')
-        veh_df = pd.DataFrame(self.passed_df.loc[self.passed_df['alt_st_rc_ft'] == veh,
-                                                 ['static_id', 'modelYearID', 'ageID', 'DirectCost_AvgPerVeh']]).reset_index(drop=True)
+        veh_df = pd.DataFrame(self.cost_df.loc[self.cost_df['alt_st_rc_ft'] == veh,
+                                               ['static_id', 'modelYearID', 'ageID', 'DirectCost_AvgPerVeh']]).reset_index(drop=True)
         repair_cost_dict = dict()
-        # index_loc = 0
         for model_year in range(veh_df['modelYearID'].min(), veh_df['modelYearID'].max() + 1):
             repair_cost_dict[model_year] = pd.DataFrame(veh_df.loc[veh_df['modelYearID'] == model_year, :]).reset_index(drop=True)
             # first determine the ratio of direct costs of the veh to direct costs of passed scaling frame of reference
-            # veh_regclass = (veh[0], veh[2], veh[3])
             scaling_frame_of_reference = pd.DataFrame(self.scaling_frame_of_reference_df.loc[self.scaling_frame_of_reference_df['modelYearID'] == model_year,
                                                                                              'DirectCost_AvgPerVeh']).reset_index(drop=True)
             direct_cost_scaler = repair_cost_dict[model_year]['DirectCost_AvgPerVeh'][0] \
                                  / scaling_frame_of_reference['DirectCost_AvgPerVeh'][0]
             warranty_age = self.get_estimated_identifier_age(repair_cost_dict[model_year]['static_id'][0], 'Warranty')
             usefullife_age = self.get_estimated_identifier_age(repair_cost_dict[model_year]['static_id'][0], 'UsefulLife')
-            # warranty_age = df_temp.loc[df_temp['modelYearID'] == model_year, 'EstimatedAge_Warranty'].mean()
-            # usefullife_age = df_temp.loc[df_temp['modelYearID'] == model_year, 'EstimatedAge_UsefulLife'].mean()
             in_warranty_cpm = self.metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_owner_cpm'] \
                               * self.metrics_repair_and_maint_dict['emission_repair_share'] \
                               * direct_cost_scaler
@@ -353,7 +369,6 @@ class RepairAndMaintenanceCost:
             repair_cost_dict[model_year].loc[(repair_cost_dict[model_year]['ageID'] > (usefullife_age - 1)),
                                              'EmissionRepairCost_Owner_AvgPerMile'] \
                 = max_cpm
-            # index_loc += 1
         df_return = pd.DataFrame()
         for model_year in range(veh_df['modelYearID'].min(), veh_df['modelYearID'].max() + 1):
             df_return = pd.concat([df_return, repair_cost_dict[model_year]], axis=0, ignore_index=True)
@@ -366,161 +381,6 @@ class RepairAndMaintenanceCost:
                          self.merge_vmt(df_return)['VMT'] * df_return['EmissionRepairCost_Owner_AvgPerMile'])
         df_return.drop(columns=['modelYearID', 'ageID', 'DirectCost_AvgPerVeh'], inplace=True)
         return df_return
-
-# class RepairAndMaintenanceCost:
-#     """
-#     The RepairAndMaintenance class calculates the repair & maintenance costs.
-#
-#     :param passed_df: A DataFrame that provides the necessary physical parameters: a vehicle tuple; cumulative VMT/veh/year;
-#     estimated ages when warranty & useful life is reached.
-#     :param metrics_repair_and_maint_dict: The repair and maintenance cost curve inputs contained in the inputs folder; the dictionary is created in code
-#     :param pkg_directcost_veh_regclass_dict: The dictionary of package direct costs, year-over-year, created in code
-#     """
-#
-#     def __init__(self, passed_df, metrics_repair_and_maint_dict, pkg_directcost_veh_regclass_dict):
-#         self.passed_df = passed_df
-#         self.metrics_repair_and_maint_dict = metrics_repair_and_maint_dict
-#         self.pkg_directcost_veh_regclass_dict = pkg_directcost_veh_regclass_dict
-#
-#     def emission_repair_costs(self, veh):
-#         """
-#
-#         :return: A vehicle-specific DataFrame with emission repair metrics included (cost/mile, cost/veh, total costs)
-#         """
-#         print(f'Working on repair costs for {veh}')
-#         df_temp = pd.DataFrame(self.passed_df.loc[self.passed_df['alt_st_rc_ft'] == veh, :])
-#         repair_cost_dict = dict()
-#         index_loc = 0
-#         for model_year in range(df_temp['modelYearID'].min(), df_temp['modelYearID'].max() + 1):
-#             repair_cost_dict[model_year] = pd.DataFrame(df_temp.loc[df_temp['modelYearID'] == model_year, :])
-#             # first determine the ratio of direct costs of the veh to direct costs of (0, 47, 2)
-#             veh_regclass = (veh[0], veh[2], veh[3])
-#             direct_cost_scalar = self.pkg_directcost_veh_regclass_dict[veh_regclass].loc[
-#                                      self.pkg_directcost_veh_regclass_dict[veh_regclass]['modelYearID'] == model_year,
-#                                      'DirectCost_AvgPerVeh'][index_loc] \
-#                                  / self.pkg_directcost_veh_regclass_dict[0, 47, 2].loc[
-#                                      self.pkg_directcost_veh_regclass_dict[0, 47, 2]['modelYearID'] == model_year,
-#                                      'DirectCost_AvgPerVeh'][index_loc]
-#             warranty_age = df_temp.loc[df_temp['modelYearID'] == model_year, 'EstimatedAge_Warranty'].mean()
-#             usefullife_age = df_temp.loc[df_temp['modelYearID'] == model_year, 'EstimatedAge_UsefulLife'].mean()
-#             in_warranty_cpm = self.metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_owner_cpm'] \
-#                               * self.metrics_repair_and_maint_dict['emission_repair_share'] \
-#                               * direct_cost_scalar
-#             at_usefullife_cpm = self.metrics_repair_and_maint_dict['atusefullife_repair_and_maintenance_owner_cpm'] \
-#                                 * self.metrics_repair_and_maint_dict['emission_repair_share'] \
-#                                 * direct_cost_scalar
-#             if usefullife_age > warranty_age:
-#                 slope_within_usefullife = (at_usefullife_cpm - in_warranty_cpm) / (usefullife_age - warranty_age)
-#             else:
-#                 slope_within_usefullife = 0
-#             max_cpm = self.metrics_repair_and_maint_dict['max_repair_and_maintenance_cpm'] \
-#                       * self.metrics_repair_and_maint_dict['emission_repair_share'] \
-#                       * direct_cost_scalar
-#             repair_cost_dict[model_year].insert(len(repair_cost_dict[model_year].columns),
-#                                                 'direct_cost_scalar',
-#                                                 direct_cost_scalar)
-#             repair_cost_dict[model_year].insert(len(repair_cost_dict[model_year].columns),
-#                                                 'slope_within_usefullife',
-#                                                 slope_within_usefullife)
-#             repair_cost_dict[model_year].insert(len(repair_cost_dict[model_year].columns),
-#                                                 'max_cpm',
-#                                                 max_cpm)
-#             # determine in-warranty cost per mile
-#             repair_cost_dict[model_year].insert(len(repair_cost_dict[model_year].columns),
-#                                                 'EmissionRepairCost_Owner_AvgPerMile',
-#                                                 in_warranty_cpm)
-#             # determine out-of-warranty but within-useful-life cost per mile for owner
-#             repair_cost_dict[model_year].loc[(repair_cost_dict[model_year]['ageID'] > (warranty_age - 1)),
-#                                              'EmissionRepairCost_Owner_AvgPerMile'] \
-#                 = slope_within_usefullife * (repair_cost_dict[model_year]['ageID'] - (warranty_age - 1)) \
-#                   + in_warranty_cpm
-#             # determine at-usefullife cost per mile
-#             repair_cost_dict[model_year].loc[(repair_cost_dict[model_year]['ageID'] >= (usefullife_age - 1)),
-#                                              'EmissionRepairCost_Owner_AvgPerMile'] \
-#                 = at_usefullife_cpm
-#             # determine beyond-useful-life cost per mile for owner
-#             repair_cost_dict[model_year].loc[(repair_cost_dict[model_year]['ageID'] > (usefullife_age - 1)),
-#                                              'EmissionRepairCost_Owner_AvgPerMile'] \
-#                 = max_cpm
-#             index_loc += 1
-#         df_return = pd.DataFrame()
-#         for model_year in range(df_temp['modelYearID'].min(), df_temp['modelYearID'].max() + 1):
-#             df_return = pd.concat([df_return, repair_cost_dict[model_year]], axis=0, ignore_index=True)
-#         df_return.reset_index(drop=True, inplace=True)
-#         df_return.insert(len(df_return.columns),
-#                          'EmissionRepairCost_Owner_AvgPerVeh',
-#                          df_return['VMT_AvgPerVeh'] * df_return['EmissionRepairCost_Owner_AvgPerMile'])
-#         df_return.insert(len(df_return.columns),
-#                          'EmissionRepairCost_Owner_TotalCost',
-#                          df_return['VMT'] * df_return['EmissionRepairCost_Owner_AvgPerMile'])
-#         return df_return
-
-    # def emission_repair_costs(self):
-    #     """
-    # 
-    #     :return: The passed DataFrame (operating_costs expected) with emission repair metrics included (cost/mile, cost/veh, total costs)
-    #     """
-    # 
-    #     df_temp = self.passed_object.copy()
-    #     vehicles = pd.Series(df_temp['alt_st_rc_ft']).unique()
-    #     repair_cost_dict = dict()
-    #     for veh in vehicles:
-    #         print(f'Working on repair costs for {veh}')
-    #         index_loc = 0
-    #         for model_year in range(df_temp['modelYearID'].min(), df_temp['modelYearID'].max() + 1):
-    #             repair_cost_dict[veh, model_year] = pd.DataFrame(df_temp.loc[((df_temp['alt_st_rc_ft'] == veh) & (df_temp['modelYearID'] == model_year)), :])
-    #             # first determine the ratio of direct costs of the veh to direct costs of (0, 47, 2)
-    #             veh_regclass = (veh[0], veh[2], veh[3])
-    #             direct_cost_scalar = self.pkg_directcost_veh_regclass_dict[veh_regclass].loc[
-    #                                      self.pkg_directcost_veh_regclass_dict[veh_regclass]['modelYearID'] == model_year,
-    #                                      'DirectCost_AvgPerVeh'][index_loc] \
-    #                                  / self.pkg_directcost_veh_regclass_dict[0, 47, 2].loc[
-    #                                      self.pkg_directcost_veh_regclass_dict[0, 47, 2]['modelYearID'] == model_year,
-    #                                      'DirectCost_AvgPerVeh'][index_loc]
-    #             warranty_age = df_temp.loc[(df_temp['alt_st_rc_ft'] == veh) & (df_temp['modelYearID'] == model_year), 'EstimatedAge_Warranty'].mean()
-    #             usefullife_age = df_temp.loc[(df_temp['alt_st_rc_ft'] == veh) & (df_temp['modelYearID'] == model_year), 'EstimatedAge_UsefulLife'].mean()
-    #             in_warranty_cpm = self.metrics_repair_and_maint_dict['inwarranty_repair_and_maintenance_owner_cpm'] \
-    #                               * self.metrics_repair_and_maint_dict['emission_repair_share'] \
-    #                               * direct_cost_scalar
-    #             at_usefullife_cpm = self.metrics_repair_and_maint_dict['atusefullife_repair_and_maintenance_owner_cpm'] \
-    #                                 * self.metrics_repair_and_maint_dict['emission_repair_share'] \
-    #                                 * direct_cost_scalar
-    #             if usefullife_age > warranty_age:
-    #                 slope_within_usefullife = (at_usefullife_cpm - in_warranty_cpm) / (usefullife_age - warranty_age)
-    #             else:
-    #                 slope_within_usefullife = 0
-    #             max_cpm = self.metrics_repair_and_maint_dict['max_repair_and_maintenance_cpm'] \
-    #                       * self.metrics_repair_and_maint_dict['emission_repair_share'] \
-    #                       * direct_cost_scalar
-    #             repair_cost_dict[veh, model_year].insert(len(repair_cost_dict[veh, model_year].columns), 'direct_cost_scalar', direct_cost_scalar)
-    #             repair_cost_dict[veh, model_year].insert(len(repair_cost_dict[veh, model_year].columns), 'slope_within_usefullife', slope_within_usefullife)
-    #             repair_cost_dict[veh, model_year].insert(len(repair_cost_dict[veh, model_year].columns), 'max_cpm', max_cpm)
-    #             # determine in-warranty cost per mile
-    #             repair_cost_dict[veh, model_year].insert(len(repair_cost_dict[veh, model_year].columns), 'EmissionRepairCost_Owner_AvgPerMile',
-    #                                                      in_warranty_cpm)
-    #             # determine out-of-warranty but within-useful-life cost per mile for owner
-    #             repair_cost_dict[veh, model_year].loc[(repair_cost_dict[veh, model_year]['ageID'] > (warranty_age - 1)), 'EmissionRepairCost_Owner_AvgPerMile'] \
-    #                 = slope_within_usefullife * (repair_cost_dict[veh, model_year]['ageID'] - (warranty_age - 1)) \
-    #                   + in_warranty_cpm
-    #             # determine at-usefullife cost per mile
-    #             repair_cost_dict[veh, model_year].loc[(repair_cost_dict[veh, model_year]['ageID'] >= (usefullife_age - 1)), 'EmissionRepairCost_Owner_AvgPerMile'] \
-    #                 = at_usefullife_cpm
-    #             # determine beyond-useful-life cost per mile for owner
-    #             repair_cost_dict[veh, model_year].loc[(repair_cost_dict[veh, model_year]['ageID'] > (usefullife_age - 1)),
-    #                                                   'EmissionRepairCost_Owner_AvgPerMile'] \
-    #                 = max_cpm
-    #             index_loc += 1
-    #     df_return = pd.DataFrame()
-    #     for veh, model_year in product(vehicles, range(df_temp['modelYearID'].min(), df_temp['modelYearID'].max() + 1)):
-    #         df_return = pd.concat([df_return, repair_cost_dict[veh, model_year]], axis=0, ignore_index=True)
-    #     df_return.reset_index(drop=True, inplace=True)
-    #     df_return.insert(len(df_return.columns),
-    #                      'EmissionRepairCost_Owner_AvgPerVeh',
-    #                      df_return['VMT_AvgPerVeh'] * df_return['EmissionRepairCost_Owner_AvgPerMile'])
-    #     df_return.insert(len(df_return.columns),
-    #                      'EmissionRepairCost_Owner_TotalCost',
-    #                      df_return['VMT'] * df_return['EmissionRepairCost_Owner_AvgPerMile'])
-    #     return df_return
 
 
 if __name__ == '__main__':

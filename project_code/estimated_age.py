@@ -9,19 +9,16 @@ from itertools import product
 
 
 class EstimatedAge:
-    """
-    The EstimatedAge class calculates the age at which warranty and useful life are reached given the alt_st_rc_ft vehicle
-
-    :param passed_df: A DataFrame that provides the necessary physical parameters: a vehicle tuple; cumulative VMT/veh/year
-    """
     def __init__(self, inventory_df, vmt_thru_ageID, miles_df, age_df):
         """
+        The EstimatedAge class calculates the age at which warranty and useful life are reached given the alt_st_rc_ft vehicle.
 
         :param inventory_df: A DataFrame that provides the necessary physical parameters: a vehicle tuple; cumulative VMT/veh/year
         :param vmt_thru_ageID: A single entry in the BCA_Inputs file contained in the inputs folder.
         :param miles_df: Warranty or Useful life miles; a DataFrame generated in code from files in the inputs folder.
         :param age_df: Warranty or Useful life ages; a DataFrame generated in code from files in the inputs folder.
         """
+
         self.inventory_df = inventory_df
         self.vmt_thru_ageID = vmt_thru_ageID
         self.miles_df = miles_df
@@ -31,7 +28,7 @@ class EstimatedAge:
         """
 
         :param identifier: A string: "Warranty" or "UsefulLife" expected.
-        :return: The passed inventory_df DataFrame having added  estimated ages at which warranty or useful life are expected to be reached.
+        :return: A DataFrame of required, calculated (required miles divided by miles/year) and estimated ages at which warranty or useful life are expected to be reached.
         """
         print(f'\nCalculating "Estimated Ages" when {identifier} will be reached.\n')
         age_df = pd.DataFrame(self.inventory_df.loc[self.inventory_df['ageID'] == self.vmt_thru_ageID],
@@ -40,7 +37,7 @@ class EstimatedAge:
         age_df = age_df.merge(self.miles_df[['alt_rc_ft', 'modelYearID', f'{identifier}_Miles']], on=['alt_rc_ft', 'modelYearID'], how='left')
         age_df = age_df.merge(self.age_df[['alt_rc_ft', 'modelYearID', f'{identifier}_Age']], on=['alt_rc_ft', 'modelYearID'], how='left')
         cols = [col for col in age_df.columns if identifier in col]
-        # vehs = pd.Series(age_df['alt_rc_ft'].unique())
+
         # since the merge is only for select MYs and alt_rc_ft vehicles, filling in for other ages/years has to be done via the following loop
         vehs = pd.Series(age_df['alt_rc_ft'].unique())
         for veh in vehs:
@@ -56,14 +53,13 @@ class EstimatedAge:
             min_age = min(required_age, calculated_age)
             estimated_age.append(min_age)
         age_df.insert(len(age_df.columns), f'EstimatedAge_{identifier}', estimated_age)
-        # age_df.drop(columns=['alt_rc_ft', 'VMT_AvgPerVeh_CumSum'], inplace=True) # drop for easier merge
-        # if identifier == 'UsefulLife':
-        #     age_df.drop(columns=['TypicalVMTperYear'], inplace=True)  # drop for easier merge since metric is in 'Warranty' DataFrame
+
         cols = [col for col in age_df.columns if identifier in col]
         return_df = pd.DataFrame(self.inventory_df[['static_id', 'modelYearID', 'alt_st_rc_ft']]
                                  .merge(age_df[['modelYearID', 'alt_st_rc_ft', 'TypicalVMTperYear'] + cols],
                                         on=['modelYearID', 'alt_st_rc_ft'], how='left')).reset_index(drop=True)
-        # # for those MYs without ageID data within the range specified in BCA_Inputs (i.e., no ageID data >= vmt_thru_ageID),
+
+        # for those MYs without ageID data within the range specified in BCA_Inputs (i.e., no ageID data >= vmt_thru_ageID),
         # a forward fill will fill their data with the last MY having ageID data within the range
         vehs = pd.Series(return_df['alt_st_rc_ft'].unique())
         for veh in vehs:
@@ -71,64 +67,6 @@ class EstimatedAge:
                 = return_df.loc[(return_df['alt_st_rc_ft'] == veh) & (return_df['modelYearID'] >= return_df['modelYearID'].max() - self.vmt_thru_ageID)].ffill(axis=0)
         return_df = return_df[['static_id', 'TypicalVMTperYear'] + [col for col in return_df.columns if f'{identifier}' in col]]
         return return_df
-
-# class EstimatedAge:
-#     """
-#     The EstimatedAge class calculates the age at which warranty and useful life are reached given the alt_st_rc_ft vehicle
-#
-#     :param passed_df: A DataFrame that provides the necessary physical parameters: a vehicle tuple; cumulative VMT/veh/year
-#     """
-#     def __init__(self, inventory_df, vmt_thru_ageID, miles_df, age_df):
-#         """
-#
-#         :param inventory_df: A DataFrame that provides the necessary physical parameters: a vehicle tuple; cumulative VMT/veh/year
-#         :param vmt_thru_ageID: A single entry in the BCA_Inputs file contained in the inputs folder.
-#         :param miles_df: Warranty or Useful life miles; a DataFrame generated in code from files in the inputs folder.
-#         :param age_df: Warranty or Useful life ages; a DataFrame generated in code from files in the inputs folder.
-#         """
-#         self.inventory_df = inventory_df
-#         self.vmt_thru_ageID = vmt_thru_ageID
-#         self.miles_df = miles_df
-#         self.age_df = age_df
-#
-#     def ages_by_identifier(self, identifier):
-#         """
-#
-#         :param identifier: A string: "Warranty" or "UsefulLife" expected.
-#         :return: The passed inventory_df DataFrame having added  estimated ages at which warranty or useful life are expected to be reached.
-#         """
-#         print(f'\nCalculating "Estimated Ages" when {identifier} will be reached.')
-#         age_df = pd.DataFrame(self.inventory_df.loc[self.inventory_df['ageID'] == self.vmt_thru_ageID],
-#                               columns=['optionID', 'modelYearID', 'sourceTypeID', 'regClassID', 'fuelTypeID',
-#                                        'alt_rc_ft', 'VMT_AvgPerVeh_CumSum'])
-#         age_df.insert(len(age_df.columns), 'TypicalVMTperYear', age_df['VMT_AvgPerVeh_CumSum'] / (self.vmt_thru_ageID + 1))
-#         age_df = age_df.merge(self.miles_df, on=['optionID', 'modelYearID', 'regClassID', 'fuelTypeID'], how='left')
-#         age_df = age_df.merge(self.age_df, on=['optionID', 'modelYearID', 'regClassID', 'fuelTypeID'], how='left')
-#         cols = [col for col in age_df.columns if identifier in col]
-#         vehs = pd.Series(age_df['alt_rc_ft'].unique())
-#         # since the merge is only for select MYs and alt_rc_ft vehicles, filling in for other ages/years has to be done via the following loop
-#         for veh in vehs:
-#             age_df.loc[(age_df['alt_rc_ft'] == veh), cols] = age_df.loc[(age_df['alt_rc_ft'] == veh), cols].ffill(axis=0)
-#         age_df.insert(len(age_df.columns),
-#                       f'CalculatedAgeWhen{identifier}Reached',
-#                       round(age_df[f'{identifier}_Miles'] / age_df['TypicalVMTperYear']))
-#
-#         estimated_age = list()
-#         for index, row in age_df.iterrows():
-#             required_age = row[f'{identifier}_Age']
-#             calculated_age = row[f'CalculatedAgeWhen{identifier}Reached']
-#             min_age = min(required_age, calculated_age)
-#             estimated_age.append(min_age)
-#         age_df.insert(len(age_df.columns), f'EstimatedAge_{identifier}', estimated_age)
-#         age_df.drop(columns=['alt_rc_ft', 'VMT_AvgPerVeh_CumSum'], inplace=True) # drop for easier merge
-#         if identifier == 'UsefulLife':
-#             age_df.drop(columns=['TypicalVMTperYear'], inplace=True)  # drop for easier merge since metric is in 'Warranty' DataFrame
-#         self.inventory_df = self.inventory_df.merge(age_df, on=['optionID', 'modelYearID', 'sourceTypeID', 'regClassID', 'fuelTypeID'], how='left')
-#         # for those MYs without ageID data within the range specified in BCA_Inputs (i.e., no ageID data >= vmt_thru_ageID),
-#         # a forward fill will fill their data with the last MY having ageID data within the range
-#         self.inventory_df.loc[self.inventory_df['modelYearID'] >= self.inventory_df['modelYearID'].max() - self.vmt_thru_ageID] \
-#             = self.inventory_df.loc[self.inventory_df['modelYearID'] >= self.inventory_df['modelYearID'].max() - self.vmt_thru_ageID].ffill(axis=0)
-#         return self.inventory_df
 
 
 class EstimatedAge2: # this works, but is very slow
