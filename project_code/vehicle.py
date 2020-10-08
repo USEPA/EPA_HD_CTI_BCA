@@ -4,6 +4,8 @@ vehicle.py
 Contains the Vehicle class along with MOVES definitions of fuel types, reg classes and source types.
 
 """
+import pandas as pd
+
 
 # define elements of the Vehicle class
 fuelTypeID = {1: 'Gasoline',

@@ -4,6 +4,7 @@ calc_deltas.py
 Contains the CalcDeltas class.
 
 """
+import pandas as pd
 
 
 class CalcDeltas:
@@ -21,7 +22,7 @@ class CalcDeltas:
     def calc_delta_and_new_alt_id(self):
         """
 
-        :return: A new DataFrame consisting of the passed DataFrame appended with deltas for each scenario in the passed data.
+        :return: A new DataFrame consisting of the deltas for each scenario in the passed data.
         """
         return_df = pd.DataFrame()
         alternative = dict()
@@ -59,8 +60,8 @@ class CalcDeltas:
                 alternative[alt][item] = alternative[0][item] - alternative[alt][item]
             return_df = return_df.append(alternative[alt], ignore_index=True, sort=False)
         for item in self.list_for_deltas:
-            return_df.loc[return_df['optionID'] == 0, item] = 0
-            # return_df.rename(columns={item: f'{item}_Reductions'}, inplace=True)
+            return_df.rename(columns={item: f'{item}_Reductions'}, inplace=True)
+            return_df.loc[return_df['optionID'] == 0, f'{item}_Reductions'] = 0
         return return_df
 
 

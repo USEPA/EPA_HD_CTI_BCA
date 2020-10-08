@@ -112,3 +112,9 @@ class DocTables:
             sh_name = f'CY{yr}'
             data.to_excel(writer, sheet_name=sh_name, index=False)
         return writer
+
+    def preamble_ria_tables(self, metrics, index_list, function):
+        table = pd.pivot_table(self.input_df, metrics, index_list, aggfunc=function)
+        table = table.reindex(metrics, axis=1)
+        table = table.reset_index(drop=False)
+        return table
