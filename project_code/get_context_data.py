@@ -1,7 +1,7 @@
 """
-fuel_prices_aeo.py
+get_context_data.py
 
-Contains the GetFuelPrices class.
+Contains the GetFuelPrices & GetDeflators classes.
 
 """
 
@@ -149,6 +149,10 @@ class GetDeflators:
         return f'GetDeflators: {self.id_value}'
 
     def read_table(self):
+        """
+
+        :return: A DataFrame of the raw GDP deflators file.
+        """
         return pd.read_csv(self.deflators_file, skiprows=self.skiprows, error_bad_lines=False).dropna()
 
     def deflator_df(self):

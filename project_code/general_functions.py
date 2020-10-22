@@ -40,6 +40,7 @@ def convert_dollars_to_analysis_basis(df, deflators, dollar_basis, *args):
     """
 
     This function converts dollars into a consistent dollar basis as set in the Inputs workbook.
+
     :param df: The passed DataFrame containing costs to convert.
     :param deflators: A dictionary of gdp price deflators and adjustments to be multiplied by costs.
     :param dollar_basis: The dollar basis of the analysis.
@@ -110,6 +111,7 @@ def read_input_files(path_inputs, input_file, col_list, idx_col=None):
 def get_common_metrics(df_left, df_right, ignore=None):
     """
     This function simply finds common metrics between 2 DataFrames being merged to ensure a save merge.
+
     :param df_left: The left DataFrame being merged.
     :param df_right: The right DataFrame being merged.
     :param ignore: Any columns (metrics) to ignore when finding common metrics.

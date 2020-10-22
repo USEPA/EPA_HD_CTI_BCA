@@ -34,8 +34,8 @@ def main():
     """The main script."""
     path_project = Path.cwd()
 
-    # TODO update introduction/other documentation per recent changes (0.22.0 thru 0.23.X)
-    # TODO check fleet module and later for docstrings in documentation build
+    # TODO update introduction/other documentation per recent changes (0.22.0 thru 0.24.X)
+    # TODO check general_functions module and later for docstrings in documentation build
     path_inputs = path_project / 'inputs'
     path_outputs = path_project / 'outputs'
     run_folder_identifier = input('Provide a run identifier for your output folder name (press return to use the default name)\n')
@@ -709,7 +709,7 @@ def main():
     document_tables_file = pd.ExcelWriter(path_of_run_results_folder.joinpath('preamble_ria_tables.xlsx'))
     for sheet_name in doc_table_dict:
         doc_table_dict[sheet_name].to_excel(document_tables_file, sheet_name=sheet_name)
-    document_tables_file.save()
+    # document_tables_file.save()
     ages_table.to_csv(path_of_run_results_folder / 'ages.csv', index=True)
 
     # for figures, an updated options_dict would be nice
@@ -772,6 +772,10 @@ def main():
                                      'Results': [project_code.__version__, path_of_run_folder, start_time_readable, elapsed_time_read, elapsed_time_calcs, elapsed_time_outputs, end_time_readable, elapsed_time],
                                      'Units': ['', '', 'YYYYmmdd-HHMMSS', 'seconds', 'seconds', 'seconds', 'YYYYmmdd-HHMMSS', 'seconds']})
     summary_log = pd.concat([summary_log, gen_fxns.get_file_datetime(input_files_pathlist)], axis=0, sort=False, ignore_index=True)
+
+    # add summary log to document_tables_file for tracking this file which is the most likely to be shared
+    summary_log.to_excel(document_tables_file, sheet_name='summary_log')
+    document_tables_file.save()
     summary_log.to_csv(path_of_run_results_folder.joinpath('summary_log.csv'), index=False)
     print(f'\nOutput files have been saved to {path_of_run_folder}')
 

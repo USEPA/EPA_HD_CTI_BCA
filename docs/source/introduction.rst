@@ -53,6 +53,7 @@ Output files always generated are:
     - bca_npv.xlsx which contains net present value benefit and cost summaries for specific calendar years as specified in the BCA_General_Inputs file.
     - inventory_annual_IncludedModelYears.xlsx which contains annual inventory summaries for specific calendar years as specified in the BCA_General_Inputs file (for model years included in the analysis).
     - techcostAvgPerVeh.xlsx which contains average tech costs for specific model years as specified in the BCA_General_Inputs file.
+    - ages.csv which contains the required, calculated and estimated warranty and useful life ages.
     - summary_log.csv which contains the version number of the tool, date and time statistics for the run and input file data specific to the run.
 
 Optional output files are:
