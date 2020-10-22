@@ -23,8 +23,8 @@ class DiscountValues:
     def discount(self, discrate):
         """
         The discount method takes the list of metrics to be discounted and does the discounting calculation to a given year and point within that year.
-        The costs_start entry of the BCA_General_Inputs file should be set to 'start-year' or 'end-year', where start-year discounts to the start of the year
-        (i.e., costs begin at time t=0) and end-year discounts to the end of the year (i.e., costs begin at time t=1).
+        The costs_start entry of the BCA_General_Inputs file should be set to 'start-year' or 'end-year', where start-year represents costs starting at time t=0
+        (i.e., first year costs are undiscounted), and end-year represents costs starting at time t=1 (i.e., first year costs are discounted).
 
         :param discrate: The discount rate.
         :return: A DataFrame containing the passed list of monetized values after discounting.

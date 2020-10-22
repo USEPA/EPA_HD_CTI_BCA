@@ -5,7 +5,7 @@ Methodology
 General
 ^^^^^^^
 
-The project folder for using the tool should contain and "inputs" folder containing necessary input files and a "project_code" folder containing the Python modules.
+The project folder for using the tool should contain an "inputs" folder containing necessary input files, an "aeo" folder containing AEO fuel price information, and a "project_code" folder containing the Python modules.
 Optionally, a virtual environment folder may be desirable. The tool will create an "outputs" folder within the project folder into which all run results will be saved.
 
 The tool first reads inputs and input files, then calculates appropriate technology costs, operating costs and emission costs. Once complete, these are brought together
@@ -14,7 +14,7 @@ in a set of BCA (benefit-cost analysis) results with those results saved to a ru
 Importantly, monetized values in the tool are treated as costs. Also, for the most part, everything is treated in absolute terms. So absolute costs are calculated
 for each scenario/option/alternative and then deltas are calculated as costs in the alternative case less costs in the baseline case. As such, higher technology costs
 in an alternative case than those in the baseline case would result in positive delta costs, or increased costs. Likewise, lower emission costs in an alternative case
-relative to those in the baseline case would result in negative delta costs, or decreased costs. A decrease in emission costs represents and increase in emission benefits.
+relative to those in the baseline case would result in negative delta costs, or decreased costs. A decrease in emission costs represents an increase in emission benefits.
 
 
 Sensitivites
@@ -112,15 +112,19 @@ where,
 
 - *RequiredWarrantyAge* = the minimum age required by regulation at which the warranty can end
 - *RequiredUsefulLifeAge* = the age required by regulation at which the useful life ends
-- *CalculatedWarrantyAge* = the minimum mileage required by regulation at which the warranty can end divided by the annual miles driven for the given vehicle
-- *CalculatedUsefulLifeAge* = the minimum mileage required by regulation at which the useful life can end divided by the annual miles driven for the given vehicle
+- *CalculatedWarrantyAge* = the minimum mileage required by regulation at which the warranty can end divided by the "typical" annual miles driven for the given vehicle
+- *CalculatedUsefulLifeAge* = the minimum mileage required by regulation at which the useful life can end divided by the "typical" annual miles driven for the given vehicle
 - *optionID* = the option considered (i.e, baseline or one of the action alternatives)
 - *MY* = the model year being considered
 - *vehicle* = a unique sourcetype-regclass-fueltype vehicle within MOVES
 
 Required warranty and useful life miles and ages by optionID/MY/RegClass/FuelType are controlled via input files to the tool (Warranty_Inputs.csv and
 UsefulLife_Inputs.csv, respectively). “Estimated” and “Calculated” ages are calculated by the tool in-code where “Calculated” age uses MOVES sourcetype
-mileage accumulations.
+mileage accumulations. The "typical" annual miles driven is calculated in the tool as the cumulative miles driven divided by the number of years included
+in the cumulative miles. Because vehicles tend to be driven fewer miles with age, the "typical" annual miles driven decreases with age. The Repair_and_Maintenance_Curve_Inputs.csv
+file has a controller for how many years of mileage accumulation to include (typical_vmt_thru_ageID). The default value is 6 which represents 7 years of cumulative miles.
+Again, a smaller value would result in more "typical" annual miles driven and a lower calculated age, and a larger value would result in fewer "typical" annual miles driven
+and a higher calculated age.
 
 Cost per mile by age (for emission-related repairs)
 ...................................................

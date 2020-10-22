@@ -34,7 +34,7 @@ class EmissionCost:
     def calc_emission_costs_df(self):
         """
 
-        :return: The inventory_df DataFrame after adding the criteria emission damage costs broken out in all ways.
+        :return: The inventory_df DataFrame after adding the emission damage costs broken out in all ways.
         """
         # df = self.inventory_df.copy()
         df_fuel = dict()
@@ -59,6 +59,10 @@ class EmissionCost:
         return df_return
 
     def calc_criteria_costs_df(self):
+        """
+
+        :return: The inventory_df DataFrame after summing the individual emission damage costs into a single criteria damage cost.
+        """
         for dr, mortality_est in product([0.03, 0.07], ['low', 'high']):
             cols = [col for col in self.inventory_df.columns if f'{mortality_est}_{dr}' in col and 'USDpUSton' not in col]
             self.inventory_df.insert(len(self.inventory_df.columns),

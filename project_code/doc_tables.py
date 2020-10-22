@@ -46,7 +46,7 @@ class DocTables:
                         data.to_excel(writer, sheet_name=sh_name, index=False)
         return writer
 
-    def bca_yearID_tables(self, suffix, discrate, low_series, high_series, years, units, df_cols, writer):
+    def bca_yearID_tables(self, suffix, discrate, years, units, df_cols, writer, low_series='', high_series=''):
         """
 
         :param suffix: The metric suffix to use: '' for annual values; '_CumSum' for NPVs; '_Annualized' for annualized values.
@@ -71,8 +71,6 @@ class DocTables:
             cols_new_units = [col for col in data.columns if 'OptionName' not in col and 'DiscountRate' not in col]
             for col in cols_new_units:
                 data[col] = (data[col] / divisor).round(1)
-            # data.insert(len(data.columns), 'PM2.5_Damages_TotalCosts', '')
-            # data['PM2.5_Damages_TotalCosts'] = data[low_series + suffix].astype(str) + ' to ' + data[high_series + suffix].astype(str)
             data.loc[len(data.index), 'OptionName'] = f'Table values are in {units}'
             sh_name = f'CY{yr}_DR{discrate}'
             data.to_excel(writer, sheet_name=sh_name, index=False)

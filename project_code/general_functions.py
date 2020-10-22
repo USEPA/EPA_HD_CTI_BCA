@@ -13,9 +13,8 @@ from math import log10, floor
 
 def inputs_filenames(input_files_pathlist):
     """
-    :param input_files_pathlist: A list of those input files that are not modified in code.
-    :type input_files_pathlist: List - currently hardcoded.
-    :return: A list of input file paths - these will be copied directly to the output folder so that inputs and outputs end up bundled together in the output folder.
+    :param input_files_pathlist: A list of those input files that are specified in the Input_Files.csv file contained in the inputs folder.
+    :return: A list of input file full paths - these will be copied directly to the output folder so that inputs and outputs end up bundled together in the output folder.
     """
     _filename_list = [PurePath(path).name for path in input_files_pathlist]
     return _filename_list
@@ -24,16 +23,11 @@ def inputs_filenames(input_files_pathlist):
 def reshape_df(df, value_variable_list, cols_to_melt, melted_header, new_column_name):
     """
 
-    :param df: Data to melt.
-    :type df: DataFrame
-    :param value_variable_list: Column(s) to use as identifier variables.
-    :type value_variable_list: List
-    :param cols_to_melt: Column(s) to unpivot (melt).
-    :type cols_to_melt: List - this is a list of columns determined in code that are to be melted.
+    :param df: The DataFrame to melt.
+    :param value_variable_list: Column(s) list to use as identifier variables.
+    :param cols_to_melt: Column(s) list of columns to pivot (melt).
     :param melted_header: The header for the column to be populated with the cols_to_melt list.
-    :type melted_header: String
     :param new_column_name: Name to use for the ‘Value’ column.
-    :type new_column_name: String
     :return: A new DataFrame in long and narrow shape rather than the passed short and wide shape.
     """
     df = df.melt(id_vars=value_variable_list,
@@ -55,7 +49,7 @@ def convert_dollars_to_analysis_basis(df, deflators, dollar_basis, *args):
     dollar_years = pd.Series(pd.DataFrame(df.loc[df['DollarBasis'] > 1])['DollarBasis'].unique())
     for year in dollar_years:
         for arg in args:
-            df.loc[df['DollarBasis'] == year, arg] = df[arg] * deflators[year]['adjustment']
+            df.loc[df['DollarBasis'] == year, arg] = df[arg] * deflators[year]['adjustment_factor']
         df.loc[df['DollarBasis'] == year, 'DollarBasis'] = dollar_basis
     return df
 
@@ -72,7 +66,15 @@ def round_metrics(df, metrics, round_by):
     return df
 
 
-def round_sig(df, metrics, divisor, sig=0):
+def round_sig(df, metrics, divisor=1, sig=0):
+    """
+
+    :param df: The DataFrame containing data to be rounded.
+    :param metrics: The list of metrics to be rounded.
+    :param divisor: The divisor to use should results be desired in units other than those passed (set divisor=1 to maintain units).
+    :param sig: The number of significant digits.
+    :return: The passed DataFrame with metrics rounded to 'sig' digits and expressed in 'divisor' units.
+    """
     for metric in metrics:
         try:
             df[metric] = df[metric].apply(lambda x: round(x/divisor, sig-int(floor(log10(abs(x/divisor))))-1))
@@ -106,6 +108,13 @@ def read_input_files(path_inputs, input_file, col_list, idx_col=None):
 
 
 def get_common_metrics(df_left, df_right, ignore=None):
+    """
+    This function simply finds common metrics between 2 DataFrames being merged to ensure a save merge.
+    :param df_left: The left DataFrame being merged.
+    :param df_right: The right DataFrame being merged.
+    :param ignore: Any columns (metrics) to ignore when finding common metrics.
+    :return: A DataFrame merged on the common metrics (less any ignored metrics).
+    """
     if ignore:
         cols_left = df_left.columns.tolist()
         cols_right = df_right.columns.tolist()
@@ -120,13 +129,4 @@ def get_common_metrics(df_left, df_right, ignore=None):
     if cols != []:
         return cols
     else:
-        print(f'No common columns found in {df_left} with {df_right} merge.')
         return
-
-
-def pivot_table_of_results(df_source, index_list, function=None, *value_args):
-    value_list = []
-    for value_arg in value_args:
-        value_list.append(value_arg)
-    table = pd.pivot_table(df_source, aggfunc=function, values=value_list, index=index_list)
-    return table

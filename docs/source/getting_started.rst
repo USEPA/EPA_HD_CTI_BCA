@@ -30,7 +30,7 @@ With the requirements installed, you should be able to run the tool by typing th
 
 This should create an outputs folder in your project folder (i.e., where you have placed the repo), unless one has already been created, where the results of the run can be found.
 
-Note that the tool was written in a Python 3.7 environment.
+Note that the tool was written in a Python 3.8 environment.
 
 For help or questions, contact
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

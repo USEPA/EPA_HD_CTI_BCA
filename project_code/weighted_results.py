@@ -46,12 +46,22 @@ class WeightedResult:
         return weighted_results_by_veh
 
     def weighted_results_all_vehs(self, metric):
+        """
+
+        :param metric: The specific metric (or series) of data to be weighted.
+        :return: DataFrame containing weighted results for all vehicles.
+        """
         weighted_results = dict()
         for veh in self.vehs:
             weighted_results[veh] = self.weighted_results_by_veh(veh, metric)
         return weighted_results
 
     def weighted_results(self, metric):
+        """
+
+        :param metric: The specific metric (or series) of data to be weighted.
+        :return: A pivot table of the weighted cost per mile results for all options & all vehicles.
+        """
         print(f'\nGetting weighted results of {metric} for model years {self.year_list}')
         weighted_results = pd.DataFrame(self.weighted_results_all_vehs(metric))
         weighted_results = weighted_results.transpose()
