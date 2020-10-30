@@ -112,6 +112,13 @@ class DocTables:
         return writer
 
     def preamble_ria_tables(self, metrics, index_list, function):
+        """
+
+        :param metrics: The list of metrics within the passed DataFrame to include as data in the returned table.
+        :param index_list: The list of metrics within the passed DataFrame to include as the row index of the returned table.
+        :param function: The function to use (e.g., 'sum', 'mean')
+        :return: A pivot table.
+        """
         table = pd.pivot_table(self.input_df, metrics, index_list, aggfunc=function)
         table = table.reindex(metrics, axis=1)
         table = table.reset_index(drop=False)

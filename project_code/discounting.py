@@ -95,10 +95,12 @@ if __name__ == '__main__':
     df_startyear = DiscountValues(df, ['cost'], discount_to_cy, costs_start).discount(discrate)
     df_startyear = df_startyear.join(GroupMetrics(df_startyear, ['option']).group_cumsum(['cost']))
     DiscountValues(df_startyear, ['cost'], discount_to_cy, costs_start).annualize()
+    print(f'\nIf costs occur at time t=0, or {costs_start}.\n')
     print(df_startyear)
 
     costs_start = 'end-year'
     df_endyear = DiscountValues(df, ['cost'], discount_to_cy, costs_start).discount(discrate)
     df_endyear = df_endyear.join(GroupMetrics(df_endyear, ['option']).group_cumsum(['cost']))
     DiscountValues(df_endyear, ['cost'], discount_to_cy, costs_start).annualize()
+    print(f'\nIf costs occur at time t=1, or {costs_start}.\n')
     print(df_endyear)

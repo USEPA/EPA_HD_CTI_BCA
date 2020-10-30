@@ -16,7 +16,7 @@ class GetFuelPrices:
     def __init__(self, path_project, aeo_case, id_col, *fuels):
         """
 
-        :param path_project: The path of the project and the parent of the aeo directory.
+        :param path_project: The path of the project (the 'working directory') and the parent of the aeo directory.
         :param aeo_case: From the BCA inputs sheet - the AEO fuel case to use (a CSV of fuel prices must exist in the aeo directory).
         :param id_col: The column name where id data can be found.
         :param fuels: Descriptor for gasoline and diesel fuels (e.g., Motor Gasoline, Diesel).
@@ -44,8 +44,7 @@ class GetFuelPrices:
         try:
             pd.read_csv(self.fuel_prices_file, skiprows=4)
             print(f'Fuel prices file for AEO {self.aeo_case}.......FOUND.')
-            fuel_prices_full = pd.read_csv(self.fuel_prices_file, skiprows=4, error_bad_lines=False).dropna().reset_index(drop=True)
-            return fuel_prices_full
+            return pd.read_csv(self.fuel_prices_file, skiprows=4, error_bad_lines=False).dropna().reset_index(drop=True)
         except FileNotFoundError:
             print(f'Fuel prices file for AEO {self.aeo_case}......NOT FOUND in {self.aeo} folder.')
             sys.exit()
@@ -141,7 +140,6 @@ class GetDeflators:
         self.id_col = id_col
         self.id_value = id_value
         self.bea = path_project / 'bea'
-        self.id_col = id_col
         self.skiprows = skiprows
         self.deflators_file = self.bea / 'Table_1.1.9_ImplicitPriceDeflators.csv'
 
@@ -153,14 +151,21 @@ class GetDeflators:
 
         :return: A DataFrame of the raw GDP deflators file.
         """
-        return pd.read_csv(self.deflators_file, skiprows=self.skiprows, error_bad_lines=False).dropna()
+        try:
+            pd.read_csv(self.deflators_file, skiprows=4)
+            print(f'BEA GDP deflators file.......FOUND.')
+            return pd.read_csv(self.deflators_file, skiprows=self.skiprows, error_bad_lines=False).dropna()
+        except FileNotFoundError:
+            print(f'BEA GDP deflators file......NOT FOUND in {self.bea} folder.')
+            sys.exit()
 
     def deflator_df(self):
         """
 
         :return: A DataFrame consisting of only the data for the given AEO case; the name of the AEO case is also removed from the 'full name' column entries.
         """
-        df_return = pd.DataFrame(self.read_table().loc[self.read_table()[self.id_col].str.endswith(f'{self.id_value}'), :]).reset_index(drop=True)
+        df_return = pd.DataFrame(self.read_table())
+        df_return = pd.DataFrame(df_return.loc[df_return[self.id_col].str.endswith(f'{self.id_value}'), :]).reset_index(drop=True)
         df_return.replace({self.id_col: f': {self.id_value}'}, {self.id_col: ''}, regex=True, inplace=True)
         return df_return
 
@@ -171,11 +176,12 @@ class GetDeflators:
         :param drop_col: The name of any columns to be dropped after melt.
         :return: The melted DataFrame with a column of data named value_name.
         """
-        df = pd.melt(self.deflator_df(), id_vars=[self.id_col], value_vars=[col for col in self.deflator_df().columns if '20' in col], var_name='yearID', value_name=value_name)
-        df['yearID'] = df['yearID'].astype(int)
+        deflator_df = self.deflator_df()
+        melt_df = pd.melt(deflator_df, id_vars=[self.id_col], value_vars=[col for col in deflator_df.columns if '20' in col], var_name='yearID', value_name=value_name)
+        melt_df['yearID'] = melt_df['yearID'].astype(int)
         if drop_col:
-            df.drop(columns=drop_col, inplace=True)
-        return df
+            melt_df.drop(columns=drop_col, inplace=True)
+        return melt_df
 
     def calc_adjustment_factors(self, dollar_basis):
         """
@@ -199,12 +205,23 @@ if __name__ == '__main__':
     from pathlib import Path
 
     path_project = Path.cwd()
-    aeo_case = 'Reference case'
-    fuel_prices_obj = GetFuelPrices(path_project, aeo_case, 'Motor Gasoline', 'Diesel')
-    fuel_prices = fuel_prices_obj.get_prices()
-    fuel_prices.to_csv(path_project / f'dev/fuel_prices_{aeo_case}.csv', index=False)
+    path_dev = path_project / 'dev'
+    path_dev.mkdir(exist_ok=True)
 
-    aeo_case = 'High oil price'
-    fuel_prices_obj = GetFuelPrices(path_project, aeo_case, 'Motor Gasoline', 'Diesel')
+    aeo_case_1 = 'Reference case'
+    fuel_prices_obj = GetFuelPrices(path_project, aeo_case_1, 'full name', 'Motor Gasoline', 'Diesel')
     fuel_prices = fuel_prices_obj.get_prices()
-    fuel_prices.to_csv(path_project / f'dev/fuel_prices_{aeo_case}.csv', index=False)
+    fuel_prices.to_csv(path_project / f'dev/fuel_prices_{aeo_case_1}.csv', index=False)
+
+    aeo_case_2 = 'High oil price'
+    fuel_prices_obj = GetFuelPrices(path_project, aeo_case_2, 'full name', 'Motor Gasoline', 'Diesel')
+    fuel_prices = fuel_prices_obj.get_prices()
+    fuel_prices.to_csv(path_project / f'dev/fuel_prices_{aeo_case_2}.csv', index=False)
+
+    deflators_obj = GetDeflators(path_project, 'Unnamed: 1', 'Gross domestic product')
+    dollar_basis = 2017
+    deflators = deflators_obj.calc_adjustment_factors(dollar_basis)
+    deflators = pd.DataFrame(deflators)
+    deflators.to_csv(path_project / f'dev/gdp_deflators.csv', index=False)
+
+    print(f'\nfuel_prices_{aeo_case_1}.csv, fuel_prices_{aeo_case_2}.csv & gdp_deflators.csv (dollar basis = {dollar_basis}) have been saved to the {path_dev} folder.')

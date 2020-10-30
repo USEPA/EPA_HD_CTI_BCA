@@ -86,18 +86,26 @@ def round_sig(df, metrics, divisor=1, sig=0):
 
 
 def get_file_datetime(list_of_files):
+    """
+
+    :param list_of_files: List of files for which datetimes are required.
+    :return: A DataFrame of input files (full path) and corresponding datetimes (date stamps) for those files.
+    """
     file_datetime = pd.DataFrame()
     file_datetime.insert(0, 'Item', [path_to_file for path_to_file in list_of_files])
     file_datetime.insert(1, 'Results', [time.ctime(os.path.getmtime(path_to_file)) for path_to_file in list_of_files])
     return file_datetime
 
 
-def cols_for_df(source_df, metrics):
-    return_df = pd.DataFrame(source_df, columns=metrics)
-    return return_df
-
-
 def read_input_files(path_inputs, input_file, col_list, idx_col=None):
+    """
+
+    :param path_inputs: The path to the input file(s).
+    :param input_file: The name of the input file.
+    :param col_list: The columns to use (return).
+    :param idx_col: The column to use as the row index.
+    :return: A DataFrame of the desired data from the input file.
+    """
     try:
         pd.read_csv(path_inputs / f'{input_file}', usecols=col_list, index_col=idx_col)
         print(f'File {input_file}.......FOUND.')
@@ -110,7 +118,7 @@ def read_input_files(path_inputs, input_file, col_list, idx_col=None):
 
 def get_common_metrics(df_left, df_right, ignore=None):
     """
-    This function simply finds common metrics between 2 DataFrames being merged to ensure a save merge.
+    This function simply finds common metrics between 2 DataFrames being merged to ensure a safe merge.
 
     :param df_left: The left DataFrame being merged.
     :param df_right: The right DataFrame being merged.

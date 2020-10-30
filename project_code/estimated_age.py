@@ -129,33 +129,46 @@ class EstimatedAge:
 if __name__ == '__main__':
     import pandas as pd
     from pathlib import Path
-    from project_code.cti_bca import reshape_df
-    # from project_code.estimated_age import EstimatedAge
+    import project_code.general_functions as gen_fxns
 
     typical_vmt_thru_age = 6
 
     path_project = Path.cwd()
     path_inputs = path_project / 'inputs'
-    sourcetype_costs_file = path_project / 'dev/estimated_age_test.csv'
-    sourcetype_costs = pd.read_csv(sourcetype_costs_file)
+    sourcetype_per_veh_file = path_project / 'dev/sourcetype_per_veh.csv'
+    sourcetype_per_veh = pd.read_csv(sourcetype_per_veh_file)
+    # this reads alt_rc_ft entries as strings, not tuples, so re-do these entries as tuples
+    sourcetype_per_veh = sourcetype_per_veh['alt_rc_ft'].str.split(', ', expand=True).join(sourcetype_per_veh)
+    sourcetype_per_veh.drop(columns=0, inplace=True)
+    sourcetype_per_veh.rename(columns={1: 'regClassID', 2: 'fuelTypeID'}, inplace=True)
+    sourcetype_per_veh['fuelTypeID'] = sourcetype_per_veh['fuelTypeID'].str.rstrip(')')
+    sourcetype_per_veh['regClassID'] = pd.to_numeric(sourcetype_per_veh['regClassID'])
+    sourcetype_per_veh['fuelTypeID'] = pd.to_numeric(sourcetype_per_veh['fuelTypeID'])
+    sourcetype_per_veh['alt_rc_ft'] = pd.Series(zip(sourcetype_per_veh['optionID'], sourcetype_per_veh['regClassID'], sourcetype_per_veh['fuelTypeID']))
 
-    warranty_inputs = pd.read_csv(path_inputs / 'Warranty_Inputs.csv')
-    usefullife_inputs = pd.read_csv(path_inputs / 'UsefulLife_Inputs.csv')
-    warranty_miles_reshaped = reshape_df(warranty_inputs.loc[warranty_inputs['period'] == 'Miles'], ['optionID', 'regClassID', 'fuelTypeID'],
-                                         [col for col in warranty_inputs.columns if '20' in col], 'modelYearID', 'Warranty_Miles')
-    warranty_age_reshaped = reshape_df(warranty_inputs.loc[warranty_inputs['period'] == 'Age'], ['optionID', 'regClassID', 'fuelTypeID'],
-                                       [col for col in warranty_inputs.columns if '20' in col], 'modelYearID', 'Warranty_Age')
-    usefullife_miles_reshaped = reshape_df(usefullife_inputs.loc[usefullife_inputs['period'] == 'Miles'], ['optionID', 'regClassID', 'fuelTypeID'],
-                                           [col for col in usefullife_inputs.columns if '20' in col], 'modelYearID', 'UsefulLife_Miles')
-    usefullife_age_reshaped = reshape_df(usefullife_inputs.loc[usefullife_inputs['period'] == 'Age'], ['optionID', 'regClassID', 'fuelTypeID'],
-                                         [col for col in usefullife_inputs.columns if '20' in col], 'modelYearID', 'UsefulLife_Age')
+    input_files_df = pd.read_csv(path_inputs / 'Input_Files.csv', usecols=lambda x: 'Notes' not in x, index_col=0)
+    input_files_dict = input_files_df.to_dict('index')
+    warranty_inputs = gen_fxns.read_input_files(path_inputs, input_files_dict['warranty_inputs']['UserEntry.csv'], lambda x: 'Notes' not in x)
+    usefullife_inputs = gen_fxns.read_input_files(path_inputs, input_files_dict['usefullife_inputs']['UserEntry.csv'], lambda x: 'Notes' not in x)
+    warranty_miles_reshaped = gen_fxns.reshape_df(warranty_inputs.loc[warranty_inputs['period'] == 'Miles'], ['optionID', 'regClassID', 'fuelTypeID'],
+                                                  [col for col in warranty_inputs.columns if '20' in col], 'modelYearID', 'Warranty_Miles')
+    warranty_age_reshaped = gen_fxns.reshape_df(warranty_inputs.loc[warranty_inputs['period'] == 'Age'], ['optionID', 'regClassID', 'fuelTypeID'],
+                                                [col for col in warranty_inputs.columns if '20' in col], 'modelYearID', 'Warranty_Age')
+    usefullife_miles_reshaped = gen_fxns.reshape_df(usefullife_inputs.loc[usefullife_inputs['period'] == 'Miles'], ['optionID', 'regClassID', 'fuelTypeID'],
+                                                    [col for col in usefullife_inputs.columns if '20' in col], 'modelYearID', 'UsefulLife_Miles')
+    usefullife_age_reshaped = gen_fxns.reshape_df(usefullife_inputs.loc[usefullife_inputs['period'] == 'Age'], ['optionID', 'regClassID', 'fuelTypeID'],
+                                                  [col for col in usefullife_inputs.columns if '20' in col], 'modelYearID', 'UsefulLife_Age')
 
-    warranty_miles_reshaped['modelYearID'] = pd.to_numeric(warranty_miles_reshaped['modelYearID'])
-    warranty_age_reshaped['modelYearID'] = pd.to_numeric(warranty_age_reshaped['modelYearID'])
-    usefullife_miles_reshaped['modelYearID'] = pd.to_numeric(usefullife_miles_reshaped['modelYearID'])
-    usefullife_age_reshaped['modelYearID'] = pd.to_numeric(usefullife_age_reshaped['modelYearID'])
+    for df in [warranty_miles_reshaped, warranty_age_reshaped, usefullife_miles_reshaped, usefullife_age_reshaped]:
+        df['modelYearID'] = pd.to_numeric(df['modelYearID'])
+        df.insert(0, 'alt_rc_ft', pd.Series(zip(df['optionID'], df['regClassID'], df['fuelTypeID'])))
 
-    sourcetype_costs = EstimatedAge(sourcetype_costs, typical_vmt_thru_age, warranty_miles_reshaped, warranty_age_reshaped).ages_by_identifier('Warranty')
-    sourcetype_costs = EstimatedAge(sourcetype_costs, typical_vmt_thru_age, usefullife_miles_reshaped, usefullife_age_reshaped).ages_by_identifier('UsefulLife')
+    estimated_warranty_age_obj = EstimatedAge(sourcetype_per_veh, typical_vmt_thru_age,
+                                              warranty_miles_reshaped, warranty_age_reshaped)
+    warranty_ages = estimated_warranty_age_obj.ages_by_identifier('Warranty')
+    estimated_usefullife_age_obj = EstimatedAge(sourcetype_per_veh, typical_vmt_thru_age,
+                                                usefullife_miles_reshaped, usefullife_age_reshaped)
+    usefullife_ages = estimated_usefullife_age_obj.ages_by_identifier('UsefulLife')
+    estimated_ages_df = warranty_ages.merge(usefullife_ages, on=gen_fxns.get_common_metrics(warranty_ages, usefullife_ages), how='left')
 
-    sourcetype_costs.to_csv(path_project / 'dev/sourcetype_costs.csv', index=False)
+    estimated_ages_df.to_csv(path_project / 'dev/estimated_ages_test.csv', index=False)
