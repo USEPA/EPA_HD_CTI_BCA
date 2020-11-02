@@ -1,6 +1,6 @@
-import project_code
-from project_code import cti_bca
-import project_code.general_functions as gen_fxns
+import cti_bca_tool
+from cti_bca_tool import cti_bca
+import cti_bca_tool.general_functions as gen_fxns
 from pathlib import Path
 from datetime import datetime
 import pandas as pd
@@ -12,6 +12,10 @@ if __name__ == '__main__':
 
     class SetInputs:
         def __init__(self):
+            """
+            The SetInputs class establishes the input files to use and other input settings set in the BCA_Inputs file and needed within the tool.
+            """
+
             self.path_project = Path.cwd()  # the 'Working directory'
             # TODO base discount rate low/high on criteria inputs since can't mix and match rates anyway?
             # TODO update introduction/other documentation per recent changes (0.22.0 thru 0.24.X)
@@ -23,12 +27,12 @@ if __name__ == '__main__':
             self.create_all_files = input('Create and save the large "all_calcs" file? (y)es or (n)o?\n')
             self.start_time = time.time()
             self.start_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')
-            print(f'\nCTI BCA tool version: {project_code.__version__}')
+            print(f'\nCTI BCA tool version: {cti_bca_tool.__version__}')
             print(f'\nStart date and time:  {self.start_time_readable}')
 
             print("\nReading input files....")
             self.start_time_read = time.time()
-            self.input_files_df = pd.read_csv(self.path_inputs / 'Input_Files.csv', usecols=lambda x: 'Notes' not in x, index_col=0)
+            self.input_files_df = gen_fxns.read_input_files(self.path_inputs, 'Input_Files.csv', lambda x: 'Notes' not in x, 0)
             self.input_files_dict = self.input_files_df.to_dict('index')
 
             self.bca_inputs = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['bca_inputs']['UserEntry.csv'], lambda x: 'Notes' not in x, 0)
@@ -79,5 +83,5 @@ if __name__ == '__main__':
             self.generate_BCA_ArgsByOption_figures = self.bca_inputs.at['generate_BCA_ArgsByOption_figures', 'UserEntry']
             self.generate_BCA_ArgByOptions_figures = self.bca_inputs.at['generate_BCA_ArgByOptions_figures', 'UserEntry']
 
-    bca_tool = SetInputs()
-    cti_bca.main(bca_tool)
+    settings = SetInputs()
+    cti_bca.main(settings)

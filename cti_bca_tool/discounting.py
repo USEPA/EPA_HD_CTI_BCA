@@ -83,7 +83,7 @@ if __name__ == '__main__':
     
     """
     import pandas as pd
-    from project_code.group_metrics import GroupMetrics
+    from cti_bca_tool.group_metrics import GroupMetrics
 
     df = pd.DataFrame({'yearID': [2027, 2028, 2029, 2030, 2031, 2032],
                        'cost': [100, 100, 100, 100, 100, 100]})

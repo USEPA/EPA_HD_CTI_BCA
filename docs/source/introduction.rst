@@ -54,13 +54,13 @@ Output files always generated are:
     - inventory_annual_IncludedModelYears.xlsx which contains annual inventory summaries for specific calendar years as specified in the BCA_General_Inputs file (for model years included in the analysis).
     - techcostAvgPerVeh.xlsx which contains average tech costs for specific model years as specified in the BCA_General_Inputs file.
     - ages.csv which contains the required, calculated and estimated warranty and useful life ages.
+    - vmt_weighted_emission_repair_owner_cpm.csv which contains weighted cost per mile emission repair results by sourcetype/regclass/fueltype.
+    - vmt_weighted_fuel_cpm.csv which contains weighted cost per mile fuel costs results by sourcetype/regclass/fueltype.
+    - vmt_weighted_def_cpm.csv which contains weighted cost per mile diesel exhaust fluid costs results by sourcetype/regclass/fueltype.
     - summary_log.csv which contains the version number of the tool, date and time statistics for the run and input file data specific to the run.
 
 Optional output files are:
     - bca_all_calcs.csv which contains data for every calendar year (yearID) and vehicle age (ageID) by option/sourcetype/regclass/fueltype. Generation of this file is controlled via user interaction during runtime. It can be a very large file depending on the number of alternatives.
-    - vmt_weighted_emission_repair_owner_cpm.csv which contains weighted cost per mile emission repair results by sourcetype/regclass/fueltype.
-    - vmt_weighted_fuel_cpm.csv which contains weighted cost per mile fuel costs results by sourcetype/regclass/fueltype.
-    - vmt_weighted_def_cpm.csv which contains weighted cost per mile diesel exhaust fluid costs results by sourcetype/regclass/fueltype.
 
 Optional output figures are:
     - the toggle generate_emissionrepair_cpm_figures will generate a figure showing the emission repair cost/mile results for each vehicle for the model years entered. Note that there are ~50 vehicles so entering 2 model years results in ~100 figures.

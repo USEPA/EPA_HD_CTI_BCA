@@ -129,7 +129,7 @@ class EstimatedAge:
 if __name__ == '__main__':
     import pandas as pd
     from pathlib import Path
-    import project_code.general_functions as gen_fxns
+    import cti_bca_tool.general_functions as gen_fxns
 
     typical_vmt_thru_age = 6
 

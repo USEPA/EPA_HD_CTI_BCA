@@ -7,8 +7,8 @@ Contains the DEFCost, ORVRadjust, FuelCost and RepairAndMaintenanceCost classes.
 
 import pandas as pd
 from itertools import product
-from project_code.vehicle import fuelTypeID
-import project_code.general_functions as gen_fxns
+from cti_bca_tool.vehicle import fuelTypeID
+import cti_bca_tool.general_functions as gen_fxns
 
 grams_per_short_ton = 907185
 gallons_per_ml = 0.000264172
@@ -386,10 +386,10 @@ class RepairAndMaintenanceCost:
 if __name__ == '__main__':
     import pandas as pd
     from pathlib import Path
-    from project_code.fleet import Fleet
-    from project_code.cti_bca import read_input_files
-    from project_code.operating_cost import ORVRadjust
-    from project_code.group_metrics import GroupMetrics
+    from cti_bca_tool.fleet import Fleet
+    from cti_bca_tool.cti_bca import read_input_files
+    from cti_bca_tool.operating_cost import ORVRadjust
+    from cti_bca_tool.group_metrics import GroupMetrics
 
     path_project = Path.cwd()
     path_inputs = path_project / 'inputs'

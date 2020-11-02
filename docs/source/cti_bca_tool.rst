@@ -1,4 +1,4 @@
-usepa-cti-bca project code
+usepa-cti-bca cti_bca_tool
 ==========================
 
 .. toctree::

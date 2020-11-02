@@ -4,9 +4,9 @@ weighted_results.py
 Contains the WeightedResult class.
 """
 import pandas as pd
-from project_code.fleet import Fleet
-from project_code.vehicle import sourceTypeID
-from project_code.calc_deltas import CalcDeltas
+from cti_bca_tool.fleet import Fleet
+from cti_bca_tool.vehicle import sourceTypeID
+from cti_bca_tool.calc_deltas import CalcDeltas
 
 
 class WeightedResult:
@@ -90,7 +90,7 @@ class WeightedResult:
 if __name__ == '__main__':
     import pandas as pd
     from pathlib import Path
-    from project_code.fleet import Fleet
+    from cti_bca_tool.fleet import Fleet
 
     path_project = Path.cwd()
     path_inputs = path_project / 'inputs'
