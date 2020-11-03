@@ -68,8 +68,8 @@ class CalcDeltas:
 if __name__ == '__main__':
     """
     This tests the CalcDeltas class to ensure that things are working properly.
-    If run as a script (python -m project_code.calc_deltas) the created DataFrames should show metric values of -100 for optionID 10
-    and then metric_reductions values of 0 for optionID 0 and 100 for optionID 1.
+    If run as a script (python -m cti_bca_tool.calc_deltas) the first DataFrame should show metric values of -100 for optionID 10
+    and the second DataFrame should show metric_reductions values of 0 for optionID 0 and 100 for optionID 1.
 
     """
     import pandas as pd

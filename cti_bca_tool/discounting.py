@@ -79,7 +79,7 @@ class DiscountValues:
 if __name__ == '__main__':
     """
     This tests the discounting and annualizing methods to ensure that things are working properly.
-    If run as a script (python -m project_code.discounting) the annualized values in the two created DataFrames should be 100.
+    If run as a script (python -m cti_bca_tool.discounting) the annualized values in the two created DataFrames should be 100.
     
     """
     import pandas as pd

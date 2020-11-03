@@ -202,6 +202,9 @@ class GetDeflators:
 
 
 if __name__ == '__main__':
+    """
+    This tests the context data creation if run as a script (python -m cti_bca_tool.get_context_data).
+    """
     from pathlib import Path
 
     path_project = Path.cwd()

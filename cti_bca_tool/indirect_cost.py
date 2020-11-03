@@ -7,10 +7,6 @@ Contains the IndirectCost class and the IndirectCostScalers class.
 
 import pandas as pd
 
-# create a list of markup factors to be included
-markup_factors = ['Warranty', 'RnD', 'Other', 'Profit']
-markup_factors_with_scalers = ['Warranty', 'RnD']
-
 
 class IndirectCost:
     """
@@ -18,12 +14,30 @@ class IndirectCost:
     and provided in the markup_factors list.
     """
 
-    def __init__(self, directcosts_df):
+    def __init__(self, directcosts_df, markups):
         """
 
         :param directcosts_df: A DataFrame of all direct manufacturing costs, year-over-year for all vehicles and alternatives.
         """
         self.directcosts_df = directcosts_df
+        self.markups = markups
+        # self.markup_factors = ['Warranty', 'RnD', 'Other', 'Profit']
+        # self.markup_factors_with_scalers = ['Warranty', 'RnD']
+
+    def markup_factors(self):
+        """
+
+        :return: A list of the markup factors included in the indirect cost input file (excluding "IndirectCost").
+        """
+        return [item for item in self.markups['Markup_Factor'].unique() if 'Indirect' not in item]
+
+    def markup_factors_with_scalers(self):
+        """
+
+        :return: A list of the markup factors that are to be scaled according to the BCA Inputs scale_indirect_costs_by entry.
+        """
+        df = pd.DataFrame(self.markups.loc[self.markups['Scaler'] == 'Y', 'Markup_Factor'])
+        return [item for item in df['Markup_Factor'].unique() if 'Indirect' not in item]
 
     def merge_markups_and_directcosts(self, markups, *args):
         """
@@ -33,7 +47,7 @@ class IndirectCost:
         :return: A DataFrame of markup factors merged on the identifier columns of the direct costs DataFrame.
         """
         merge_metrics = [arg for arg in args]
-        for markup_factor in markup_factors:
+        for markup_factor in self.markup_factors():
             temp = pd.DataFrame(markups.loc[markups['Markup_Factor'] == markup_factor])
             self.directcosts_df = self.directcosts_df.merge(temp, on=merge_metrics, how='left')
             self.directcosts_df.rename(columns={'Value': markup_factor}, inplace=True)
@@ -47,7 +61,7 @@ class IndirectCost:
         :param args: Metrics for merging.
         :return: A DataFrame of markup factors merged on the identifier columns of the direct costs DataFrame.
         """
-        for markup_factor in markup_factors:
+        for markup_factor in self.markup_factors():
             temp = pd.DataFrame(fueltype_markups.loc[fueltype_markups['Markup_Factor'] == markup_factor])
             temp.reset_index(drop=True, inplace=True)
             self.directcosts_df.insert(len(self.directcosts_df.columns), markup_factor, temp.at[0, 'Value'])
@@ -61,7 +75,7 @@ class IndirectCost:
         :return:
         """
         merge_metrics = [arg for arg in args]
-        for markup_factor in markup_factors_with_scalers:
+        for markup_factor in self.markup_factors_with_scalers():
             temp = pd.DataFrame(alt_rc_ft_scalers.loc[alt_rc_ft_scalers['Markup_Factor'] == markup_factor])
             self.directcosts_df = self.directcosts_df.merge(temp[['yearID', 'Value']], on=merge_metrics, how='left')
             self.directcosts_df.rename(columns={'Value': f'{markup_factor}_scaler'}, inplace=True)
@@ -74,55 +88,11 @@ class IndirectCost:
         :param alt_rc_ft_scalers:
         :return:
         """
-        for markup_factor in markup_factors_with_scalers:
+        for markup_factor in self.markup_factors_with_scalers():
             temp = pd.DataFrame(alt_rc_ft_scalers.loc[alt_rc_ft_scalers['Markup_Factor'] == markup_factor])
             temp.reset_index(drop=True, inplace=True)
             self.directcosts_df.insert(len(self.directcosts_df.columns), f'{markup_factor}_scaler', temp.at[0, 'Value'])
         return self.directcosts_df
-
-
-    # def merge_markups_and_directcosts(self, markups, column_list_for_merge):
-    #     """
-    #
-    #     :param markups: A DataFrame of indirect cost markup factors.
-    #     :param column_list_for_merge: The identifier columns in the direct cost DataFrame.
-    #     :return: A DataFrame of markup factors merged on the identifier columns of the direct costs DataFrame.
-    #     """
-    #     merged_df = pd.DataFrame(self.directcosts_df, columns=column_list_for_merge)
-    #     for markup_factor in markup_factors:
-    #         temp = pd.DataFrame(markups.loc[markups['Markup_Factor'] == markup_factor])
-    #         merged_df = merged_df.merge(temp, on='fuelTypeID', how='left')
-    #         merged_df.rename(columns={'Value': markup_factor}, inplace=True)
-    #         merged_df.drop(labels='Markup_Factor', axis=1, inplace=True)
-    #     return merged_df
-
-    # def merge_markup_scalers(self, scalars, column_list_for_merge):
-    #     """
-    #
-    #     :param scalars: A DataFrame of scalars used for adjusting indirect cost markup factors.
-    #     :param column_list_for_merge: The identifier columns in the direct cost DataFrame.
-    #     :return: A DataFrame of markup factor scalars merged on the identifier columns of the direct costs DataFrame.
-    #     """
-    #     merged_df = pd.DataFrame(self.directcosts_df, columns=column_list_for_merge + markup_factors)
-    #     for markup_factor in markup_factors_with_scalers:
-    #         temp = pd.DataFrame(scalars.loc[scalars['Markup_Factor'] == markup_factor])
-    #         merged_df = merged_df.merge(temp, on=column_list_for_merge, how='left')
-    #         merged_df.rename(columns={'Value': f'{markup_factor}_scalar'}, inplace=True)
-    #         merged_df.drop(labels='Markup_Factor', axis=1, inplace=True)
-    #     return merged_df
-    #
-    # def indirect_cost(self, markups_and_scalers):
-    #     """
-    #     This method is not currently being used.
-    #
-    #     :param markups_and_scalers: A DataFrame of indirect cost markup factors in the shape of the direct cost DataFrame
-    #     :return: A DataFrame of indirect costs per vehicle and total costs.
-    #     """
-    #     techcost_df = self.directcosts_df.copy()
-    #     for markup_factor in markup_factors:
-    #         techcost_df.insert(len(techcost_df.columns), f'{markup_factor}Cost_AvgPerVeh', techcost_df['DirectCost_AvgPerVeh'] * markups_and_scalers[markup_factor])
-    #         techcost_df.insert(len(techcost_df.columns), f'{markup_factor}Cost_TotalCost', techcost_df[f'{markup_factor}Cost_AvgPerVeh'] * techcost_df['VPOP'])
-    #     return techcost_df
 
     def indirect_cost_unscaled(self, markups_and_scalers):
         """
@@ -130,13 +100,11 @@ class IndirectCost:
         :param markups_and_scalers: A DataFrame of indirect cost markup factors & scalers in the shape of the direct cost DataFrame.
         :return: A DataFrame of indirect costs per vehicle and total costs for those indirect costs that do not scale with VMT.
         """
-        # techcost_df = self.directcosts_df.copy()
-        temp = [item for item in markup_factors if item not in markup_factors_with_scalers]
+        temp = [item for item in self.markup_factors() if item not in self.markup_factors_with_scalers()]
         for factor in temp:
             self.directcosts_df.insert(len(self.directcosts_df.columns),
                                        f'{factor}Cost_AvgPerVeh',
                                        self.directcosts_df['DirectCost_AvgPerVeh'] * markups_and_scalers[factor])
-            # techcost_df.insert(len(techcost_df.columns), f'{factor}Cost_TotalCost', techcost_df[f'{factor}Cost_AvgPerVeh'] * techcost_df['VPOP'])
         return self.directcosts_df
 
     def indirect_cost_scaled(self, merged_df, factor, vmt_share):
@@ -147,12 +115,10 @@ class IndirectCost:
         :param vmt_share: A factor established in the main inputs file to represent the percentage of warranty costs that scale with VMT (vs. age or other metric).
         :return: A DataFrame of indirect costs per vehicle and total costs with VMT scalers applied.
         """
-        techcost_df = self.directcosts_df.copy()
         self.directcosts_df.insert(len(self.directcosts_df.columns),
                                    f'{factor}Cost_AvgPerVeh',
                                    self.directcosts_df['DirectCost_AvgPerVeh']
                                    * (merged_df[factor] * (1 - vmt_share) + merged_df[factor] * vmt_share * merged_df[f'{factor}_scaler']))
-        # techcost_df.insert(len(techcost_df.columns), f'{factor}Cost_TotalCost', techcost_df[f'{factor}Cost_AvgPerVeh'] * techcost_df['VPOP'])
         return self.directcosts_df
 
     def indirect_cost_sum(self):
@@ -160,11 +126,9 @@ class IndirectCost:
 
         :return: A DataFrame of full tech costs with direct and indirect costs per vehicle and in total.
         """
-        # techcost_df = self.directcosts_df.copy()
         self.directcosts_df.insert(len(self.directcosts_df.columns),
                                    'IndirectCost_AvgPerVeh',
-                                   self.directcosts_df[[f'{item}Cost_AvgPerVeh' for item in markup_factors]].sum(axis=1))
-        # techcost_df.insert(len(techcost_df.columns), 'IndirectCost_TotalCost', techcost_df['IndirectCost_AvgPerVeh'] * techcost_df['VPOP'])
+                                   self.directcosts_df[[f'{item}Cost_AvgPerVeh' for item in self.markup_factors()]].sum(axis=1))
         return self.directcosts_df
 
 

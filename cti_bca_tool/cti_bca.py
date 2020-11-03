@@ -15,7 +15,7 @@ from cti_bca_tool.get_context_data import GetFuelPrices, GetDeflators
 from cti_bca_tool.fleet import Fleet
 from cti_bca_tool.vehicle import Vehicle, regClassID, fuelTypeID
 from cti_bca_tool.direct_cost import DirectCost
-from cti_bca_tool.indirect_cost import IndirectCost, IndirectCostScalers, markup_factors
+from cti_bca_tool.indirect_cost import IndirectCost, IndirectCostScalers
 from cti_bca_tool.operating_cost import DEFCost, ORVRadjust, FuelCost, RepairAndMaintenanceCost
 from cti_bca_tool.discounting import DiscountValues
 from cti_bca_tool.group_metrics import GroupMetrics
@@ -70,10 +70,10 @@ def main(settings):
                                      'emission_repair_share': emission_repair_share}
 
     # Calculate the Indirect Cost scalers based on the warranty_inputs and usefullife_inputs
-    warranty_scalers = IndirectCostScalers(settings.warranty_inputs, 'Warranty', settings.indirect_cost_scaling_metric)
-    warranty_scalers = warranty_scalers.calc_scalers_absolute()
-    usefullife_scalers = IndirectCostScalers(settings.usefullife_inputs, 'RnD', settings.indirect_cost_scaling_metric)
-    usefullife_scalers = usefullife_scalers.calc_scalers_relative()
+    warranty_scalers_obj = IndirectCostScalers(settings.warranty_inputs, 'Warranty', settings.indirect_cost_scaling_metric)
+    warranty_scalers = warranty_scalers_obj.calc_scalers_absolute()
+    usefullife_scalers_obj = IndirectCostScalers(settings.usefullife_inputs, 'RnD', settings.indirect_cost_scaling_metric)
+    usefullife_scalers = usefullife_scalers_obj.calc_scalers_relative()
     markup_scalers = pd.concat([warranty_scalers, usefullife_scalers], ignore_index=True, axis=0)
     markup_scalers.reset_index(drop=True, inplace=True)
 
@@ -193,7 +193,7 @@ def main(settings):
     # merge markups and scalers into direct costs and calculate indirect costs
     regclass_costs_df = pd.DataFrame()
     for veh in alt_rc_ft_vehicles:
-        merge_object = IndirectCost(regclass_costs_dict[veh])
+        merge_object = IndirectCost(regclass_costs_dict[veh], settings.markups)
         regclass_costs_dict[veh] = merge_object.get_markups(settings.markups.loc[settings.markups['fuelTypeID'] == veh[2], :])
         regclass_costs_dict[veh] = merge_object.merge_markup_scalers(markup_scalers_reshaped.loc[(markup_scalers_reshaped['optionID'] == veh[0])
                                                                                                  & (markup_scalers_reshaped['regClassID'] == veh[1])
@@ -202,7 +202,7 @@ def main(settings):
         regclass_costs_dict[veh].ffill(inplace=True)
         regclass_costs_dict[veh].reset_index(drop=True, inplace=True)
 
-        indirect_cost_obj = IndirectCost(regclass_costs_dict[veh])
+        indirect_cost_obj = IndirectCost(regclass_costs_dict[veh], settings.markups)
         print(f'IndirectCost: Vehicle {veh}')
         regclass_costs_dict[veh] = indirect_cost_obj.indirect_cost_scaled(regclass_costs_dict[veh], 'Warranty', settings.warranty_vmt_share)
         regclass_costs_dict[veh] = indirect_cost_obj.indirect_cost_scaled(regclass_costs_dict[veh], 'RnD', settings.r_and_d_vmt_share)
@@ -220,7 +220,7 @@ def main(settings):
     sourcetype_tech_costs.loc[sourcetype_tech_costs['VPOP'] == 0, 'DirectCost_AvgPerVeh'] = 0
     for metric in [item for item in sourcetype_tech_costs.columns if 'Cost_AvgPerVeh' in item]:
         sourcetype_tech_costs[f'{metric}'].fillna(0, inplace=True)
-    for metric in markup_factors + ['Direct', 'Indirect', 'Tech']:
+    for metric in indirect_cost_obj.markup_factors() + ['Direct', 'Indirect', 'Tech']:
         sourcetype_tech_costs.insert(len(sourcetype_tech_costs.columns),
                                      f'{metric}Cost_TotalCost',
                                      sourcetype_tech_costs[[f'{metric}Cost_AvgPerVeh', 'VPOP']].product(axis=1))
@@ -230,12 +230,14 @@ def main(settings):
     # work on pollution costs, if being calculated
     if settings.calc_pollution_effects == 'Y':
         print('\nWorking on pollution costs....')
-        # emission_cost_obj = EmissionCost(sourcetype_criteria, criteria_emission_costs_reshaped)
+        # first calc emission costs
         emission_cost_obj = EmissionCost(sourcetype_criteria, criteria_emission_costs_reshaped,
                                          [discrate_criteria_low, discrate_criteria_high], ['PM25', 'NOx'], ['onroad'], ['low', 'high'])
         sourcetype_emission_costs = emission_cost_obj.calc_emission_costs_df()
+        # now calc criteria costs (sum of emission costs)
+        emission_cost_obj = EmissionCost(sourcetype_emission_costs, criteria_emission_costs_reshaped,
+                                         [discrate_criteria_low, discrate_criteria_high], ['PM25', 'NOx'], ['onroad'], ['low', 'high'])
         sourcetype_emission_costs = emission_cost_obj.calc_criteria_costs_df()
-        # sourcetype_emission_costs = EmissionCost(sourcetype_emission_costs, criteria_emission_costs_reshaped).calc_criteria_costs_df()
         # make some useful lists of metrics
         criteria_costs_list = [col for col in sourcetype_emission_costs.columns if 'CriteriaCost' in col]
         criteria_costs_list_low = [col for col in sourcetype_emission_costs.columns if 'CriteriaCost' in col and str(discrate_criteria_low) in col]
@@ -721,4 +723,5 @@ def main(settings):
 
 
 if __name__ == '__main__':
-    main()
+    from cti_bca_tool.__main__ import SetInputs
+    main(SetInputs())
