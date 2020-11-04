@@ -10,13 +10,11 @@ class GroupMetrics:
     """
 
     The GroupMetrics class conducts groupby methods to get results by yearID and more.
+
+    :param data: A DataFrame of values to be grouped.
+    :param row_header: A list of the row headers on which to group the passed DataFrame.
     """
     def __init__(self, data, row_header):
-        """
-
-        :param data: A DataFrame of values to be grouped.
-        :param row_header: A list of the row headers on which to group the passed DataFrame.
-        """
         self.data = data
         self.row_header = row_header
 

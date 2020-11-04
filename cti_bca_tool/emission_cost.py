@@ -13,18 +13,15 @@ class EmissionCost:
     """
     
     The EmissionCost class calculates the monetized damages from pollutants.
-    """
 
+    :param inventory_df: The DataFrame that provides pollutant inventories.
+    :param cost_per_ton_df: A DataFrame that provides the pollution damage costs in dollars per ton.
+    :param rates: Discount rates of criteria cost inputs.
+    :param pollutants: Pollutants for which pollutions costs are being estimated.
+    :param sources: Sources of pollutants (e.g., onroad, upstream, etc.).
+    :param mortality_ests: The mortality estimates (e.g., low/high).
+    """
     def __init__(self, inventory_df, cost_per_ton_df, rates, pollutants, sources, mortality_ests):
-        """
-        
-        :param inventory_df: The DataFrame that provides pollutant inventories.
-        :param cost_per_ton_df: A DataFrame that provides the pollution damage costs in dollars per ton.
-        :param rates: Discount rates of criteria cost inputs.
-        :param pollutants: Pollutants for which pollutions costs are being estimated.
-        :param sources: Sources of pollutants (e.g., onroad, upstream, etc.).
-        :param mortality_ests: The mortality estimates (e.g., low/high).
-        """
         self.inventory_df = inventory_df
         self.cost_per_ton_df = cost_per_ton_df
         self.rates = rates

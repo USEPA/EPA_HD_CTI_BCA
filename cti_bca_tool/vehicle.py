@@ -46,12 +46,10 @@ class Vehicle:
     The Vehicle class takes a vehicle tuple object consisting of 3 to 5 integers to uniquely identify
     a vehicle and return names for those vehicles.
 
-    :param _veh: a unique vehicle object
-    :type _veh: tuple of 3 to 5 integers, where the first entry is always the optionID
+    :param _veh: A tuple of 3 to 5 integers, where the first entry is always the optionID.
 
     Tuples of length 3 denote (alternative, regClassID, fuelTypeID).
     Tuples of length 4 denote (alternative, sourcetypeID, regClassID, fuelTypeID).
-    Tuples of length 5 denote (alternative, sourcetypeID, regClassID, fuelTypeID, zgtechID).
     """
 
     def __init__(self, _veh):

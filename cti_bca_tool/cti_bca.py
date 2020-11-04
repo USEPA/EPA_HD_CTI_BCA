@@ -30,8 +30,11 @@ import cti_bca_tool.general_functions as gen_fxns
 
 
 def main(settings):
-    """The main script."""
+    """
 
+    :param settings: The SetInputs class within __main__.py establishes the input files to use and other input settings set in the BCA_Inputs file and needed within the tool.
+    :return: The results of the cti_bca_tool.
+    """
     print("\nDoing the work....")
     start_time_calcs = time.time()
 

@@ -10,14 +10,12 @@ import pandas as pd
 
 class Fleet:
     """
+
     The Fleet class creates vehicle identifiers used by the Vehicle class. It also returns a fleet consisting of sales_df (ageID=0) data only.
 
+    :param fleet: A DataFrame representing a fleet of vehicles and associated data.
     """
-
     def __init__(self, fleet):
-        """
-        :param fleet: A DataFrame representing a fleet of vehicles and associated data.
-        """
         self.fleet = fleet
         
     def define_bca_regclass(self):

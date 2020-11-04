@@ -10,19 +10,16 @@ import pandas as pd
 
 class IndirectCost:
     """
+
     The IndirectCost class takes a DataFrame of direct costs and applies markups as provided by the merge_markups_and_directcosts method
     and provided in the markup_factors list.
+
+    :param directcosts_df: A DataFrame of all direct manufacturing costs, year-over-year for all vehicles and alternatives.
+    :param markups: A DataFrame of the indirect cost markup factors by fuelTypeID.
     """
-
     def __init__(self, directcosts_df, markups):
-        """
-
-        :param directcosts_df: A DataFrame of all direct manufacturing costs, year-over-year for all vehicles and alternatives.
-        """
         self.directcosts_df = directcosts_df
         self.markups = markups
-        # self.markup_factors = ['Warranty', 'RnD', 'Other', 'Profit']
-        # self.markup_factors_with_scalers = ['Warranty', 'RnD']
 
     def markup_factors(self):
         """
@@ -72,7 +69,7 @@ class IndirectCost:
 
         :param alt_rc_ft_scalers:
         :param args:
-        :return:
+        :return: The passed DataFrame into which the markup scaling factors (for those markups with scaling factors) have been merged.
         """
         merge_metrics = [arg for arg in args]
         for markup_factor in self.markup_factors_with_scalers():
@@ -82,17 +79,17 @@ class IndirectCost:
             # self.directcosts_df.drop(labels='Markup_Factor', axis=1, inplace=True)
         return self.directcosts_df
 
-    def get_markup_scalers(self, alt_rc_ft_scalers):
-        """
-
-        :param alt_rc_ft_scalers:
-        :return:
-        """
-        for markup_factor in self.markup_factors_with_scalers():
-            temp = pd.DataFrame(alt_rc_ft_scalers.loc[alt_rc_ft_scalers['Markup_Factor'] == markup_factor])
-            temp.reset_index(drop=True, inplace=True)
-            self.directcosts_df.insert(len(self.directcosts_df.columns), f'{markup_factor}_scaler', temp.at[0, 'Value'])
-        return self.directcosts_df
+    # def get_markup_scalers(self, alt_rc_ft_scalers):
+    #     """
+    #
+    #     :param alt_rc_ft_scalers:
+    #     :return:
+    #     """
+    #     for markup_factor in self.markup_factors_with_scalers():
+    #         temp = pd.DataFrame(alt_rc_ft_scalers.loc[alt_rc_ft_scalers['Markup_Factor'] == markup_factor])
+    #         temp.reset_index(drop=True, inplace=True)
+    #         self.directcosts_df.insert(len(self.directcosts_df.columns), f'{markup_factor}_scaler', temp.at[0, 'Value'])
+    #     return self.directcosts_df
 
     def indirect_cost_unscaled(self, markups_and_scalers):
         """

@@ -9,16 +9,15 @@ from itertools import product
 
 
 class EstimatedAge:
+    """
+    The EstimatedAge class calculates the age at which warranty and useful life are reached given the alt_st_rc_ft vehicle.
+
+    :param inventory_df: A DataFrame that provides the necessary physical parameters: a vehicle tuple; cumulative VMT/veh/year
+    :param vmt_thru_ageID: A single entry in the BCA_Inputs file contained in the inputs folder.
+    :param miles_df: Warranty or Useful life miles; a DataFrame generated in code from files in the inputs folder.
+    :param age_df: Warranty or Useful life ages; a DataFrame generated in code from files in the inputs folder.
+    """
     def __init__(self, inventory_df, vmt_thru_ageID, miles_df, age_df):
-        """
-        The EstimatedAge class calculates the age at which warranty and useful life are reached given the alt_st_rc_ft vehicle.
-
-        :param inventory_df: A DataFrame that provides the necessary physical parameters: a vehicle tuple; cumulative VMT/veh/year
-        :param vmt_thru_ageID: A single entry in the BCA_Inputs file contained in the inputs folder.
-        :param miles_df: Warranty or Useful life miles; a DataFrame generated in code from files in the inputs folder.
-        :param age_df: Warranty or Useful life ages; a DataFrame generated in code from files in the inputs folder.
-        """
-
         self.inventory_df = inventory_df
         self.vmt_thru_ageID = vmt_thru_ageID
         self.miles_df = miles_df

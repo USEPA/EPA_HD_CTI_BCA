@@ -32,17 +32,18 @@ def get_reductions(inventory_df, *args):
 
 
 class DEFCost:
-    def __init__(self, _veh, cost_steps, inventory_df, def_doserate_inputs, def_gallons_per_ton_nox_reduction, def_prices):
-        """
-        The DEFCost class calculates the DEF (urea) costs.
+    """
 
-        :param _veh: An alt_st_rc_ft vehicle.
-        :param cost_steps: A list of cost steps corresponding to model years in which new standards are set.
-        :param inventory_df: A vehicle-specifc DataFrame that provides NOx reductions.
-        :param def_doserate_inputs: A DataFrame containing the DEF dose rate inputs.
-        :param def_gallons_per_ton_nox_reduction: A single value included as an input.
-        :param def_prices: A DataFrame of the input DEF prices.
-        """
+    The DEFCost class calculates the DEF (urea) costs.
+
+    :param _veh: An alt_st_rc_ft vehicle.
+    :param cost_steps: A list of cost steps corresponding to model years in which new standards are set.
+    :param inventory_df: A vehicle-specifc DataFrame that provides NOx reductions.
+    :param def_doserate_inputs: A DataFrame containing the DEF dose rate inputs.
+    :param def_gallons_per_ton_nox_reduction: A single value included as an input.
+    :param def_prices: A DataFrame of the input DEF prices.
+    """
+    def __init__(self, _veh, cost_steps, inventory_df, def_doserate_inputs, def_gallons_per_ton_nox_reduction, def_prices):
         self._veh = _veh
         self.cost_steps = cost_steps
         self.inventory_df = inventory_df
@@ -117,16 +118,17 @@ class DEFCost:
 
 
 class ORVRadjust:
-    def __init__(self, _vehs, orvr_fuelchanges, gallons_df, inventory_df, vmt_df):
-        """
-        The ORVRadjust class adjusts the MOVES THC inventories and then gallons based on the ORVR impacts on THC emissions.
+    """
 
-        :param _vehs: A list of all alt_st_rc_ft vehicles.
-        :param orvr_fuelchanges: The input ORVR impacts.
-        :param gallons_df: A DataFrame of gallons of fuel consumed for all passed vehicles.
-        :param inventory_df: A DataFrame of THC reductions associated with ORVR.
-        :param vmt_df: A DataFrame of VMT values.
-        """
+    The ORVRadjust class adjusts the MOVES THC inventories and then gallons based on the ORVR impacts on THC emissions.
+
+    :param _vehs: A list of all alt_st_rc_ft vehicles.
+    :param orvr_fuelchanges: The input ORVR impacts.
+    :param gallons_df: A DataFrame of gallons of fuel consumed for all passed vehicles.
+    :param inventory_df: A DataFrame of THC reductions associated with ORVR.
+    :param vmt_df: A DataFrame of VMT values.
+    """
+    def __init__(self, _vehs, orvr_fuelchanges, gallons_df, inventory_df, vmt_df):
         self._vehs = _vehs
         self.orvr_fuelchanges = orvr_fuelchanges
         self.gallons_df = gallons_df
@@ -179,16 +181,17 @@ class ORVRadjust:
 
 
 class FuelCost:
-    def __init__(self, vehs, gallons_df, vmt_df, per_veh_df, fuel_prices):
-        """
-        The FuelCost class calculates the monetized fuel impacts.
+    """
 
-        :param vehs: List of alt_st_rc_ft vehicles.
-        :param gallons_df: DataFrame with inventory (gallons) for all vehicles.
-        :param vmt_df: DataFrame with VMT for all vehicles.
-        :param per_veh_df: DataFrame with VMT/veh for all vehicles.
-        :param fuel_prices: DataFrame of fuel prices for all fuels for all years.
-        """
+    The FuelCost class calculates the monetized fuel impacts.
+
+    :param vehs: List of alt_st_rc_ft vehicles.
+    :param gallons_df: DataFrame with inventory (gallons) for all vehicles.
+    :param vmt_df: DataFrame with VMT for all vehicles.
+    :param per_veh_df: DataFrame with VMT/veh for all vehicles.
+    :param fuel_prices: DataFrame of fuel prices for all fuels for all years.
+    """
+    def __init__(self, vehs, gallons_df, vmt_df, per_veh_df, fuel_prices):
         self.vehs = vehs
         self.gallons_df = gallons_df
         self.fuel_prices = fuel_prices
@@ -259,17 +262,18 @@ class FuelCost:
 
 
 class RepairAndMaintenanceCost:
-    def __init__(self, cost_df, metrics_repair_and_maint_dict, scaling_frame_of_reference_df, estimated_ages_df, per_veh_df, vmt_df):
-        """
-        The RepairAndMaintenance class calculates the repair & maintenance costs.
+    """
 
-        :param cost_df: A DataFrame containing necessary direct costs by sourcetype.
-        :param metrics_repair_and_maint_dict: A dictionary generated in code that contains data from the repair and maintenance input file.
-        :param scaling_frame_of_reference_df: A DataFrame of direct costs for the scaling reference used in scaling repair costs.
-        :param estimated_ages_df: A DataFrame generated in code that contains the estimated ages at which warranty and useful life are reached.
-        :param per_veh_df: A DataFrame of metrics on a per vehicle basis.
-        :param vmt_df: A DataFrame of VMT values.
-        """
+    The RepairAndMaintenance class calculates the repair & maintenance costs.
+
+    :param cost_df: A DataFrame containing necessary direct costs by sourcetype.
+    :param metrics_repair_and_maint_dict: A dictionary generated in code that contains data from the repair and maintenance input file.
+    :param scaling_frame_of_reference_df: A DataFrame of direct costs for the scaling reference used in scaling repair costs.
+    :param estimated_ages_df: A DataFrame generated in code that contains the estimated ages at which warranty and useful life are reached.
+    :param per_veh_df: A DataFrame of metrics on a per vehicle basis.
+    :param vmt_df: A DataFrame of VMT values.
+    """
+    def __init__(self, cost_df, metrics_repair_and_maint_dict, scaling_frame_of_reference_df, estimated_ages_df, per_veh_df, vmt_df):
         self.cost_df = cost_df
         self.metrics_repair_and_maint_dict = metrics_repair_and_maint_dict
         self.scaling_frame_of_reference_df = scaling_frame_of_reference_df

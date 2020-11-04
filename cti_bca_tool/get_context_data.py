@@ -11,16 +11,15 @@ import sys
 
 class GetFuelPrices:
     """
+
     The GetFuelPrices class grabs the appropriate fuel prices from the aeo folder, cleans up some naming and creates a fuel_prices DataFrame for use in operating costs.
+
+    :param path_project: The path of the project (the 'working directory') and the parent of the aeo directory.
+    :param aeo_case: From the BCA inputs sheet - the AEO fuel case to use (a CSV of fuel prices must exist in the aeo directory).
+    :param id_col: The column name where id data can be found.
+    :param fuels: Descriptor for gasoline and diesel fuels (e.g., Motor Gasoline, Diesel).
     """
     def __init__(self, path_project, aeo_case, id_col, *fuels):
-        """
-
-        :param path_project: The path of the project (the 'working directory') and the parent of the aeo directory.
-        :param aeo_case: From the BCA inputs sheet - the AEO fuel case to use (a CSV of fuel prices must exist in the aeo directory).
-        :param id_col: The column name where id data can be found.
-        :param fuels: Descriptor for gasoline and diesel fuels (e.g., Motor Gasoline, Diesel).
-        """
         self.path_project = path_project
         self.aeo_case = aeo_case
         self.aeo = path_project / 'aeo'
@@ -126,16 +125,15 @@ class GetFuelPrices:
 
 class GetDeflators:
     """
+
     The GetDeflators class returns the GDP Implicit Price Deflators for use in adjusting monetized values to a consistent cost basis.
+
+    :param path_project: The path of the project and the parent of the aeo directory.
+    :param id_col: The column name where id data can be found.
+    :param id_value: The value within id_col to return.
+    :param skiprows: The number of rows to skip when reading the file.
     """
     def __init__(self, path_project, id_col, id_value, skiprows=4):
-        """
-
-        :param path_project: The path of the project and the parent of the aeo directory.
-        :param id_col: The column name where id data can be found.
-        :param id_value: The value within id_col to return.
-        :param skiprows: The number of rows to skip when reading the file.
-        """
         self.path_project = path_project
         self.id_col = id_col
         self.id_value = id_value

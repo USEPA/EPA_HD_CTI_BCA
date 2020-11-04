@@ -6,12 +6,12 @@ import pandas as pd
 
 
 class DataTable:
-    def __init__(self, source_df, *args):
-        """
+    """
 
-        :param source_df: The source of data for which a data table is sought.
-        :param args: The list of metrics for inclusion in the data table.
-        """
+    :param source_df: The source of data for which a data table is sought.
+    :param args: The list of metrics for inclusion in the data table.
+    """
+    def __init__(self, source_df, *args):
         self.source_df = source_df
         self.args = args
 

@@ -1,6 +1,5 @@
 import cti_bca_tool
 from cti_bca_tool import cti_bca
-# from cti_bca_tool.operating_cost import ORVRadjust
 import cti_bca_tool.general_functions as gen_fxns
 from pathlib import Path
 from datetime import datetime
@@ -9,14 +8,11 @@ import time
 
 
 class SetInputs:
+    """
+    The SetInputs class establishes the input files to use and other input settings set in the BCA_Inputs file and needed within the tool.
+    """
     def __init__(self):
-        """
-        The SetInputs class establishes the input files to use and other input settings set in the BCA_Inputs file and needed within the tool.
-        """
-
         self.path_project = Path.cwd()  # the 'Working directory'
-        # TODO update introduction/other documentation per recent changes (0.22.0 thru 0.24.X)
-        # TODO check general_functions module and later for docstrings in documentation build
         self.path_inputs = self.path_project / 'inputs'
         self.path_outputs = self.path_project / 'outputs'
         self.run_folder_identifier = input('Provide a run identifier for your output folder name (press return to use the default name)\n')

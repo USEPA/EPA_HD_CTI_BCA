@@ -10,17 +10,17 @@ from cti_bca_tool.calc_deltas import CalcDeltas
 
 
 class WeightedResult:
-    def __init__(self, input_df, weightby_metric, vehs, year_metric, year_list, max_age_included, options_dict):
-        """
+    """
 
-        :param input_df: DataFrame containing values to be weighted.
-        :param weightby_metric:  The metric by which the data is being weighted.
-        :param vehs: A list of vehicles for which weighting is requested.
-        :param year_metric:  "yearID" or "modelYearID"
-        :param year_list: List of years for which weighted results are requested.
-        :param max_age_included: The age through which data is to be weighted (i.e., can be less than full life)
-        :param options_dict: A dictionary of the options included in the input file.
-        """
+    :param input_df: DataFrame containing values to be weighted.
+    :param weightby_metric:  The metric by which the data is being weighted.
+    :param vehs: A list of vehicles for which weighting is requested.
+    :param year_metric:  "yearID" or "modelYearID"
+    :param year_list: List of years for which weighted results are requested.
+    :param max_age_included: The age through which data is to be weighted (i.e., can be less than full life)
+    :param options_dict: A dictionary of the options included in the input file.
+    """
+    def __init__(self, input_df, weightby_metric, vehs, year_metric, year_list, max_age_included, options_dict):
         self.input_df = input_df
         self.weightby_metric = weightby_metric
         self.vehs = vehs
