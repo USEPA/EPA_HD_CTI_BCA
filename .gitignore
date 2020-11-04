@@ -3,6 +3,9 @@ venv
 env
 build
 dist
+dev
+outputs
+supporting
 .pytest_cache
 .coverage
 
@@ -115,9 +118,6 @@ composer.lock
 
 # mypy
 .mypy_cache/
-
-# VS Code settings
-.vscode
 
 # Mac
 *.DS_Store
