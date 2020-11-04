@@ -36,10 +36,10 @@ The list of necessary input files contained in the "inputs" folder is:
 
 The "aeo" folder should also contain a fuel prices CSV file housing any AEO cases to be run (e.g., Reference case, High oil price, etc.). The case is selected via the BCA_General_Inputs file and the
 CSV file in the aeo folder must contain the desired AEO case. The file should remain as downloaded from the AEO webpage without modification. The name of the file should be:
-    - Components_of_Selected_Petroleum_Product_Prices.csv
+    - Components_of_Selected_Petroleum_Product_Prices (a CSV file)
 
 The "bea" folder should also contain a GDP price deflator CSV file. The file should remain as downloaded from the BEA webpage without modification. The name of the file should be:
-    - Table_1.1.9_ImplicitPriceDeflators.csv
+    - Table_1.1.9_ImplicitPriceDeflators (a CSV file)
 
 What are the output files?
 --------------------------
