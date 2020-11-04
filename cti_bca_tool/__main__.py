@@ -1,5 +1,6 @@
 import cti_bca_tool
 from cti_bca_tool import cti_bca
+# from cti_bca_tool.operating_cost import ORVRadjust
 import cti_bca_tool.general_functions as gen_fxns
 from pathlib import Path
 from datetime import datetime
@@ -45,6 +46,7 @@ class SetInputs:
         self.def_prices = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['def_prices']['UserEntry.csv'], lambda x: 'Notes' not in x)
         self.orvr_fuelchanges = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['orvr_fuelchanges']['UserEntry.csv'], lambda x: 'Notes' not in x)
         self.repair_and_maintenance = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['repair_and_maintenance']['UserEntry.csv'], lambda x: 'Notes' not in x, 0)
+        self.unit_conversions = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['unit_conversions']['UserEntry.csv'], lambda x: 'Notes' not in x, 0)
 
         self.input_files_pathlist = [self.path_inputs / item for item in pd.Series(self.input_files_df['UserEntry.csv'])]
         self.input_files_pathlist.append(self.path_inputs / 'Input_Files.csv')
@@ -78,6 +80,9 @@ class SetInputs:
         self.generate_emissionrepair_cpm_figures = self.bca_inputs.at['generate_emissionrepair_cpm_figures', 'UserEntry']
         self.generate_BCA_ArgsByOption_figures = self.bca_inputs.at['generate_BCA_ArgsByOption_figures', 'UserEntry']
         self.generate_BCA_ArgByOptions_figures = self.bca_inputs.at['generate_BCA_ArgByOptions_figures', 'UserEntry']
+
+        self.grams_per_short_ton = self.unit_conversions.at['grams_per_short_ton', 'UserEntry']
+        self.gallons_per_ml = self.unit_conversions.at['gallons_per_ml', 'UserEntry']
 
 
 if __name__ == '__main__':

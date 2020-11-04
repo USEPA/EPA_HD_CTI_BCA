@@ -274,7 +274,7 @@ def main(settings):
     # make ORVR adjustments to gasoline THC inventories and gallons
     orvr_adjust_obj = ORVRadjust(alt_st_rc_ft_vehicles, settings.orvr_fuelchanges, sourcetype_gallons,
                                  sourcetype_criteria[['THC_UStons_Reductions']], sourcetype_vmt)
-    sourcetype_gallons = orvr_adjust_obj.adjust_gallons()
+    sourcetype_gallons = orvr_adjust_obj.adjust_gallons(settings)
     sourcetype_per_veh = orvr_adjust_obj.adjust_mpg(sourcetype_per_veh)  # must adjust MPG prior to calc of fuel costs
     sourcetype_fuel_costs = FuelCost(alt_st_rc_ft_vehicles, sourcetype_gallons, sourcetype_vmt, sourcetype_per_veh, fuel_prices).calc_fuel_costs()
 

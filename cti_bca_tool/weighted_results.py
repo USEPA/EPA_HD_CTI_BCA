@@ -19,7 +19,7 @@ class WeightedResult:
         :param year_metric:  "yearID" or "modelYearID"
         :param year_list: List of years for which weighted results are requested.
         :param max_age_included: The age through which data is to be weighted (i.e., can be less than full life)
-        :param options_dict: The options included in the input file.
+        :param options_dict: A dictionary of the options included in the input file.
         """
         self.input_df = input_df
         self.weightby_metric = weightby_metric
@@ -32,6 +32,7 @@ class WeightedResult:
     def weighted_results_by_veh(self, veh, metric):
         """
 
+        :param veh: A specific alt_st_rc_ft vehicle.
         :param metric: The specific metric (or series) of data to be weighted.
         :return: DataFrame containing weighted results for the passed vehicle.
         """
@@ -85,33 +86,3 @@ class WeightedResult:
                                           values=[col for col in weighted_results.columns if 'cents_per_mile' in col],
                                           index=['fuelTypeID', 'regClassID', 'sourceTypeID', 'sourceType', 'optionID'])
         return weighted_results
-
-
-if __name__ == '__main__':
-    import pandas as pd
-    from pathlib import Path
-    from cti_bca_tool.fleet import Fleet
-
-    path_project = Path.cwd()
-    path_inputs = path_project / 'inputs'
-    sourcetype_costs_file = path_project / 'dev/sourcetype_costs.csv'
-    sourcetype_costs = pd.read_csv(sourcetype_costs_file) # this reads alt_st_rc_ft as a string rather than a tuple, so...
-    # convert alt_st_rc_ft to tuple as it would be if generated in main code
-    sourcetype_costs.drop(columns=['alt_st_rc_ft', 'st_rc_ft'], inplace=True)
-    sourcetype_costs = Fleet(sourcetype_costs).define_bca_sourcetype()
-    options = pd.read_csv(path_inputs / 'options.csv', index_col=0)
-    options_dict = options.to_dict('index')
-
-    # for testing the WeightedResults class
-    alt_st_rc_ft_vehs = pd.Series(sourcetype_costs['alt_st_rc_ft']).unique()
-    weighted_repair_owner_cpm = dict()
-    weighted_def_cpm = dict()
-    weighted_fuel_cpm = dict()
-    year_list = [2027, 2030, 2035]
-    max_age_included = 9
-
-    def_weighting_obj = WeightedResult(sourcetype_costs, 'VMT_AvgPerVeh', alt_st_rc_ft_vehs, 'modelYearID', year_list, max_age_included, options_dict)
-    weighted_results_all_vehs = def_weighting_obj.weighted_results_all_vehs('DEFCost_AvgPerMile')
-    weighted_def_cpm_df = def_weighting_obj.weighted_results('DEFCost_AvgPerMile')
-    weighted_def_cpm_df.to_csv(path_project / 'dev/vmt_weighted_def_cpm.csv')
-    print(weighted_def_cpm_df)

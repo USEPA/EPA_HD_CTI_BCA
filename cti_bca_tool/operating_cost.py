@@ -4,14 +4,8 @@ operating_cost.py
 Contains the DEFCost, ORVRadjust, FuelCost and RepairAndMaintenanceCost classes.
 
 """
-
 import pandas as pd
-from itertools import product
-from cti_bca_tool.vehicle import fuelTypeID
 import cti_bca_tool.general_functions as gen_fxns
-
-grams_per_short_ton = 907185
-gallons_per_ml = 0.000264172
 
 
 def get_reductions(inventory_df, *args):
@@ -155,7 +149,7 @@ class ORVRadjust:
         impact = impact.at[0, 'ml/g']
         return impact
 
-    def adjust_gallons(self):
+    def adjust_gallons(self, settings):
         """
 
         :return: The gallons_df DataFrame with gallons of fuel consumed having been adjusted since MOVES runs did not make the adjustment.
@@ -171,7 +165,7 @@ class ORVRadjust:
                 self.gallons_df.loc[self.gallons_df['alt_st_rc_ft'] == veh, 'ml/g'] = 0
         self.gallons_df['Gallons'] \
             = self.gallons_df['Gallons'] \
-              - self.inventory_df['THC_UStons_Reductions'] * self.gallons_df['ml/g'] * grams_per_short_ton * gallons_per_ml
+              - self.inventory_df['THC_UStons_Reductions'] * self.gallons_df['ml/g'] * settings.grams_per_short_ton * settings.gallons_per_ml
         return self.gallons_df
 
     def adjust_mpg(self, per_veh_df):
@@ -385,56 +379,8 @@ class RepairAndMaintenanceCost:
 
 if __name__ == '__main__':
     import pandas as pd
-    from pathlib import Path
-    from cti_bca_tool.fleet import Fleet
-    from cti_bca_tool.cti_bca import read_input_files
-    from cti_bca_tool.operating_cost import ORVRadjust
-    from cti_bca_tool.group_metrics import GroupMetrics
 
-    path_project = Path.cwd()
-    path_inputs = path_project / 'inputs'
-
-    # for testing the ORVRadjust class
-    moves_file = path_inputs / 'CTI_NPRM_CY2027_2045_NewGRID_for_Todd_withORVRcorrection.csv'
-    moves = pd.read_csv(moves_file)
-    moves_adjustments = read_input_files(path_inputs, 'MOVES_Adjustments.csv', lambda x: 'Notes' not in x)
-    orvr_fuelchanges = read_input_files(path_inputs, 'ORVR_FuelChangeInputs.csv', lambda x: 'Notes' not in x)
-    if 'Alternative' in moves.columns.tolist():
-        moves.rename(columns={'Alternative': 'optionID'}, inplace=True)
-    for df in [moves, moves_adjustments]:
-        df = Fleet(df).define_bca_regclass()
-        df = Fleet(df).define_bca_sourcetype()
-    moves_adjusted = Fleet(moves).adjust_moves(moves_adjustments)  # adjust (41, 2) to be engine cert only
-    moves_adjusted = moves_adjusted.loc[(moves_adjusted['regClassID'] != 41) | (moves_adjusted['fuelTypeID'] != 1), :]  # eliminate (41, 1) keeping (41, 2)
-    moves_adjusted = moves_adjusted.loc[moves_adjusted['regClassID'] != 49, :]  # eliminate Gliders
-    moves_adjusted = moves_adjusted.loc[moves_adjusted['fuelTypeID'] != 5, :]  # eliminate E85
-    moves_adjusted = moves_adjusted.loc[moves_adjusted['regClassID'] >= 41, :]  # eliminate non-CTI regclasses
-    cols = [col for col in moves_adjusted.columns if 'PM25' in col]
-    moves_adjusted.insert(len(moves_adjusted.columns), 'PM25_onroad', moves_adjusted[cols].sum(axis=1))  # sum PM25 metrics
-    moves_adjusted.insert(len(moves_adjusted.columns), 'ageID', moves_adjusted['yearID'] - moves_adjusted['modelYearID'])
-    moves_adjusted.rename(columns={'NOx_UStons': 'NOx_onroad'}, inplace=True)
-    cols_to_drop = [col for col in moves_adjusted.columns if 'CO_UStons' in col or 'exhaust' in col or 'brakewear' in col
-                    or 'tirewear' in col or 'VOC' in col or 'CO2' in col or 'Energy' in col]
-    moves_adjusted = moves_adjusted.drop(columns=cols_to_drop)
-    moves_adjusted.reset_index(drop=True, inplace=True)
-
-    # add VMT/vehicle & Gallons/mile metrics to moves dataframe
-    moves_adjusted.insert(len(moves_adjusted.columns), 'VMT_AvgPerVeh', moves_adjusted['VMT'] / moves_adjusted['VPOP'])
-    moves_adjusted = moves_adjusted.join(GroupMetrics(moves_adjusted,
-                                                      ['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'modelYearID'])
-                                         .group_cumsum(['VMT_AvgPerVeh']))
-    moves_adjusted.rename({'VPOP_CumSum': 'VPOP_CumSum_by_alt_rc_ft'}, inplace=True, axis=1)
-    moves_adjusted.insert(len(moves_adjusted.columns), 'MPG_AvgPerVeh', moves_adjusted['VMT'] / moves_adjusted['Gallons'])
-
-    st_rc_ft_vehs = pd.Series(moves_adjusted['st_rc_ft'].unique())
-
-    moves_adjusted = ORVRadjust(st_rc_ft_vehs, orvr_fuelchanges, moves_adjusted).adjust_gallons()
-    print(moves_adjusted.loc[(moves_adjusted['fuelTypeID'] == 1) & (moves_adjusted['optionID'] == 1), 'ml/g'].head())
-    print(moves_adjusted.loc[(moves_adjusted['fuelTypeID'] == 1) & (moves_adjusted['optionID'] == 1), 'THC_UStons_Reductions'].head())
-    print(moves_adjusted.loc[(moves_adjusted['fuelTypeID'] == 2) & (moves_adjusted['optionID'] == 1), 'ml/g'].head())
-    print(moves_adjusted.loc[(moves_adjusted['fuelTypeID'] == 2) & (moves_adjusted['optionID'] == 1), 'THC_UStons_Reductions'].head())
-
-    # for testing the get_reductions function created DataFrames should show metric_reductions values of 0 for
+    # for testing the get_reductions function created DataFrame should show metric_reductions values of 0 for
     # optionID 0 and 100 for optionID 1.
     df = pd.DataFrame({'optionID': [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, ],
                        'OptionName': ['Base', 'Base', 'Base', 'Base', 'Base', 'Base', 'Base', 'Base', 'Alt1', 'Alt1', 'Alt1', 'Alt1', 'Alt1', 'Alt1', 'Alt1', 'Alt1', ],
