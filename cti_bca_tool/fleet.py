@@ -65,16 +65,17 @@ class Fleet:
             self.fleet.loc[self.fleet['optionID'] == option, 'OptionName'] = options_dict[option]['OptionName']
         return self.fleet
 
-    def adjust_moves(self, moves_adjustments_df):
+    def adjust_moves(self, moves_adjustments_df, *args):
         """
 
         :param moves_adjustments_df: A DataFrame of adjustments to be made to MOVES values
+        :param args: The metrics (arguments) to be adjusted.
         :return: The MOVES fleet adjusted to account for the adjustments needed in the analysis.
         """
         moves_df = self.fleet.copy()
         for index, row in moves_adjustments_df.iterrows():
             veh = row['alt_rc_ft']
             percent_adjustment = row['percent']
-            for metric in ['VPOP', 'VMT', 'Gallons']:
-                moves_df.loc[moves_df['alt_rc_ft'] == veh, metric] = moves_df[metric] * percent_adjustment
+            for arg in args:
+                moves_df.loc[moves_df['alt_rc_ft'] == veh, arg] = moves_df[arg] * percent_adjustment
         return moves_df

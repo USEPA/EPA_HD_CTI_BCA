@@ -8,29 +8,6 @@ import pandas as pd
 import cti_bca_tool.general_functions as gen_fxns
 
 
-def get_reductions(inventory_df, *args):
-    """
-
-    :param inventory_df: A DataFrame of inventory data for at least two alternatives for which reductions are to be calculated.
-    :param args: Metrics for which reductions are sought.
-    :return: The passed DataFrame with new metrics showing reductions from baseline.
-    """
-    alts = pd.Series(inventory_df['optionID'].unique())
-    for arg in args:
-        alternative = dict()
-        alternative[0] = pd.DataFrame(inventory_df.loc[inventory_df['optionID'] == 0, arg])
-        alternative[0].reset_index(drop=True, inplace=True)
-        alternative['all'] = alternative[0].copy()
-        for alt in range(1, len(alts)):
-            alternative[alt] = pd.DataFrame(inventory_df.loc[inventory_df['optionID'] == alt, arg])
-            alternative[alt].reset_index(drop=True, inplace=True)
-            alternative[alt][arg] = alternative[0][arg] - alternative[alt][arg]
-            alternative['all'] = alternative['all'].append(alternative[alt], ignore_index=True, sort=False)
-        inventory_df.insert(inventory_df.columns.get_loc(f'{arg}') + 1, f'{arg}_Reductions', alternative['all'][arg])
-        inventory_df.loc[inventory_df['optionID'] == 0, f'{arg}_Reductions'] = 0
-    return inventory_df
-
-
 class DEFCost:
     """
 
@@ -52,7 +29,7 @@ class DEFCost:
         self.def_prices = def_prices
 
     def __repr__(self):
-        return f'DEFCost: Vehicle {self._veh}'
+        return f'{self.__class__.__name__}: Vehicle {self._veh}'
 
     def def_doserate_scaling_factor(self, step):
         """
@@ -136,7 +113,7 @@ class ORVRadjust:
         self.vmt_df = vmt_df
 
     def __repr__(self):
-        return 'ORVR adjustments being made.'
+        return f'{self.__class__.__name__}ments being made.'
 
     def get_orvr_impact(self, veh, alt):
         """
@@ -379,19 +356,3 @@ class RepairAndMaintenanceCost:
                          self.merge_vmt(df_return)['VMT'] * df_return['EmissionRepairCost_Owner_AvgPerMile'])
         df_return.drop(columns=['modelYearID', 'ageID', 'DirectCost_AvgPerVeh'], inplace=True)
         return df_return
-
-
-if __name__ == '__main__':
-    import pandas as pd
-
-    # for testing the get_reductions function created DataFrame should show metric_reductions values of 0 for
-    # optionID 0 and 100 for optionID 1.
-    df = pd.DataFrame({'optionID': [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, ],
-                       'OptionName': ['Base', 'Base', 'Base', 'Base', 'Base', 'Base', 'Base', 'Base', 'Alt1', 'Alt1', 'Alt1', 'Alt1', 'Alt1', 'Alt1', 'Alt1', 'Alt1', ],
-                       'modelYearID': [2027, 2027, 2027, 2027, 2028, 2028, 2028, 2028, 2027, 2027, 2027, 2027, 2028, 2028, 2028, 2028, ],
-                       'regClassID': [46, 47, 46, 47, 46, 47, 46, 47, 46, 47, 46, 47, 46, 47, 46, 47, ],
-                       'fuelTypeID': [1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2, ],
-                       'metric': [200, 200, 200, 200, 300, 300, 300, 300, 100, 100, 100, 100, 200, 200, 200, 200, ]})
-    number_alts = int(df['optionID'].max()) + 1
-    df = get_reductions(df, 'metric')
-    print(df)

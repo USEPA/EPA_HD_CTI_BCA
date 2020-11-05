@@ -10,18 +10,16 @@ import pandas as pd
 class CalcDeltas:
     """The CalcDelta class calculates the deltas (more stringent option minus option 0, as written)
 
-    :param data: DataFrame being passed on which deltas are to be calculated.
-    :param number_of_alts: The number of alternatives, or options, being considered in data.
+    :param data: DataFrame being passed on which deltas or reductions are to be calculated.
     :param list_for_deltas: List of metrics for which to calculate deltas.
     """
-    def __init__(self, data, number_of_alts, list_for_deltas):
+    def __init__(self, data):
         self.data = data
-        self.number_of_alts = number_of_alts
-        self.list_for_deltas = list_for_deltas
 
-    def calc_delta_and_new_alt_id(self):
+    def calc_delta_and_new_alt_id(self, *args):
         """
 
+        :param args: Metrics for which deltas or reductions are sought.
         :return: A new DataFrame consisting of the deltas for each scenario in the passed data.
         """
         return_df = pd.DataFrame()
@@ -29,7 +27,8 @@ class CalcDeltas:
         alternative[0] = self.data.loc[self.data['optionID'] == 0, :]
         alternative[0].reset_index(drop=True, inplace=True)
         alt0_name = alternative[0].at[0, 'OptionName']
-        for alt in range(1, self.number_of_alts):
+        alts = pd.Series(self.data['optionID'].unique())
+        for alt in range(1, len(alts)):
             alternative[alt] = self.data.loc[self.data['optionID'] == alt, :]
             alternative[alt].reset_index(drop=True, inplace=True)
             alt_name = alternative[alt].at[0, 'OptionName']
@@ -37,39 +36,41 @@ class CalcDeltas:
             alternative[alt_delta] = pd.DataFrame(alternative[alt].copy())
             alternative[alt_delta]['optionID'] = alt_delta
             alternative[alt_delta]['OptionName'] = str(f'{alt_name}_minus_{alt0_name}')
-        for alt in range(1, self.number_of_alts):
+        for alt in range(1, len(alts)):
             alt_delta = int(alt * 10)
-            for item in self.list_for_deltas:
-                alternative[alt_delta][item] = alternative[alt][item] - alternative[0][item]
+            for arg in args:
+                alternative[alt_delta][arg] = alternative[alt][arg] - alternative[0][arg]
             return_df = return_df.append(alternative[alt_delta], ignore_index=True, sort=False)
         return return_df
 
-    def calc_delta_and_keep_alt_id(self):
+    def calc_delta_and_keep_alt_id(self, *args):
         """
 
+        :param args: Metrics for which deltas or reductions are sought.
         :return: The passed DataFrame with metrics in list_for_deltas showing as reductions from baseline rather than the values contained in the passed DataFrame
         """
         return_df = pd.DataFrame(self.data.loc[self.data['optionID'] == 0, :])
         alternative = dict()
         alternative[0] = pd.DataFrame(self.data.loc[self.data['optionID'] == 0, :])
         alternative[0].reset_index(drop=True, inplace=True)
-        for alt in range(1, self.number_of_alts):
+        alts = pd.Series(self.data['optionID'].unique())
+        for alt in range(1, len(alts)):
             alternative[alt] = pd.DataFrame(self.data.loc[self.data['optionID'] == alt, :])
             alternative[alt].reset_index(drop=True, inplace=True)
-            for item in self.list_for_deltas:
-                alternative[alt][item] = alternative[0][item] - alternative[alt][item]
+            for arg in args:
+                alternative[alt][arg] = alternative[0][arg] - alternative[alt][arg]
             return_df = return_df.append(alternative[alt], ignore_index=True, sort=False)
-        for item in self.list_for_deltas:
-            return_df.rename(columns={item: f'{item}_Reductions'}, inplace=True)
-            return_df.loc[return_df['optionID'] == 0, f'{item}_Reductions'] = 0
+        for arg in args:
+            return_df.rename(columns={arg: f'{arg}_Reductions'}, inplace=True)
+            return_df.loc[return_df['optionID'] == 0, f'{arg}_Reductions'] = 0
         return return_df
 
 
 if __name__ == '__main__':
     """
     This tests the CalcDeltas class to ensure that things are working properly.
-    If run as a script (python -m cti_bca_tool.calc_deltas) the first DataFrame should show metric values of -100 for optionID 10
-    and the second DataFrame should show metric_reductions values of 0 for optionID 0 and 100 for optionID 1.
+    If run as a script (python -m cti_bca_tool.calc_deltas) the first DataFrame should show metric_Reductions values of 0 for optionID 0 and 100 
+    for optionID 1 and the second DataFrame should show metric values of -100 for optionID 10.
 
     """
     import pandas as pd
@@ -80,10 +81,9 @@ if __name__ == '__main__':
                        'regClassID': [46, 47, 46, 47, 46, 47, 46, 47, 46, 47, 46, 47, 46, 47, 46, 47,],
                        'fuelTypeID': [1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2,],
                        'metric': [200, 200, 200, 200, 300, 300, 300, 300, 100, 100, 100, 100, 200, 200, 200, 200,]})
-    number_alts = int(df['optionID'].max()) + 1
-    df = pd.concat([df, CalcDeltas(df, number_alts, ['metric']).calc_delta_and_new_alt_id()], axis=0, ignore_index=True) # modelYearID=2027,2028,2029; metric=400,800,1200
-    print(df)
 
-    df.insert(df.columns.get_loc('metric') + 1, 'metric_reductions', df['metric'])
-    df = CalcDeltas(df, number_alts, ['metric_reductions']).calc_delta_and_keep_alt_id()
-    print(df)
+    df1 = CalcDeltas(df).calc_delta_and_keep_alt_id('metric')
+    print(f'\nFirst DataFrame should show metric_Reductions values of 0 for optionID 0 and 100 for optionID 1\n{df1}')
+
+    df2 = pd.concat([df, CalcDeltas(df).calc_delta_and_new_alt_id('metric')], axis=0, ignore_index=True) # modelYearID=2027,2028,2029; metric=400,800,1200
+    print(f'\nSecond DataFrame should show metric values of -100 for optionID 10\n{df2}')

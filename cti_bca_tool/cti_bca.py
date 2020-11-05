@@ -44,13 +44,13 @@ def main(settings):
     number_alts = len(settings.moves['optionID'].unique())
 
     # get the fuel price inputs and usd basis for the analysis
-    fuel_prices_obj = GetFuelPrices(settings.path_project, settings.aeo_case, 'full name', 'Motor Gasoline', 'Diesel')
+    fuel_prices_obj = GetFuelPrices(settings.fuel_prices_file, settings.aeo_case, 'full name', 'Motor Gasoline', 'Diesel')
     print(fuel_prices_obj)
     fuel_prices = fuel_prices_obj.get_prices()
     dollar_basis_analysis = fuel_prices_obj.aeo_dollars()
 
     # generate a dictionary of gdp deflators, calc adjustment values and apply adjustment values to cost inputs
-    deflators_obj = GetDeflators(settings.path_project, 'Unnamed: 1', 'Gross domestic product')
+    deflators_obj = GetDeflators(settings.deflators_file, 'Unnamed: 1', 'Gross domestic product')
     print(deflators_obj)
     gdp_deflators = deflators_obj.calc_adjustment_factors(dollar_basis_analysis)
     cost_steps = [col for col in settings.regclass_costs.columns if '20' in col]
@@ -117,7 +117,7 @@ def main(settings):
     moves = Fleet(settings.moves).define_bca_sourcetype()
 
     # adjust MOVES VPOP/VMT/Gallons to reflect what's included in CTI (excluding what's not in CTI)
-    moves_adjusted = Fleet(moves).adjust_moves(settings.moves_adjustments)  # adjust (41, 2) to be engine cert only
+    moves_adjusted = Fleet(moves).adjust_moves(settings.moves_adjustments, 'VPOP', 'VMT', 'Gallons')  # adjust (41, 2) to be engine cert only
     moves_adjusted = moves_adjusted.loc[(moves_adjusted['regClassID'] != 41) | (moves_adjusted['fuelTypeID'] != 1), :]  # eliminate (41, 1) keeping (41, 2)
     moves_adjusted = moves_adjusted.loc[moves_adjusted['regClassID'] != 49, :]  # eliminate Gliders
     moves_adjusted = moves_adjusted.loc[moves_adjusted['fuelTypeID'] != 5, :]  # eliminate E85
@@ -146,9 +146,7 @@ def main(settings):
     regclass_sales = regclass_vpop.loc[regclass_vpop['ageID'] == 0, :].groupby(by=['optionID', 'yearID', 'modelYearID', 'ageID', 'alt_rc_ft'],
                                                                                as_index=False).sum()
     regclass_sales.drop(columns='static_id', inplace=True) # static_id is tied to sourcetype-level info, once summed in regclass_sales, it is no longer relevant
-    reductions = CalcDeltas(
-        sourcetype_criteria, len(sourcetype_criteria['optionID'].unique()), ['THC_UStons', 'PM25_onroad', 'NOx_onroad']) \
-        .calc_delta_and_keep_alt_id()
+    reductions = CalcDeltas(sourcetype_criteria).calc_delta_and_keep_alt_id('THC_UStons', 'PM25_onroad', 'NOx_onroad')
     sourcetype_criteria = sourcetype_criteria.merge(reductions, on=gen_fxns.get_common_metrics(sourcetype_criteria, reductions), how='left')
     sourcetype_per_veh.insert(len(sourcetype_per_veh.columns), 'VMT_AvgPerVeh', sourcetype_vmt['VMT'] / sourcetype_vpop['VPOP'])
     sourcetype_per_veh = sourcetype_per_veh.join(GroupMetrics(sourcetype_per_veh, ['alt_st_rc_ft', 'modelYearID']).group_cumsum(['VMT_AvgPerVeh']))
@@ -354,7 +352,7 @@ def main(settings):
     else:
         bca_metrics_to_discount = techcost_metrics_to_discount + operatingcost_metrics_to_discount
     for dr in [0, settings.discrate_social_low, settings.discrate_social_high]:
-        discounting_obj = DiscountValues(sourcetype_all_costs, bca_metrics_to_discount, settings.discount_to_yearID, settings.costs_start)
+        discounting_obj = DiscountValues(sourcetype_all_costs, settings.discount_to_yearID, settings.costs_start, *bca_metrics_to_discount)
         bca_dict[dr] = discounting_obj.discount(dr)
 
     # now set to NaN discounted pollutant values using discount rates that are not consistent with the input values
@@ -415,8 +413,6 @@ def main(settings):
     row_header_group_cumsum['yearID'] = common_metrics
     row_header_group_cumsum['yearID_rc_ft'] = common_metrics + ['regClassID', 'fuelTypeID']
 
-    # # create a bca DataFrame that contains metrics necessary for the bca, i.e., TotalCost metrics
-    # bca = pd.DataFrame(bca, columns=row_header_group[2] + ['modelYearID', 'ageID', 'sourceTypeID'] + bca_metrics_to_sum + bca_metrics_to_avg)
     # create some dicts to store the groupby.sum, groupby.cumsum and groupby.mean results
     bca_sum = dict()
     bca_mean = dict()
@@ -430,7 +426,7 @@ def main(settings):
 
     # now annualize the cumsum metrics
     for group in ['yearID', 'yearID_rc_ft']:
-        bca_summary[group] = DiscountValues(bca_summary[group], bca_metrics_to_cumsum, settings.discount_to_yearID, settings.costs_start).annualize()
+        bca_summary[group] = DiscountValues(bca_summary[group], settings.discount_to_yearID, settings.costs_start, *bca_metrics_to_cumsum).annualize()
 
     # calc the deltas relative to alt0
     bca_summary['yearID'].sort_values(by=['DiscountRate', 'optionID', 'yearID'], ascending=True, inplace=True, axis=0)
@@ -440,7 +436,7 @@ def main(settings):
                              + [metric + '_Annualized' for metric in bca_metrics_to_cumsum]
     for group in ['yearID', 'yearID_rc_ft']:
         bca_summary[group] = pd.concat([bca_summary[group], 
-                                        CalcDeltas(bca_summary[group], number_alts, bca_metrics_for_deltas).calc_delta_and_new_alt_id()], 
+                                        CalcDeltas(bca_summary[group]).calc_delta_and_new_alt_id(*bca_metrics_for_deltas)],
                                        axis=0, ignore_index=True)
 
     # add some identifier columns to the grouped output files
@@ -456,69 +452,69 @@ def main(settings):
     bca_cols_for_deltas = [col for col in bca.columns if 'Calculated' in col or 'Estimated' in col or 'Cost' in col or 'cost' in col
                              or 'Warranty' in col or 'UsefulLife' in col or 'Gallons' in col or 'max' in col or 'slope' in col
                              or ('AvgPerVeh' in col and 'VMT' not in col) or 'THC' in col or 'PM' in col or 'NOx' in col]
-    bca = pd.concat([bca, CalcDeltas(bca, number_alts, bca_cols_for_deltas).calc_delta_and_new_alt_id()], axis=0, ignore_index=True)
+    bca = pd.concat([bca, CalcDeltas(bca).calc_delta_and_new_alt_id(*bca_cols_for_deltas)], axis=0, ignore_index=True)
 
     # generate some document tables
     preamble_program_metrics = ['DirectCost_TotalCost', 'WarrantyCost_TotalCost', 'RnDCost_TotalCost', 'OtherCost_TotalCost', 'ProfitCost_TotalCost', 'TechCost_TotalCost',
                                 'EmissionRepairCost_Owner_TotalCost', 'DEFCost_TotalCost', 'FuelCost_Pretax_TotalCost', 'OperatingCost_BCA_TotalCost',
                                 'TechAndOperatingCost_BCA_TotalCost']
     preamble_program_table = DocTables(bca).preamble_ria_tables(preamble_program_metrics, ['DiscountRate', 'optionID', 'OptionName', 'yearID'], 'sum')
-    preamble_program_table = gen_fxns.round_sig(preamble_program_table, preamble_program_metrics, 1000000, 2)
+    preamble_program_table = gen_fxns.round_sig(preamble_program_table, 1000000, 2, *preamble_program_metrics)
     preamble_program_table.insert(len(preamble_program_table.columns), 'Units_SignificantDigits', 'Millions of USD; 2 sig digits')
 
     preamble_program_table_pv = DocTables(bca).preamble_ria_tables(preamble_program_metrics, ['DiscountRate', 'optionID', 'OptionName'], 'sum')
-    preamble_program_table_pv = gen_fxns.round_sig(preamble_program_table_pv, preamble_program_metrics, 1000000, 2)
+    preamble_program_table_pv = gen_fxns.round_sig(preamble_program_table_pv, 1000000, 2, *preamble_program_metrics)
     preamble_program_table_pv.insert(len(preamble_program_table_pv.columns), 'Units_SignificantDigits', 'Millions of USD; 2 sig digits')
 
     ria_program_metrics = ['TechCost_TotalCost', 'OperatingCost_BCA_TotalCost', 'TechAndOperatingCost_BCA_TotalCost']
     ria_program_table = DocTables(bca).preamble_ria_tables(ria_program_metrics, ['DiscountRate', 'optionID', 'OptionName', 'yearID'], 'sum')
-    ria_program_table = gen_fxns.round_sig(ria_program_table, ria_program_metrics, 1000000, 2)
+    ria_program_table = gen_fxns.round_sig(ria_program_table, 1000000, 2, *ria_program_metrics)
     ria_program_table.insert(len(ria_program_table.columns), 'Units_SignificantDigits', 'Millions of USD; 2 sig digits')
 
     ria_program_table_pv = DocTables(bca).preamble_ria_tables(ria_program_metrics, ['DiscountRate', 'optionID', 'OptionName'], 'sum')
-    ria_program_table_pv = gen_fxns.round_sig(ria_program_table_pv, ria_program_metrics, 1000000, 2)
+    ria_program_table_pv = gen_fxns.round_sig(ria_program_table_pv, 1000000, 2, *ria_program_metrics)
     ria_program_table_pv.insert(len(ria_program_table_pv.columns), 'Units_SignificantDigits', 'Millions of USD; 2 sig digits')
 
     tech_metrics = ['DirectCost_TotalCost', 'WarrantyCost_TotalCost', 'RnDCost_TotalCost', 'OtherCost_TotalCost', 'ProfitCost_TotalCost', 'TechCost_TotalCost']
     tech_by_ft_yr_table = DocTables(bca).preamble_ria_tables(tech_metrics, ['DiscountRate', 'optionID', 'OptionName', 'fuelTypeID', 'yearID'], 'sum')
-    tech_by_ft_yr_table = gen_fxns.round_sig(tech_by_ft_yr_table, tech_metrics, 1000000, 2)
+    tech_by_ft_yr_table = gen_fxns.round_sig(tech_by_ft_yr_table, 1000000, 2, *tech_metrics)
     tech_by_ft_yr_table.insert(len(tech_by_ft_yr_table.columns), 'Units_SignificantDigits', 'Millions of USD; 2 sig digits')
 
     tech_by_ft_yr_table_pv = DocTables(bca).preamble_ria_tables(tech_metrics, ['DiscountRate', 'optionID', 'OptionName', 'fuelTypeID'], 'sum')
-    tech_by_ft_yr_table_pv = gen_fxns.round_sig(tech_by_ft_yr_table_pv, tech_metrics, 1000000, 2)
+    tech_by_ft_yr_table_pv = gen_fxns.round_sig(tech_by_ft_yr_table_pv, 1000000, 2, *tech_metrics)
     tech_by_ft_yr_table_pv.insert(len(tech_by_ft_yr_table_pv.columns), 'Units_SignificantDigits', 'Millions of USD; 2 sig digits')
 
     tech_by_ft_rc_table = DocTables(bca).preamble_ria_tables(tech_metrics, ['DiscountRate', 'fuelTypeID', 'optionID', 'OptionName', 'regClassID'], 'sum')
-    tech_by_ft_rc_table = gen_fxns.round_sig(tech_by_ft_rc_table, tech_metrics, 1000000, 2)
+    tech_by_ft_rc_table = gen_fxns.round_sig(tech_by_ft_rc_table, 1000000, 2, *tech_metrics)
     tech_by_ft_rc_table.insert(len(tech_by_ft_rc_table.columns), 'Units_SignificantDigits', 'Millions of USD; 2 sig digits')
 
     tech_by_ft_alt_table = DocTables(bca).preamble_ria_tables(tech_metrics, ['DiscountRate', 'fuelTypeID', 'optionID', 'OptionName'], 'sum')
-    tech_by_ft_alt_table = gen_fxns.round_sig(tech_by_ft_alt_table, tech_metrics, 1000000, 2)
+    tech_by_ft_alt_table = gen_fxns.round_sig(tech_by_ft_alt_table, 1000000, 2, *tech_metrics)
     tech_by_ft_alt_table.insert(len(tech_by_ft_alt_table.columns), 'Units_SignificantDigits', 'Millions of USD; 2 sig digits')
 
     tech_by_alt_table = DocTables(bca).preamble_ria_tables(tech_metrics, ['DiscountRate', 'optionID', 'OptionName'], 'sum')
-    tech_by_alt_table = gen_fxns.round_sig(tech_by_alt_table, tech_metrics, 1000000, 2)
+    tech_by_alt_table = gen_fxns.round_sig(tech_by_alt_table, 1000000, 2, *tech_metrics)
     tech_by_alt_table.insert(len(tech_by_alt_table.columns), 'Units_SignificantDigits', 'Millions of USD; 2 sig digits')
 
     operating_metrics = ['EmissionRepairCost_Owner_TotalCost', 'DEFCost_TotalCost', 'FuelCost_Pretax_TotalCost', 'OperatingCost_BCA_TotalCost']
     operating_ft_year_table = DocTables(bca).preamble_ria_tables(operating_metrics, ['DiscountRate', 'optionID', 'OptionName', 'fuelTypeID', 'yearID'], 'sum')
-    operating_ft_year_table = gen_fxns.round_sig(operating_ft_year_table, operating_metrics, 1000000, 2)
+    operating_ft_year_table = gen_fxns.round_sig(operating_ft_year_table, 1000000, 2, *operating_metrics)
     operating_ft_year_table.insert(len(operating_ft_year_table.columns), 'Units_SignificantDigits', 'Millions of USD; 2 sig digits')
 
     operating_ft_year_table_pv = DocTables(bca).preamble_ria_tables(operating_metrics, ['DiscountRate', 'optionID', 'OptionName', 'fuelTypeID'], 'sum')
-    operating_ft_year_table_pv = gen_fxns.round_sig(operating_ft_year_table_pv, operating_metrics, 1000000, 2)
+    operating_ft_year_table_pv = gen_fxns.round_sig(operating_ft_year_table_pv, 1000000, 2, *operating_metrics)
     operating_ft_year_table_pv.insert(len(operating_ft_year_table_pv.columns), 'Units_SignificantDigits', 'Millions of USD; 2 sig digits')
 
     operating_by_ft_rc_table = DocTables(bca).preamble_ria_tables(operating_metrics, ['DiscountRate', 'fuelTypeID', 'optionID', 'OptionName', 'regClassID'], 'sum')
-    operating_by_ft_rc_table = gen_fxns.round_sig(operating_by_ft_rc_table, operating_metrics, 1000000, 2)
+    operating_by_ft_rc_table = gen_fxns.round_sig(operating_by_ft_rc_table, 1000000, 2, *operating_metrics)
     operating_by_ft_rc_table.insert(len(operating_by_ft_rc_table.columns), 'Units_SignificantDigits', 'Millions of USD; 2 sig digits')
 
     operating_by_ft_alt_table = DocTables(bca).preamble_ria_tables(operating_metrics, ['DiscountRate', 'fuelTypeID', 'optionID', 'OptionName'], 'sum')
-    operating_by_ft_alt_table = gen_fxns.round_sig(operating_by_ft_alt_table, operating_metrics, 1000000, 2)
+    operating_by_ft_alt_table = gen_fxns.round_sig(operating_by_ft_alt_table, 1000000, 2, *operating_metrics)
     operating_by_ft_alt_table.insert(len(operating_by_ft_alt_table.columns), 'Units_SignificantDigits', 'Millions of USD; 2 sig digits')
 
     operating_by_alt_table = DocTables(bca).preamble_ria_tables(operating_metrics, ['DiscountRate', 'optionID', 'OptionName'], 'sum')
-    operating_by_alt_table = gen_fxns.round_sig(operating_by_alt_table, operating_metrics, 1000000, 2)
+    operating_by_alt_table = gen_fxns.round_sig(operating_by_alt_table, 1000000, 2, *operating_metrics)
     operating_by_alt_table.insert(len(operating_by_alt_table.columns), 'Units_SignificantDigits', 'Millions of USD; 2 sig digits')
 
     econ_table_metrics = ['TechCost_TotalCost']

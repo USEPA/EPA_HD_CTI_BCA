@@ -7,15 +7,6 @@ Contains the DirectCost class.
 
 import pandas as pd
 
-# list of metrics to which to applying learning; note that keys in the learning dict represent fuelTypeID
-# tech_apply_learning_common = ['EngineHardware', 'CDA']
-# tech_apply_learning_dict = {1: tech_apply_learning_common + ['Aftertreatment', 'ORVR'],
-#                             2: tech_apply_learning_common + ['CDPF', 'DOC', 'SCR', 'HCdosing', 'Canning', 'ClosedCrankcase'],
-#                             3: tech_apply_learning_common + ['Aftertreatment'],
-#                             5: tech_apply_learning_common + ['Aftertreatment', 'ORVR'],
-#                             9: '',
-#                             }
-
 
 class DirectCost:
     """
@@ -44,7 +35,7 @@ class DirectCost:
                                          }
 
     def __repr__(self):
-        return f'DirectCost: Vehicle {self._veh}, Step {self.step}'
+        return f'{self.__class__.__name__}: Vehicle {self._veh}, Step {self.step}'
 
     def package_of_techs_on_vehicle(self):
         """

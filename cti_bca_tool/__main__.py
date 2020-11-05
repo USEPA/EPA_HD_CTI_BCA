@@ -6,7 +6,7 @@ from datetime import datetime
 import pandas as pd
 import time
 
-
+# TODO something is not working correcly in the introduction.rst when generating a PDF via readthedocs
 class SetInputs:
     """
     The SetInputs class establishes the input files to use and other input settings set in the BCA_Inputs file and needed within the tool.
@@ -14,6 +14,7 @@ class SetInputs:
     def __init__(self):
         self.path_project = Path.cwd()  # the 'Working directory'
         self.path_inputs = self.path_project / 'inputs'
+        self.path_context = self.path_project / 'context_inputs'
         self.path_outputs = self.path_project / 'outputs'
         self.run_folder_identifier = input('Provide a run identifier for your output folder name (press return to use the default name)\n')
         self.run_folder_identifier = self.run_folder_identifier if self.run_folder_identifier != '' else 'BCA-Results'
@@ -25,24 +26,29 @@ class SetInputs:
 
         print("\nReading input files....")
         self.start_time_read = time.time()
-        self.input_files_df = gen_fxns.read_input_files(self.path_inputs, 'Input_Files.csv', lambda x: 'Notes' not in x, 0)
+        self.input_files_df = gen_fxns.read_input_files(self.path_inputs, 'Input_Files.csv', usecols=lambda x: 'Notes' not in x, index_col=0)
         self.input_files_dict = self.input_files_df.to_dict('index')
+        self.context_files_df = gen_fxns.read_input_files(self.path_inputs, 'Context_Files.csv', usecols=lambda x: 'Notes' not in x, index_col=0)
+        self.context_files_dict = self.context_files_df.to_dict('index')
 
-        self.bca_inputs = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['bca_inputs']['UserEntry.csv'], lambda x: 'Notes' not in x, 0)
-        self.regclass_costs = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['regclass_costs']['UserEntry.csv'], lambda x: 'Notes' not in x)
-        self.regclass_learningscalers = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['regclass_learningscalers']['UserEntry.csv'], lambda x: 'Notes' not in x)
-        self.markups = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['markups']['UserEntry.csv'], lambda x: 'Notes' not in x)
-        self.warranty_inputs = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['warranty_inputs']['UserEntry.csv'], lambda x: 'Notes' not in x)
-        self.usefullife_inputs = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['usefullife_inputs']['UserEntry.csv'], lambda x: 'Notes' not in x)
-        self.moves = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['moves']['UserEntry.csv'], lambda x: 'Notes' not in x)
-        self.moves_adjustments = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['moves_adjustments']['UserEntry.csv'], lambda x: 'Notes' not in x)
-        self.options = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['options']['UserEntry.csv'], lambda x: 'Notes' not in x, 0)
+        self.bca_inputs = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['bca_inputs']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x, index_col=0)
+        self.regclass_costs = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['regclass_costs']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
+        self.regclass_learningscalers = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['regclass_learningscalers']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
+        self.markups = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['markups']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
+        self.warranty_inputs = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['warranty_inputs']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
+        self.usefullife_inputs = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['usefullife_inputs']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
+        self.moves = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['moves']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
+        self.moves_adjustments = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['moves_adjustments']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
+        self.options = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['options']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x, index_col=0)
         self.options_dict = self.options.to_dict('index')
-        self.def_doserate_inputs = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['def_doserate_inputs']['UserEntry.csv'], lambda x: 'Notes' not in x)
-        self.def_prices = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['def_prices']['UserEntry.csv'], lambda x: 'Notes' not in x)
-        self.orvr_fuelchanges = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['orvr_fuelchanges']['UserEntry.csv'], lambda x: 'Notes' not in x)
-        self.repair_and_maintenance = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['repair_and_maintenance']['UserEntry.csv'], lambda x: 'Notes' not in x, 0)
-        self.unit_conversions = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['unit_conversions']['UserEntry.csv'], lambda x: 'Notes' not in x, 0)
+        self.def_doserate_inputs = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['def_doserate_inputs']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
+        self.def_prices = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['def_prices']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
+        self.orvr_fuelchanges = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['orvr_fuelchanges']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
+        self.repair_and_maintenance = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['repair_and_maintenance']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x, index_col=0)
+        self.unit_conversions = gen_fxns.read_input_files(self.path_inputs, self.input_files_dict['unit_conversions']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x, index_col=0)
+
+        self.fuel_prices_file = gen_fxns.read_input_files(self.path_context, self.context_files_dict['fuel_prices_file']['UserEntry.csv'], skiprows=4, reset_index=True)
+        self.deflators_file = gen_fxns.read_input_files(self.path_context, self.context_files_dict['deflators_file']['UserEntry.csv'], skiprows=4, reset_index=True)
 
         self.input_files_pathlist = [self.path_inputs / item for item in pd.Series(self.input_files_df['UserEntry.csv'])]
         self.input_files_pathlist.append(self.path_inputs / 'Input_Files.csv')

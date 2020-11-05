@@ -76,20 +76,7 @@ class IndirectCost:
             temp = pd.DataFrame(alt_rc_ft_scalers.loc[alt_rc_ft_scalers['Markup_Factor'] == markup_factor])
             self.directcosts_df = self.directcosts_df.merge(temp[['yearID', 'Value']], on=merge_metrics, how='left')
             self.directcosts_df.rename(columns={'Value': f'{markup_factor}_scaler'}, inplace=True)
-            # self.directcosts_df.drop(labels='Markup_Factor', axis=1, inplace=True)
         return self.directcosts_df
-
-    # def get_markup_scalers(self, alt_rc_ft_scalers):
-    #     """
-    #
-    #     :param alt_rc_ft_scalers:
-    #     :return:
-    #     """
-    #     for markup_factor in self.markup_factors_with_scalers():
-    #         temp = pd.DataFrame(alt_rc_ft_scalers.loc[alt_rc_ft_scalers['Markup_Factor'] == markup_factor])
-    #         temp.reset_index(drop=True, inplace=True)
-    #         self.directcosts_df.insert(len(self.directcosts_df.columns), f'{markup_factor}_scaler', temp.at[0, 'Value'])
-    #     return self.directcosts_df
 
     def indirect_cost_unscaled(self, markups_and_scalers):
         """

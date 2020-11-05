@@ -20,6 +20,7 @@ What are the input files?
 
 The list of necessary input files contained in the "inputs" folder is:
     - BCA_General_Inputs.csv which specifies which AEO fuel prices to use, what calendar year to which to discount costs, the dollar basis year for all monetized values in the analysis, among other parameters.
+    - Input_Files.csv which specifies the specific filenames from which to read-in the necessary data. A user can use different input files/filenames provided they are in the same format as the default files.
     - options.csv which specifies the number of options to be run along with an Option Name for each optionID. Note that "option" and "alternative" and "scenario" tend to be used interchangeably.
     - A MOVES or fleet file which provides inventories and VMT, etc., to support the analysis.
     - MOVES_Adjustments.csv which provides adjustments to data in the MOVES data file that might be necessary within the BCA tool. Currently, this adjusts regclass 41 diesel data to reflect engine-certs only
@@ -34,12 +35,17 @@ The list of necessary input files contained in the "inputs" folder is:
     - UsefulLife_Inputs.csv which provides useful life miles and ages under each alternative.
     - Warranty_Inputs.csv which provides warranty miles and ages under each alternative.
 
+Context files
+-------------
+
+The "context files" describe the context of a given run of the tool. There are two primary elements of the context: The fuel prices to use and the dollar basis of those fuel prices. The dollar basis
+subsequently establishes the dollar basis for all other monetized values within a given run. This is done in-code using Implicit Price Deflators reported by the Bureau of Economic Analysis.
 The "aeo" folder should also contain a fuel prices CSV file housing any AEO cases to be run (e.g., Reference case, High oil price, etc.). The case is selected via the BCA_General_Inputs file and the
 CSV file in the aeo folder must contain the desired AEO case. The file should remain as downloaded from the AEO webpage without modification. The name of the file should be:
-    - Components_of_Selected_Petroleum_Product_Prices (a CSV file)
+    - Components_of_Selected_Petroleum_Product_Prices.csv
 
 The "bea" folder should also contain a GDP price deflator CSV file. The file should remain as downloaded from the BEA webpage without modification. The name of the file should be:
-    - Table_1.1.9_ImplicitPriceDeflators (a CSV file)
+    - Table_1.1.9_ImplicitPriceDeflators.csv
 
 What are the output files?
 --------------------------

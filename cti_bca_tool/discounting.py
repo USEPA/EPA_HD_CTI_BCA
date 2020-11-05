@@ -10,15 +10,15 @@ class DiscountValues:
     """The DiscountValues class takes a source DataFrame, a discount rate and a year to which to discount and discounts all values.
 
     :param source_df: A DataFrame containing monetized values to be discounted.
-    :param metrics: The list of metrics (monetized values) to be discounted or annualized.
     :param discount_to_cy:  The year to which to discount values.
     :param costs_start: The point in the discount_to_cy to which to discount (start of year, mid-year, end of year)
+    :param args: The metrics (arguments, i.e., monetized values) to be discounted or annualized.
     """
-    def __init__(self, source_df, metrics, discount_to_cy, costs_start):
+    def __init__(self, source_df, discount_to_cy, costs_start, *args):
         self.source_df = source_df
-        self.metrics = metrics
         self.discount_to_cy = discount_to_cy
         self.costs_start = costs_start
+        self.args = args
 
     def discount(self, discrate):
         """
@@ -26,7 +26,6 @@ class DiscountValues:
         The costs_start entry of the BCA_General_Inputs file should be set to 'start-year' or 'end-year', where start-year represents costs starting at time t=0
         (i.e., first year costs are undiscounted), and end-year represents costs starting at time t=1 (i.e., first year costs are discounted).
 
-        :param discrate: The discount rate.
         :return: A DataFrame containing the passed list of monetized values after discounting.
         """
         destination_df = self.source_df.copy()
@@ -34,9 +33,9 @@ class DiscountValues:
             discount_offset = 0
         if self.costs_start == 'end-year':
             discount_offset = 1
-        for metric in self.metrics:
+        for arg in self.args:
             discounted_years = self.source_df['yearID'] - self.discount_to_cy + discount_offset
-            destination_df[metric] = self.source_df[metric] / ((1 + discrate) ** discounted_years)
+            destination_df[arg] = self.source_df[arg] / ((1 + discrate) ** discounted_years)
         destination_df.insert(0, 'DiscountRate', discrate)
         return destination_df
 
@@ -67,11 +66,11 @@ class DiscountValues:
         if self.costs_start == 'end-year':
             discount_offset = 1
             annualized_offset = 0
-        for metric in self.metrics:
-            self.source_df.insert(len(self.source_df.columns), f'{metric}_Annualized', 0)
+        for arg in self.args:
+            self.source_df.insert(len(self.source_df.columns), f'{arg}_Annualized', 0)
             periods = self.source_df['yearID'] - self.discount_to_cy + discount_offset
-            self.source_df.loc[self.source_df['DiscountRate'] != 0, [f'{metric}_Annualized']] = \
-                self.source_df[f'{metric}_CumSum'] * self.source_df['DiscountRate'] * (1 + self.source_df['DiscountRate']) ** periods \
+            self.source_df.loc[self.source_df['DiscountRate'] != 0, [f'{arg}_Annualized']] = \
+                self.source_df[f'{arg}_CumSum'] * self.source_df['DiscountRate'] * (1 + self.source_df['DiscountRate']) ** periods \
                 / ((1 + self.source_df['DiscountRate']) ** (periods + annualized_offset) - 1)
         return self.source_df
 
@@ -92,15 +91,15 @@ if __name__ == '__main__':
     discount_to_cy = 2027
 
     costs_start = 'start-year'
-    df_startyear = DiscountValues(df, ['cost'], discount_to_cy, costs_start).discount(discrate)
+    df_startyear = DiscountValues(df, discount_to_cy, costs_start, 'cost').discount(discrate)
     df_startyear = df_startyear.join(GroupMetrics(df_startyear, ['option']).group_cumsum(['cost']))
-    DiscountValues(df_startyear, ['cost'], discount_to_cy, costs_start).annualize()
+    DiscountValues(df_startyear, discount_to_cy, costs_start, 'cost').annualize()
     print(f'\nIf costs occur at time t=0, or {costs_start}.\n')
     print(df_startyear)
 
     costs_start = 'end-year'
-    df_endyear = DiscountValues(df, ['cost'], discount_to_cy, costs_start).discount(discrate)
+    df_endyear = DiscountValues(df, discount_to_cy, costs_start, 'cost').discount(discrate)
     df_endyear = df_endyear.join(GroupMetrics(df_endyear, ['option']).group_cumsum(['cost']))
-    DiscountValues(df_endyear, ['cost'], discount_to_cy, costs_start).annualize()
+    DiscountValues(df_endyear, discount_to_cy, costs_start, 'cost').annualize()
     print(f'\nIf costs occur at time t=1, or {costs_start}.\n')
     print(df_endyear)

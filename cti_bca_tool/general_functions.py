@@ -58,6 +58,7 @@ def convert_dollars_to_analysis_basis(df, deflators, dollar_basis, *args):
 def round_metrics(df, metrics, round_by):
     """
 
+    Note - this function is not being used.
     :param df: DataFrame containing data to be rounded.
     :param metrics: List of metrics within the passed DataFrame for which rounding is requested.
     :param round_by: A value entered via the BCA_Inputs sheet contained in the inputs folder that sets the level of rounding.
@@ -67,21 +68,21 @@ def round_metrics(df, metrics, round_by):
     return df
 
 
-def round_sig(df, metrics, divisor=1, sig=0):
+def round_sig(df, divisor=1, sig=0, *args):
     """
 
     :param df: The DataFrame containing data to be rounded.
-    :param metrics: The list of metrics to be rounded.
+    :param args: The metrics to be rounded.
     :param divisor: The divisor to use should results be desired in units other than those passed (set divisor=1 to maintain units).
     :param sig: The number of significant digits.
-    :return: The passed DataFrame with metrics rounded to 'sig' digits and expressed in 'divisor' units.
+    :return: The passed DataFrame with args rounded to 'sig' digits and expressed in 'divisor' units.
     """
-    for metric in metrics:
+    for arg in args:
         try:
-            df[metric] = df[metric].apply(lambda x: round(x/divisor, sig-int(floor(log10(abs(x/divisor))))-1))
+            df[arg] = df[arg].apply(lambda x: round(x/divisor, sig-int(floor(log10(abs(x/divisor))))-1))
         except:
-            df[metric].replace(to_replace=0, value=1, inplace=True)
-            df[metric] = df[metric].apply(lambda x: round(x / divisor, sig - int(floor(log10(abs(x / divisor)))) - 1))
+            df[arg].replace(to_replace=0, value=1, inplace=True)
+            df[arg] = df[arg].apply(lambda x: round(x / divisor, sig - int(floor(log10(abs(x / divisor)))) - 1))
     return df
 
 
@@ -97,23 +98,26 @@ def get_file_datetime(list_of_files):
     return file_datetime
 
 
-def read_input_files(path_inputs, input_file, col_list, idx_col=None):
+def read_input_files(path, input_file, usecols=None, index_col=None, skiprows=None, reset_index=False):
     """
 
-    :param path_inputs: The path to the input file(s).
+    :param path: The path to the input file(s).
     :param input_file: The name of the input file.
-    :param col_list: The columns to use (return).
+    :param usecols: The columns to use (return).
     :param idx_col: The column to use as the row index.
+    :param skiprows: The number of rows to skip.
     :return: A DataFrame of the desired data from the input file.
     """
     try:
-        pd.read_csv(path_inputs / f'{input_file}', usecols=col_list, index_col=idx_col)
+        pd.read_csv(path / f'{input_file}', usecols=usecols, index_col=index_col, skiprows=skiprows, error_bad_lines=False)
         print(f'File {input_file}.......FOUND.')
-        df_return = pd.read_csv(path_inputs / f'{input_file}', usecols=col_list, index_col=idx_col)
+        if reset_index:
+            return pd.read_csv(path / f'{input_file}', usecols=usecols, index_col=index_col, skiprows=skiprows, error_bad_lines=False).dropna().reset_index(drop=True)
+        else:
+            return pd.read_csv(path / f'{input_file}', usecols=usecols, index_col=index_col, skiprows=skiprows, error_bad_lines=False)
     except FileNotFoundError:
-        print(f'File {input_file}......NOT FOUND in {path_inputs} folder.')
+        print(f'File {input_file}......NOT FOUND in {path} folder.')
         sys.exit()
-    return df_return
 
 
 def get_common_metrics(df_left, df_right, ignore=None):

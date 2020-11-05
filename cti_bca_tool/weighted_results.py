@@ -80,8 +80,9 @@ class WeightedResult:
             weighted_results.insert(len(weighted_results.columns), f'{str(year)}_cents_per_mile', weighted_results[year] * 100)
         weighted_results.columns = weighted_results.columns.astype(str)
         weighted_results = pd.concat([weighted_results,
-                                      CalcDeltas(weighted_results, number_alts, [col for col in weighted_results.columns if '20' in col])
-                                     .calc_delta_and_new_alt_id()], ignore_index=True, axis=0)
+                                      CalcDeltas(weighted_results)
+                                     .calc_delta_and_new_alt_id(*[col for col in weighted_results.columns if '20' in col])],
+                                     ignore_index=True, axis=0)
         weighted_results = pd.pivot_table(weighted_results,
                                           values=[col for col in weighted_results.columns if 'cents_per_mile' in col],
                                           index=['fuelTypeID', 'regClassID', 'sourceTypeID', 'sourceType', 'optionID'])

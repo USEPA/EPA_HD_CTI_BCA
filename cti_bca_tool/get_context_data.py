@@ -19,41 +19,43 @@ class GetFuelPrices:
     :param id_col: The column name where id data can be found.
     :param fuels: Descriptor for gasoline and diesel fuels (e.g., Motor Gasoline, Diesel).
     """
-    def __init__(self, path_project, aeo_case, id_col, *fuels):
-        self.path_project = path_project
+    def __init__(self, input_file, aeo_case, id_col, *fuels):
+        # self.path_project = path_project
+        self.input_file = input_file
         self.aeo_case = aeo_case
-        self.aeo = path_project / 'aeo'
+        # self.aeo = path_project / 'aeo'
         self.id_col = id_col
         self.fuels = fuels
         self.fuel_price_metrics = ['gasoline_retail', 'gasoline_pretax', 'diesel_retail', 'diesel_pretax']
-        self.fuel_prices_file = self.aeo / f'Components_of_Selected_Petroleum_Product_Prices.csv'
+        # self.fuel_prices_file = self.aeo / f'Components_of_Selected_Petroleum_Product_Prices.csv'
         self.fuel_dict = {'Motor Gasoline': 1,
                           'Diesel': 2,
                           'CNG': 3,
                           }
 
     def __repr__(self):
-        return f'\nGetFuelPrices: AEO {self.aeo_case}'
+        return f'\n{self.__class__.__name__}: AEO {self.aeo_case}'
 
-    def read_aeo_file(self):
-        """
-
-        :return: A DataFrame of the fuel prices in the csv file, if found, contained in the aeo folder.
-        """
-        try:
-            pd.read_csv(self.fuel_prices_file, skiprows=4)
-            print(f'Fuel prices file for AEO {self.aeo_case}.......FOUND.')
-            return pd.read_csv(self.fuel_prices_file, skiprows=4, error_bad_lines=False).dropna().reset_index(drop=True)
-        except FileNotFoundError:
-            print(f'Fuel prices file for AEO {self.aeo_case}......NOT FOUND in {self.aeo} folder.')
-            sys.exit()
+    # def read_aeo_file(self):
+    #     """
+    #
+    #     :return: A DataFrame of the fuel prices in the csv file, if found, contained in the aeo folder.
+    #     """
+    #     try:
+    #         pd.read_csv(self.fuel_prices_file, skiprows=4)
+    #         print(f'Fuel prices file for AEO {self.aeo_case}.......FOUND.')
+    #         return pd.read_csv(self.fuel_prices_file, skiprows=4, error_bad_lines=False).dropna().reset_index(drop=True)
+    #     except FileNotFoundError:
+    #         print(f'Fuel prices file for AEO {self.aeo_case}......NOT FOUND in {self.aeo} folder.')
+    #         sys.exit()
 
     def aeo_dollars(self):
         """
 
         :return: The dollar basis of the AEO report.
         """
-        return int(self.read_aeo_file().at[0, 'units'][0: 4])
+        return int(self.input_file.at[0, 'units'][0: 4])
+        # return int(self.read_aeo_file().at[0, 'units'][0: 4])
 
     def select_aeo_table_rows(self, df_source, row):
         """
@@ -95,17 +97,17 @@ class GetFuelPrices:
 
         :return: A DataFrame of fuel prices for the given AEO case.
         """
-        prices_full = self.read_aeo_file()
+        # prices_full = self.read_aeo_file()
         fuel_prices_dict = dict()
         fuel_prices_df = pd.DataFrame()
         for fuel in self.fuels:
-            retail_prices = self.select_aeo_table_rows(prices_full, self.row_dict(fuel)['retail_prices'])
+            retail_prices = self.select_aeo_table_rows(self.input_file, self.row_dict(fuel)['retail_prices'])
             fuel_prices_dict[fuel] = self.melt_df(retail_prices, 'retail_fuel_price')
 
-            distribution_costs = self.select_aeo_table_rows(prices_full, self.row_dict(fuel)['distribution_costs'])
+            distribution_costs = self.select_aeo_table_rows(self.input_file, self.row_dict(fuel)['distribution_costs'])
             fuel_prices_dict[fuel] = fuel_prices_dict[fuel].merge(self.melt_df(distribution_costs, 'distribution_costs'), on='yearID')
 
-            wholesale_price = self.select_aeo_table_rows(prices_full, self.row_dict(fuel)['wholesale_price'])
+            wholesale_price = self.select_aeo_table_rows(self.input_file, self.row_dict(fuel)['wholesale_price'])
             fuel_prices_dict[fuel] = fuel_prices_dict[fuel].merge(self.melt_df(wholesale_price, 'wholesale_price'), on='yearID')
 
             # tax_allowance = self.select_aeo_table_rows(prices_full, self.row_dict(fuel)['tax_allowance'])
@@ -133,36 +135,37 @@ class GetDeflators:
     :param id_value: The value within id_col to return.
     :param skiprows: The number of rows to skip when reading the file.
     """
-    def __init__(self, path_project, id_col, id_value, skiprows=4):
-        self.path_project = path_project
+    def __init__(self, input_file, id_col, id_value):
+        # self.path_project = path_project
+        self.input_file = input_file
         self.id_col = id_col
         self.id_value = id_value
-        self.bea = path_project / 'bea'
-        self.skiprows = skiprows
-        self.deflators_file = self.bea / 'Table_1.1.9_ImplicitPriceDeflators.csv'
+        # self.bea = path_project / 'bea'
+        # self.skiprows = skiprows
+        # self.deflators_file = self.bea / 'Table_1.1.9_ImplicitPriceDeflators.csv'
 
     def __repr__(self):
-        return f'GetDeflators: {self.id_value}'
+        return f'{self.__class__.__name__}: {self.id_value}'
 
-    def read_table(self):
-        """
-
-        :return: A DataFrame of the raw GDP deflators file.
-        """
-        try:
-            pd.read_csv(self.deflators_file, skiprows=4)
-            print(f'BEA GDP deflators file.......FOUND.')
-            return pd.read_csv(self.deflators_file, skiprows=self.skiprows, error_bad_lines=False).dropna()
-        except FileNotFoundError:
-            print(f'BEA GDP deflators file......NOT FOUND in {self.bea} folder.')
-            sys.exit()
+    # def read_table(self):
+    #     """
+    #
+    #     :return: A DataFrame of the raw GDP deflators file.
+    #     """
+    #     try:
+    #         pd.read_csv(self.deflators_file, skiprows=4)
+    #         print(f'BEA GDP deflators file.......FOUND.')
+    #         return pd.read_csv(self.deflators_file, skiprows=self.skiprows, error_bad_lines=False).dropna()
+    #     except FileNotFoundError:
+    #         print(f'BEA GDP deflators file......NOT FOUND in {self.bea} folder.')
+    #         sys.exit()
 
     def deflator_df(self):
         """
 
         :return: A DataFrame consisting of only the data for the given AEO case; the name of the AEO case is also removed from the 'full name' column entries.
         """
-        df_return = pd.DataFrame(self.read_table())
+        df_return = pd.DataFrame(self.input_file)
         df_return = pd.DataFrame(df_return.loc[df_return[self.id_col].str.endswith(f'{self.id_value}'), :]).reset_index(drop=True)
         df_return.replace({self.id_col: f': {self.id_value}'}, {self.id_col: ''}, regex=True, inplace=True)
         return df_return
