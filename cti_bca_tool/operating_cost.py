@@ -211,7 +211,7 @@ class FuelCost:
     def calc_fuel_costs(self):
         """
 
-        :return: A DataFrame of fuel cost metrics for all vehicles.
+        :return: A DataFrame of fuel cost metrics (Retail/Pretax Total Costs; Retail Avg/Mile & Avg/Veh) all vehicles.
         """
         fuel_cost_dict = dict()
         fuel_cost_df = pd.DataFrame()

@@ -8,7 +8,7 @@ local machine if you intend to suggest changes to the code via a pull request.
 
 Setting up a Python environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Once you have the repo locally and have set up your python environment, you can install the packages needed to use the repo by typing the command (in a terminal window within your python environment):
+Once you have the tool installed locally and have set up your python environment, you can install the packages needed to use the tool by typing the command (in a terminal window within your python environment):
 
 ::
 
@@ -28,7 +28,7 @@ With the requirements installed, you should be able to run the tool by typing th
 
     python -m cti_bca_tool
 
-This should create an outputs folder in your project folder (i.e., where you have placed the repo), unless one has already been created, where the results of the run can be found.
+This should create an outputs folder in your project folder (i.e., where you have placed the tool and repository), unless one has already been created, where the results of the run can be found.
 
 Note that the tool was written in a Python 3.8 environment.
 

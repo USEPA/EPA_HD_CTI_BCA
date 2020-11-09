@@ -36,27 +36,11 @@ class IndirectCost:
         df = pd.DataFrame(self.markups.loc[self.markups['Scaler'] == 'Y', 'Markup_Factor'])
         return [item for item in df['Markup_Factor'].unique() if 'Indirect' not in item]
 
-    def merge_markups_and_directcosts(self, markups, *args):
-        """
-
-        :param markups: A DataFrame of indirect cost markup factors.
-        :param args: Metrics for merging.
-        :return: A DataFrame of markup factors merged on the identifier columns of the direct costs DataFrame.
-        """
-        merge_metrics = [arg for arg in args]
-        for markup_factor in self.markup_factors():
-            temp = pd.DataFrame(markups.loc[markups['Markup_Factor'] == markup_factor])
-            self.directcosts_df = self.directcosts_df.merge(temp, on=merge_metrics, how='left')
-            self.directcosts_df.rename(columns={'Value': markup_factor}, inplace=True)
-            self.directcosts_df.drop(labels='Markup_Factor', axis=1, inplace=True)
-        return self.directcosts_df
-
     def get_markups(self, fueltype_markups):
         """
 
-        :param markups: A DataFrame of indirect cost markup factors.
-        :param args: Metrics for merging.
-        :return: A DataFrame of markup factors merged on the identifier columns of the direct costs DataFrame.
+        :param fueltype_markups: A DataFrame of indirect cost markup factors for a specific fuel.
+        :return: The passed DataFrame with markup factors inserted.
         """
         for markup_factor in self.markup_factors():
             temp = pd.DataFrame(fueltype_markups.loc[fueltype_markups['Markup_Factor'] == markup_factor])
@@ -67,8 +51,8 @@ class IndirectCost:
     def merge_markup_scalers(self, alt_rc_ft_scalers, *args):
         """
 
-        :param alt_rc_ft_scalers:
-        :param args:
+        :param alt_rc_ft_scalers: A DataFrame of markup scalars for the given optionID_regclass_fueltype vehicle.
+        :param args: The metrics on which to merge the scalars into the passed direct cost DataFrame.
         :return: The passed DataFrame into which the markup scaling factors (for those markups with scaling factors) have been merged.
         """
         merge_metrics = [arg for arg in args]
@@ -141,7 +125,7 @@ class IndirectCostScalers:
     def calc_scalers_absolute(self):
         """
 
-        :return: DatFrame of scaling factors.
+        :return: DatFrame of scaling factors that scale on absolute terms.
         """
         scaling_inputs = pd.DataFrame(self.input_df.loc[self.input_df['period'] == self.period])
         return_df = scaling_inputs.copy()
@@ -155,7 +139,7 @@ class IndirectCostScalers:
     def calc_scalers_relative(self):
         """
 
-        :return: DatFrame of scaling factors.
+        :return: DatFrame of scaling factors that scale relative to the prior year.
         """
         scaling_inputs = pd.DataFrame(self.input_df.loc[self.input_df['period'] == self.period])
         return_df = scaling_inputs.copy()

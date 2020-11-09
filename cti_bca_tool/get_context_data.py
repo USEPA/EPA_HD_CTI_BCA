@@ -14,20 +14,16 @@ class GetFuelPrices:
 
     The GetFuelPrices class grabs the appropriate fuel prices from the aeo folder, cleans up some naming and creates a fuel_prices DataFrame for use in operating costs.
 
-    :param path_project: The path of the project (the 'working directory') and the parent of the aeo directory.
+    :param input_file: The file containing fuel price data (this class assumes a file structured like those published by EIA in the Annual Energy Outlook).
     :param aeo_case: From the BCA inputs sheet - the AEO fuel case to use (a CSV of fuel prices must exist in the aeo directory).
     :param id_col: The column name where id data can be found.
     :param fuels: Descriptor for gasoline and diesel fuels (e.g., Motor Gasoline, Diesel).
     """
     def __init__(self, input_file, aeo_case, id_col, *fuels):
-        # self.path_project = path_project
         self.input_file = input_file
         self.aeo_case = aeo_case
-        # self.aeo = path_project / 'aeo'
         self.id_col = id_col
         self.fuels = fuels
-        self.fuel_price_metrics = ['gasoline_retail', 'gasoline_pretax', 'diesel_retail', 'diesel_pretax']
-        # self.fuel_prices_file = self.aeo / f'Components_of_Selected_Petroleum_Product_Prices.csv'
         self.fuel_dict = {'Motor Gasoline': 1,
                           'Diesel': 2,
                           'CNG': 3,
@@ -36,26 +32,12 @@ class GetFuelPrices:
     def __repr__(self):
         return f'\n{self.__class__.__name__}: AEO {self.aeo_case}'
 
-    # def read_aeo_file(self):
-    #     """
-    #
-    #     :return: A DataFrame of the fuel prices in the csv file, if found, contained in the aeo folder.
-    #     """
-    #     try:
-    #         pd.read_csv(self.fuel_prices_file, skiprows=4)
-    #         print(f'Fuel prices file for AEO {self.aeo_case}.......FOUND.')
-    #         return pd.read_csv(self.fuel_prices_file, skiprows=4, error_bad_lines=False).dropna().reset_index(drop=True)
-    #     except FileNotFoundError:
-    #         print(f'Fuel prices file for AEO {self.aeo_case}......NOT FOUND in {self.aeo} folder.')
-    #         sys.exit()
-
     def aeo_dollars(self):
         """
 
         :return: The dollar basis of the AEO report.
         """
         return int(self.input_file.at[0, 'units'][0: 4])
-        # return int(self.read_aeo_file().at[0, 'units'][0: 4])
 
     def select_aeo_table_rows(self, df_source, row):
         """
@@ -130,35 +112,17 @@ class GetDeflators:
 
     The GetDeflators class returns the GDP Implicit Price Deflators for use in adjusting monetized values to a consistent cost basis.
 
-    :param path_project: The path of the project and the parent of the aeo directory.
+    :param input_file: The file containing price deflator data (this class assumes a file structured like those published by the Bureau of Economic Analysis).
     :param id_col: The column name where id data can be found.
     :param id_value: The value within id_col to return.
-    :param skiprows: The number of rows to skip when reading the file.
     """
     def __init__(self, input_file, id_col, id_value):
-        # self.path_project = path_project
         self.input_file = input_file
         self.id_col = id_col
         self.id_value = id_value
-        # self.bea = path_project / 'bea'
-        # self.skiprows = skiprows
-        # self.deflators_file = self.bea / 'Table_1.1.9_ImplicitPriceDeflators.csv'
 
     def __repr__(self):
         return f'{self.__class__.__name__}: {self.id_value}'
-
-    # def read_table(self):
-    #     """
-    #
-    #     :return: A DataFrame of the raw GDP deflators file.
-    #     """
-    #     try:
-    #         pd.read_csv(self.deflators_file, skiprows=4)
-    #         print(f'BEA GDP deflators file.......FOUND.')
-    #         return pd.read_csv(self.deflators_file, skiprows=self.skiprows, error_bad_lines=False).dropna()
-    #     except FileNotFoundError:
-    #         print(f'BEA GDP deflators file......NOT FOUND in {self.bea} folder.')
-    #         sys.exit()
 
     def deflator_df(self):
         """
@@ -207,25 +171,35 @@ if __name__ == '__main__':
     This tests the context data creation if run as a script (python -m cti_bca_tool.get_context_data).
     """
     from pathlib import Path
+    import cti_bca_tool.general_functions as gen_fxns
 
     path_project = Path.cwd()
     path_dev = path_project / 'dev'
     path_dev.mkdir(exist_ok=True)
+    path_inputs = path_project / 'inputs'
+    path_context = path_project / 'context_inputs'
+
+    input_files_df = gen_fxns.read_input_files(path_inputs, 'Input_Files.csv', usecols=lambda x: 'Notes' not in x, index_col=0)
+    input_files_dict = input_files_df.to_dict('index')    
+    context_files_df = gen_fxns.read_input_files(path_inputs, 'Context_Files.csv', usecols=lambda x: 'Notes' not in x, index_col=0)
+    context_files_dict = context_files_df.to_dict('index')
+    fuel_prices_file = gen_fxns.read_input_files(path_context, context_files_dict['fuel_prices_file']['UserEntry.csv'], skiprows=4, reset_index=True)
+    deflators_file = gen_fxns.read_input_files(path_context, context_files_dict['deflators_file']['UserEntry.csv'], skiprows=4, reset_index=True)
 
     aeo_case_1 = 'Reference case'
-    fuel_prices_obj = GetFuelPrices(path_project, aeo_case_1, 'full name', 'Motor Gasoline', 'Diesel')
+    fuel_prices_obj = GetFuelPrices(fuel_prices_file, aeo_case_1, 'full name', 'Motor Gasoline', 'Diesel')
     fuel_prices = fuel_prices_obj.get_prices()
     fuel_prices.to_csv(path_project / f'dev/fuel_prices_{aeo_case_1}.csv', index=False)
 
     aeo_case_2 = 'High oil price'
-    fuel_prices_obj = GetFuelPrices(path_project, aeo_case_2, 'full name', 'Motor Gasoline', 'Diesel')
+    fuel_prices_obj = GetFuelPrices(fuel_prices_file, aeo_case_2, 'full name', 'Motor Gasoline', 'Diesel')
     fuel_prices = fuel_prices_obj.get_prices()
     fuel_prices.to_csv(path_project / f'dev/fuel_prices_{aeo_case_2}.csv', index=False)
 
-    deflators_obj = GetDeflators(path_project, 'Unnamed: 1', 'Gross domestic product')
-    dollar_basis = 2017
-    deflators = deflators_obj.calc_adjustment_factors(dollar_basis)
+    deflators_obj = GetDeflators(deflators_file, 'Unnamed: 1', 'Gross domestic product')
+    dollar_basis_analysis = fuel_prices_obj.aeo_dollars()
+    deflators = deflators_obj.calc_adjustment_factors(dollar_basis_analysis)
     deflators = pd.DataFrame(deflators)
-    deflators.to_csv(path_project / f'dev/gdp_deflators.csv', index=False)
+    deflators.to_csv(path_project / f'dev/gdp_deflators.csv', index=True)
 
-    print(f'\nfuel_prices_{aeo_case_1}.csv, fuel_prices_{aeo_case_2}.csv & gdp_deflators.csv (dollar basis = {dollar_basis}) have been saved to the {path_dev} folder.')
+    print(f'\nfuel_prices_{aeo_case_1}.csv, fuel_prices_{aeo_case_2}.csv & gdp_deflators.csv (dollar basis = {dollar_basis_analysis}) have been saved to the {path_dev} folder.')

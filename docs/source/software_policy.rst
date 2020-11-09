@@ -3,7 +3,7 @@ Distribution and Support Policy for EPA Software
 
 Copyright Status
 ^^^^^^^^^^^^^^^^
-The United States (U.S.) Government retains a non^exclusive, royalty^free license to publish or reproduce these software products and associated documents, or allow others to do so, for U.S. Government purposes. These software products and documents may be freely distributed and used for non^commercial, scientific, and/or educational purposes. Commercial use of these software products and documents may be protected under the U.S. and Foreign Copyright Laws. Individual documents on this server may have different copyright conditions, and that will be noted in those documents.
+The United States (U.S.) Government retains a non-exclusive, royalty-free license to publish or reproduce these software products and associated documents, or allow others to do so, for U.S. Government purposes. These software products and documents may be freely distributed and used for non-commercial, scientific, and/or educational purposes. Commercial use of these software products and documents may be protected under the U.S. and Foreign Copyright Laws. Individual documents on this server may have different copyright conditions, and that will be noted in those documents.
 
 Disclaimer of Liability
 ^^^^^^^^^^^^^^^^^^^^^^^

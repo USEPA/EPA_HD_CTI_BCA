@@ -17,14 +17,6 @@ in an alternative case than those in the baseline case would result in positive 
 relative to those in the baseline case would result in negative delta costs, or decreased costs. A decrease in emission costs represents an increase in emission benefits.
 
 
-Sensitivites
-^^^^^^^^^^^^
-
-The BCA_General_Inputs file contains several inputs that can be adjusted as indicated within the file. Input values in other files can also be adjusted. It is suggested
-that the structure of the input files not be changed and that the headers and names within the input files not be changed unless the user is willing to modify the Python
-code in the event that changes result in errors.
-
-
 Calculations and Equations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -236,3 +228,11 @@ where,
 - *PV* = present value of costs or benefits or net of costs and benefits
 - *rate* = discount rate
 - *n* = the number of periods over which to annualize the present value
+
+
+Sensitivites
+^^^^^^^^^^^^
+
+The BCA_General_Inputs file contains several inputs that can be adjusted as indicated within the file. Input values in other files can also be adjusted. It is suggested
+that the structure of the input files not be changed and that the headers and names within the input files not be changed unless the user is willing to modify the Python
+code in the event that changes result in errors.

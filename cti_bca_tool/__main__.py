@@ -6,13 +6,15 @@ from datetime import datetime
 import pandas as pd
 import time
 
-# TODO something is not working correcly in the introduction.rst when generating a PDF via readthedocs
+
 class SetInputs:
     """
     The SetInputs class establishes the input files to use and other input settings set in the BCA_Inputs file and needed within the tool.
     """
     def __init__(self):
-        self.path_project = Path.cwd()  # the 'Working directory'
+        self.path_code = Path(__file__).parent
+        # self.path_project = Path.cwd()  # the 'Working directory'
+        self.path_project = Path(self.path_code).parent
         self.path_inputs = self.path_project / 'inputs'
         self.path_context = self.path_project / 'context_inputs'
         self.path_outputs = self.path_project / 'outputs'

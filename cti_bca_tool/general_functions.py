@@ -59,6 +59,7 @@ def round_metrics(df, metrics, round_by):
     """
 
     Note - this function is not being used.
+
     :param df: DataFrame containing data to be rounded.
     :param metrics: List of metrics within the passed DataFrame for which rounding is requested.
     :param round_by: A value entered via the BCA_Inputs sheet contained in the inputs folder that sets the level of rounding.
