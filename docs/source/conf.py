@@ -47,7 +47,28 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'default'
+html_theme = 'classic'
+
+# EPA Palette
+html_theme_options = {
+    "stickysidebar": "true",
+    "sidebarwidth": "30em",
+    "sidebarbgcolor": "#0071BC",
+    "sidebartextcolor": "#FFFFFF",
+    "sidebarlinkcolor": "#FFFFFF",
+    "relbarbgcolor": "#205493",
+    "textcolor": "#205493",
+    "linkcolor": "#205493",
+    "visitedlinkcolor": "#205493",
+    "headtextcolor": "#205493",
+    "headlinkcolor": "#205493",
+    "footerbgcolor": "#112E51"
+}
+
+html_sidebars = {
+   '**': ['globaltoc.html', 'sourcelink.html', 'searchbox.html'],
+   'using/windows': ['windowssidebar.html', 'searchbox.html'],
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
