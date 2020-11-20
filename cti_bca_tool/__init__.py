@@ -1,3 +1,3 @@
 # Version number of usepa-cti-bca tool
 
-__version__ = "0.24.9"
+__version__ = "0.24.10"
