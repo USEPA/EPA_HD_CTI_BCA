@@ -144,7 +144,7 @@ class IndirectCostScalers:
         scaling_inputs = pd.DataFrame(self.input_df.loc[self.input_df['period'] == self.period])
         return_df = scaling_inputs.copy()
         cols = [col for col in return_df.columns if '20' in col]
-        for col_number in range(1, len(cols)):
+        for col_number, col in enumerate(cols):
             return_df[cols[col_number]] = return_df[cols[col_number]] / scaling_inputs[cols[col_number - 1]]
         return_df[cols[0]] = 1.0
         return_df.insert(1, 'Markup_Factor', self.identifier)

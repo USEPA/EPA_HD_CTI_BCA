@@ -171,8 +171,7 @@ def main(settings):
     for veh in alt_rc_ft_vehicles:
         regclass_costs_dict[veh] = regclass_costs_dict[veh, cost_steps[0]].copy()
         regclass_costs_dict[veh][f'DirectCost_AvgPerVeh_{cost_steps[0]}'].fillna(0, inplace=True)
-        for step_number in range(1, len(cost_steps)):  # this brings in costs from subsequent steps
-            step = cost_steps[step_number]
+        for step_number, step in enumerate(cost_steps[1:]): #range(1, len(cost_steps)):  # this brings in costs from subsequent steps
             regclass_costs_dict[veh] = regclass_costs_dict[veh]\
                 .merge(regclass_costs_dict[veh, step],
                        on=gen_fxns.get_common_metrics(regclass_costs_dict[veh], regclass_costs_dict[veh, step], ignore=['static_id']),

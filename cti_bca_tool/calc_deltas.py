@@ -28,7 +28,7 @@ class CalcDeltas:
         alternative[0].reset_index(drop=True, inplace=True)
         alt0_name = alternative[0].at[0, 'OptionName']
         alts = pd.Series(self.data['optionID'].unique())
-        for alt in range(1, len(alts)):
+        for idx, alt in enumerate(alts[1:]):
             alternative[alt] = self.data.loc[self.data['optionID'] == alt, :]
             alternative[alt].reset_index(drop=True, inplace=True)
             alt_name = alternative[alt].at[0, 'OptionName']
@@ -36,7 +36,7 @@ class CalcDeltas:
             alternative[alt_delta] = pd.DataFrame(alternative[alt].copy())
             alternative[alt_delta]['optionID'] = alt_delta
             alternative[alt_delta]['OptionName'] = str(f'{alt_name}_minus_{alt0_name}')
-        for alt in range(1, len(alts)):
+        for idx, alt in enumerate(alts[1:]):
             alt_delta = int(alt * 10)
             for arg in args:
                 alternative[alt_delta][arg] = alternative[alt][arg] - alternative[0][arg]
@@ -54,7 +54,7 @@ class CalcDeltas:
         alternative[0] = pd.DataFrame(self.data.loc[self.data['optionID'] == 0, :])
         alternative[0].reset_index(drop=True, inplace=True)
         alts = pd.Series(self.data['optionID'].unique())
-        for alt in range(1, len(alts)):
+        for idx, alt in enumerate(alts[1:]):
             alternative[alt] = pd.DataFrame(self.data.loc[self.data['optionID'] == alt, :])
             alternative[alt].reset_index(drop=True, inplace=True)
             for arg in args:

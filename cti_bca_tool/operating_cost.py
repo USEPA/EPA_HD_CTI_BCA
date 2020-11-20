@@ -51,10 +51,9 @@ class DEFCost:
         :return: The inventory DataFrame into which the DEF doserate has been inserted.
         """
         self.inventory_df.insert(len(self.inventory_df.columns), 'DEF_PercentOfFuel_Baseline', 0)
-        for step_number in range(len(self.cost_steps)):
-            step = int(self.cost_steps[step_number])
-            self.inventory_df.loc[self.inventory_df['modelYearID'] >= step, 'DEF_PercentOfFuel_Baseline'] \
-                = self.def_doserate_scaling_factor(step)
+        for step_number, step in enumerate(self.cost_steps):
+            self.inventory_df.loc[self.inventory_df['modelYearID'] >= int(step), 'DEF_PercentOfFuel_Baseline'] \
+                = self.def_doserate_scaling_factor(int(step))
         return self.inventory_df
 
     def calc_gallons_def(self, gallons_df):
@@ -64,8 +63,6 @@ class DEFCost:
         :return: The inventory DataFrame into which the gallons of DEF consumed has been inserted.
         """
         self.inventory_df = self.insert_def_doserate()
-        # self.inventory_df = get_reductions(self.inventory_df, 'NOx_onroad')
-        # self.inventory_df = self.get_reductions('NOx_onroad')
         self.inventory_df.insert(len(self.inventory_df.columns), 'Gallons_DEF', 0)
         self.inventory_df['Gallons_DEF'] = gallons_df['Gallons'] * self.inventory_df['DEF_PercentOfFuel_Baseline'] \
                                            + self.inventory_df['NOx_onroad_Reductions'] * self.def_gallons_per_ton_nox_reduction
