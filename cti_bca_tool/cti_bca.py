@@ -570,7 +570,7 @@ def main(settings):
     path_of_run_results_folder.mkdir(exist_ok=False)
     path_of_modified_inputs_folder = path_of_run_folder.joinpath('modified_inputs')
     path_of_modified_inputs_folder.mkdir(exist_ok=False)
-
+# TODO the techcost_per_veh table is not working, where upstream has this gone wrong - maybe eliminate these summary files?
     # now build some high level summary tables for copy/paste into slides/documents/etc. # TODO rewrite this to make use of pd.pivot_table()?
     techcost_per_veh_cols = ['DiscountRate', 'yearID', 'regclass', 'fueltype', 'OptionName']
     result_cols = ['DirectCost_AvgPerVeh', 'WarrantyCost_AvgPerVeh', 'RnDCost_AvgPerVeh', 'OtherCost_AvgPerVeh', 'ProfitCost_AvgPerVeh', 'TechCost_AvgPerVeh']

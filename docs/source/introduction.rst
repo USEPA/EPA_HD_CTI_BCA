@@ -31,7 +31,7 @@ The list of necessary input files contained in the "inputs" folder is:
     - ORVR_FuelChangeInputs.csv which provides the fuel consumption impacts expected from adding onboard refueling vapor recovery systems to HD gasoline vehicles.
     - DEF_DoseRateInputs.csv which provides the diesel exhaust fluid (DEF) dosing rates expected in the baseline scenario.
     - DEF_Prices.csv which provides DEFs prices by calendar year.
-    - CriteriaEmissionCost_Inputs.csv which provides the cost per ton of criteria emissions in the inventory.
+    - CriteriaEmissionCost_Inputs.csv which provides the cost per ton of criteria emissions in the inventory (not used for the NPRM analysis).
     - Repair_and_Maintenance_Curve_Inputs.csv which provides inputs used in estimating emission repair costs.
     - UsefulLife_Inputs.csv which provides useful life miles and ages under each alternative.
     - Warranty_Inputs.csv which provides warranty miles and ages under each alternative.
@@ -52,7 +52,6 @@ Output files always generated are:
     - bca_annual.xlsx which contains benefit and cost summaries for specific calendar years as specified in the BCA_General_Inputs file.
     - bca_annualized.xlsx which contains annualized benefit and cost summaries through specific calendar years as specified in the BCA_General_Inputs file.
     - bca_npv.xlsx which contains net present value benefit and cost summaries for specific calendar years as specified in the BCA_General_Inputs file.
-    - inventory_annual_IncludedModelYears.xlsx which contains annual inventory summaries for specific calendar years as specified in the BCA_General_Inputs file (for model years included in the analysis).
     - techcostAvgPerVeh.xlsx which contains average tech costs for specific model years as specified in the BCA_General_Inputs file.
     - ages.csv which contains the required, calculated and estimated warranty and useful life ages.
     - vmt_weighted_emission_repair_owner_cpm.csv which contains weighted cost per mile emission repair results by sourcetype/regclass/fueltype.
@@ -62,6 +61,7 @@ Output files always generated are:
 
 Optional output files are:
     - bca_all_calcs.csv which contains data for every calendar year (yearID) and vehicle age (ageID) by option/sourcetype/regclass/fueltype. Generation of this file is controlled via user interaction during runtime. It can be a very large file depending on the number of alternatives.
+    - inventory_annual_IncludedModelYears.xlsx which contains annual inventory summaries for specific calendar years as specified in the BCA_General_Inputs file (for model years included in the analysis).
 
 Optional output figures are:
     - the toggle generate_emissionrepair_cpm_figures will generate a figure showing the emission repair cost/mile results for each vehicle for the model years entered. Note that there are ~50 vehicles so entering 2 model years results in ~100 figures.
