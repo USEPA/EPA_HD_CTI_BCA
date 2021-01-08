@@ -395,56 +395,81 @@ def main(settings):
     # Now add an OptionName column so that output files provide that information
     Fleet(bca).insert_option_name(settings.options_dict, number_alts)
 
-    # now set a standard row header for use in grouping along with metrics to group
+    # # now set a standard row header for use in grouping along with metrics to group
     bca_metrics_to_sum = [col for col in bca.columns if 'TotalCost' in col or 'VPOP' in col or 'Gallons' in col
                           or 'PM25' in col or 'NOx' in col or 'Criteria' in col]
-    bca_metrics_to_avg = [col for col in bca.columns if 'AvgPerVeh' in col or 'AvgPerMile' in col]
     bca_metrics_to_cumsum = [col for col in bca.columns if 'TotalCost' in col or 'Criteria' in col]
 
-    # create a dict of lists for passing thru grouping methods
-    row_header_group = dict()
-    common_metrics = ['optionID', 'OptionName', 'DiscountRate']
-    row_header_group['yearID'] = common_metrics + ['yearID']
-    row_header_group['yearID_rc_ft'] = common_metrics + ['yearID', 'regClassID', 'fuelTypeID']
-    # groups = 2 # increment this consistent with row_headers created
+    # do some grouping by yearID
+    row_header = ['optionID', 'OptionName', 'DiscountRate', 'yearID']
+    row_header_cumsum = ['optionID', 'OptionName', 'DiscountRate']
+    bca_sum = GroupMetrics(bca, row_header).group_sum(bca_metrics_to_sum)
+    bca_summary = bca_sum.join(GroupMetrics(bca_sum, row_header_cumsum).group_cumsum(bca_metrics_to_cumsum))
+    bca_summary = DiscountValues(bca_summary, settings.discount_to_yearID, settings.costs_start, *bca_metrics_to_cumsum).annualize()
 
-    row_header_group_cumsum = dict()
-    row_header_group_cumsum['yearID'] = common_metrics
-    row_header_group_cumsum['yearID_rc_ft'] = common_metrics + ['regClassID', 'fuelTypeID']
-
-    # create some dicts to store the groupby.sum, groupby.cumsum and groupby.mean results
-    bca_sum = dict()
-    bca_mean = dict()
-    bca_summary = dict()
-    for group in ['yearID', 'yearID_rc_ft']:
-        # first a groupby.sum, then a groupby.cumsum on the groupby.sum which is joined into the groupby.sum, then a groupby.mean, then a merge into one
-        bca_sum[group] = GroupMetrics(bca, row_header_group[group]).group_sum(bca_metrics_to_sum)
-        bca_mean[group] = GroupMetrics(bca, row_header_group[group]).group_mean(bca_metrics_to_avg)
-        bca_summary[group] = bca_sum[group].merge(bca_mean[group], on=row_header_group[group])
-        bca_summary[group] = bca_summary[group].join(GroupMetrics(bca_summary[group], row_header_group_cumsum[group]).group_cumsum(bca_metrics_to_cumsum))
-
-    # now annualize the cumsum metrics
-    for group in ['yearID', 'yearID_rc_ft']:
-        bca_summary[group] = DiscountValues(bca_summary[group], settings.discount_to_yearID, settings.costs_start, *bca_metrics_to_cumsum).annualize()
-
-    # calc the deltas relative to alt0
-    bca_summary['yearID'].sort_values(by=['DiscountRate', 'optionID', 'yearID'], ascending=True, inplace=True, axis=0)
-    bca_summary['yearID_rc_ft'].sort_values(by=['DiscountRate', 'optionID', 'yearID', 'regClassID', 'fuelTypeID'], ascending=True, inplace=True, axis=0)
-    bca_metrics_for_deltas = bca_metrics_to_sum + bca_metrics_to_avg \
+    # calc deltas and concat to summary
+    bca_summary.sort_values(by=['DiscountRate', 'optionID', 'yearID'], ascending=True, inplace=True, axis=0)
+    bca_metrics_for_deltas = bca_metrics_to_sum \
                              + [metric + '_CumSum' for metric in bca_metrics_to_cumsum] \
                              + [metric + '_Annualized' for metric in bca_metrics_to_cumsum]
-    for group in ['yearID', 'yearID_rc_ft']:
-        bca_summary[group] = pd.concat([bca_summary[group], 
-                                        CalcDeltas(bca_summary[group]).calc_delta_and_new_alt_id(*bca_metrics_for_deltas)],
-                                       axis=0, ignore_index=True)
+    bca_summary = pd.concat([bca_summary, CalcDeltas(bca_summary).calc_delta_and_new_alt_id(*bca_metrics_for_deltas)],
+                            axis=0, ignore_index=True)
+
+    # # now set a standard row header for use in grouping along with metrics to group
+    # bca_metrics_to_sum = [col for col in bca.columns if 'TotalCost' in col or 'VPOP' in col or 'Gallons' in col
+    #                       or 'PM25' in col or 'NOx' in col or 'Criteria' in col]
+    # # bca_metrics_to_avg = [col for col in bca.columns if 'AvgPerVeh' in col or 'AvgPerMile' in col]
+    # bca_metrics_to_cumsum = [col for col in bca.columns if 'TotalCost' in col or 'Criteria' in col]
+
+    # create a dict of lists for passing thru grouping methods
+    # row_header_group = dict()
+    # common_metrics = ['optionID', 'OptionName', 'DiscountRate']
+    # row_header_group['yearID'] = common_metrics + ['yearID']
+    # row_header_group['yearID_rc_ft'] = common_metrics + ['yearID', 'regClassID', 'fuelTypeID']
+
+    # row_header_group_cumsum = dict()
+    # row_header_group_cumsum['yearID'] = common_metrics
+    # row_header_group_cumsum['yearID_rc_ft'] = common_metrics + ['regClassID', 'fuelTypeID']
+    #
+    # create some dicts to store the groupby.sum, groupby.cumsum and groupby.mean results
+    # bca_sum = dict()
+    # bca_mean = dict()
+    # bca_summary = dict()
+    # for group in ['yearID', 'yearID_rc_ft']:
+    #     # first a groupby.sum, then a groupby.cumsum on the groupby.sum which is joined into the groupby.sum, then a groupby.mean, then a merge into one
+    #     bca_sum[group] = GroupMetrics(bca, row_header_group[group]).group_sum(bca_metrics_to_sum)
+    #     # bca_mean[group] = GroupMetrics(bca, row_header_group[group]).group_mean(bca_metrics_to_avg)
+    #     # bca_summary[group] = bca_sum[group].merge(bca_mean[group], on=row_header_group[group])
+    #     bca_summary[group] = bca_summary[group].join(GroupMetrics(bca_summary[group], row_header_group_cumsum[group]).group_cumsum(bca_metrics_to_cumsum))
+
+    # # now annualize the cumsum metrics
+    # for group in ['yearID', 'yearID_rc_ft']:
+    #     bca_summary[group] = DiscountValues(bca_summary[group], settings.discount_to_yearID, settings.costs_start, *bca_metrics_to_cumsum).annualize()
+    #
+    # calc the deltas relative to alt0
+    # bca_summary.sort_values(by=['DiscountRate', 'optionID', 'yearID'], ascending=True, inplace=True, axis=0)
+    # # bca_summary['yearID'].sort_values(by=['DiscountRate', 'optionID', 'yearID'], ascending=True, inplace=True, axis=0)
+    # # bca_summary['yearID_rc_ft'].sort_values(by=['DiscountRate', 'optionID', 'yearID', 'regClassID', 'fuelTypeID'], ascending=True, inplace=True, axis=0)
+    # # # bca_metrics_for_deltas = bca_metrics_to_sum + bca_metrics_to_avg \
+    # # #                          + [metric + '_CumSum' for metric in bca_metrics_to_cumsum] \
+    # # #                          + [metric + '_Annualized' for metric in bca_metrics_to_cumsum]
+    # bca_metrics_for_deltas = bca_metrics_to_sum \
+    #                          + [metric + '_CumSum' for metric in bca_metrics_to_cumsum] \
+    #                          + [metric + '_Annualized' for metric in bca_metrics_to_cumsum]
+    # bca_summary = pd.concat([bca_summary, CalcDeltas(bca_summary).calc_delta_and_new_alt_id(*bca_metrics_for_deltas)],
+    #                         axis=0, ignore_index=True)
+    # for group in ['yearID', 'yearID_rc_ft']:
+    #     bca_summary[group] = pd.concat([bca_summary[group],
+    #                                     CalcDeltas(bca_summary[group]).calc_delta_and_new_alt_id(*bca_metrics_for_deltas)],
+    #                                    axis=0, ignore_index=True)
 
     # add some identifier columns to the grouped output files
-    bca_summary['yearID_rc_ft'].insert(bca_summary['yearID_rc_ft'].columns.get_loc('regClassID') + 1,
-                                       'regclass',
-                                       pd.Series(regClassID[number] for number in bca_summary['yearID_rc_ft']['regClassID']))
-    bca_summary['yearID_rc_ft'].insert(bca_summary['yearID_rc_ft'].columns.get_loc('fuelTypeID') + 1,
-                                       'fueltype',
-                                       pd.Series(fuelTypeID[number] for number in bca_summary['yearID_rc_ft']['fuelTypeID']))
+    # bca_summary['yearID_rc_ft'].insert(bca_summary['yearID_rc_ft'].columns.get_loc('regClassID') + 1,
+    #                                    'regclass',
+    #                                    pd.Series(regClassID[number] for number in bca_summary['yearID_rc_ft']['regClassID']))
+    # bca_summary['yearID_rc_ft'].insert(bca_summary['yearID_rc_ft'].columns.get_loc('fuelTypeID') + 1,
+    #                                    'fueltype',
+    #                                    pd.Series(fuelTypeID[number] for number in bca_summary['yearID_rc_ft']['fuelTypeID']))
 
     # calc the deltas relative to alt0 for the bca DataFrame
     bca.sort_values(by=['DiscountRate', 'optionID', 'yearID', 'modelYearID', 'ageID', 'sourceTypeID', 'regClassID', 'fuelTypeID'], ascending=True, inplace=True, axis=0)
@@ -452,6 +477,14 @@ def main(settings):
                              or 'Warranty' in col or 'UsefulLife' in col or 'Gallons' in col or 'max' in col or 'slope' in col
                              or ('AvgPerVeh' in col and 'VMT' not in col) or 'THC' in col or 'PM' in col or 'NOx' in col]
     bca = pd.concat([bca, CalcDeltas(bca).calc_delta_and_new_alt_id(*bca_cols_for_deltas)], axis=0, ignore_index=True)
+
+    # add some identifier columns to the grouped output files
+    bca.insert(bca.columns.get_loc('regClassID') + 1,
+               'regclass',
+               pd.Series(regClassID[number] for number in bca['regClassID']))
+    bca.insert(bca.columns.get_loc('fuelTypeID') + 1,
+               'fueltype',
+               pd.Series(fuelTypeID[number] for number in bca['fuelTypeID']))
 
     # generate some document tables
     preamble_program_metrics = ['DirectCost_TotalCost', 'WarrantyCost_TotalCost', 'RnDCost_TotalCost', 'OtherCost_TotalCost', 'ProfitCost_TotalCost', 'TechCost_TotalCost',
@@ -570,50 +603,76 @@ def main(settings):
     path_of_run_results_folder.mkdir(exist_ok=False)
     path_of_modified_inputs_folder = path_of_run_folder.joinpath('modified_inputs')
     path_of_modified_inputs_folder.mkdir(exist_ok=False)
+    path_of_code_folder = path_of_run_folder.joinpath('code')
+    path_of_code_folder.mkdir(exist_ok=False)
 # TODO the techcost_per_veh table is not working, where upstream has this gone wrong - maybe eliminate these summary files?
-    # now build some high level summary tables for copy/paste into slides/documents/etc. # TODO rewrite this to make use of pd.pivot_table()?
-    techcost_per_veh_cols = ['DiscountRate', 'yearID', 'regclass', 'fueltype', 'OptionName']
-    result_cols = ['DirectCost_AvgPerVeh', 'WarrantyCost_AvgPerVeh', 'RnDCost_AvgPerVeh', 'OtherCost_AvgPerVeh', 'ProfitCost_AvgPerVeh', 'TechCost_AvgPerVeh']
-    techcost_per_veh_cols += result_cols
-    discount_rates = [0]
-    techcost_years = settings.techcost_summary_years
-    regclasses = ['LHD', 'LHD45', 'MHD67', 'HHD8', 'Urban Bus']
-    fueltypes = ['Diesel', 'Gasoline', 'CNG']
-    techcost_per_veh_file = pd.ExcelWriter(path_of_run_results_folder.joinpath('techcosts_AvgPerVeh.xlsx'))
-    DocTables(bca_summary['yearID_rc_ft']).techcost_per_veh_table(discount_rates, techcost_years, regclasses, fueltypes, techcost_per_veh_cols, techcost_per_veh_file)
-    techcost_per_veh_file.save()
+#     # now build some high level summary tables for copy/paste into slides/documents/etc. # TODO rewrite this to make use of pd.pivot_table()?
+#     techcost_per_veh_cols = ['DiscountRate', 'yearID', 'regclass', 'fueltype', 'OptionName']
+#     result_cols = ['DirectCost_AvgPerVeh', 'WarrantyCost_AvgPerVeh', 'RnDCost_AvgPerVeh', 'OtherCost_AvgPerVeh', 'ProfitCost_AvgPerVeh', 'TechCost_AvgPerVeh']
+#     techcost_per_veh_cols += result_cols
+#     discount_rates = [0]
+#     techcost_years = settings.techcost_summary_years
+#     regclasses = ['LHD', 'LHD45', 'MHD67', 'HHD8', 'Urban Bus']
+#     fueltypes = ['Diesel', 'Gasoline', 'CNG']
+#     techcost_per_veh_file = pd.ExcelWriter(path_of_run_results_folder.joinpath('techcosts_AvgPerVeh.xlsx'))
+#     DocTables(bca_summary['yearID_rc_ft']).techcost_per_veh_table(discount_rates, techcost_years, regclasses, fueltypes, techcost_per_veh_cols, techcost_per_veh_file)
+#     techcost_per_veh_file.save()
 
     bca_cols = ['OptionName', 'DiscountRate', 'TechCost_TotalCost', 'OperatingCost_BCA_TotalCost', 'TechAndOperatingCost_BCA_TotalCost']
     bca_years = settings.bca_summary_years
     bca_annual = pd.ExcelWriter(path_of_run_results_folder.joinpath('bca_annual.xlsx'))
     if settings.calc_pollution_effects == 'Y':
-        DocTables(bca_summary['yearID']).bca_yearID_tables('', 0, bca_years, 'billions', bca_cols, bca_annual,
+        DocTables(bca_summary).bca_yearID_tables('', 0, bca_years, 'billions', bca_cols, bca_annual,
                                                            f'CriteriaCost_low_{discrate_criteria_high}', f'CriteriaCost_high_{discrate_criteria_low}')
     else:
-        DocTables(bca_summary['yearID']).bca_yearID_tables('', 0, bca_years, 'billions', bca_cols, bca_annual)
+        DocTables(bca_summary).bca_yearID_tables('', 0, bca_years, 'billions', bca_cols, bca_annual)
     bca_annual.save()
+    # if settings.calc_pollution_effects == 'Y':
+    #     DocTables(bca_summary['yearID']).bca_yearID_tables('', 0, bca_years, 'billions', bca_cols, bca_annual,
+    #                                                        f'CriteriaCost_low_{discrate_criteria_high}', f'CriteriaCost_high_{discrate_criteria_low}')
+    # else:
+    #     DocTables(bca_summary['yearID']).bca_yearID_tables('', 0, bca_years, 'billions', bca_cols, bca_annual)
+    # bca_annual.save()
 
     bca_npv = pd.ExcelWriter(path_of_run_results_folder.joinpath('bca_npv.xlsx'))
     if settings.calc_pollution_effects == 'Y':
-        DocTables(bca_summary['yearID']).bca_yearID_tables('_CumSum', discrate_criteria_low, bca_years, 'billions', bca_cols, bca_npv,
+        DocTables(bca_summary).bca_yearID_tables('_CumSum', discrate_criteria_low, bca_years, 'billions', bca_cols, bca_npv,
                                                            f'CriteriaCost_low_{discrate_criteria_low}', f'CriteriaCost_high_{discrate_criteria_low}')
-        DocTables(bca_summary['yearID']).bca_yearID_tables('_CumSum', discrate_criteria_high, bca_years, 'billions', bca_cols, bca_npv,
+        DocTables(bca_summary).bca_yearID_tables('_CumSum', discrate_criteria_high, bca_years, 'billions', bca_cols, bca_npv,
                                                            f'CriteriaCost_low_{discrate_criteria_high}', f'CriteriaCost_high_{discrate_criteria_high}')
     else:
-        DocTables(bca_summary['yearID']).bca_yearID_tables('_CumSum', settings.discrate_social_low, bca_years, 'billions', bca_cols, bca_npv)
-        DocTables(bca_summary['yearID']).bca_yearID_tables('_CumSum', settings.discrate_social_high, bca_years, 'billions', bca_cols, bca_npv)
+        DocTables(bca_summary).bca_yearID_tables('_CumSum', settings.discrate_social_low, bca_years, 'billions', bca_cols, bca_npv)
+        DocTables(bca_summary).bca_yearID_tables('_CumSum', settings.discrate_social_high, bca_years, 'billions', bca_cols, bca_npv)
     bca_npv.save()
+    # if settings.calc_pollution_effects == 'Y':
+    #     DocTables(bca_summary['yearID']).bca_yearID_tables('_CumSum', discrate_criteria_low, bca_years, 'billions', bca_cols, bca_npv,
+    #                                                        f'CriteriaCost_low_{discrate_criteria_low}', f'CriteriaCost_high_{discrate_criteria_low}')
+    #     DocTables(bca_summary['yearID']).bca_yearID_tables('_CumSum', discrate_criteria_high, bca_years, 'billions', bca_cols, bca_npv,
+    #                                                        f'CriteriaCost_low_{discrate_criteria_high}', f'CriteriaCost_high_{discrate_criteria_high}')
+    # else:
+    #     DocTables(bca_summary['yearID']).bca_yearID_tables('_CumSum', settings.discrate_social_low, bca_years, 'billions', bca_cols, bca_npv)
+    #     DocTables(bca_summary['yearID']).bca_yearID_tables('_CumSum', settings.discrate_social_high, bca_years, 'billions', bca_cols, bca_npv)
+    # bca_npv.save()
 
     bca_annualized = pd.ExcelWriter(path_of_run_results_folder.joinpath('bca_annualized.xlsx'))
     if settings.calc_pollution_effects == 'Y':
-        DocTables(bca_summary['yearID']).bca_yearID_tables('_Annualized', discrate_criteria_low, bca_years, 'billions', bca_cols, bca_annualized,
+        DocTables(bca_summary).bca_yearID_tables('_Annualized', discrate_criteria_low, bca_years, 'billions', bca_cols, bca_annualized,
                                                            f'CriteriaCost_low_{discrate_criteria_low}', f'CriteriaCost_high_{discrate_criteria_low}')
-        DocTables(bca_summary['yearID']).bca_yearID_tables('_Annualized', discrate_criteria_high, bca_years, 'billions', bca_cols, bca_annualized,
+        DocTables(bca_summary).bca_yearID_tables('_Annualized', discrate_criteria_high, bca_years, 'billions', bca_cols, bca_annualized,
                                                            f'CriteriaCost_low_{discrate_criteria_high}', f'CriteriaCost_high_{discrate_criteria_high}')
     else:
-        DocTables(bca_summary['yearID']).bca_yearID_tables('_Annualized', settings.discrate_social_low, bca_years, 'billions', bca_cols, bca_annualized)
-        DocTables(bca_summary['yearID']).bca_yearID_tables('_Annualized', settings.discrate_social_high, bca_years, 'billions', bca_cols, bca_annualized)
+        DocTables(bca_summary).bca_yearID_tables('_Annualized', settings.discrate_social_low, bca_years, 'billions', bca_cols, bca_annualized)
+        DocTables(bca_summary).bca_yearID_tables('_Annualized', settings.discrate_social_high, bca_years, 'billions', bca_cols, bca_annualized)
     bca_annualized.save()
+    # if settings.calc_pollution_effects == 'Y':
+    #     DocTables(bca_summary['yearID']).bca_yearID_tables('_Annualized', discrate_criteria_low, bca_years, 'billions', bca_cols, bca_annualized,
+    #                                                        f'CriteriaCost_low_{discrate_criteria_low}', f'CriteriaCost_high_{discrate_criteria_low}')
+    #     DocTables(bca_summary['yearID']).bca_yearID_tables('_Annualized', discrate_criteria_high, bca_years, 'billions', bca_cols, bca_annualized,
+    #                                                        f'CriteriaCost_low_{discrate_criteria_high}', f'CriteriaCost_high_{discrate_criteria_high}')
+    # else:
+    #     DocTables(bca_summary['yearID']).bca_yearID_tables('_Annualized', settings.discrate_social_low, bca_years, 'billions', bca_cols, bca_annualized)
+    #     DocTables(bca_summary['yearID']).bca_yearID_tables('_Annualized', settings.discrate_social_high, bca_years, 'billions', bca_cols, bca_annualized)
+    # bca_annualized.save()
 
     # note that the inventory tables created below include MY2027+ only since emission_costs_sum is based on fleet_bca
     if settings.calc_pollution_effects == 'Y':
@@ -630,6 +689,8 @@ def main(settings):
         path_source = settings.path_inputs.joinpath(file)
         path_destination = path_of_run_inputs_folder.joinpath(file)
         shutil.copy2(path_source, path_destination) # copy2 maintains original timestamp metadata
+    for file in settings.files_in_path_code:
+        shutil.copy2(file, path_of_code_folder.joinpath(file.name))
     fuel_prices.to_csv(path_of_modified_inputs_folder.joinpath('fuel_prices_' + settings.aeo_case + '.csv'), index=False)
     settings.regclass_costs.to_csv(path_of_modified_inputs_folder.joinpath('regclass_costs.csv'), index=False)
     markup_scalers_reshaped.to_csv(path_of_modified_inputs_folder.joinpath('markup_scalers_reshaped.csv'), index=False)
@@ -644,7 +705,8 @@ def main(settings):
     weighted_repair_owner_cpm_df.to_csv(path_of_run_results_folder.joinpath('vmt_weighted_emission_repair_owner_cpm.csv'), index=True)
     weighted_def_cpm_df.to_csv(path_of_run_results_folder.joinpath('vmt_weighted_def_cpm.csv'), index=True)
     weighted_fuel_cpm_df.to_csv(path_of_run_results_folder.joinpath('vmt_weighted_fuel_cpm.csv'), index=True)
-    bca_summary['yearID'].to_csv(path_of_run_results_folder.joinpath('bca_by_yearID.csv'), index=False)
+    bca_summary.to_csv(path_of_run_results_folder.joinpath('bca_by_yearID.csv'), index=False)
+    # bca_summary['yearID'].to_csv(path_of_run_results_folder.joinpath('bca_by_yearID.csv'), index=False)
 
     document_tables_file = pd.ExcelWriter(path_of_run_results_folder.joinpath('preamble_ria_tables.xlsx'))
     for sheet_name in doc_table_dict:
@@ -678,13 +740,20 @@ def main(settings):
         path_figures.mkdir(exist_ok=True)
         alts = pd.Series(bca.loc[bca['optionID'] >= 10, 'optionID']).unique()
         for alt in alts:
-            CreateFigures(bca_summary['yearID'], settings.options_dict, path_figures).line_chart_args_by_option(0, alt, yearID_min, yearID_max,
-                                                                                                                'TechCost_TotalCost',
-                                                                                                                'EmissionRepairCost_Owner_TotalCost',
-                                                                                                                'DEFCost_TotalCost',
-                                                                                                                'FuelCost_Pretax_TotalCost',
-                                                                                                                'TechAndOperatingCost_BCA_TotalCost'
-                                                                                                                )
+            CreateFigures(bca_summary, settings.options_dict, path_figures).line_chart_args_by_option(0, alt, yearID_min, yearID_max,
+                                                                                                      'TechCost_TotalCost',
+                                                                                                      'EmissionRepairCost_Owner_TotalCost',
+                                                                                                      'DEFCost_TotalCost',
+                                                                                                      'FuelCost_Pretax_TotalCost',
+                                                                                                      'TechAndOperatingCost_BCA_TotalCost'
+                                                                                                      )
+            # CreateFigures(bca_summary['yearID'], settings.options_dict, path_figures).line_chart_args_by_option(0, alt, yearID_min, yearID_max,
+            #                                                                                                     'TechCost_TotalCost',
+            #                                                                                                     'EmissionRepairCost_Owner_TotalCost',
+            #                                                                                                     'DEFCost_TotalCost',
+            #                                                                                                     'FuelCost_Pretax_TotalCost',
+            #                                                                                                     'TechAndOperatingCost_BCA_TotalCost'
+            #                                                                                                     )
     if settings.generate_BCA_ArgByOptions_figures == 'Y':
         yearID_min = int(bca['yearID'].min())
         yearID_max = int(bca['yearID'].max())
@@ -698,7 +767,8 @@ def main(settings):
                 'TechAndOperatingCost_BCA_TotalCost'
                 ]
         for arg in args:
-            CreateFigures(bca_summary['yearID'], settings.options_dict, path_figures).line_chart_arg_by_options(0, alts, yearID_min, yearID_max, arg)
+            CreateFigures(bca_summary, settings.options_dict, path_figures).line_chart_arg_by_options(0, alts, yearID_min, yearID_max, arg)
+            # CreateFigures(bca_summary['yearID'], settings.options_dict, path_figures).line_chart_arg_by_options(0, alts, yearID_min, yearID_max, arg)
 
     if settings.create_all_files == 'y' or settings.create_all_files == 'Y' or settings.create_all_files == '':
         bca.to_csv(path_of_run_results_folder.joinpath('bca_all_calcs.csv'), index=False)

@@ -20,6 +20,9 @@ class SetInputs:
     path_context = path_project / 'context_inputs'
     path_outputs = path_project / 'outputs'
 
+    # create generator of files in path_code
+    files_in_path_code = (entry for entry in path_code.iterdir() if entry.is_file())
+
     # set run id and files to generate
     run_folder_identifier = input('Provide a run identifier for your output folder name (press return to use the default name)\n')
     run_folder_identifier = run_folder_identifier if run_folder_identifier != '' else 'BCA-Results'
