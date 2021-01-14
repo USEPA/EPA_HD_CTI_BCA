@@ -7,6 +7,8 @@ Contains the Fleet class.
 
 import pandas as pd
 
+adj_dict = dict()
+
 
 class Fleet:
     """
@@ -72,6 +74,7 @@ class Fleet:
         :param args: The metrics (arguments) to be adjusted.
         :return: The MOVES fleet adjusted to account for the adjustments needed in the analysis.
         """
+
         moves_df = self.fleet.copy()
         for index, row in moves_adjustments_df.iterrows():
             veh = row['alt_rc_ft']

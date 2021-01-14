@@ -39,24 +39,24 @@ def main(settings):
     start_time_calcs = time.time()
 
     # how many alternatives are there? But first, be sure that optionID is the header for optionID.
-    if 'Alternative' in settings.moves.columns.tolist():
-        settings.moves.rename(columns={'Alternative': 'optionID'}, inplace=True)
-    number_alts = len(settings.moves['optionID'].unique())
-
-    # get the fuel price inputs and usd basis for the analysis
-    fuel_prices_obj = GetFuelPrices(settings.fuel_prices_file, settings.aeo_case, 'full name', 'Motor Gasoline', 'Diesel')
-    print(fuel_prices_obj)
-    fuel_prices = fuel_prices_obj.get_prices()
-    dollar_basis_analysis = fuel_prices_obj.aeo_dollars()
-
-    # generate a dictionary of gdp deflators, calc adjustment values and apply adjustment values to cost inputs
-    deflators_obj = GetDeflators(settings.deflators_file, 'Unnamed: 1', 'Gross domestic product')
-    print(deflators_obj)
-    gdp_deflators = deflators_obj.calc_adjustment_factors(dollar_basis_analysis)
-    cost_steps = [col for col in settings.regclass_costs.columns if '20' in col]
-    gen_fxns.convert_dollars_to_analysis_basis(settings.regclass_costs, gdp_deflators, dollar_basis_analysis, [step for step in cost_steps])
-    gen_fxns.convert_dollars_to_analysis_basis(settings.def_prices, gdp_deflators, dollar_basis_analysis, 'DEF_USDperGal')
-    gen_fxns.convert_dollars_to_analysis_basis(settings.repair_and_maintenance, gdp_deflators, dollar_basis_analysis, 'Value')
+    # if 'Alternative' in settings.moves.columns.tolist():
+    #     settings.moves.rename(columns={'Alternative': 'optionID'}, inplace=True)
+    # number_alts = len(settings.moves['optionID'].unique())
+    #
+    # # get the fuel price inputs and usd basis for the analysis
+    # fuel_prices_obj = GetFuelPrices(settings.fuel_prices_file, settings.aeo_case, 'full name', 'Motor Gasoline', 'Diesel')
+    # print(fuel_prices_obj)
+    # fuel_prices = fuel_prices_obj.get_prices()
+    # dollar_basis_analysis = fuel_prices_obj.aeo_dollars()
+    #
+    # # generate a dictionary of gdp deflators, calc adjustment values and apply adjustment values to cost inputs
+    # deflators_obj = GetDeflators(settings.deflators_file, 'Unnamed: 1', 'Gross domestic product')
+    # print(deflators_obj)
+    # gdp_deflators = deflators_obj.calc_adjustment_factors(dollar_basis_analysis)
+    # cost_steps = [col for col in settings.regclass_costs.columns if '20' in col]
+    # gen_fxns.convert_dollars_to_analysis_basis(settings.regclass_costs, gdp_deflators, dollar_basis_analysis, [step for step in cost_steps])
+    # gen_fxns.convert_dollars_to_analysis_basis(settings.def_prices, gdp_deflators, dollar_basis_analysis, 'DEF_USDperGal')
+    # gen_fxns.convert_dollars_to_analysis_basis(settings.repair_and_maintenance, gdp_deflators, dollar_basis_analysis, 'Value')
 
     # now get specific inputs from repair_and_maintenance
     inwarranty_repair_and_maintenance_owner_cpm = settings.repair_and_maintenance.at['in-warranty_R&M_Owner_CPM', 'Value']
@@ -157,11 +157,11 @@ def main(settings):
     regclass_costs_dict = dict()
     regclass_sales_dict = dict()  # this will provide sales by regclass-fueltype (rather than sourcetype-regclass-fueltype) which is needed for learning effects
     alt_rc_ft_vehicles = dict()
-    for step in cost_steps:
+    for step in settings.cost_steps:
         regclass_sales_dict[step] = pd.DataFrame(regclass_sales.loc[regclass_sales['modelYearID'] >= pd.to_numeric(step), :])
         alt_rc_ft_vehicles[step] = pd.Series(regclass_sales_dict[step]['alt_rc_ft'].unique())
     # Apply learning to direct costs
-    for step, veh in product(cost_steps, alt_rc_ft_vehicles[step]):
+    for step, veh in product(settings.cost_steps, alt_rc_ft_vehicles[step]):
         direct_costs_obj = DirectCost(veh, step, settings.regclass_costs, settings.regclass_learningscalers, regclass_sales_dict[step])
         print(direct_costs_obj)
         regclass_costs_dict[veh, step] = direct_costs_obj.pkg_cost_regclass_withlearning(settings.learning_rate)
@@ -169,9 +169,9 @@ def main(settings):
     # Now merge the steps into a single DataFrame so that the costs can be summed into a single cost series. An outer merge is used in case there are different vehicles (unlikely).
     alt_rc_ft_vehicles = pd.Series(regclass_sales['alt_rc_ft'].unique())
     for veh in alt_rc_ft_vehicles:
-        regclass_costs_dict[veh] = regclass_costs_dict[veh, cost_steps[0]].copy()
-        regclass_costs_dict[veh][f'DirectCost_AvgPerVeh_{cost_steps[0]}'].fillna(0, inplace=True)
-        for step_number, step in enumerate(cost_steps[1:]): #range(1, len(cost_steps)):  # this brings in costs from subsequent steps
+        regclass_costs_dict[veh] = regclass_costs_dict[veh, settings.cost_steps[0]].copy()
+        regclass_costs_dict[veh][f'DirectCost_AvgPerVeh_{settings.cost_steps[0]}'].fillna(0, inplace=True)
+        for step_number, step in enumerate(settings.cost_steps[1:]): #range(1, len(cost_steps)):  # this brings in costs from subsequent steps
             regclass_costs_dict[veh] = regclass_costs_dict[veh]\
                 .merge(regclass_costs_dict[veh, step],
                        on=gen_fxns.get_common_metrics(regclass_costs_dict[veh], regclass_costs_dict[veh, step], ignore=['static_id']),
@@ -181,7 +181,7 @@ def main(settings):
     # Since subsequent steps are incremental to prior steps, now sum the steps.
     for veh in alt_rc_ft_vehicles:
         regclass_costs_dict[veh].insert(len(regclass_costs_dict[veh].columns), 'DirectCost_AvgPerVeh', 0)
-        for step in cost_steps:
+        for step in settings.cost_steps:
             regclass_costs_dict[veh]['DirectCost_AvgPerVeh'] += regclass_costs_dict[veh][f'DirectCost_AvgPerVeh_{step}']
 
     # Since package costs for NoAction are absolute and for other options they are incremental to NoAction, add in NoAction costs
@@ -258,7 +258,7 @@ def main(settings):
             def_costs_dict[veh] = pd.DataFrame(sourcetype_criteria.loc[sourcetype_criteria['alt_st_rc_ft'] == veh,
                                                                        ['alt_st_rc_ft', 'yearID', 'modelYearID', 'ageID',
                                                                         'NOx_onroad_Reductions']]).reset_index(drop=True)
-            def_costs_obj = DEFCost(veh, cost_steps, def_costs_dict[veh], settings.def_doserate_inputs, settings.def_gallons_perTonNOxReduction, settings.def_prices)
+            def_costs_obj = DEFCost(veh, settings.cost_steps, def_costs_dict[veh], settings.def_doserate_inputs, settings.def_gallons_perTonNOxReduction, settings.def_prices)
             print(def_costs_obj)
             veh_gallons = pd.DataFrame(sourcetype_gallons.loc[sourcetype_gallons['alt_st_rc_ft'] == veh, :]).reset_index(drop=True)
             veh_vmt = pd.DataFrame(sourcetype_vmt.loc[sourcetype_vmt['alt_st_rc_ft'] == veh, :]).reset_index(drop=True)

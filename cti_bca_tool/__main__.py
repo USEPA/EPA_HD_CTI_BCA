@@ -7,6 +7,8 @@ import pandas as pd
 import time
 import attr
 
+from cti_bca_tool.get_context_data import GetFuelPrices, GetDeflators
+
 
 @attr.s
 class SetInputs:
@@ -98,6 +100,26 @@ class SetInputs:
 
     grams_per_short_ton = unit_conversions.at['grams_per_short_ton', 'UserEntry']
     gallons_per_ml = unit_conversions.at['gallons_per_ml', 'UserEntry']
+
+    # now adjust some things and get dollar values on a consistent valuation
+    if 'Alternative' in moves.columns.tolist():
+        moves.rename(columns={'Alternative': 'optionID'}, inplace=True)
+    number_alts = len(moves['optionID'].unique())
+
+    # get the fuel price inputs and usd basis for the analysis
+    fuel_prices_obj = GetFuelPrices(fuel_prices_file, aeo_case, 'full name', 'Motor Gasoline', 'Diesel')
+    print(fuel_prices_obj)
+    fuel_prices = fuel_prices_obj.get_prices()
+    dollar_basis_analysis = fuel_prices_obj.aeo_dollars()
+
+    # generate a dictionary of gdp deflators, calc adjustment values and apply adjustment values to cost inputs
+    deflators_obj = GetDeflators(deflators_file, 'Unnamed: 1', 'Gross domestic product')
+    print(deflators_obj)
+    gdp_deflators = deflators_obj.calc_adjustment_factors(dollar_basis_analysis)
+    cost_steps = [col for col in regclass_costs.columns if '20' in col]
+    gen_fxns.convert_dollars_to_analysis_basis(regclass_costs, gdp_deflators, dollar_basis_analysis, [step for step in cost_steps])
+    gen_fxns.convert_dollars_to_analysis_basis(def_prices, gdp_deflators, dollar_basis_analysis, 'DEF_USDperGal')
+    gen_fxns.convert_dollars_to_analysis_basis(repair_and_maintenance, gdp_deflators, dollar_basis_analysis, 'Value')
 
 
 if __name__ == '__main__':

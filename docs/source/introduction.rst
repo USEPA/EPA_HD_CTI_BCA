@@ -52,7 +52,6 @@ Output files always generated are:
     - bca_annual.xlsx which contains benefit and cost summaries for specific calendar years as specified in the BCA_General_Inputs file.
     - bca_annualized.xlsx which contains annualized benefit and cost summaries through specific calendar years as specified in the BCA_General_Inputs file.
     - bca_npv.xlsx which contains net present value benefit and cost summaries for specific calendar years as specified in the BCA_General_Inputs file.
-    - techcostAvgPerVeh.xlsx which contains average tech costs for specific model years as specified in the BCA_General_Inputs file.
     - ages.csv which contains the required, calculated and estimated warranty and useful life ages.
     - vmt_weighted_emission_repair_owner_cpm.csv which contains weighted cost per mile emission repair results by sourcetype/regclass/fueltype.
     - vmt_weighted_fuel_cpm.csv which contains weighted cost per mile fuel costs results by sourcetype/regclass/fueltype.
@@ -72,3 +71,4 @@ A folder called "run_results" will be created within the outputs folder that con
 A folder called "modified_inputs" is also created which holds modified versions of the input files. Those modifications include reshaping of the input files along with conversions of the
 dollar-based inputs into a consistent dollar basis.
 A folder called "run_inputs" is also created which holds a direct copy/paste of all input files used for the given run.
+A folder called "code" is also created which holds a direct copy/paste of all files in the cti_bca_tool package folder (i.e., the python code).
