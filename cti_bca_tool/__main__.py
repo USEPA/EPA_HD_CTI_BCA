@@ -69,6 +69,12 @@ class SetInputs:
 
     elapsed_time_read = time.time() - start_time_read
 
+    # set some year data
+    moves.insert(moves.columns.get_loc('modelYearID') + 1, 'ageID', moves['yearID'] - moves['modelYearID'])
+    year_min = moves.loc[moves['ageID'] == 0, 'yearID'].min()
+    year_max = moves['yearID'].max()
+    years = range(year_min, year_max + 1)
+
     # parse values from the input files
     aeo_case = bca_inputs.at['aeo_fuel_price_case', 'UserEntry']
     discrate_social_low = pd.to_numeric(bca_inputs.at['discrate_social_low', 'UserEntry'])
@@ -124,4 +130,5 @@ class SetInputs:
 
 if __name__ == '__main__':
     settings = SetInputs()
+    cti_bca.new_main(settings)
     cti_bca.main(settings)

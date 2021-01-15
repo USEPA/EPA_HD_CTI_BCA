@@ -1,7 +1,7 @@
 
 import pandas as pd
 import attr
-
+from cti_bca_tool.__main__ import SetInputs as settings
 
 # create a dictionary to store moves adjustments
 adj_dict = dict()
@@ -37,7 +37,7 @@ class Moves:
     """
     fleet_df = attr.ib()
 
-    def project_fleet_df(self, moves_adjustments_df):
+    def project_fleet_df(self, settings):
         project_fleet = self.fleet_df.copy()
         if 'Alternative' in project_fleet.columns.tolist():
             project_fleet.rename(columns={'Alternative': 'optionID'}, inplace=True)
@@ -92,6 +92,28 @@ class Moves:
         df.set_index('id', inplace=True)
         regclass_sales_dict = df.to_dict('index')
         return regclass_sales_dict
+
+
+@attr.s
+class WarrantyAndUsefullife:
+    warranty_df = attr.ib()
+    warranty_id = attr.ib()
+    usefullife_df = attr.ib()
+    usefullife_id = attr.ib()
+
+    def create_dict(self):
+        df_all = pd.DataFrame()
+        self.warranty_df.insert(0, 'identifier', f'{self.warranty_id}')
+        self.usefullife_df.insert(0, 'identifier', f'{self.usefullife_id}')
+        for df in [self.warranty_df, self.usefullife_df]:
+            df = pd.DataFrame(df.loc[df['period'] == settings.indirect_cost_scaling_metric]).reset_index(drop=True)
+            df.insert(0, 'alt_rc_ft', pd.Series(zip(df['optionID'], df['regClassID'], df['fuelTypeID'])))
+            df.insert(0, 'id', pd.Series(zip(df['alt_rc_ft'], df['identifier'])))
+            df = df[['id'] + [col for col in df.columns if '20' in col]]
+            df_all = pd.concat([df_all, df], axis=0, ignore_index=True)
+        df_all.set_index('id', inplace=True)
+        inputs_dict = df_all.to_dict('index')
+        return inputs_dict
 
 
 @attr.s

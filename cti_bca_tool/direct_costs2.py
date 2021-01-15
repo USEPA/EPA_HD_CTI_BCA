@@ -1,7 +1,7 @@
 import pandas as pd
 from itertools import product
-from cti_bca_tool.project_classes import Moves
-from cti_bca_tool.project_fleet import alt_rc_ft_vehicles
+# from cti_bca_tool.project_classes import Moves
+from cti_bca_tool import project_fleet
 
 
 # create some dictionaries for storing data
@@ -73,7 +73,7 @@ def tech_pkg_cost_withlearning_2(vehicle, step, model_year, project_regclass_sal
     :param costs_df:
     :param seedvol_df:
     :param learning_rate: The learning rate entered in the BCA inputs sheet.
-    :return:
+    :return: A single package cost with learning applied along with the cumulative sales used in the learning calculation.
     """
     cumulative_sales_dict_id = ((vehicle), int(step))
     sales = project_regclass_sales_dict[((vehicle), model_year)]['VPOP']
@@ -93,10 +93,10 @@ def tech_pkg_cost_withlearning_2(vehicle, step, model_year, project_regclass_sal
     return pkg_cost_learned, cumulative_sales
 
 
-def per_veh_direct_costs_by_year(settings, vehicles, project_sales_dict, max_year):
+def per_veh_direct_costs(settings, vehicles, project_sales_dict):
     """
 
-    :param vehicles:
+    :param vehicles: A list/array of vehicles by alt_regclass_fueltype.
     :param project_sales_dict: A dictionary of the project fleet consisting of new vehicle sales by year.
     :param settings:
     :param moves_adjustments:
@@ -106,150 +106,57 @@ def per_veh_direct_costs_by_year(settings, vehicles, project_sales_dict, max_yea
     :param costs_df:
     :param seedvol_df:
     :param learning_rate:
-    :return:
+    :return: Two dictionaries - one dictionary of per vehicle package costs by model year and by implementation step and another dictionary of
+    per vehicle package costs by model year.
     """
+    print('\nCalculating per vehicle direct costs\n')
     costs_by_year_by_step_dict = dict()
     costs_by_year_dict = dict()
     for vehicle, step in product(vehicles, settings.cost_steps):
         alt, rc, ft = vehicle
-        for model_year in range(int(step), max_year + 1):
+        for model_year in range(int(step), settings.year_max + 1):
             pkg_cost, cumulative_sales = tech_pkg_cost_withlearning_2(vehicle, step, model_year, project_sales_dict,
                                                                       settings.regclass_costs, settings.regclass_learningscalers,
                                                                       settings.learning_rate)
             costs_by_year_by_step_dict[((vehicle), model_year, int(step))] = {'CumulativeSales': cumulative_sales, 'DirectCost_AvgPerVeh': pkg_cost}
             if alt == 0 and step == settings.cost_steps[0]:
-                costs_by_year_dict[((vehicle), model_year)] = costs_by_year_by_step_dict[((vehicle), model_year, int(step))]['DirectCost_AvgPerVeh']
+                costs_by_year_dict[((vehicle), model_year)] \
+                    = {'DirectCost_AvgPerVeh': costs_by_year_by_step_dict[((vehicle), model_year, int(step))]['DirectCost_AvgPerVeh']}
             elif alt == 0 and step != settings.cost_steps[0]:
-                costs_by_year_dict[((vehicle), model_year)] = costs_by_year_dict[((vehicle), model_year)]
+                costs_by_year_dict[((vehicle), model_year)] = {'DirectCost_AvgPerVeh': costs_by_year_dict[((vehicle), model_year)]['DirectCost_AvgPerVeh']}
             elif step == settings.cost_steps[0]:
                 costs_by_year_dict[((vehicle), model_year)] \
-                    = costs_by_year_by_step_dict[((vehicle), model_year, int(step))]['DirectCost_AvgPerVeh'] \
-                      + costs_by_year_dict[((0, rc, ft), model_year)]
+                    = {'DirectCost_AvgPerVeh': costs_by_year_by_step_dict[((vehicle), model_year, int(step))]['DirectCost_AvgPerVeh'] \
+                                               + costs_by_year_dict[((0, rc, ft), model_year)]['DirectCost_AvgPerVeh']}
             else:
                 costs_by_year_dict[((vehicle), model_year)] \
-                    = costs_by_year_by_step_dict[((vehicle), model_year, int(step))]['DirectCost_AvgPerVeh'] \
-                      + costs_by_year_dict[((vehicle), model_year)]
+                    = {'DirectCost_AvgPerVeh': costs_by_year_by_step_dict[((vehicle), model_year, int(step))]['DirectCost_AvgPerVeh'] \
+                                               + costs_by_year_dict[((vehicle), model_year)]['DirectCost_AvgPerVeh']}
     return costs_by_year_by_step_dict, costs_by_year_dict
 
-    # for vehicle in vehicles:
-    #     alt, rc, ft = vehicle
-    #     for step_num in range(len(settings.cost_steps)):
-    #         for model_year in range(int(settings.cost_steps[step_num]), max_year + 1):
-    #             if alt == 0:
-    #                 # alt = 0 is the no action case so costs are always equal to the first step of costs
-    #                 costs_by_year_dict[((vehicle), model_year, 9999)] \
-    #                     = costs_by_year_by_step_dict[((vehicle), model_year, int(settings.cost_steps[0]))]['DirectCost_AvgPerVeh']
-    #             elif model_year < int(settings.cost_steps[step_num + 1]):
-    #                 costs_by_year_dict[((vehicle), model_year, 9999)] \
-    #                     = costs_by_year_by_step_dict[((vehicle), model_year, int(settings.cost_steps[step_num]))]['DirectCost_AvgPerVeh'] \
-    #                       + costs_by_year_dict[((0, rc, ft), model_year, 9999)]
-    #             else:
-    #                 costs_by_year_dict[((vehicle), model_year, 9999)] \
-    #                     = costs_by_year_by_step_dict[((vehicle), model_year, int(settings.cost_steps[step_num - 1]))]['DirectCost_AvgPerVeh'] \
-    #                       + costs_by_year_by_step_dict[((vehicle), model_year, int(settings.cost_steps[step_num]))]['DirectCost_AvgPerVeh']\
-    #                       + costs_by_year_by_step_dict[((0, rc, ft), model_year, 9999)]
-                # else:
-                #     costs_by_year_dict[((vehicle), model_year)] \
-                #         = costs_by_year_by_step_dict[((vehicle), model_year, int(settings.cost_steps[step_num - 1]))]['DirectCost_AvgPerVeh'] \
-                #           + costs_by_year_by_step_dict[((vehicle), model_year, int(step))]['DirectCost_AvgPerVeh']
-        # for step in settings.cost_steps:
-        #     for model_year in range(int(step), max_year + 1):
-        #         step_num = 0
-        #         if model_year <= int(settings.cost_steps[step_num + 1]):
-        #             costs_by_year_dict[((vehicle), model_year)] = costs_by_year_by_step_dict[((vehicle), model_year, int(step))]['DirectCost_AvgPerVeh']
-        #         else:
-        #             costs_by_year_dict[((vehicle), model_year)] \
-        #                 = costs_by_year_by_step_dict[((vehicle), model_year, int(settings.cost_steps[step_num - 1]))]['DirectCost_AvgPerVeh'] \
-        #                   + costs_by_year_by_step_dict[((vehicle), model_year, int(step))]['DirectCost_AvgPerVeh']
-    # return costs_by_year_dict
 
+def per_veh_direct_costs_to_csv(dict_to_save, save_path):
+    """
 
-def per_veh_direct_costs_by_year_df(per_veh_direct_costs_dict):
-    per_veh_direct_costs_df = pd.DataFrame(per_veh_direct_costs_dict).transpose()
-    per_veh_direct_costs_df.reset_index(inplace=True)
-    per_veh_direct_costs_df.rename(columns={'level_0': 'alt_rc_ft', 'level_1': 'modelYearID', 'level_2': 'cost_step'}, inplace=True)
-    return per_veh_direct_costs_df
-
-
-# def calc_per_veh_direct_costs_old(project_fleet, settings):
-#     # create some dictionaries and dataframes to store data
-#     direct_costs_veh_step_dict = dict()
-#     direct_costs_veh_dict = dict()
-#     direct_costs_fleet_df = pd.DataFrame()
-#     # determine the cost steps - the model years for which new standards/cost-steps are incurred
-#     cost_steps = [col for col in settings.regclass_costs.columns if '20' in col]
-#     # determine the vehicles
-#     vehicles = alt_rc_ft_vehicles(project_fleet)
-#     # create a loop to get sales that will allow learning to be applied to tech package costs for each vehicle at each step
-#     for vehicle, step in product(vehicles, cost_steps):
-#         sales_df = ProjectClass(vehicle=vehicle).regclass_sales_following_given_my(project_fleet, settings.moves_adjustments, int(step))
-#         direct_costs_veh_step_dict[vehicle, step] \
-#             = tech_pkg_cost_withlearning(vehicle, sales_df, settings.regclass_costs, settings.regclass_learningscalers, settings.learning_rate)
-#     # now concatenate the steps together for each vehicle to then groupby.sum()
-#     for vehicle in vehicles:
-#         direct_costs_veh_dict[vehicle] = pd.DataFrame()
-#     for vehicle, step in product(vehicles, cost_steps):
-#         direct_costs_veh_dict[vehicle] \
-#             = pd.concat([direct_costs_veh_dict[vehicle], direct_costs_veh_step_dict[vehicle, step]], axis=0, ignore_index=True)
-#     # now do the groupby.sum() to get a stream of costs model_year-over-model_year
-#     for vehicle in vehicles:
-#         direct_costs_veh_dict[vehicle] = direct_costs_veh_dict[vehicle].groupby(by=['optionID', 'modelYearID', 'ageID', 'regClassID', 'fuelTypeID'], as_index=False).sum()
-#     # now sum the alt vehicles with the alt0 vehicles after first determining the non-alt0 vehicles
-#     non_alt0_vehicles = alt_rc_ft_vehicles(project_fleet.loc[project_fleet['optionID'] != 0, :])
-#     for vehicle in non_alt0_vehicles:
-#         alt, rc, ft = vehicle
-#         direct_costs_veh_dict[vehicle]['DirectCost_AvgPerVeh'] = direct_costs_veh_dict[vehicle]['DirectCost_AvgPerVeh'] \
-#                                                                  + direct_costs_veh_dict[(0, rc, ft)]['DirectCost_AvgPerVeh']
-#     # now concatenate everything in one direct_costs dataframe
-#     for vehicle in vehicles:
-#         direct_costs_fleet_df = pd.concat([direct_costs_fleet_df, direct_costs_veh_dict[vehicle]], axis=0, ignore_index=True)
-#     return direct_costs_fleet_df, direct_costs_veh_dict
+    :param dict_to_save: A dictionary having ((vehicle), year, step) keys where vehicle is an alt_rc_ft tuple.
+    :return: A DataFrame by vehicle and model year.
+    """
+    df = pd.DataFrame(dict_to_save).transpose()
+    df.reset_index(inplace=True)
+    df.rename(columns={'level_0': 'alt_rc_ft', 'level_1': 'modelYearID', 'level_2': 'cost_step'}, inplace=True)
+    df.to_csv(f'{save_path}.csv', index=False)
 
 
 if __name__ == '__main__':
     from cti_bca_tool.__main__ import SetInputs as settings
-    from cti_bca_tool.project_classes import Moves
-    from cti_bca_tool.project_fleet import project_fleet
+    from cti_bca_tool import project_fleet
 
-    project_fleet_df = Moves(settings.moves).project_fleet_df(settings.moves_adjustments)
-    vehicles = pd.Series(project_fleet_df['alt_rc_ft'].unique())
-    project_regclass_sales_dict = Moves(settings.moves).project_regclass_sales_dict(settings.moves_adjustments)
-    max_year = project_fleet_df['modelYearID'].max()
-    per_veh_dc_by_year_by_step_dict, per_veh_dc_by_year_dict = per_veh_direct_costs_by_year(settings, vehicles, project_regclass_sales_dict, max_year)
+    project_fleet_df = project_fleet.project_fleet_df(settings)
+    vehicles_rc = pd.Series(project_fleet_df['alt_rc_ft'].unique())
+    project_regclass_sales_dict = project_fleet.project_regclass_sales_dict(project_fleet_df)
+    per_veh_dc_by_year_by_step_dict, per_veh_dc_by_year_dict \
+        = per_veh_direct_costs(settings, vehicles_rc, project_regclass_sales_dict)
 
-    # per_veh_direct_costs_dict = dict()
-    # for vehicle, step in product(vehicles, settings.cost_steps):
-    #     for model_year in range(int(step), max_year + 1):
-    #         pkg_cost, cumulative_sales = tech_pkg_cost_withlearning_2(vehicle, step, model_year, project_regclass_sales_dict,
-    #                                                                   settings.regclass_costs, settings.regclass_learningscalers,
-    #                                                                   settings.learning_rate)
-    #         per_veh_direct_costs_dict[((vehicle), model_year, int(step))] = {'CumulativeSales': cumulative_sales, 'DirectCost_AvgPerVeh': pkg_cost}
-    #
-    #
-    df = pd.DataFrame(per_veh_dc_by_year_by_step_dict).transpose()
-    df.reset_index(inplace=True)
-    df.rename(columns={'level_0': 'alt_rc_ft', 'level_1': 'modelYearID', 'level_2': 'cost_step'}, inplace=True)
-    df.to_csv(settings.path_project / 'test/per_veh_direct_costs_by_year_by_step.csv', index=False)
-
-    df = pd.DataFrame(per_veh_dc_by_year_dict, index=['DirectCost_AvgPerVeh']).transpose()
-    df.reset_index(inplace=True)
-    df.rename(columns={'level_0': 'alt_rc_ft', 'level_1': 'modelYearID', 'level_2': 'cost_step'}, inplace=True)
-    df.to_csv(settings.path_project / 'test/per_veh_direct_costs_by_year.csv', index=False)
-
-
-    # per_veh_direct_costs_by_year_by_step_df = pd.DataFrame(per_veh_dc_by_year_by_step_dict).transpose()
-    # per_veh_direct_costs_by_year_by_step_df.reset_index(inplace=True)
-    # per_veh_direct_costs_by_year_by_step_df.rename(columns={'level_0': 'alt_rc_ft', 'level_1': 'modelYearID', 'level_2': 'cost_step'}, inplace=True)
-    # s = pd.Series(per_veh_direct_costs_df['alt_rc_ft'])
-    # per_veh_direct_costs_df.insert(0, 'fuelTypeID', 0)
-    # per_veh_direct_costs_df.insert(0, 'regClassID', 0)
-    # per_veh_direct_costs_df.insert(0, 'optionID', 0)
-    # for idx, value in enumerate(s):
-    #     alt, rc, ft = s[idx]
-    #     per_veh_direct_costs_df['optionID'][idx] = alt
-    #     per_veh_direct_costs_df['regClassID'][idx] = rc
-    #     per_veh_direct_costs_df['fuelTypeID'][idx] = ft
-
-    # per_veh_direct_costs_df.to_csv(settings.path_project / 'test/per_veh_direct_costs.csv', index=False)
-    # per_veh_direct_costs = dict()
-    # for k, v in per_veh_direct_costs_dict.items():
+    # save dicts to csv
+    per_veh_direct_costs_to_csv(per_veh_dc_by_year_by_step_dict, settings.path_project / 'test/per_veh_direct_costs_by_year_by_step')
+    per_veh_direct_costs_to_csv(per_veh_dc_by_year_dict, settings.path_project / 'test/per_veh_direct_costs_by_year')

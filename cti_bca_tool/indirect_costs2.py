@@ -1,158 +1,127 @@
 import pandas as pd
 import attr
 from itertools import product
-from cti_bca_tool.project_classes import ProjectClass
-from cti_bca_tool.project_fleet import alt_rc_ft_vehicles
+# from cti_bca_tool.project_classes import Moves, WarrantyAndUsefullife
+from cti_bca_tool import project_fleet
 
 
-absolute_scaler_dict = dict()
-relative_scaler_dict = dict()
+scaled_markups_dict = dict()
+project_markups_dict = dict()
 
 
-def calc_scalers_absolute(input_df, vehicle, identifier, period):
+def create_scaling_dict(warranty_df, warranty_id, usefullife_df, usefullife_id, settings):
+    df_all = pd.DataFrame()
+    df1 = warranty_df.copy()
+    df2 = usefullife_df.copy()
+    df1.insert(0, 'identifier', f'{warranty_id}')
+    df2.insert(0, 'identifier', f'{usefullife_id}')
+    for df in [df1, df2]:
+        df = pd.DataFrame(df.loc[df['period'] == settings.indirect_cost_scaling_metric]).reset_index(drop=True)
+        df.insert(0, 'alt_rc_ft', pd.Series(zip(df['optionID'], df['regClassID'], df['fuelTypeID'])))
+        df.insert(0, 'id', pd.Series(zip(df['alt_rc_ft'], df['identifier'])))
+        df = df[['id'] + [col for col in df.columns if '20' in col]]
+        df_all = pd.concat([df_all, df], axis=0, ignore_index=True)
+    df_all.set_index('id', inplace=True)
+    dict_return = df_all.to_dict('index')
+    return dict_return
+
+
+def create_markup_inputs_dict(df):
     """
-    :param: input_df: A DataFrame of warranty or useful life miles and ages by optionID.
-    :return: DatFrame of scaling factors that scale on absolute terms.
+
+    :param df: A DataFrame of the indirect cost markup factors and values by option and fueltype.
+    :return: A dictionary with 'fueltype, markup factor' keys and 'markup value' values.
     """
-    absolute_scaler_dict_id = f'{vehicle}_{identifier}'
-    if absolute_scaler_dict_id in absolute_scaler_dict:
-        return absolute_scaler_dict[absolute_scaler_dict_id]
-    else:
-        absolute_scaler_dict[absolute_scaler_dict_id] = dict()
-
-    alt, rc, ft = vehicle
-    scaler_df = pd.DataFrame(input_df.loc[(input_df['optionID'] == alt)
-                                          & (input_df['regClassID'] == rc)
-                                          & (input_df['fuelTypeID'] == ft)
-                                          & (input_df['period'] == period), :]).reset_index(drop=True)
-    cols = [col for col in scaler_df.columns if '20' in col]
-    for col in cols[1:]:
-        absolute_scaler_dict[absolute_scaler_dict_id].update({col: scaler_df[col][0] / scaler_df[cols[0]][0]})
-    absolute_scaler_dict[absolute_scaler_dict_id].update({[cols[0]][0]: 1.0})
-    return absolute_scaler_dict[absolute_scaler_dict_id]
-
-
-def calc_scalers_relative(input_df, vehicle, identifier, period):
-    """
-    :param: input_df: A DataFrame of warranty or useful life miles and ages by optionID.
-    :return: DatFrame of scaling factors that scale relative to the prior year.
-    """
-    relative_scaler_dict_id = f'{vehicle}_{identifier}'
-    if relative_scaler_dict_id in relative_scaler_dict:
-        return relative_scaler_dict[relative_scaler_dict_id]
-    else:
-        relative_scaler_dict[relative_scaler_dict_id] = dict()
-
-    alt, rc, ft = vehicle
-    scaler_df = pd.DataFrame(input_df.loc[(input_df['optionID'] == alt)
-                                          & (input_df['regClassID'] == rc)
-                                          & (input_df['fuelTypeID'] == ft)
-                                          & (input_df['period'] == period), :]).reset_index(drop=True)
-    cols = [col for col in scaler_df.columns if '20' in col]
-    for col_number, col in enumerate(cols):
-        relative_scaler_dict[relative_scaler_dict_id].update({col: scaler_df[cols[col_number]][0] / scaler_df[cols[col_number - 3]][0]})
-    return relative_scaler_dict[relative_scaler_dict_id]
-
-
-def get_markup_factors(df):
     project_markups = df.copy()
-    # insert and id to use as a dictionary key
+    # insert a unique id to use as a dictionary key
     project_markups.insert(0, 'id', pd.Series(zip(project_markups['fuelTypeID'], project_markups['Markup_Factor'])))
     project_markups.set_index('id', inplace=True)
+    project_markups.drop(columns=['fuelTypeID', 'Markup_Factor'], inplace=True)
     markups_dict = project_markups.to_dict('index')
     return markups_dict
 
 
-def calc_project_markups(project_fleet, markups_dict, settings):
+def calc_project_markup_value(vehicle, markup_factor, model_year, scaling_dict, markups_dict):
+    alt, rc, ft = vehicle
+    scaled_markups_dict_id = ((vehicle), markup_factor, model_year)
+    if scaled_markups_dict_id in scaled_markups_dict:
+        project_markup_value = scaled_markups_dict[scaled_markups_dict_id]
+    else:
+        input_markup_value, scaler, scaled_by = markups_dict[(ft, markup_factor)]['Value'], markups_dict[(ft, markup_factor)]['Scaler'], markups_dict[(ft, markup_factor)]['Scaled_by']
+        if scaler == 'Absolute':
+            project_markup_value = \
+                (scaling_dict[((vehicle), scaled_by)][f'{model_year}'] / scaling_dict[((vehicle), scaled_by)]['2024']) \
+                * input_markup_value
+        if scaler == 'Relative':
+            project_markup_value = \
+                (scaling_dict[((vehicle), scaled_by)][f'{model_year}'] / scaling_dict[((vehicle), scaled_by)][str(int(model_year)-3)]) \
+                * input_markup_value
+        if scaler == 'None':
+            project_markup_value = input_markup_value
+        scaled_markups_dict[scaled_markups_dict_id] = project_markup_value
+    return project_markup_value
+
+
+def per_veh_project_markups(settings, vehicles):
     """
-    Warranty indirect markup factors are to be scaled using absolute scalers. R&D indirect markup factors are to be scaled using relative scalers.
-    Other and Profit indirect markup factors are not scaled. The scaling factors are determined using both the warranty and useful life inputs which
-    provide the no action and action (proposed) changes to the miles and ages during which warranty and/or useful life provisions exist. So, if warranty
-    miles or age doubles (the miles or age identifier is set via the General_Inputs workbook), then the warranty markup factor would double indefinitely. If useful life
-    miles or age doubles, then the R&D markup factor would double for three years the return to normal.
-    :param project_fleet:
+    This method is for use in testing to get an output CSV that shows the markups used within the project.
     :param settings:
+    :param markup_factors:
+    :param vehicles:
+    :param scaling_dict:
+    :param markups_dict:
     :return:
     """
-    # create list of markup factors
-    markup_factors = [item for item in settings.markups['Markup_Factor'].unique()]
-    vehicles = alt_rc_ft_vehicles(project_fleet)
-    years = range(project_fleet['modelYearID'].min(), project_fleet['modelYearID'].max() + 1)
-    project_markups_dict = dict()
+    markup_factors = [arg for arg in settings.markups['Markup_Factor'].unique()]
+    markups_dict = create_markup_inputs_dict(settings.markups)
+    scaling_dict = create_scaling_dict(settings.warranty_inputs, 'Warranty', settings.usefullife_inputs, 'Usefullife', settings)
 
-    for markup_factor, vehicle in product(markup_factors, vehicles):
-        project_markups_dict[f'{vehicle}_{markup_factor}'] = dict()
-    for markup_factor, vehicle, year in product(markup_factors, vehicles, years):
-        alt, rc, ft = vehicle
-        if markup_factor == 'Warranty':
-            project_markups_dict[f'{vehicle}_{markup_factor}'] = calc_scalers_absolute(settings.warranty_inputs, vehicle, 'Warranty', settings.indirect_cost_scaling_metric)
-            markup_factor_value = markups_dict[(ft, f'{markup_factor}')]['Value']
-            project_markups_dict[f'{vehicle}_{markup_factor}'][str(year)] = project_markups_dict[f'{vehicle}_{markup_factor}'][str(year)] * markup_factor_value
-        if markup_factor == 'RnD':
-            project_markups_dict[f'{vehicle}_{markup_factor}'] = calc_scalers_relative(settings.usefullife_inputs, vehicle, 'UsefulLife', settings.indirect_cost_scaling_metric)
-            markup_factor_value = markups_dict[(ft, f'{markup_factor}')]['Value']
-            project_markups_dict[f'{vehicle}_{markup_factor}'][str(year)] = project_markups_dict[f'{vehicle}_{markup_factor}'][str(year)] * markup_factor_value
-        if markup_factor == 'Other' or markup_factor == 'Profit':
-            markup_factor_value = markups_dict[(ft, f'{markup_factor}')]['Value']
-            project_markups_dict[f'{vehicle}_{markup_factor}'][str(year)] = markup_factor_value
+    for vehicle, model_year in product(vehicles, settings.years):
+        for markup_factor in markup_factors:
+            markup_value = calc_project_markup_value(vehicle, markup_factor, model_year, scaling_dict, markups_dict)
+            if markup_factor == markup_factors[0]:
+                project_markups_dict[((vehicle), model_year)] = {markup_factor: markup_value}
+            else:
+                project_markups_dict[((vehicle), model_year)].update({markup_factor: markup_value})
     return project_markups_dict
 
 
-def calc_per_veh_indirect_costs(project_fleet, per_veh_direct_costs_dict, project_markups_dict, settings):
-    """
-    Warranty indirect markup factors are to be scaled using absolute scalers. R&D indirect markup factors are to be scaled using relative scalers.
-    Other and Profit indirect markup factors are not scaled. The scaling factors are determined using both the warranty and useful life inputs which
-    provide the no action and action (proposed) changes to the miles and ages during which warranty and/or useful life provisions exist. So, if warranty
-    miles or age doubles (the miles or age identifier is set via the General_Inputs workbook), then the warranty markup factor would double indefinitely. If useful life
-    miles or age doubles, then the R&D markup factor would double for three years the return to normal.
-    :param project_fleet:
-    :param settings:
-    :return:
-    """
-    # create list of markup factors
-    markup_factors = [item for item in settings.markups['Markup_Factor'].unique()]
-    years = range(project_fleet['modelYearID'].min(), project_fleet['modelYearID'].max() + 1)
-    vehicles = alt_rc_ft_vehicles(project_fleet)
-    per_veh_indirect_costs_dict = dict()
-    per_veh_indirect_costs_df = pd.DataFrame()
-    for vehicle in vehicles:
-        alt, rc, ft = vehicle
-        dc_df = per_veh_direct_costs_dict[vehicle].copy()
-        per_veh_indirect_costs_dict[vehicle] = pd.DataFrame(columns=['optionID', 'modelYearID', 'ageID', 'regClassID', 'fuelTypeID'])
-        per_veh_indirect_costs_dict[vehicle]['modelYearID'] = pd.Series(years)
-        per_veh_indirect_costs_dict[vehicle]['optionID'] = alt
-        per_veh_indirect_costs_dict[vehicle]['ageID'] = 0
-        per_veh_indirect_costs_dict[vehicle]['regClassID'] = rc
-        per_veh_indirect_costs_dict[vehicle]['fuelTypeID'] = ft
-        for markup_factor in markup_factors:
-            per_veh = list()
-            for year in years:
-                dc_year_df = pd.DataFrame(dc_df.loc[dc_df['modelYearID'] == year, :]).reset_index(drop=True)
-                direct_cost = dc_year_df['DirectCost_AvgPerVeh'][0]
-                per_veh.append(project_markups_dict[f'{vehicle}_{markup_factor}'][str(year)] * direct_cost)
-            col_num = len(per_veh_indirect_costs_dict[vehicle].columns)
-            per_veh_indirect_costs_dict[vehicle].insert(col_num, f'{markup_factor}Cost_AvgPerVeh', per_veh)
+def per_veh_indirect_costs(settings, vehicles, direct_costs_dict):
+    print('\nCalculating per vehicle indirect costs\n')
+    per_veh_indirect_costs = dict()
 
-    for vehicle in vehicles:
-        per_veh_indirect_costs_df = pd.concat([per_veh_indirect_costs_df, per_veh_indirect_costs_dict[vehicle]], axis=0, ignore_index=True)
-    return per_veh_indirect_costs_df, per_veh_indirect_costs_dict
+    markup_factors = [arg for arg in settings.markups['Markup_Factor'].unique()]
+    markups_dict = create_markup_inputs_dict(settings.markups)
+    scaling_dict = create_scaling_dict(settings.warranty_inputs, 'Warranty', settings.usefullife_inputs, 'Usefullife', settings)
+
+    for vehicle, model_year, markup_factor in product(vehicles, settings.years, markup_factors):
+        markup_value = calc_project_markup_value(vehicle, markup_factor, model_year, scaling_dict, markups_dict)
+        direct_cost = direct_costs_dict[((vehicle, model_year))]['DirectCost_AvgPerVeh']
+        if markup_factor == markup_factors[0]:
+            per_veh_indirect_costs[((vehicle), model_year)] = {f'{markup_factor}_AvgPerVeh': markup_value * direct_cost}
+        else:
+            per_veh_indirect_costs[((vehicle), model_year)].update({f'{markup_factor}_AvgPerVeh': markup_value * direct_cost})
+    return per_veh_indirect_costs
 
 
 if __name__ == '__main__':
     from cti_bca_tool.__main__ import SetInputs as settings
-    from cti_bca_tool.project_fleet import project_fleet
-    from cti_bca_tool.direct_costs2 import calc_per_veh_direct_costs
+    # from cti_bca_tool.project_classes import Moves, WarrantyAndUsefullife
+    from cti_bca_tool import project_fleet
+    from cti_bca_tool import direct_costs2
 
-    project_fleet = project_fleet(settings.moves)
-    vehicles = alt_rc_ft_vehicles(project_fleet)
+    project_fleet_df = project_fleet.project_fleet_df(settings)
+    vehicles_rc = pd.Series(project_fleet_df['alt_rc_ft'].unique())
 
-    markups_dict = get_markup_factors(settings.markups)
-    project_markups_dict = calc_project_markups(project_fleet, markups_dict, settings)
-    project_markups_df = pd.DataFrame(project_markups_dict)
+    per_veh_markups_by_year_dict = per_veh_project_markups(settings, vehicles_rc)
 
-    per_veh_direct_costs_dict = calc_per_veh_direct_costs(project_fleet, settings)[1]
-    per_veh_indirect_costs_df, per_veh_indirect_costs_dict \
-        = calc_per_veh_indirect_costs(project_fleet, per_veh_direct_costs_dict, project_markups_dict, settings)
+    per_veh_markups_by_year_df = pd.DataFrame(per_veh_markups_by_year_dict)
+    # save dict to csv
+    direct_costs2.per_veh_direct_costs_to_csv(per_veh_markups_by_year_df, settings.path_project / 'test/per_veh_markups_by_year')
 
-    project_markups_df.to_csv(settings.path_project / 'test/project_markups.csv', index=True)
-    per_veh_indirect_costs_df.to_csv(settings.path_project / 'test/per_veh_indirect_costs.csv', index=False)
+    project_regclass_sales_dict = project_fleet.project_regclass_sales_dict(project_fleet_df)
+    direct_costs_dict = direct_costs2.per_veh_direct_costs(settings, vehicles_rc, project_regclass_sales_dict)[1]
+    per_veh_indirect_costs_dict = per_veh_indirect_costs(settings, vehicles_rc, direct_costs_dict)
+    per_veh_indirect_costs_df = pd.DataFrame(per_veh_indirect_costs_dict)
+    # save dict to csv
+    direct_costs2.per_veh_direct_costs_to_csv(per_veh_indirect_costs_df, settings.path_project / 'test/per_veh_indirect_costs_by_year')
