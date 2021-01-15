@@ -1,12 +1,13 @@
 import pandas as pd
-import attr
 from itertools import product
-# from cti_bca_tool.project_classes import Moves, WarrantyAndUsefullife
 from cti_bca_tool import project_fleet
 
 
+# create some dictionaries for storing data
 scaled_markups_dict = dict()
 project_markups_dict = dict()
+per_veh_indirect_costs = dict()
+sales_dict = dict()
 
 
 def create_scaling_dict(warranty_df, warranty_id, usefullife_df, usefullife_id, settings):
@@ -86,42 +87,68 @@ def per_veh_project_markups(settings, vehicles):
     return project_markups_dict
 
 
-def per_veh_indirect_costs(settings, vehicles, direct_costs_dict):
+def calc_per_veh_indirect_costs(settings, vehicles, direct_costs_dict):
     print('\nCalculating per vehicle indirect costs\n')
-    per_veh_indirect_costs = dict()
-
     markup_factors = [arg for arg in settings.markups['Markup_Factor'].unique()]
     markups_dict = create_markup_inputs_dict(settings.markups)
     scaling_dict = create_scaling_dict(settings.warranty_inputs, 'Warranty', settings.usefullife_inputs, 'Usefullife', settings)
 
-    for vehicle, model_year, markup_factor in product(vehicles, settings.years, markup_factors):
-        markup_value = calc_project_markup_value(vehicle, markup_factor, model_year, scaling_dict, markups_dict)
-        direct_cost = direct_costs_dict[((vehicle, model_year))]['DirectCost_AvgPerVeh']
-        if markup_factor == markup_factors[0]:
-            per_veh_indirect_costs[((vehicle), model_year)] = {f'{markup_factor}_AvgPerVeh': markup_value * direct_cost}
-        else:
-            per_veh_indirect_costs[((vehicle), model_year)].update({f'{markup_factor}_AvgPerVeh': markup_value * direct_cost})
+    for vehicle, model_year in product(vehicles, settings.years):
+        ic_sum = 0
+        for markup_factor in markup_factors:
+            markup_value = calc_project_markup_value(vehicle, markup_factor, model_year, scaling_dict, markups_dict)
+            per_veh_direct_cost = direct_costs_dict[((vehicle, model_year))]['DirectCost_AvgPerVeh']
+            if markup_factor == markup_factors[0]:
+                per_veh_indirect_costs[((vehicle), model_year)] = {f'{markup_factor}Cost_AvgPerVeh': markup_value * per_veh_direct_cost}
+            else:
+                per_veh_indirect_costs[((vehicle), model_year)].update({f'{markup_factor}Cost_AvgPerVeh': markup_value * per_veh_direct_cost})
+            ic_sum += markup_value * per_veh_direct_cost
+        per_veh_indirect_costs[((vehicle), model_year)].update({'IndirectCost_AvgPerVeh': ic_sum})
     return per_veh_indirect_costs
+
+
+def calc_indirect_costs(settings, vehicles, costs_by_year_dict, fleet_dict):
+    print('\nCalculating total indirect costs.\n')
+    markup_factors = [arg for arg in settings.markups['Markup_Factor'].unique()]
+    markup_factors.append('Indirect')
+    for vehicle, year in product(vehicles, settings.years):
+        for markup_factor in markup_factors:
+            alt, st, rc, ft = vehicle
+            rc_vehicle = (alt, rc, ft)
+            cost_per_veh = costs_by_year_dict[((rc_vehicle), year)][f'{markup_factor}Cost_AvgPerVeh']
+            sales_dict_id = ((vehicle), year, 0)
+            if sales_dict_id in sales_dict:
+                sales = sales_dict[sales_dict_id]
+            else:
+                sales = fleet_dict[((vehicle), year, 0)]['VPOP']
+            fleet_dict[((vehicle), year, 0)].update({f'{markup_factor}Cost': cost_per_veh * sales})
+    return fleet_dict
 
 
 if __name__ == '__main__':
     from cti_bca_tool.__main__ import SetInputs as settings
-    # from cti_bca_tool.project_classes import Moves, WarrantyAndUsefullife
-    from cti_bca_tool import project_fleet
-    from cti_bca_tool import direct_costs2
+    from cti_bca_tool.project_fleet import create_fleet_df, regclass_vehicles, create_regclass_sales_dict, create_fleet_dict, sourcetype_vehicles
+    from cti_bca_tool.direct_costs2 import calc_per_veh_direct_costs, calc_direct_costs
+    from cti_bca_tool.general_functions import save_dict_to_csv
 
-    project_fleet_df = project_fleet.project_fleet_df(settings)
-    vehicles_rc = pd.Series(project_fleet_df['alt_rc_ft'].unique())
+    project_fleet_df = create_fleet_df(settings)
+    vehicles_rc = regclass_vehicles(project_fleet_df)
 
     per_veh_markups_by_year_dict = per_veh_project_markups(settings, vehicles_rc)
 
     per_veh_markups_by_year_df = pd.DataFrame(per_veh_markups_by_year_dict)
-    # save dict to csv
-    direct_costs2.per_veh_direct_costs_to_csv(per_veh_markups_by_year_df, settings.path_project / 'test/per_veh_markups_by_year')
 
-    project_regclass_sales_dict = project_fleet.project_regclass_sales_dict(project_fleet_df)
-    direct_costs_dict = direct_costs2.per_veh_direct_costs(settings, vehicles_rc, project_regclass_sales_dict)[1]
-    per_veh_indirect_costs_dict = per_veh_indirect_costs(settings, vehicles_rc, direct_costs_dict)
-    per_veh_indirect_costs_df = pd.DataFrame(per_veh_indirect_costs_dict)
-    # save dict to csv
-    direct_costs2.per_veh_direct_costs_to_csv(per_veh_indirect_costs_df, settings.path_project / 'test/per_veh_indirect_costs_by_year')
+    project_regclass_sales_dict = create_regclass_sales_dict(project_fleet_df)
+    per_veh_dc_by_year_dict = calc_per_veh_direct_costs(settings, vehicles_rc, project_regclass_sales_dict)[1]
+    per_veh_ic_by_year_dict = calc_per_veh_indirect_costs(settings, vehicles_rc, per_veh_dc_by_year_dict)
+    per_veh_indirect_costs_df = pd.DataFrame(per_veh_ic_by_year_dict)
+
+    fleet_dict = project_fleet.create_fleet_dict(project_fleet_df)
+    vehicles_st = project_fleet.sourcetype_vehicles(project_fleet_df)
+    fleet_dict = calc_direct_costs(settings, vehicles_st, per_veh_dc_by_year_dict, fleet_dict)
+    fleet_dict = calc_indirect_costs(settings, vehicles_st, per_veh_ic_by_year_dict, fleet_dict)
+
+    # save dicts to csv
+    save_dict_to_csv(per_veh_markups_by_year_df, settings.path_project / 'test/per_veh_markups_by_year', 'vehicle', 'modelYearID')
+    save_dict_to_csv(per_veh_indirect_costs_df, settings.path_project / 'test/per_veh_indirect_costs_by_year', 'vehicle', 'modelYearID')
+    save_dict_to_csv(fleet_dict, settings.path_project / 'test/fleet_totals', 'vehicle', 'modelYearID', 'ageID')

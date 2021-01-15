@@ -71,9 +71,11 @@ class SetInputs:
 
     # set some year data
     moves.insert(moves.columns.get_loc('modelYearID') + 1, 'ageID', moves['yearID'] - moves['modelYearID'])
-    year_min = moves.loc[moves['ageID'] == 0, 'yearID'].min()
-    year_max = moves['yearID'].max()
+    year_min = moves.loc[moves['ageID'] == 0, 'yearID'].min() # this will work for both calendar year and model year
+    year_max = moves['yearID'].max() # this is the last calendar year included
+    model_year_max = moves.loc[moves['ageID'] == 0, 'modelYearID'].max() # calendar years could extend beyond the last model year included
     years = range(year_min, year_max + 1)
+    model_years = range(year_min, model_year_max + 1)
 
     # parse values from the input files
     aeo_case = bca_inputs.at['aeo_fuel_price_case', 'UserEntry']
