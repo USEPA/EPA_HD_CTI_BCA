@@ -8,6 +8,8 @@ import time
 import attr
 
 from cti_bca_tool.get_context_data import GetFuelPrices, GetDeflators
+from cti_bca_tool.project_fleet import create_fleet_df, regclass_vehicles, sourcetype_vehicles
+from project_dicts import *
 
 
 @attr.s
@@ -88,7 +90,7 @@ class SetInputs:
     r_and_d_vmt_share = pd.to_numeric(bca_inputs.at['r_and_d_vmt_share', 'UserEntry'])
     indirect_cost_scaling_metric = bca_inputs.at['scale_indirect_costs_by', 'UserEntry']
     calc_pollution_effects = bca_inputs.at['calculate_pollution_effects', 'UserEntry']
-    def_gallons_perTonNOxReduction = pd.to_numeric(bca_inputs.at['def_gallons_per_ton_nox_reduction', 'UserEntry'])
+    def_gallons_per_ton_nox_reduction = pd.to_numeric(bca_inputs.at['def_gallons_per_ton_nox_reduction', 'UserEntry'])
     weighted_operating_cost_years = bca_inputs.at['weighted_operating_cost_years', 'UserEntry']
     weighted_operating_cost_years = weighted_operating_cost_years.split(',')
     for i, v in enumerate(weighted_operating_cost_years):
@@ -128,6 +130,19 @@ class SetInputs:
     gen_fxns.convert_dollars_to_analysis_basis(regclass_costs, gdp_deflators, dollar_basis_analysis, [step for step in cost_steps])
     gen_fxns.convert_dollars_to_analysis_basis(def_prices, gdp_deflators, dollar_basis_analysis, 'DEF_USDperGal')
     gen_fxns.convert_dollars_to_analysis_basis(repair_and_maintenance, gdp_deflators, dollar_basis_analysis, 'Value')
+
+    # create any DataFrames and dictionaries and lists that are useful as part of settings (used throughout project)
+    moves_adjustments_dict = create_moves_adjustments_dict(moves_adjustments, 'optionID', 'regClassID', 'fuelTypeID')
+    seedvol_factor_dict = create_seedvol_factor_dict(regclass_learningscalers)
+    markup_inputs_dict = create_markup_inputs_dict(markups)
+    markup_factors = [arg for arg in markups['Markup_Factor'].unique()]
+    def_doserate_inputs_dict = create_def_doserate_inputs_dict(def_doserate_inputs)
+    def_prices_dict = create_def_prices_dict(def_prices)
+    # project_fleet_df = create_fleet_df(moves, moves_adjustments_dict)
+    # vehicles_rc = regclass_vehicles(project_fleet_df)
+    # vehicles_st = sourcetype_vehicles(project_fleet_df)
+    # regclass_sales_dict = create_regclass_sales_dict(project_fleet_df)
+    # fleet_dict = create_fleet_totals_dict(project_fleet_df)
 
 
 if __name__ == '__main__':

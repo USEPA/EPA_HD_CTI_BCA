@@ -1,6 +1,5 @@
 import pandas as pd
 from itertools import product
-from cti_bca_tool import project_fleet
 
 
 # create some dictionaries for storing data
@@ -10,10 +9,10 @@ per_veh_indirect_costs = dict()
 sales_dict = dict()
 
 
-def create_scaling_dict(warranty_df, warranty_id, usefullife_df, usefullife_id, settings):
+def create_markup_scaling_dict(settings, warranty_id, usefullife_id):
     df_all = pd.DataFrame()
-    df1 = warranty_df.copy()
-    df2 = usefullife_df.copy()
+    df1 = settings.warranty_inputs.copy()
+    df2 = settings.usefullife_inputs.copy()
     df1.insert(0, 'identifier', f'{warranty_id}')
     df2.insert(0, 'identifier', f'{usefullife_id}')
     for df in [df1, df2]:
@@ -27,28 +26,15 @@ def create_scaling_dict(warranty_df, warranty_id, usefullife_df, usefullife_id, 
     return dict_return
 
 
-def create_markup_inputs_dict(df):
-    """
-
-    :param df: A DataFrame of the indirect cost markup factors and values by option and fueltype.
-    :return: A dictionary with 'fueltype, markup factor' keys and 'markup value' values.
-    """
-    project_markups = df.copy()
-    # insert a unique id to use as a dictionary key
-    project_markups.insert(0, 'id', pd.Series(zip(project_markups['fuelTypeID'], project_markups['Markup_Factor'])))
-    project_markups.set_index('id', inplace=True)
-    project_markups.drop(columns=['fuelTypeID', 'Markup_Factor'], inplace=True)
-    markups_dict = project_markups.to_dict('index')
-    return markups_dict
-
-
-def calc_project_markup_value(vehicle, markup_factor, model_year, scaling_dict, markups_dict):
+def calc_project_markup_value(settings, vehicle, markup_factor, model_year, scaling_dict):
     alt, rc, ft = vehicle
     scaled_markups_dict_id = ((vehicle), markup_factor, model_year)
     if scaled_markups_dict_id in scaled_markups_dict:
         project_markup_value = scaled_markups_dict[scaled_markups_dict_id]
     else:
-        input_markup_value, scaler, scaled_by = markups_dict[(ft, markup_factor)]['Value'], markups_dict[(ft, markup_factor)]['Scaler'], markups_dict[(ft, markup_factor)]['Scaled_by']
+        input_markup_value, scaler, scaled_by = settings.markup_inputs_dict[(ft, markup_factor)]['Value'], \
+                                                settings.markup_inputs_dict[(ft, markup_factor)]['Scaler'], \
+                                                settings.markup_inputs_dict[(ft, markup_factor)]['Scaled_by']
         if scaler == 'Absolute':
             project_markup_value = \
                 (scaling_dict[((vehicle), scaled_by)][f'{model_year}'] / scaling_dict[((vehicle), scaled_by)]['2024']) \
@@ -73,14 +59,12 @@ def per_veh_project_markups(settings, vehicles):
     :param markups_dict:
     :return:
     """
-    markup_factors = [arg for arg in settings.markups['Markup_Factor'].unique()]
-    markups_dict = create_markup_inputs_dict(settings.markups)
-    scaling_dict = create_scaling_dict(settings.warranty_inputs, 'Warranty', settings.usefullife_inputs, 'Usefullife', settings)
+    scaling_dict = create_markup_scaling_dict(settings, 'Warranty', 'Usefullife')
 
     for vehicle, model_year in product(vehicles, settings.years):
-        for markup_factor in markup_factors:
-            markup_value = calc_project_markup_value(vehicle, markup_factor, model_year, scaling_dict, markups_dict)
-            if markup_factor == markup_factors[0]:
+        for markup_factor in settings.markup_factors:
+            markup_value = calc_project_markup_value(settings, vehicle, markup_factor, model_year, scaling_dict)
+            if markup_factor == settings.markup_factors[0]:
                 project_markups_dict[((vehicle), model_year)] = {markup_factor: markup_value}
             else:
                 project_markups_dict[((vehicle), model_year)].update({markup_factor: markup_value})
@@ -90,15 +74,15 @@ def per_veh_project_markups(settings, vehicles):
 def calc_per_veh_indirect_costs(settings, vehicles, direct_costs_dict):
     print('\nCalculating per vehicle indirect costs\n')
     markup_factors = [arg for arg in settings.markups['Markup_Factor'].unique()]
-    markups_dict = create_markup_inputs_dict(settings.markups)
-    scaling_dict = create_scaling_dict(settings.warranty_inputs, 'Warranty', settings.usefullife_inputs, 'Usefullife', settings)
+    # markups_dict = create_markup_inputs_dict(settings.markups)
+    scaling_dict = create_markup_scaling_dict(settings, 'Warranty', 'Usefullife')
 
     for vehicle, model_year in product(vehicles, settings.years):
         ic_sum = 0
-        for markup_factor in markup_factors:
-            markup_value = calc_project_markup_value(vehicle, markup_factor, model_year, scaling_dict, markups_dict)
+        for markup_factor in settings.markup_factors:
+            markup_value = calc_project_markup_value(settings, vehicle, markup_factor, model_year, scaling_dict)
             per_veh_direct_cost = direct_costs_dict[((vehicle, model_year))]['DirectCost_AvgPerVeh']
-            if markup_factor == markup_factors[0]:
+            if markup_factor == settings.markup_factors[0]:
                 per_veh_indirect_costs[((vehicle), model_year)] = {f'{markup_factor}Cost_AvgPerVeh': markup_value * per_veh_direct_cost}
             else:
                 per_veh_indirect_costs[((vehicle), model_year)].update({f'{markup_factor}Cost_AvgPerVeh': markup_value * per_veh_direct_cost})
@@ -127,7 +111,8 @@ def calc_indirect_costs(settings, vehicles, costs_by_year_dict, fleet_dict):
 
 if __name__ == '__main__':
     from cti_bca_tool.__main__ import SetInputs as settings
-    from cti_bca_tool.project_fleet import create_fleet_df, regclass_vehicles, create_regclass_sales_dict, create_fleet_dict, sourcetype_vehicles
+    from cti_bca_tool.project_fleet import create_fleet_df, regclass_vehicles, sourcetype_vehicles
+    from cti_bca_tool.project_dicts import create_regclass_sales_dict, create_fleet_totals_dict
     from cti_bca_tool.direct_costs2 import calc_per_veh_direct_costs, calc_direct_costs
     from cti_bca_tool.general_functions import save_dict_to_csv
 
@@ -143,8 +128,8 @@ if __name__ == '__main__':
     per_veh_ic_by_year_dict = calc_per_veh_indirect_costs(settings, vehicles_rc, per_veh_dc_by_year_dict)
     per_veh_indirect_costs_df = pd.DataFrame(per_veh_ic_by_year_dict)
 
-    fleet_dict = project_fleet.create_fleet_dict(project_fleet_df)
-    vehicles_st = project_fleet.sourcetype_vehicles(project_fleet_df)
+    fleet_dict = create_fleet_totals_dict(project_fleet_df)
+    vehicles_st = sourcetype_vehicles(project_fleet_df)
     fleet_dict = calc_direct_costs(settings, vehicles_st, per_veh_dc_by_year_dict, fleet_dict)
     fleet_dict = calc_indirect_costs(settings, vehicles_st, per_veh_ic_by_year_dict, fleet_dict)
 
