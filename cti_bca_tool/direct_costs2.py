@@ -25,21 +25,6 @@ def tech_package_cost(costs_df, vehicle, year):
     return pkg_cost
 
 
-# def seedvol_factor(seedvol_df, vehicle):
-#     """
-#
-#     :param: seedvol_df: A DataFrame of learning rate scalers (seed volume factors) by regclass and fueltype.
-#     :return:  A single seed volume factor for use in calculating learning effects for the given vehicle in the given implementation step.
-#     """
-#     alt, rc, ft = vehicle
-#     pkg_seedvol_df = pd.DataFrame(seedvol_df.loc[(seedvol_df['optionID'] == alt)
-#                                                  & (seedvol_df['regClassID'] == rc)
-#                                                  & (seedvol_df['fuelTypeID'] == ft), 'SeedVolumeFactor'])
-#     pkg_seedvol_df.reset_index(drop=True, inplace=True)
-#     pkg_seedvol = pkg_seedvol_df['SeedVolumeFactor'][0]
-#     return pkg_seedvol
-
-
 def tech_pkg_cost_withlearning(settings, vehicle, step, model_year, project_regclass_sales_dict):
     """
 
@@ -70,7 +55,7 @@ def tech_pkg_cost_withlearning(settings, vehicle, step, model_year, project_regc
     return pkg_cost_learned, cumulative_sales
 
 
-def calc_per_veh_direct_costs(settings, vehicles, project_sales_dict):
+def calc_per_regclass_direct_costs(settings, vehicles, project_sales_dict):
     """
 
     :param vehicles: A list/array of vehicles by alt_regclass_fueltype.
@@ -101,26 +86,26 @@ def calc_per_veh_direct_costs(settings, vehicles, project_sales_dict):
     return costs_by_year_by_step_dict, costs_by_year_dict
 
 
-def calc_direct_costs(settings, vehicles, costs_by_year_dict, fleet_totals_dict):
+def calc_direct_costs(costs_by_year_dict, fleet_totals_dict):
     print('\nCalculating total direct costs.\n')
-    for vehicle, year in product(vehicles, settings.years):
-        alt, st, rc, ft = vehicle
+    for key in fleet_totals_dict.keys():
+        alt, st, rc, ft = key[0]
+        model_year, age = key[1], key[2]
         vehicle_rc = (alt, rc, ft)
-        cost_per_veh = costs_by_year_dict[((vehicle_rc), year)]['DirectCost_AvgPerVeh']
-        sales = fleet_totals_dict[((vehicle), year, 0)]['VPOP']
-        fleet_totals_dict[((vehicle), year, 0)].update({'DirectCost': cost_per_veh * sales})
+        if age == 0:
+            cost_per_veh = costs_by_year_dict[((vehicle_rc), model_year)]['DirectCost_AvgPerVeh']
+            sales = fleet_totals_dict[key]['VPOP']
+            fleet_totals_dict[key].update({'DirectCost': cost_per_veh * sales})
     return fleet_totals_dict
 
 
-def update_fleet_averages_dict(fleet_totals_dict, fleet_averages_dict):
-    for k in fleet_totals_dict.keys():
-        vehicle, model_year, age = k
+def calc_per_veh_direct_costs(fleet_totals_dict, fleet_averages_dict):
+    for key in fleet_totals_dict.keys():
+        age = key[2]
         if age == 0:
-            fleet_averages_dict[((vehicle), model_year, age)]\
-                .update({'DirectCost_AvgPerVeh': fleet_totals_dict[((vehicle), model_year, age)]['DirectCost']
-                                                 / fleet_totals_dict[((vehicle), model_year, age)]['VPOP']})
-        else:
-            pass
+            direct_cost = fleet_totals_dict[key]['DirectCost']
+            vpop = fleet_totals_dict[key]['VPOP']
+            fleet_averages_dict[key].update({'DirectCost_AvgPerVeh': direct_cost / vpop})
     return fleet_averages_dict
 
 
@@ -134,16 +119,15 @@ if __name__ == '__main__':
     vehicles_rc = regclass_vehicles(project_fleet_df)
     project_regclass_sales_dict = create_regclass_sales_dict(project_fleet_df)
     per_veh_dc_by_year_by_step_dict, per_veh_dc_by_year_dict \
-        = calc_per_veh_direct_costs(settings, vehicles_rc, project_regclass_sales_dict)
+        = calc_per_regclass_direct_costs(settings, vehicles_rc, project_regclass_sales_dict)
 
     fleet_totals_dict = create_fleet_totals_dict(project_fleet_df)
     fleet_averages_dict = create_fleet_averages_dict(project_fleet_df)
-    vehicles_st = project_fleet.sourcetype_vehicles(project_fleet_df)
-    fleet_totals_dict = calc_direct_costs(settings, vehicles_st, per_veh_dc_by_year_dict, fleet_totals_dict)
-    fleet_averages_dict = update_fleet_averages_dict(fleet_totals_dict, fleet_averages_dict)
+    fleet_totals_dict = calc_direct_costs(per_veh_dc_by_year_dict, fleet_totals_dict)
+    fleet_averages_dict = calc_per_veh_direct_costs(fleet_totals_dict, fleet_averages_dict)
 
     # save dicts to csv
     save_dict_to_csv(per_veh_dc_by_year_by_step_dict, settings.path_project / 'test/per_veh_direct_costs_by_year_by_step', 'vehicle', 'modelYearID', 'cost_step')
     save_dict_to_csv(per_veh_dc_by_year_dict, settings.path_project / 'test/per_veh_direct_costs_by_year', 'vehicle', 'modelYearID')
-    save_dict_to_csv(fleet_totals_dict, settings.path_project / 'test/fleet_totals', 'vehicle', 'modelYearID', 'ageID')
-    save_dict_to_csv(fleet_averages_dict, settings.path_project / 'test/fleet_averages', 'vehicle', 'modelYearID', 'ageID')
+    save_dict_to_csv(fleet_totals_dict, settings.path_project / 'test/cti_fleet_totals', 'vehicle', 'modelYearID', 'ageID')
+    save_dict_to_csv(fleet_averages_dict, settings.path_project / 'test/cti_fleet_averages', 'vehicle', 'modelYearID', 'ageID')

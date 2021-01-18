@@ -136,8 +136,12 @@ class SetInputs:
     seedvol_factor_dict = create_seedvol_factor_dict(regclass_learningscalers)
     markup_inputs_dict = create_markup_inputs_dict(markups)
     markup_factors = [arg for arg in markups['Markup_Factor'].unique()]
+    required_miles_and_ages_dict = create_required_miles_and_ages_dict(warranty_inputs, 'Warranty', usefullife_inputs, 'Usefullife')
     def_doserate_inputs_dict = create_def_doserate_inputs_dict(def_doserate_inputs)
     def_prices_dict = create_def_prices_dict(def_prices)
+    orvr_inputs_dict = create_orvr_inputs_dict(orvr_fuelchanges)
+    fuel_prices_dict = create_fuel_prices_dict(fuel_prices)
+    repair_inputs_dict = repair_and_maintenance.to_dict('index')
     # project_fleet_df = create_fleet_df(moves, moves_adjustments_dict)
     # vehicles_rc = regclass_vehicles(project_fleet_df)
     # vehicles_st = sourcetype_vehicles(project_fleet_df)

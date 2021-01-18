@@ -1,5 +1,5 @@
 import pandas as pd
-
+from cti_bca_tool.repair_costs import calc_per_veh_cumulative_vmt
 
 def create_fleet_totals_dict(fleet_df):
     df = fleet_df.copy()
@@ -17,7 +17,9 @@ def create_fleet_averages_dict(fleet_df):
     df.drop(columns=['modelYearID', 'ageID'], inplace=True)
     df.insert(len(df.columns), 'VMT_AvgPerVeh', fleet_df['VMT'] / fleet_df['VPOP'])
     df.set_index('id', inplace=True)
-    return df.to_dict('index')
+    return_dict = df.to_dict('index')
+    return_dict = calc_per_veh_cumulative_vmt(return_dict)
+    return return_dict
 
 
 def create_regclass_sales_dict(fleet_df):
@@ -63,6 +65,21 @@ def create_markup_inputs_dict(input_df):
     return df.to_dict('index')
 
 
+def create_required_miles_and_ages_dict(warranty_inputs, warranty_id, usefullife_inputs, usefullife_id):
+    df_all = pd.DataFrame()
+    df1 = warranty_inputs.copy()
+    df2 = usefullife_inputs.copy()
+    df1.insert(0, 'identifier', f'{warranty_id}')
+    df2.insert(0, 'identifier', f'{usefullife_id}')
+    for df in [df1, df2]:
+        df.insert(0, 'id', pd.Series(zip(zip(df['optionID'], df['regClassID'], df['fuelTypeID']), df['identifier'], df['period'])))
+        df = df[['id'] + [col for col in df.columns if '20' in col]]
+        df_all = pd.concat([df_all, df], axis=0, ignore_index=True)
+    df_all.set_index('id', inplace=True)
+    dict_return = df_all.to_dict('index')
+    return dict_return
+
+
 def create_def_doserate_inputs_dict(input_df):
     df = input_df.copy()
     id = pd.Series(zip(df['regClassID'], df['fuelTypeID']))
@@ -75,6 +92,30 @@ def create_def_doserate_inputs_dict(input_df):
 def create_def_prices_dict(input_df):
     df = input_df.copy()
     df.set_index('yearID', inplace=True)
+    return df.to_dict('index')
+
+
+def create_orvr_inputs_dict(input_df):
+    df = input_df.copy()
+    id = pd.Series(zip(df['optionID'], df['regClassID'], df['fuelTypeID']))
+    df.insert(0, 'id', id)
+    df.drop(columns=['optionID', 'regClassID', 'fuelTypeID'], inplace=True)
+    df.set_index('id', inplace=True)
+    return df.to_dict('index')
+
+
+def create_fuel_prices_dict(input_df):
+    df = input_df.copy()
+    id = pd.Series(zip(df['yearID'], df['fuelTypeID']))
+    df.insert(0, 'id', id)
+    df.drop(columns=['yearID', 'fuelTypeID'], inplace=True)
+    df.set_index('id', inplace=True)
+    return df.to_dict('index')
+
+
+def create_repair_inputs_dict(input_df):
+    df = input_df.copy()
+    df.set_index('Metric', inplace=True)
     return df.to_dict('index')
 
 
