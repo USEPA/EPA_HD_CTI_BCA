@@ -142,12 +142,12 @@ class SetInputs:
     orvr_inputs_dict = create_orvr_inputs_dict(orvr_fuelchanges)
     fuel_prices_dict = create_fuel_prices_dict(fuel_prices)
     repair_inputs_dict = repair_and_maintenance.to_dict('index')
-    # project_fleet_df = create_fleet_df(moves, moves_adjustments_dict)
-    # vehicles_rc = regclass_vehicles(project_fleet_df)
-    # vehicles_st = sourcetype_vehicles(project_fleet_df)
-    # regclass_sales_dict = create_regclass_sales_dict(project_fleet_df)
-    # fleet_dict = create_fleet_totals_dict(project_fleet_df)
 
+    # read criteria cost factors if needed
+    if calc_pollution_effects == 'Y':
+        criteria_cost_factors = gen_fxns.read_input_files(path_inputs, input_files_dict['criteria_emission_costs']['UserEntry.csv'], lambda x: 'Notes' not in x)
+        criteria_cost_factors_dict = create_criteria_cost_factors_dict(criteria_cost_factors)
+    t = 0
 
 if __name__ == '__main__':
     settings = SetInputs()

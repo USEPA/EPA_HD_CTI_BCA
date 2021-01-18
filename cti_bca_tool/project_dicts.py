@@ -119,6 +119,12 @@ def create_repair_inputs_dict(input_df):
     return df.to_dict('index')
 
 
+def create_criteria_cost_factors_dict(input_df):
+    df = input_df.copy()
+    df.set_index('yearID', inplace=True)
+    return df.to_dict('index')
+
+
 if __name__ == '__main__':
     from cti_bca_tool.__main__ import SetInputs as settings
     from cti_bca_tool.project_fleet import create_fleet_df, regclass_vehicles, sourcetype_vehicles
