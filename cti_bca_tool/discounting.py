@@ -4,6 +4,25 @@ discounting.py
 Contains the DiscountValues class.
 
 """
+import copy
+
+
+def discount_values(settings, dict_of_values, rate):
+    discounted_dict = copy.deepcopy(dict_of_values) # deepcopy is required due to multilevel dictionary being passed
+    if settings.costs_start == 'start-year': discount_offset = 0
+    elif settings.costs_start == 'end-year': discount_offset = 1
+    discount_to_year = settings.discount_to_yearID
+
+    for key in discounted_dict.keys():
+        print(f'Discounting values for {key}')
+        vehicle, model_year, age_id = key[0], key[1], key[2]
+        year = model_year + age_id
+        args = [k for k, v in discounted_dict[key].items() if 'Cost' in k]
+        # args = [k for k, v in discounted_dict[key].items()]
+        for arg in args:
+            discounted_arg = discounted_dict[key][arg] / ((1 + rate) ** (year - discount_to_year + discount_offset))
+            discounted_dict[key].update({'DiscountRate': rate, arg: discounted_arg})
+    return discounted_dict
 
 
 class DiscountValues:
@@ -76,30 +95,32 @@ class DiscountValues:
 
 
 if __name__ == '__main__':
-    """
-    This tests the discounting and annualizing methods to ensure that things are working properly.
-    If run as a script (python -m cti_bca_tool.discounting) the annualized values in the two created DataFrames should be 100.
-    
-    """
-    import pandas as pd
-    from cti_bca_tool.group_metrics import GroupMetrics
+    from cti_bca_tool.__main__ import SetInputs as settings
+    from cti_bca_tool.project_fleet import create_fleet_df, regclass_vehicles, sourcetype_vehicles
+    from cti_bca_tool.project_dicts import create_regclass_sales_dict, create_fleet_totals_dict, create_fleet_averages_dict
+    from cti_bca_tool.direct_costs2 import calc_regclass_yoy_costs_per_step, calc_direct_costs, calc_per_veh_direct_costs
+    from cti_bca_tool.indirect_costs2 import calc_per_veh_indirect_costs, calc_indirect_costs
+    from cti_bca_tool.general_functions import save_dict_to_csv
 
-    df = pd.DataFrame({'yearID': [2027, 2028, 2029, 2030, 2031, 2032],
-                       'cost': [100, 100, 100, 100, 100, 100]})
-    df.insert(0, 'option', 0)
-    discrate = 0.03
-    discount_to_cy = 2027
+    # create project fleet data structures, both a DataFrame and a dictionary of regclass based sales
+    project_fleet_df = create_fleet_df(settings)
 
-    costs_start = 'start-year'
-    df_startyear = DiscountValues(df, discount_to_cy, costs_start, 'cost').discount(discrate)
-    df_startyear = df_startyear.join(GroupMetrics(df_startyear, ['option']).group_cumsum(['cost']))
-    DiscountValues(df_startyear, discount_to_cy, costs_start, 'cost').annualize()
-    print(f'\nIf costs occur at time t=0, or {costs_start}.\n')
-    print(df_startyear)
+    # create a sales (by regclass) and fleet dictionaries
+    regclass_sales_dict = create_regclass_sales_dict(project_fleet_df)
+    fleet_totals_dict = create_fleet_totals_dict(project_fleet_df)
+    fleet_averages_dict = create_fleet_averages_dict(project_fleet_df)
 
-    costs_start = 'end-year'
-    df_endyear = DiscountValues(df, discount_to_cy, costs_start, 'cost').discount(discrate)
-    df_endyear = df_endyear.join(GroupMetrics(df_endyear, ['option']).group_cumsum(['cost']))
-    DiscountValues(df_endyear, discount_to_cy, costs_start, 'cost').annualize()
-    print(f'\nIf costs occur at time t=1, or {costs_start}.\n')
-    print(df_endyear)
+    # calculate direct costs per reg class based on cumulative regclass sales (learning is applied to cumulative reg class sales)
+    regclass_yoy_costs_per_step = calc_regclass_yoy_costs_per_step(settings, regclass_sales_dict)
+
+    # calculate total direct costs and then per vehicle costs (per sourcetype)
+    fleet_averages_dict = calc_per_veh_direct_costs(settings, regclass_yoy_costs_per_step, fleet_averages_dict)
+    fleet_totals_dict = calc_direct_costs(fleet_totals_dict, fleet_averages_dict)
+
+    fleet_averages_dict = calc_per_veh_indirect_costs(settings, fleet_averages_dict)
+    fleet_totals_dict = calc_indirect_costs(settings, fleet_totals_dict, fleet_averages_dict)
+
+    # fleet_totals_dict_3 = create_fleet_totals_dict(project_fleet_df, rate=0.03)
+    fleet_totals_dict_3 = discount_values(settings, fleet_totals_dict, 0.03)
+    fleet_totals_dict_7 = discount_values(settings, fleet_totals_dict, 0.07)
+    print(fleet_totals_dict_3)

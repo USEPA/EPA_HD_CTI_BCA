@@ -88,7 +88,7 @@ if __name__ == '__main__':
     from cti_bca_tool.__main__ import SetInputs as settings
     from cti_bca_tool.project_fleet import create_fleet_df, regclass_vehicles, sourcetype_vehicles
     from cti_bca_tool.project_dicts import create_regclass_sales_dict, create_fleet_totals_dict, create_fleet_averages_dict
-    from cti_bca_tool.direct_costs2 import calc_per_regclass_direct_costs, calc_direct_costs, calc_per_veh_direct_costs
+    from cti_bca_tool.direct_costs2 import calc_regclass_yoy_costs_per_step, calc_direct_costs, calc_per_veh_direct_costs
     from cti_bca_tool.general_functions import save_dict_to_csv
 
     project_fleet_df = create_fleet_df(settings)
@@ -98,15 +98,22 @@ if __name__ == '__main__':
 
     per_veh_markups_by_year_df = pd.DataFrame(per_veh_markups_by_year_dict)
 
-    project_regclass_sales_dict = create_regclass_sales_dict(project_fleet_df)
+    # create project fleet data structures, both a DataFrame and a dictionary of regclass based sales
+    project_fleet_df = create_fleet_df(settings)
+
+    # create a sales (by regclass) and fleet dictionaries
+    regclass_sales_dict = create_regclass_sales_dict(project_fleet_df)
     fleet_totals_dict = create_fleet_totals_dict(project_fleet_df)
     fleet_averages_dict = create_fleet_averages_dict(project_fleet_df)
 
-    per_veh_dc_by_year_dict = calc_per_regclass_direct_costs(settings, vehicles_rc, project_regclass_sales_dict)[1]
-    fleet_totals_dict = calc_direct_costs(per_veh_dc_by_year_dict, fleet_totals_dict)
-    fleet_averages_dict = calc_per_veh_direct_costs(fleet_totals_dict, fleet_averages_dict)
-    fleet_averages_dict = calc_per_veh_indirect_costs(settings, fleet_averages_dict)
+    # calculate direct costs per reg class based on cumulative regclass sales (learning is applied to cumulative reg class sales)
+    regclass_yoy_costs_per_step = calc_regclass_yoy_costs_per_step(settings, regclass_sales_dict)
 
+    # calculate total direct costs and then per vehicle costs (per sourcetype)
+    fleet_averages_dict = calc_per_veh_direct_costs(settings, regclass_yoy_costs_per_step, fleet_averages_dict)
+    fleet_totals_dict = calc_direct_costs(fleet_totals_dict, fleet_averages_dict)
+
+    fleet_averages_dict = calc_per_veh_indirect_costs(settings, fleet_averages_dict)
     fleet_totals_dict = calc_indirect_costs(settings, fleet_totals_dict, fleet_averages_dict)
 
     # save dicts to csv

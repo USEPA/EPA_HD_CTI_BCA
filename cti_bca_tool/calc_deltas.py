@@ -5,6 +5,27 @@ Contains the CalcDeltas class.
 
 """
 import pandas as pd
+import copy
+
+
+def calc_deltas(settings, dict_for_deltas, no_action_alt=0):
+    delta_dict = copy.deepcopy(dict_for_deltas)
+    no_action_name = settings.options_dict[no_action_alt]['OptionName']
+    for key in delta_dict.keys():
+        print(f'Calculating deltas for {key}')
+        vehicle, model_year, age_id = key[0], key[1], key[2]
+        alt, st, rc, ft = vehicle
+        if alt == 0:
+            del delta_dict[key]
+    for key in delta_dict.keys():
+        args = [k for k, v in delta_dict[key].items() if 'Cost' in k or 'Avg' in k]
+        action_name = settings.options_dict[alt]['OptionName'] - no_action_name
+        action_alt = f'{alt}{no_action_alt}'
+        for arg in args:
+            no_action_arg = dict_for_deltas[((no_action_alt, st, rc, ft), model_year, age_id)][arg]
+            delta_dict[key].update({'optionID': f'{action_alt}', 'OptionName': f'{action_name}', arg: delta_dict[key][arg] - no_action_arg})
+    return delta_dict
+
 
 
 class CalcDeltas:
@@ -67,23 +88,41 @@ class CalcDeltas:
 
 
 if __name__ == '__main__':
-    """
-    This tests the CalcDeltas class to ensure that things are working properly.
-    If run as a script (python -m cti_bca_tool.calc_deltas) the first DataFrame should show metric_Reductions values of 0 for optionID 0 and 100 
-    for optionID 1 and the second DataFrame should show metric values of -100 for optionID 10.
+    from cti_bca_tool.__main__ import SetInputs as settings
+    from cti_bca_tool.project_fleet import create_fleet_df, regclass_vehicles, sourcetype_vehicles
+    from cti_bca_tool.project_dicts import create_regclass_sales_dict, create_fleet_totals_dict, create_fleet_averages_dict
+    from cti_bca_tool.direct_costs2 import calc_regclass_yoy_costs_per_step, calc_direct_costs, calc_per_veh_direct_costs
+    from cti_bca_tool.indirect_costs2 import calc_per_veh_indirect_costs, calc_indirect_costs
+    from cti_bca_tool.discounting import discount_values
+    from cti_bca_tool.general_functions import save_dict_to_csv, convert_dict_to_df
 
-    """
-    import pandas as pd
+    # create project fleet data structures, both a DataFrame and a dictionary of regclass based sales
+    project_fleet_df = create_fleet_df(settings)
 
-    df = pd.DataFrame({'optionID': [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,],
-                       'OptionName': ['Base', 'Base', 'Base', 'Base', 'Base', 'Base', 'Base', 'Base', 'Alt1', 'Alt1', 'Alt1', 'Alt1', 'Alt1', 'Alt1', 'Alt1', 'Alt1',],
-                       'modelYearID': [2027, 2027, 2027, 2027, 2028, 2028, 2028, 2028, 2027, 2027, 2027, 2027, 2028, 2028, 2028, 2028,],
-                       'regClassID': [46, 47, 46, 47, 46, 47, 46, 47, 46, 47, 46, 47, 46, 47, 46, 47,],
-                       'fuelTypeID': [1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2,],
-                       'metric': [200, 200, 200, 200, 300, 300, 300, 300, 100, 100, 100, 100, 200, 200, 200, 200,]})
+    # create a sales (by regclass) and fleet dictionaries
+    regclass_sales_dict = create_regclass_sales_dict(project_fleet_df)
+    fleet_totals_dict = create_fleet_totals_dict(project_fleet_df)
+    fleet_averages_dict = create_fleet_averages_dict(project_fleet_df)
 
-    df1 = CalcDeltas(df).calc_delta_and_keep_alt_id('metric')
-    print(f'\nFirst DataFrame should show metric_Reductions values of 0 for optionID 0 and 100 for optionID 1\n{df1}')
+    # calculate direct costs per reg class based on cumulative regclass sales (learning is applied to cumulative reg class sales)
+    regclass_yoy_costs_per_step = calc_regclass_yoy_costs_per_step(settings, regclass_sales_dict)
 
-    df2 = pd.concat([df, CalcDeltas(df).calc_delta_and_new_alt_id('metric')], axis=0, ignore_index=True) # modelYearID=2027,2028,2029; metric=400,800,1200
-    print(f'\nSecond DataFrame should show metric values of -100 for optionID 10\n{df2}')
+    # calculate total direct costs and then per vehicle costs (per sourcetype)
+    fleet_averages_dict = calc_per_veh_direct_costs(settings, regclass_yoy_costs_per_step, fleet_averages_dict)
+    fleet_totals_dict = calc_direct_costs(fleet_totals_dict, fleet_averages_dict)
+
+    fleet_averages_dict = calc_per_veh_indirect_costs(settings, fleet_averages_dict)
+    fleet_totals_dict = calc_indirect_costs(settings, fleet_totals_dict, fleet_averages_dict)
+
+    # fleet_totals_dict_3 = create_fleet_totals_dict(project_fleet_df, rate=0.03)
+    fleet_totals_dict_3 = discount_values(settings, fleet_totals_dict, 0.03)
+    fleet_totals_dict_7 = discount_values(settings, fleet_totals_dict, 0.07)
+
+    # now prep for deltas
+    fleet_totals_df = convert_dict_to_df(fleet_totals_dict, 0, 'vehicle', 'modelYearID', 'ageID')
+
+    # now calc deltas
+    fleet_totals_dict_deltas = calc_deltas(settings, fleet_totals_dict, no_action_alt=0)
+    fleet_totals_dict_3_deltas = calc_deltas(settings, fleet_totals_dict_3, no_action_alt=0)
+
+    print(fleet_totals_dict_deltas)
