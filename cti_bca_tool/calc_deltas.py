@@ -5,26 +5,35 @@ Contains the CalcDeltas class.
 
 """
 import pandas as pd
-import copy
 
 
 def calc_deltas(settings, dict_for_deltas, no_action_alt=0):
-    delta_dict = copy.deepcopy(dict_for_deltas)
     no_action_name = settings.options_dict[no_action_alt]['OptionName']
-    for key in delta_dict.keys():
-        print(f'Calculating deltas for {key}')
-        vehicle, model_year, age_id = key[0], key[1], key[2]
+    update_dict = dict()
+    for key in dict_for_deltas.keys():
+        vehicle, model_year, age_id, discount_rate = key[0], key[1], key[2], key[3]
         alt, st, rc, ft = vehicle
-        if alt == 0:
-            del delta_dict[key]
-    for key in delta_dict.keys():
-        args = [k for k, v in delta_dict[key].items() if 'Cost' in k or 'Avg' in k]
-        action_name = settings.options_dict[alt]['OptionName'] - no_action_name
-        action_alt = f'{alt}{no_action_alt}'
-        for arg in args:
-            no_action_arg = dict_for_deltas[((no_action_alt, st, rc, ft), model_year, age_id)][arg]
-            delta_dict[key].update({'optionID': f'{action_alt}', 'OptionName': f'{action_name}', arg: delta_dict[key][arg] - no_action_arg})
-    return delta_dict
+        print(f'Calculating deltas for {vehicle}, MY {model_year}, age {age_id}, DR {discount_rate}')
+        id_args = [k for k, v in dict_for_deltas[key].items() if 'ID' in k or 'Name' in k]
+        args_to_delta = [k for k, v in dict_for_deltas[key].items() if k not in id_args]
+        if alt != no_action_alt:
+            action_name = settings.options_dict[alt]['OptionName']
+            delta_name = f'{action_name}_minus_{no_action_name}'
+            delta_alt = f'{alt}{no_action_alt}'
+            delta_alt = int(delta_alt)
+            delta_dict = dict()
+            for arg in args_to_delta:
+                arg_value = dict_for_deltas[key][arg] - dict_for_deltas[((no_action_alt, st, rc, ft), model_year, age_id, discount_rate)][arg]
+                delta_dict.update({'OptionName': delta_name, arg: arg_value})
+                # delta_dict.update({'optionID': delta_alt, 'OptionName': delta_name, arg: arg_value})
+            for arg in id_args:
+                arg_value = dict_for_deltas[key][arg]
+                delta_dict.update({'OptionName': delta_name, arg: arg_value})
+                # delta_dict.update({'optionID': delta_alt, 'OptionName': delta_name, arg: arg_value})
+            delta_dict.update({'optionID': delta_alt})
+            update_dict[((delta_alt, st, rc, ft), model_year, age_id, discount_rate)] = delta_dict
+    dict_for_deltas.update(update_dict)
+    return dict_for_deltas
 
 
 

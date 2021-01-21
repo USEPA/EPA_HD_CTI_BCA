@@ -1,48 +1,28 @@
 import pandas as pd
 from cti_bca_tool.repair_costs import calc_per_veh_cumulative_vmt
 
-# def create_fleet_totals_dict(fleet_df, rate=0):
-#     df = fleet_df.copy()
-#     id = pd.Series(zip(zip(df['optionID'], fleet_df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['modelYearID'], df['ageID']))
-#     df.insert(0, 'id', id)
-#     df.insert(1, 'DiscountRate', rate)
-#     df.drop(columns=['modelYearID', 'ageID'], inplace=True)
-#     df.set_index('id', inplace=True)
-#     return df.to_dict('index')
-def create_fleet_totals_dict(fleet_df, no_action_alt):
-    """
-
-    :param fleet_df:
-    :param no_action_alt:
-    :param rates: A list of discount rates to use (presumably 0.03 and 0.07).
-    :return:
-    """
+def create_fleet_totals_dict(settings, fleet_df, rate=0):
     df = fleet_df.copy()
-    df.insert(0, 'DiscountRate', 0)
-    df3 = df.copy()
-    df3['DiscountRate'] = 0.03
-    df7 = df.copy()
-    df7['DiscountRate'] = 0.07
-    df = pd.concat([df, df3, df7], ignore_index=True, axis=0)
-    df.reset_index(drop=True, inplace=True)
-    df_delta = pd.DataFrame(df.loc[df['optionID'] != no_action_alt, :])
-    df.reset_index(drop=True, inplace=True)
-    df_delta['optionID'] = df_delta['optionID'] * 10
-    df = pd.concat([df, df_delta], axis=0, ignore_index=True)
-    df.reset_index(drop=True, inplace=True)
-    id = pd.Series(zip(zip(df['optionID'], df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['modelYearID'], df['ageID'], df['DiscountRate']))
+    df.insert(0, 'OptionName', '')
+    for alt in settings.options_dict.keys():
+        df.loc[df['optionID'] == alt, 'OptionName'] = settings.options_dict[alt]['OptionName']
+    df.insert(0, 'DiscountRate', rate)
+    id = pd.Series(zip(zip(df['optionID'], fleet_df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['modelYearID'], df['ageID'], df['DiscountRate']))
     df.insert(0, 'id', id)
     df.drop(columns=['modelYearID', 'ageID', 'DiscountRate'], inplace=True)
     df.set_index('id', inplace=True)
     return df.to_dict('index')
 
 
-def create_fleet_averages_dict(fleet_df, rate=0):
+def create_fleet_averages_dict(settings, fleet_df, rate=0):
     df = pd.DataFrame(fleet_df[['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'yearID', 'modelYearID', 'ageID']]).reset_index(drop=True)
-    id = pd.Series(zip(zip(df['optionID'], df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['modelYearID'], df['ageID']))
+    df.insert(0, 'OptionName', '')
+    for alt in settings.options_dict.keys():
+        df.loc[df['optionID'] == alt, 'OptionName'] = settings.options_dict[alt]['OptionName']
+    df.insert(0, 'DiscountRate', rate)
+    id = pd.Series(zip(zip(df['optionID'], df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['modelYearID'], df['ageID'], df['DiscountRate']))
     df.insert(0, 'id', id)
-    df.insert(1, 'DiscountRate', rate)
-    df.drop(columns=['modelYearID', 'ageID'], inplace=True)
+    df.drop(columns=['modelYearID', 'ageID', 'DiscountRate'], inplace=True)
     df.insert(len(df.columns), 'VMT_AvgPerVeh', fleet_df['VMT'] / fleet_df['VPOP'])
     df.set_index('id', inplace=True)
     return_dict = df.to_dict('index')

@@ -57,9 +57,10 @@ def calc_per_veh_indirect_costs(settings, fleet_averages_dict):
     print('\nCalculating per vehicle indirect costs\n')
 
     for key in fleet_averages_dict.keys():
-        alt, st, rc, ft = key[0]
-        model_year, age = key[1], key[2]
-        if age == 0:
+        vehicle, model_year, age_id = key[0], key[1], key[2]
+        alt, st, rc, ft = vehicle
+        if age_id == 0:
+            print(f'Calculating per vehicle direct costs for {vehicle}, MY {model_year}.')
             ic_sum = 0
             for markup_factor in settings.markup_factors:
                 markup_value = calc_project_markup_value(settings, (alt, rc, ft), markup_factor, model_year)

@@ -106,6 +106,7 @@ def calc_per_veh_direct_costs(settings, regclass_yoy_costs_per_step_dict, fleet_
         vehicle, model_year, age_id = key[0], key[1], key[2]
         alt, st, rc, ft = vehicle
         if age_id == 0:
+            print(f'Calculating per vehicle direct costs for {vehicle}, MY {model_year}.')
             if alt == 0:
                 model_year_cost = regclass_yoy_costs_per_step_dict[((alt, rc, ft), model_year, settings.cost_steps[0])]['DirectCost_AvgPerVeh']
             else:
@@ -117,37 +118,6 @@ def calc_per_veh_direct_costs(settings, regclass_yoy_costs_per_step_dict, fleet_
     return fleet_averages_dict
 
 
-# def calc_per_regclass_direct_costs(settings, vehicles, project_sales_dict):
-#     """
-#
-#     :param vehicles: A list/array of vehicles by alt_regclass_fueltype.
-#     :param project_sales_dict: A dictionary of the project fleet consisting of new vehicle sales by year.
-#     :param settings: The project input settings.
-#     :return: Two dictionaries - one dictionary of per vehicle package costs by model year and by implementation step and another dictionary of
-#     per vehicle package costs by model year.
-#     """
-#     print('\nCalculating per vehicle direct costs.\n')
-#     for vehicle, step in product(vehicles, settings.cost_steps):
-#         alt, rc, ft = vehicle
-#         for model_year in range(int(step), settings.year_max + 1):
-#             pkg_cost, cumulative_sales = tech_pkg_cost_withlearning(settings, vehicle, step, model_year, project_sales_dict)
-#             costs_by_year_by_step_dict[((vehicle), model_year, int(step))] = {'CumulativeSales': cumulative_sales, 'DirectCost_AvgPerVeh': pkg_cost}
-#             if alt == 0 and step == settings.cost_steps[0]:
-#                 costs_by_year_dict[((vehicle), model_year)] \
-#                     = {'DirectCost_AvgPerVeh': costs_by_year_by_step_dict[((vehicle), model_year, int(step))]['DirectCost_AvgPerVeh']}
-#             elif alt == 0 and step != settings.cost_steps[0]:
-#                 costs_by_year_dict[((vehicle), model_year)] = {'DirectCost_AvgPerVeh': costs_by_year_dict[((vehicle), model_year)]['DirectCost_AvgPerVeh']}
-#             elif step == settings.cost_steps[0]:
-#                 costs_by_year_dict[((vehicle), model_year)] \
-#                     = {'DirectCost_AvgPerVeh': costs_by_year_by_step_dict[((vehicle), model_year, int(step))]['DirectCost_AvgPerVeh'] \
-#                                                + costs_by_year_dict[((0, rc, ft), model_year)]['DirectCost_AvgPerVeh']}
-#             else:
-#                 costs_by_year_dict[((vehicle), model_year)] \
-#                     = {'DirectCost_AvgPerVeh': costs_by_year_by_step_dict[((vehicle), model_year, int(step))]['DirectCost_AvgPerVeh'] \
-#                                                + costs_by_year_dict[((vehicle), model_year)]['DirectCost_AvgPerVeh']}
-#     return costs_by_year_by_step_dict, costs_by_year_dict
-
-
 def calc_direct_costs(fleet_totals_dict, fleet_averages_dict):
     print('\nCalculating total direct costs.\n')
     for key in fleet_totals_dict.keys():
@@ -157,16 +127,6 @@ def calc_direct_costs(fleet_totals_dict, fleet_averages_dict):
             sales = fleet_totals_dict[key]['VPOP']
             fleet_totals_dict[key].update({'DirectCost': cost_per_veh * sales})
     return fleet_totals_dict
-
-
-# def calc_per_veh_direct_costs(fleet_totals_dict, fleet_averages_dict):
-#     for key in fleet_totals_dict.keys():
-#         age = key[2]
-#         if age == 0:
-#             direct_cost = fleet_totals_dict[key]['DirectCost']
-#             vpop = fleet_totals_dict[key]['VPOP']
-#             fleet_averages_dict[key].update({'DirectCost_AvgPerVeh': direct_cost / vpop})
-#     return fleet_averages_dict
 
 
 if __name__ == '__main__':
@@ -182,7 +142,7 @@ if __name__ == '__main__':
 
     regclass_yoy_costs_per_step_dict = calc_regclass_yoy_costs_per_step(settings, regclass_sales_dict)
     fleet_averages_dict = calc_per_veh_direct_costs(settings, regclass_yoy_costs_per_step_dict, fleet_averages_dict)
-    fleet_totals_dict = calc_direct_costs(fleet_averages_dict, fleet_totals_dict)
+    fleet_totals_dict = calc_direct_costs(fleet_totals_dict, fleet_averages_dict)
 
     # save dicts to csv
     save_dict_to_csv(regclass_yoy_costs_per_step_dict, settings.path_project / 'test/regclass_direct_costs_by_year_by_step', 'vehicle', 'modelYearID', 'cost_step')

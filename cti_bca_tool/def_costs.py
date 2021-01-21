@@ -33,13 +33,14 @@ def calc_nox_reduction(vehicle, year, model_year, fleet_totals_dict):
     """
     alt, st, rc, ft = vehicle
     age = year - model_year
-    nox_reduction = fleet_totals_dict[((0, st, rc, ft), model_year, age)]['NOx_UStons'] - fleet_totals_dict[((vehicle), model_year, age)]['NOx_UStons']
+    nox_reduction = fleet_totals_dict[((0, st, rc, ft), model_year, age, 0)]['NOx_UStons'] \
+                    - fleet_totals_dict[((vehicle), model_year, age, 0)]['NOx_UStons']
     return nox_reduction
 
 
 def calc_def_gallons(settings, vehicle, year, model_year, fleet_totals_dict):
     age = year - model_year
-    gallons_fuel = fleet_totals_dict[((vehicle), model_year, age)]['Gallons']
+    gallons_fuel = fleet_totals_dict[((vehicle), model_year, age, 0)]['Gallons']
     base_doserate = calc_def_doserate(settings, vehicle)
     nox_reduction = calc_nox_reduction(vehicle, year, model_year, fleet_totals_dict)
     gallons_def = gallons_fuel * base_doserate + nox_reduction * settings.def_gallons_per_ton_nox_reduction
@@ -61,10 +62,11 @@ def calc_def_costs(settings, fleet_totals_dict):
 
 
 def calc_average_def_costs(fleet_totals_dict, fleet_averages_dict):
-    print('\nCalculating DEF average cost per mile.')
     for key in fleet_averages_dict.keys():
-        alt, st, rc, ft = key[0]
+        vehicle, model_year, age_id = key[0], key[1], key[2]
+        alt, st, rc, ft = vehicle
         if ft == 2:
+            print(f'Calculating DEF average cost per mile for {vehicle}, MY {model_year}, age {age_id}.')
             def_cost = fleet_totals_dict[key]['DEFCost']
             vmt = fleet_totals_dict[key]['VMT']
             vpop = fleet_totals_dict[key]['VPOP']

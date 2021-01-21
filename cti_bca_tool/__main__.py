@@ -3,12 +3,10 @@ from cti_bca_tool import cti_bca
 import cti_bca_tool.general_functions as gen_fxns
 from pathlib import Path
 from datetime import datetime
-import pandas as pd
 import time
 import attr
 
 from cti_bca_tool.get_context_data import GetFuelPrices, GetDeflators
-from cti_bca_tool.project_fleet import create_fleet_df, regclass_vehicles, sourcetype_vehicles
 from project_dicts import *
 
 
@@ -28,9 +26,9 @@ class SetInputs:
     files_in_path_code = (entry for entry in path_code.iterdir() if entry.is_file())
 
     # set run id and files to generate
-    run_folder_identifier = input('Provide a run identifier for your output folder name (press return to use the default name)\n')
-    run_folder_identifier = run_folder_identifier if run_folder_identifier != '' else 'BCA-Results'
-    create_all_files = input('Create and save the large "all_calcs" file? (y)es or (n)o?\n')
+    # run_folder_identifier = input('Provide a run identifier for your output folder name (press return to use the default name)\n')
+    # run_folder_identifier = run_folder_identifier if run_folder_identifier != '' else 'BCA-Results'
+    # create_all_files = input('Create and save the large "all_calcs" file? (y)es or (n)o?\n')
 
     start_time = time.time()
     start_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')

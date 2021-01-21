@@ -161,7 +161,7 @@ def save_dict_to_csv(dict_to_save, save_path, *args):
     return
 
 
-def convert_dict_to_df(dict_to_convert, no_action_alt, *args):
+def convert_dict_to_df(dict_to_convert, *args):
     """
 
     :param dict_to_save: A dictionary having ((vehicle), year, step) keys where vehicle is an alt_rc_ft tuple.
@@ -171,6 +171,5 @@ def convert_dict_to_df(dict_to_convert, no_action_alt, *args):
     df.reset_index(inplace=True)
     for idx, arg in enumerate(args):
         df.rename(columns={f'level_{idx}': arg}, inplace=True)
-    df = pd.DataFrame(df.loc[df['optionID'] != no_action_alt, :])
     df.reset_index(drop=True, inplace=True)
     return df
