@@ -57,7 +57,7 @@ def calc_adjusted_gallons(settings, vehicle, year, model_year, totals_dict):
     age = year - model_year
     key = ((vehicle), model_year, age, 0)
     adjustment = get_orvr_adjustment(settings, vehicle)
-    thc_reduction = calc_thc_reduction(vehicle, year, model_year, totals_dict)
+    thc_reduction = calc_thc_reduction(settings, vehicle, year, model_year, totals_dict)
     old_gallons = totals_dict[key]['Gallons']
     adjusted_gallons = old_gallons - thc_reduction * adjustment * settings.grams_per_short_ton * settings.gallons_per_ml
     return adjusted_gallons
