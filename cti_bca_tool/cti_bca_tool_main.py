@@ -113,7 +113,9 @@ def main(settings):
 
     # determine run output paths
     if settings.run_folder_identifier == 'test':
-        path_of_run_results_folder = create_output_paths(settings)
+        path_of_run_results_folder = settings.path_test
+        path_of_run_results_folder.mkdir(exist_ok=True)
+        path_of_run_folder = path_of_run_results_folder
     else:
         path_of_run_folder, path_of_run_inputs_folder, path_of_run_results_folder, path_of_modified_inputs_folder, path_of_code_folder \
             = create_output_paths(settings)
@@ -146,9 +148,9 @@ def main(settings):
     save_dict_to_csv(estimated_ages_dict, path_of_run_results_folder / 'cti_bca_estimated_ages', 'vehicle', 'modelYearID', 'identifier')
     save_dict_to_csv(repair_cpm_dict, path_of_run_results_folder / 'cti_bca_repair_cpm_details', 'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
 
-    save_dict_to_csv(wtd_def_cpm_dict, path_of_run_results_folder / 'vmt_weighted_def_cpm', 'vehicle', 'modelYearID')
-    save_dict_to_csv(wtd_fuel_cpm_dict, path_of_run_results_folder / 'vmt_weighted_fuel_cpm', 'vehicle', 'modelYearID')
-    save_dict_to_csv(wtd_repair_cpm_dict, path_of_run_results_folder / 'vmt_weighted_emission_repair_cpm', 'vehicle', 'modelYearID')
+    save_dict_to_csv(wtd_def_cpm_dict, path_of_run_results_folder / 'cti_bca_vmt_weighted_def_cpm', 'vehicle', 'modelYearID')
+    save_dict_to_csv(wtd_fuel_cpm_dict, path_of_run_results_folder / 'cti_bca_vmt_weighted_fuel_cpm', 'vehicle', 'modelYearID')
+    save_dict_to_csv(wtd_repair_cpm_dict, path_of_run_results_folder / 'cti_bca_vmt_weighted_emission_repair_cpm', 'vehicle', 'modelYearID')
 
 
     # # for figures, an updated options_dict would be nice

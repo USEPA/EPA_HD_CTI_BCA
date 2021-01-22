@@ -114,21 +114,21 @@ def bca_tables(input_df, index_list, cols, function, *args):
 
 def create_output_paths(settings):
     settings.path_outputs.mkdir(exist_ok=True)
-    if settings.run_folder_identifier == 'test':
-        path_of_run_results_folder = settings.path_test
-        path_of_run_results_folder.mkdir(exist_ok=True)
-        return path_of_run_results_folder
-    else:
-        path_of_run_folder = settings.path_outputs / f'{settings.start_time_readable}_CTI_{settings.run_folder_identifier}'
-        path_of_run_folder.mkdir(exist_ok=False)
-        path_of_run_inputs_folder = path_of_run_folder / 'run_inputs'
-        path_of_run_inputs_folder.mkdir(exist_ok=False)
-        path_of_run_results_folder = path_of_run_folder / 'run_results'
-        path_of_run_results_folder.mkdir(exist_ok=False)
-        path_of_modified_inputs_folder = path_of_run_folder / 'modified_inputs'
-        path_of_modified_inputs_folder.mkdir(exist_ok=False)
-        path_of_code_folder = path_of_run_folder / 'code'
-        path_of_code_folder.mkdir(exist_ok=False)
+    # if settings.run_folder_identifier == 'test':
+    #     path_of_run_results_folder = settings.path_test
+    #     path_of_run_results_folder.mkdir(exist_ok=True)
+    #     return path_of_run_results_folder
+    path_of_run_folder = settings.path_outputs / f'{settings.start_time_readable}_CTI_{settings.run_folder_identifier}'
+    path_of_run_folder.mkdir(exist_ok=False)
+    path_of_run_inputs_folder = path_of_run_folder / 'run_inputs'
+    path_of_run_inputs_folder.mkdir(exist_ok=False)
+    path_of_run_results_folder = path_of_run_folder / 'run_results'
+    path_of_run_results_folder.mkdir(exist_ok=False)
+    path_of_modified_inputs_folder = path_of_run_folder / 'modified_inputs'
+    path_of_modified_inputs_folder.mkdir(exist_ok=False)
+    path_of_code_folder = path_of_run_folder / 'code'
+    path_of_code_folder.mkdir(exist_ok=False)
+
     return path_of_run_folder, path_of_run_inputs_folder, path_of_run_results_folder, path_of_modified_inputs_folder, path_of_code_folder
 
 
