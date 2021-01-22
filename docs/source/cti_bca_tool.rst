@@ -4,19 +4,20 @@ usepa-cti-bca cti_bca_tool
 .. toctree::
    :maxdepth: 4
 
-   cti_bca
+   tool_setup
+   tool_main
    calc_deltas
-   data_table
-   direct_cost
+   direct_costs
    discounting
-   emission_cost
+   emission_costs
    estimated_age
    fleet
    get_context_data
    general_functions
    group_metrics
-   indirect_cost
+   indirect_costs
+   tech_costs
    operating_cost
    vehicle
    weighted_results
-   doc_tables
+   tool_postproc

@@ -1,7 +1,7 @@
-doc_tables module
+tool_setup module
 =================
 
-.. automodule:: doc_tables
+.. automodule:: tool_setup
    :members:
    :undoc-members:
    :show-inheritance:

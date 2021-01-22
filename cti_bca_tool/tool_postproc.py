@@ -29,7 +29,7 @@ index_by_year = ['DiscountRate', 'yearID']
 
 
 def doc_tables_post_process(path_for_save, fleet_totals_df):
-    print('\nDoing some post-processing.')
+    print('\nDoing some post-processing....')
     df = fleet_totals_df.copy()
 
     preamble_program_table = preamble_ria_tables(df, index_by_alt_by_year, sum, 1000000, 2, *preamble_program_args)
@@ -73,11 +73,11 @@ def doc_tables_post_process(path_for_save, fleet_totals_df):
                       'bca_cost_pv': bca_cost_table_pv,
                       }
 
-    document_tables_file = pd.ExcelWriter(path_for_save / 'preamble_ria_tables.xlsx')
+    document_tables_file = pd.ExcelWriter(path_for_save / 'cti_bca_preamble_ria_tables.xlsx')
     for sheet_name in doc_table_dict:
         doc_table_dict[sheet_name].to_excel(document_tables_file, sheet_name=sheet_name)
 
-    return document_tables_file
+    return document_tables_file, preamble_program_table
 
 
 def preamble_ria_tables(input_df, index_list, function, divisor, sig_dig, *args):

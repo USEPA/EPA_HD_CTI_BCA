@@ -9,6 +9,20 @@ from cti_bca_tool.vehicle import sourcetype_dict
 
 
 def create_weighted_cost_dict(settings, fleet_averages_dict, arg_to_weight, arg_to_weight_by):
+    """
+    This method weights arguments by the passed weight_by argument. The weighting is limited by the number of years (ages) to be included which is set
+    in the general inputs file. The weighted is further limited to model years for which sufficient data exits to include all of those ages. For example,
+    if the maximum calendar year included in the input data is 2045, and the maximum numbers of ages of data to include for each model year is 9 (which
+    would be 10 years of age since year 1 is age 0) then the maximum model year included will be 2035.
+    Args:
+        settings: The SetInputs class.
+        fleet_averages_dict: A dictionary of fleet average data (e.g., miles/year, cost/year, cost/mile).
+        arg_to_weight: The argument to be weighted by the arg_to_weight_by argument.
+        arg_to_weight_by: The argument to weight by.
+
+    Returns: A dictionary of arguments weighted by the weight by argument.
+
+    """
     wtd_result_dict = dict()
     weighted_results_dict = dict()
     for key in fleet_averages_dict.keys():
@@ -17,17 +31,18 @@ def create_weighted_cost_dict(settings, fleet_averages_dict, arg_to_weight, arg_
         if arg_to_weight == 'DEFCost_AvgPerMile' and ft != 2:
             pass
         else:
-            print(f'Calculating weighted {arg_to_weight} for {vehicle}, MY {model_year}')
-            wtd_result_dict_id = ((vehicle), model_year)
-            numerator, denominator = 0, 0
-            if wtd_result_dict_id in wtd_result_dict:
-                numerator, denominator = wtd_result_dict[wtd_result_dict_id]['numerator'], wtd_result_dict[wtd_result_dict_id]['denominator']
-            else:
-                pass
-            if age_id <= settings.max_age_included:
-                numerator += fleet_averages_dict[key][arg_to_weight] * fleet_averages_dict[key][arg_to_weight_by]
-                denominator += fleet_averages_dict[key]['VMT_AvgPerVeh']
-                wtd_result_dict[wtd_result_dict_id] = {'numerator': numerator, 'denominator': denominator}
+            if model_year <= (settings.year_max - settings.max_age_included - 1):
+                print(f'Calculating weighted {arg_to_weight} for {vehicle}, MY {model_year}')
+                wtd_result_dict_id = ((vehicle), model_year)
+                numerator, denominator = 0, 0
+                if wtd_result_dict_id in wtd_result_dict:
+                    numerator, denominator = wtd_result_dict[wtd_result_dict_id]['numerator'], wtd_result_dict[wtd_result_dict_id]['denominator']
+                else:
+                    pass
+                if age_id <= settings.max_age_included:
+                    numerator += fleet_averages_dict[key][arg_to_weight] * fleet_averages_dict[key][arg_to_weight_by]
+                    denominator += fleet_averages_dict[key]['VMT_AvgPerVeh']
+                    wtd_result_dict[wtd_result_dict_id] = {'numerator': numerator, 'denominator': denominator}
     for key in wtd_result_dict.keys():
         numerator, denominator = wtd_result_dict[key]['numerator'], wtd_result_dict[key]['denominator']
         vehicle = key[0]

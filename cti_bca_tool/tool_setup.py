@@ -1,5 +1,5 @@
 import cti_bca_tool
-from cti_bca_tool import cti_bca_tool_main
+from cti_bca_tool import tool_main
 import cti_bca_tool.general_functions as gen_fxns
 from pathlib import Path
 from datetime import datetime
@@ -149,4 +149,4 @@ class SetInputs:
 
 if __name__ == '__main__':
     settings = SetInputs()
-    cti_bca_tool_main.main(settings)
+    tool_main.main(settings)

@@ -1,7 +1,7 @@
-data_table module
+tech_costs module
 =================
 
-.. automodule:: data_table
+.. automodule:: tech_costs
    :members:
    :undoc-members:
    :show-inheritance:

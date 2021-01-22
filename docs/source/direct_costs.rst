@@ -1,7 +1,7 @@
-indirect_cost module
+direct_costs module
 ====================
 
-.. automodule:: indirect_cost
+.. automodule:: direct_costs
    :members:
    :undoc-members:
    :show-inheritance:

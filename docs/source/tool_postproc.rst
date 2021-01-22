@@ -1,7 +1,7 @@
-emission_cost module
+tool_postproc module
 ====================
 
-.. automodule:: emission_cost
+.. automodule:: tool_postproc
    :members:
    :undoc-members:
    :show-inheritance:

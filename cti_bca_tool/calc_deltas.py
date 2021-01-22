@@ -34,7 +34,7 @@ def calc_deltas(settings, dict_for_deltas, no_action_alt=0):
     return dict_for_deltas
 
 
-def calc_deltas_weighted(dict_for_deltas, arg, no_action_alt=0):
+def calc_deltas_weighted(dict_for_deltas, weighted_arg, no_action_alt=0):
     """
     There is no age_id or discount rate in the key for weighted dictionaries.
     Args:
@@ -45,17 +45,14 @@ def calc_deltas_weighted(dict_for_deltas, arg, no_action_alt=0):
     Returns:
 
     """
-    # no_action_name = settings.options_dict[no_action_alt]['OptionName']
     update_dict = dict()
     for key in dict_for_deltas.keys():
         vehicle, model_year = key[0], key[1]
         alt, st, rc, ft = vehicle
-        print(f'Calculating weighted {arg} deltas for {vehicle}, MY {model_year}')
+        print(f'Calculating weighted {weighted_arg} deltas for {vehicle}, MY {model_year}')
         id_args = [k for k, v in dict_for_deltas[key].items() if 'ID' in k or 'Name' in k]
         args_to_delta = [k for k, v in dict_for_deltas[key].items() if k not in id_args]
         if alt != no_action_alt:
-            # action_name = settings.options_dict[alt]['OptionName']
-            # delta_name = f'{action_name}_minus_{no_action_name}'
             delta_alt = f'{alt}{no_action_alt}'
             delta_alt = int(delta_alt)
             delta_dict = dict()

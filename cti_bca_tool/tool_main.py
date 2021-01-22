@@ -8,13 +8,12 @@ import pandas as pd
 # import numpy as np
 import shutil
 from datetime import datetime
-# from itertools import product
 import time
 import cti_bca_tool
-from cti_bca_tool.project_fleet import create_fleet_df, regclass_vehicles, sourcetype_vehicles
+from cti_bca_tool.project_fleet import create_fleet_df
 from cti_bca_tool.project_dicts import create_regclass_sales_dict, create_fleet_totals_dict, create_fleet_averages_dict
-from cti_bca_tool.direct_costs2 import calc_regclass_yoy_costs_per_step, calc_per_veh_direct_costs, calc_direct_costs
-from cti_bca_tool.indirect_costs2 import calc_per_veh_indirect_costs, calc_indirect_costs
+from cti_bca_tool.direct_costs import calc_regclass_yoy_costs_per_step, calc_per_veh_direct_costs, calc_direct_costs
+from cti_bca_tool.indirect_costs import calc_per_veh_indirect_costs, calc_indirect_costs
 from cti_bca_tool.tech_costs import calc_per_veh_tech_costs, calc_tech_costs
 from cti_bca_tool.def_costs import calc_def_costs, calc_average_def_costs
 from cti_bca_tool.fuel_costs import calc_fuel_costs, calc_average_fuel_costs
@@ -25,7 +24,8 @@ from cti_bca_tool.sum_by_vehicle import calc_sum_of_costs
 from cti_bca_tool.discounting import discount_values
 from cti_bca_tool.weighted_results import create_weighted_cost_dict
 from cti_bca_tool.calc_deltas import calc_deltas, calc_deltas_weighted
-from cti_bca_tool.cti_bca_tool_postproc import doc_tables_post_process, create_output_paths
+from cti_bca_tool.tool_postproc import doc_tables_post_process, create_output_paths
+from cti_bca_tool.figures import create_figures
 
 from cti_bca_tool.general_functions import save_dict_to_csv, convert_dict_to_df, inputs_filenames, get_file_datetime
 
@@ -108,7 +108,6 @@ def main(settings):
 
     elapsed_time_calcs = time.time() - start_time_calcs
 
-    print("\nSaving the outputs....")
     start_time_outputs = time.time()
 
     # determine run output paths
@@ -120,7 +119,7 @@ def main(settings):
         path_of_run_folder, path_of_run_inputs_folder, path_of_run_results_folder, path_of_modified_inputs_folder, path_of_code_folder \
             = create_output_paths(settings)
 
-    document_tables_file = doc_tables_post_process(path_of_run_results_folder, fleet_totals_df)
+    document_tables_file, summary_table = doc_tables_post_process(path_of_run_results_folder, fleet_totals_df)
 
     # copy input files into results folder; also save fuel_prices and reshaped files to this folder
     if settings.run_folder_identifier == 'test':
@@ -142,7 +141,7 @@ def main(settings):
         gdp_deflators.to_csv(path_of_modified_inputs_folder / 'gdp_deflators.csv', index=True)
 
     # save dictionaries to csv
-    print('\nSaving output files.')
+    print("\nSaving the outputs....")
     save_dict_to_csv(fleet_totals_dict, path_of_run_results_folder / 'cti_bca_fleet_totals', 'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
     save_dict_to_csv(fleet_averages_dict, path_of_run_results_folder / 'cti_bca_fleet_averages', 'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
     save_dict_to_csv(estimated_ages_dict, path_of_run_results_folder / 'cti_bca_estimated_ages', 'vehicle', 'modelYearID', 'identifier')
@@ -152,58 +151,9 @@ def main(settings):
     save_dict_to_csv(wtd_fuel_cpm_dict, path_of_run_results_folder / 'cti_bca_vmt_weighted_fuel_cpm', 'vehicle', 'modelYearID')
     save_dict_to_csv(wtd_repair_cpm_dict, path_of_run_results_folder / 'cti_bca_vmt_weighted_emission_repair_cpm', 'vehicle', 'modelYearID')
 
+    # make some figures
+    create_figures(summary_table, path_of_run_results_folder)
 
-    # # for figures, an updated options_dict would be nice
-    # for alt_num in range(1, len(settings.options_dict)):
-    #     k = alt_num * 10
-    #     alt0 = settings.options_dict[0]['OptionName']
-    #     alt = settings.options_dict[alt_num]['OptionName']
-    #     settings.options_dict.update({k: {'OptionName': f'{alt}_minus_{alt0}'}})
-    #
-    # if settings.generate_emissionrepair_cpm_figures != 'N':
-    #     cpm_figure_years = settings.generate_emissionrepair_cpm_figures.split(',')
-    #     for i, v in enumerate(cpm_figure_years):
-    #         cpm_figure_years[i] = pd.to_numeric(cpm_figure_years[i])
-    #     path_figures = path_of_run_results_folder.joinpath('figures')
-    #     path_figures.mkdir(exist_ok=True)
-    #     alts = pd.Series(bca.loc[bca['optionID'] < 10, 'optionID']).unique()
-    #     veh_names = pd.Series(bca['Vehicle_Name_MOVES']).unique()
-    #     for veh_name in veh_names:
-    #         for cpm_figure_year in cpm_figure_years:
-    #             CreateFigures(bca, settings.options_dict, path_figures).line_chart_vs_age(0, alts, cpm_figure_year, veh_name, 'EmissionRepairCost_Owner_AvgPerMile')
-    #
-    # if settings.generate_BCA_ArgsByOption_figures == 'Y':
-    #     yearID_min = int(bca['yearID'].min())
-    #     yearID_max = int(bca['yearID'].max())
-    #     path_figures = path_of_run_results_folder.joinpath('figures')
-    #     path_figures.mkdir(exist_ok=True)
-    #     alts = pd.Series(bca.loc[bca['optionID'] >= 10, 'optionID']).unique()
-    #     for alt in alts:
-    #         CreateFigures(bca_summary, settings.options_dict, path_figures).line_chart_args_by_option(0, alt, yearID_min, yearID_max,
-    #                                                                                                   'TechCost_TotalCost',
-    #                                                                                                   'EmissionRepairCost_Owner_TotalCost',
-    #                                                                                                   'DEFCost_TotalCost',
-    #                                                                                                   'FuelCost_Pretax_TotalCost',
-    #                                                                                                   'TechAndOperatingCost_BCA_TotalCost'
-    #                                                                                                   )
-    # if settings.generate_BCA_ArgByOptions_figures == 'Y':
-    #     yearID_min = int(bca['yearID'].min())
-    #     yearID_max = int(bca['yearID'].max())
-    #     path_figures = path_of_run_results_folder.joinpath('figures')
-    #     path_figures.mkdir(exist_ok=True)
-    #     alts = pd.Series(bca.loc[bca['optionID'] >= 10, 'optionID']).unique()
-    #     args = ['TechCost_TotalCost',
-    #             'EmissionRepairCost_Owner_TotalCost',
-    #             'DEFCost_TotalCost',
-    #             'FuelCost_Pretax_TotalCost',
-    #             'TechAndOperatingCost_BCA_TotalCost'
-    #             ]
-    #     for arg in args:
-    #         CreateFigures(bca_summary, settings.options_dict, path_figures).line_chart_arg_by_options(0, alts, yearID_min, yearID_max, arg)
-    #
-    # if settings.create_all_files == 'y' or settings.create_all_files == 'Y' or settings.create_all_files == '':
-    #     bca.to_csv(path_of_run_results_folder.joinpath('bca_all_calcs.csv'), index=False)
-    #
     elapsed_time_outputs = time.time() - start_time_outputs
     end_time = time.time()
     end_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')
@@ -222,5 +172,5 @@ def main(settings):
 
 
 if __name__ == '__main__':
-    from cti_bca_tool.cti_bca_tool_setup import SetInputs as settings
+    from cti_bca_tool.tool_setup import SetInputs as settings
     main(settings)
