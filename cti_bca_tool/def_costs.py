@@ -1,12 +1,18 @@
 
-import pandas as pd
-from itertools import product
-
 
 base_doserate_dict = dict()
 
 
 def calc_def_doserate(settings, vehicle):
+    """
+
+    Args:
+        settings: The SetInputs class.
+        vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle.
+
+    Returns: The DEF dose rate for the passed vehicle based on the DEF dose rate input file.
+
+    """
     alt, st, rc, ft = vehicle
     base_doserate_dict_id = (rc, ft)
     if base_doserate_dict_id in base_doserate_dict:
@@ -21,64 +27,96 @@ def calc_def_doserate(settings, vehicle):
     return base_doserate
 
 
-def calc_nox_reduction(vehicle, year, model_year, fleet_totals_dict):
+def calc_nox_reduction(settings, vehicle, year, model_year, totals_dict):
     """
 
-    :param settings: The SetInputs class.
-    :param vehicle: An alt_st_rc_ft vehicle
-    :param year: The calendar year (yearID).
-    :param model_year: The model year.
-    :param fleet_dict: The fleet dictionary.
-    :return: The NOx reduction in terms of the no action case less the action case (larger no action emissions result in positive reductions).
+    Args:
+        settings: The SetInputs class.
+        vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle.
+        year: The calendar year (yearID).
+        model_year: The model year of the passed vehicle.
+        totals_dict: A dictionary of fleet NOx tons by vehicle.
+
+    Returns: The NOx reduction for the passed model year vehicle in the given calendar year.
+
     """
     alt, st, rc, ft = vehicle
-    age = year - model_year
-    nox_reduction = fleet_totals_dict[((0, st, rc, ft), model_year, age, 0)]['NOx_UStons'] \
-                    - fleet_totals_dict[((vehicle), model_year, age, 0)]['NOx_UStons']
+    age_id = year - model_year
+    nox_reduction = totals_dict[((settings.no_action_alt, st, rc, ft), model_year, age_id, 0)]['NOx_UStons'] \
+                    - totals_dict[((vehicle), model_year, age_id, 0)]['NOx_UStons']
     return nox_reduction
 
 
-def calc_def_gallons(settings, vehicle, year, model_year, fleet_totals_dict):
-    age = year - model_year
-    gallons_fuel = fleet_totals_dict[((vehicle), model_year, age, 0)]['Gallons']
+def calc_def_gallons(settings, vehicle, year, model_year, totals_dict):
+    """
+
+    Args:
+        settings: The SetInputs class.
+        vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle.
+        year: The calendar year (yearID).
+        model_year: The model year of the passed vehicle.
+        totals_dict: A dictionary of fleet Gallons (fuel consumption) by vehicle.
+
+    Returns: The gallons of DEF consumption for the passed model year vehicle in the given calendar year.
+
+    """
+    age_id = year - model_year
+    gallons_fuel = totals_dict[((vehicle), model_year, age_id, 0)]['Gallons']
     base_doserate = calc_def_doserate(settings, vehicle)
-    nox_reduction = calc_nox_reduction(vehicle, year, model_year, fleet_totals_dict)
+    nox_reduction = calc_nox_reduction(settings, vehicle, year, model_year, totals_dict)
     gallons_def = gallons_fuel * base_doserate + nox_reduction * settings.def_gallons_per_ton_nox_reduction
     return gallons_def
 
 
-def calc_def_costs(settings, fleet_totals_dict):
+def calc_def_costs(settings, totals_dict):
+    """
+
+    Args:
+        settings: The SetInputs class.
+        totals_dict: A dictionary of fleet DEF consumption by vehicle.
+
+    Returns: The passed dictionary updated with costs associated with DEF consumption.
+
+    """
     print('\nCalculating total DEF costs.')
-    for key in fleet_totals_dict.keys():
-        vehicle = key[0]
-        model_year, age = key[1], key[2]
+    for key in totals_dict.keys():
+        vehicle, model_year, age_id = key[0], key[1], key[2]
         alt, st, rc, ft = vehicle
         if ft == 2:
-            year = model_year + age
+            year = model_year + age_id
             def_price = settings.def_prices_dict[year]['DEF_USDperGal']
-            gallons_def = calc_def_gallons(settings, vehicle, year, model_year, fleet_totals_dict)
-            fleet_totals_dict[key].update({'DEF_Gallons': gallons_def, 'DEFCost': def_price * gallons_def})
-    return fleet_totals_dict
+            gallons_def = calc_def_gallons(settings, vehicle, year, model_year, totals_dict)
+            totals_dict[key].update({'DEF_Gallons': gallons_def, 'DEFCost': def_price * gallons_def})
+    return totals_dict
 
 
-def calc_average_def_costs(fleet_totals_dict, fleet_averages_dict):
-    for key in fleet_averages_dict.keys():
+def calc_average_def_costs(totals_dict, averages_dict):
+    """
+
+    Args:
+        totals_dict: A dictionary of fleet DEF costs by vehicle.
+        averages_dict: A dictionary into which DEF costs/vehicle will be updated.
+
+    Returns: The passed dictionary updated with costs/mile and costs/vehicle associated with DEF consumption.
+
+    """
+    for key in averages_dict.keys():
         vehicle, model_year, age_id = key[0], key[1], key[2]
         alt, st, rc, ft = vehicle
         if ft == 2:
             print(f'Calculating DEF average cost per mile for {vehicle}, MY {model_year}, age {age_id}.')
-            def_cost = fleet_totals_dict[key]['DEFCost']
-            vmt = fleet_totals_dict[key]['VMT']
-            vpop = fleet_totals_dict[key]['VPOP']
-            fleet_averages_dict[key].update({'DEFCost_AvgPerMile': def_cost / vmt})
-            fleet_averages_dict[key].update({'DEFCost_AvgPerVeh': def_cost / vpop})
-    return fleet_averages_dict
+            def_cost = totals_dict[key]['DEFCost']
+            vmt = totals_dict[key]['VMT']
+            vpop = totals_dict[key]['VPOP']
+            averages_dict[key].update({'DEFCost_AvgPerMile': def_cost / vmt})
+            averages_dict[key].update({'DEFCost_AvgPerVeh': def_cost / vpop})
+    return averages_dict
 
 
 if __name__ == '__main__':
-    from cti_bca_tool.__main__ import SetInputs as settings
-    from cti_bca_tool.project_fleet import create_fleet_df, regclass_vehicles, sourcetype_vehicles
-    from cti_bca_tool.project_dicts import create_regclass_sales_dict, create_fleet_totals_dict, create_fleet_averages_dict
+    from cti_bca_tool.tool_setup import SetInputs as settings
+    from cti_bca_tool.project_fleet import create_fleet_df, sourcetype_vehicles
+    from cti_bca_tool.project_dicts import create_fleet_totals_dict, create_fleet_averages_dict
     from cti_bca_tool.general_functions import save_dict_to_csv
 
     project_fleet_df = create_fleet_df(settings)

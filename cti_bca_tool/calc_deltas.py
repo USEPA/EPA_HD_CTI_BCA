@@ -7,8 +7,20 @@ Contains the CalcDeltas class.
 import pandas as pd
 
 
-def calc_deltas(settings, dict_for_deltas, no_action_alt=0):
-    no_action_name = settings.options_dict[no_action_alt]['OptionName']
+def calc_deltas(settings, dict_for_deltas):
+    """
+
+    This function calculates deltas for action alternatives relative to the passed no action alternative.
+    Args:
+        settings: The SetInputs class.
+        dict_for_deltas: The dictionary containing values for calculating deltas.
+        no_action_alt: An integer value representing the alt_id (option number) to use as the "No Action" option.
+
+    Returns: An updated dictionary containing deltas relative to the no_action_alt. OptionIDs for the deltas will be the alt_id followed by the no_action_alt.
+    For example, deltas for optionID=1 relative to optionID=0 would have optionID=10. OptionNames will also show as 'OptionID=1_name minus OptionID=0_name'.
+
+    """
+    no_action_name = settings.options_dict[settings.no_action_alt]['OptionName']
     update_dict = dict()
     for key in dict_for_deltas.keys():
         vehicle, model_year, age_id, discount_rate = key[0], key[1], key[2], key[3]
@@ -16,14 +28,14 @@ def calc_deltas(settings, dict_for_deltas, no_action_alt=0):
         print(f'Calculating deltas for {vehicle}, MY {model_year}, age {age_id}, DR {discount_rate}')
         id_args = [k for k, v in dict_for_deltas[key].items() if 'ID' in k or 'Name' in k]
         args_to_delta = [k for k, v in dict_for_deltas[key].items() if k not in id_args]
-        if alt != no_action_alt:
+        if alt != settings.no_action_alt:
             action_name = settings.options_dict[alt]['OptionName']
             delta_name = f'{action_name}_minus_{no_action_name}'
-            delta_alt = f'{alt}{no_action_alt}'
+            delta_alt = f'{alt}{settings.no_action_alt}'
             delta_alt = int(delta_alt)
             delta_dict = dict()
             for arg in args_to_delta:
-                arg_value = dict_for_deltas[key][arg] - dict_for_deltas[((no_action_alt, st, rc, ft), model_year, age_id, discount_rate)][arg]
+                arg_value = dict_for_deltas[key][arg] - dict_for_deltas[((settings.no_action_alt, st, rc, ft), model_year, age_id, discount_rate)][arg]
                 delta_dict.update({'OptionName': delta_name, arg: arg_value})
             for arg in id_args:
                 arg_value = dict_for_deltas[key][arg]
@@ -34,15 +46,18 @@ def calc_deltas(settings, dict_for_deltas, no_action_alt=0):
     return dict_for_deltas
 
 
-def calc_deltas_weighted(dict_for_deltas, weighted_arg, no_action_alt=0):
+def calc_deltas_weighted(settings, dict_for_deltas, weighted_arg):
     """
-    There is no age_id or discount rate in the key for weighted dictionaries.
-    Args:
-        settings:
-        dict_for_deltas:
-        no_action_alt:
 
-    Returns:
+    This function calculates deltas for action alternatives relative to the passed no action alternative specifically for the weighted cost per mile dictionaries.
+    Note that there is no age_id or discount rate in the key for the passed weighted dictionaries.
+    Args:
+        settings: The SetInputs class.
+        dict_for_deltas: The dictionary containing values for calculating deltas.
+        no_action_alt: An integer value representing the alt_id (option number) to use as the "No Action" option.
+
+    Returns: An updated dictionary containing deltas relative to the no_action_alt. OptionIDs for the deltas will be the alt_id followed by the no_action_alt.
+    For example, deltas for optionID=1 relative to optionID=0 would have optionID=10.
 
     """
     update_dict = dict()
@@ -52,12 +67,12 @@ def calc_deltas_weighted(dict_for_deltas, weighted_arg, no_action_alt=0):
         print(f'Calculating weighted {weighted_arg} deltas for {vehicle}, MY {model_year}')
         id_args = [k for k, v in dict_for_deltas[key].items() if 'ID' in k or 'Name' in k]
         args_to_delta = [k for k, v in dict_for_deltas[key].items() if k not in id_args]
-        if alt != no_action_alt:
-            delta_alt = f'{alt}{no_action_alt}'
+        if alt != settings.no_action_alt:
+            delta_alt = f'{alt}{settings.no_action_alt}'
             delta_alt = int(delta_alt)
             delta_dict = dict()
             for arg in args_to_delta:
-                arg_value = dict_for_deltas[key][arg] - dict_for_deltas[((no_action_alt, st, rc, ft), model_year)][arg]
+                arg_value = dict_for_deltas[key][arg] - dict_for_deltas[((settings.no_action_alt, st, rc, ft), model_year)][arg]
                 delta_dict.update({arg: arg_value})
             for arg in id_args:
                 arg_value = dict_for_deltas[key][arg]
@@ -68,68 +83,9 @@ def calc_deltas_weighted(dict_for_deltas, weighted_arg, no_action_alt=0):
     return dict_for_deltas
 
 
-class CalcDeltas:
-    """The CalcDelta class calculates the deltas (more stringent option minus option 0, as written)
-
-    :param data: DataFrame being passed on which deltas or reductions are to be calculated.
-    :param list_for_deltas: List of metrics for which to calculate deltas.
-    """
-    def __init__(self, data):
-        self.data = data
-
-    def calc_delta_and_new_alt_id(self, *args):
-        """
-
-        :param args: Metrics for which deltas or reductions are sought.
-        :return: A new DataFrame consisting of the deltas for each scenario in the passed data.
-        """
-        return_df = pd.DataFrame()
-        alternative = dict()
-        alternative[0] = self.data.loc[self.data['optionID'] == 0, :]
-        alternative[0].reset_index(drop=True, inplace=True)
-        alt0_name = alternative[0].at[0, 'OptionName']
-        alts = pd.Series(self.data['optionID'].unique())
-        for idx, alt in enumerate(alts[1:]):
-            alternative[alt] = self.data.loc[self.data['optionID'] == alt, :]
-            alternative[alt].reset_index(drop=True, inplace=True)
-            alt_name = alternative[alt].at[0, 'OptionName']
-            alt_delta = int(alt * 10)
-            alternative[alt_delta] = pd.DataFrame(alternative[alt].copy())
-            alternative[alt_delta]['optionID'] = alt_delta
-            alternative[alt_delta]['OptionName'] = str(f'{alt_name}_minus_{alt0_name}')
-        for idx, alt in enumerate(alts[1:]):
-            alt_delta = int(alt * 10)
-            for arg in args:
-                alternative[alt_delta][arg] = alternative[alt][arg] - alternative[0][arg]
-            return_df = return_df.append(alternative[alt_delta], ignore_index=True, sort=False)
-        return return_df
-
-    def calc_delta_and_keep_alt_id(self, *args):
-        """
-
-        :param args: Metrics for which deltas or reductions are sought.
-        :return: The passed DataFrame with metrics in list_for_deltas showing as reductions from baseline rather than the values contained in the passed DataFrame
-        """
-        return_df = pd.DataFrame(self.data.loc[self.data['optionID'] == 0, :])
-        alternative = dict()
-        alternative[0] = pd.DataFrame(self.data.loc[self.data['optionID'] == 0, :])
-        alternative[0].reset_index(drop=True, inplace=True)
-        alts = pd.Series(self.data['optionID'].unique())
-        for idx, alt in enumerate(alts[1:]):
-            alternative[alt] = pd.DataFrame(self.data.loc[self.data['optionID'] == alt, :])
-            alternative[alt].reset_index(drop=True, inplace=True)
-            for arg in args:
-                alternative[alt][arg] = alternative[0][arg] - alternative[alt][arg]
-            return_df = return_df.append(alternative[alt], ignore_index=True, sort=False)
-        for arg in args:
-            return_df.rename(columns={arg: f'{arg}_Reductions'}, inplace=True)
-            return_df.loc[return_df['optionID'] == 0, f'{arg}_Reductions'] = 0
-        return return_df
-
-
 if __name__ == '__main__':
-    from cti_bca_tool.__main__ import SetInputs as settings
-    from cti_bca_tool.project_fleet import create_fleet_df, regclass_vehicles, sourcetype_vehicles
+    from cti_bca_tool.tool_setup import SetInputs as settings
+    from cti_bca_tool.project_fleet import create_fleet_df
     from cti_bca_tool.project_dicts import create_regclass_sales_dict, create_fleet_totals_dict, create_fleet_averages_dict
     from cti_bca_tool.direct_costs2 import calc_regclass_yoy_costs_per_step, calc_direct_costs, calc_per_veh_direct_costs
     from cti_bca_tool.indirect_costs2 import calc_per_veh_indirect_costs, calc_indirect_costs
@@ -162,7 +118,7 @@ if __name__ == '__main__':
     fleet_totals_df = convert_dict_to_df(fleet_totals_dict, 0, 'vehicle', 'modelYearID', 'ageID')
 
     # now calc deltas
-    fleet_totals_dict_deltas = calc_deltas(settings, fleet_totals_dict, no_action_alt=0)
-    fleet_totals_dict_3_deltas = calc_deltas(settings, fleet_totals_dict_3, no_action_alt=0)
+    fleet_totals_dict_deltas = calc_deltas(settings, fleet_totals_dict)
+    fleet_totals_dict_3_deltas = calc_deltas(settings, fleet_totals_dict_3)
 
     print(fleet_totals_dict_deltas)

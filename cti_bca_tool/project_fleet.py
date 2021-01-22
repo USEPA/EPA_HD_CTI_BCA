@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-from vehicle import fueltype_dict, regclass_dict, sourcetype_dict
+from vehicle import Vehicle, fueltype_dict, regclass_dict, sourcetype_dict
 
 
 def create_fleet_df(settings):
@@ -17,22 +17,25 @@ def create_fleet_df(settings):
 
     df = pd.DataFrame(df.loc[df['modelYearID'] >= settings.year_min, :]).reset_index(drop=True)
 
-    # add some identifiers
+    # add some vehicle identifiers
     df.insert(0, 'OptionName', '')
     for alt in settings.options_dict.keys():
         df.loc[df['optionID'] == alt, 'OptionName'] = settings.options_dict[alt]['OptionName']
 
     df.insert(0, 'sourceTypeName', '')
     for st in sourcetype_dict.keys():
-        df.loc[df['sourceTypeID'] == st, 'sourceTypeName'] = sourcetype_dict[st]
+        df.loc[df['sourceTypeID'] == st, 'sourceTypeName'] = Vehicle(st).sourcetype_name()
+        # df.loc[df['sourceTypeID'] == st, 'sourceTypeName'] = sourcetype_dict[st]
 
     df.insert(0, 'regClassName', '')
     for rc in regclass_dict.keys():
-        df.loc[df['regClassID'] == rc, 'regClassName'] = regclass_dict[rc]
+        df.loc[df['regClassID'] == rc, 'regClassName'] = Vehicle(rc).regclass_name()
+        # df.loc[df['regClassID'] == rc, 'regClassName'] = regclass_dict[rc]
 
     df.insert(0, 'fuelTypeName', '')
     for ft in fueltype_dict.keys():
-        df.loc[df['fuelTypeID'] == ft, 'fuelTypeName'] = fueltype_dict[ft]
+        df.loc[df['fuelTypeID'] == ft, 'fuelTypeName'] = Vehicle(ft).fueltype_name()
+        # df.loc[df['fuelTypeID'] == ft, 'fuelTypeName'] = fueltype_dict[ft]
 
     # sum the PM constituents into a single constituent
     cols = [col for col in df.columns if 'PM25' in col]

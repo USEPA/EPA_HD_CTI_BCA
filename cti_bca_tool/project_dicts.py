@@ -1,11 +1,8 @@
 import pandas as pd
 from cti_bca_tool.repair_costs import calc_per_veh_cumulative_vmt
 
-def create_fleet_totals_dict(settings, fleet_df, rate=0):
+def create_fleet_totals_dict(fleet_df, rate=0):
     df = fleet_df.copy()
-    # df.insert(0, 'OptionName', '')
-    # for alt in settings.options_dict.keys():
-    #     df.loc[df['optionID'] == alt, 'OptionName'] = settings.options_dict[alt]['OptionName']
     df.insert(0, 'DiscountRate', rate)
     id = pd.Series(zip(zip(df['optionID'], fleet_df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['modelYearID'], df['ageID'], df['DiscountRate']))
     df.insert(0, 'id', id)
@@ -14,12 +11,9 @@ def create_fleet_totals_dict(settings, fleet_df, rate=0):
     return df.to_dict('index')
 
 
-def create_fleet_averages_dict(settings, fleet_df, rate=0):
+def create_fleet_averages_dict(fleet_df, rate=0):
     df = pd.DataFrame(fleet_df[['OptionName', 'optionID', 'sourceTypeID', 'sourceTypeName', 'regClassID', 'regClassName',
                                 'fuelTypeID', 'fuelTypeName', 'yearID', 'modelYearID', 'ageID']]).reset_index(drop=True)
-    # df.insert(0, 'OptionName', '')
-    # for alt in settings.options_dict.keys():
-    #     df.loc[df['optionID'] == alt, 'OptionName'] = settings.options_dict[alt]['OptionName']
     df.insert(0, 'DiscountRate', rate)
     id = pd.Series(zip(zip(df['optionID'], df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['modelYearID'], df['ageID'], df['DiscountRate']))
     df.insert(0, 'id', id)
@@ -135,8 +129,8 @@ def create_criteria_cost_factors_dict(input_df):
 
 
 if __name__ == '__main__':
-    from cti_bca_tool.__main__ import SetInputs as settings
-    from cti_bca_tool.project_fleet import create_fleet_df, regclass_vehicles, sourcetype_vehicles
+    from cti_bca_tool.tool_setup import SetInputs as settings
+    from cti_bca_tool.project_fleet import create_fleet_df
 
     project_fleet_df = create_fleet_df(settings)
     regclass_sales_dict = create_regclass_sales_dict(project_fleet_df)
@@ -145,4 +139,3 @@ if __name__ == '__main__':
     moves_adjustments_dict = create_moves_adjustments_dict(settings.moves_adjustments, 'optionID', 'regClassID', 'fuelTypeID')
     seedvol_factor_dict = create_seedvol_factor_dict(settings.regclass_learningscalers)
     markup_inputs_dict = create_markup_inputs_dict(settings.markups)
-    print('')

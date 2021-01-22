@@ -2,6 +2,15 @@ orvr_adjust_dict = dict()
 
 
 def get_orvr_adjustment(settings, vehicle):
+    """
+    
+    Args:
+        settings: The SetInputs class.
+        vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle.
+
+    Returns:A single value representing the milliliter per gram adjustment to be applied to total hydrocarbon emission reductions to estimate the gallons of fuel saved.
+
+    """
     alt, st, rc, ft = vehicle
     key = (alt, rc, ft)
     if key in orvr_adjust_dict:
@@ -12,67 +21,102 @@ def get_orvr_adjustment(settings, vehicle):
     return adjustment
 
 
-def calc_thc_reduction(vehicle, year, model_year, fleet_totals_dict):
+def calc_thc_reduction(settings, vehicle, year, model_year, totals_dict):
     """
+    
+    Args:
+        settings: The SetInputs class.
+        vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle.
+        year: The calendar year.
+        model_year: The model year of the passed vehicle.
+        totals_dict: A dictionary of fleet total hydrocarbon (THC) tons by vehicle.
 
-    :param settings: The SetInputs class.
-    :param vehicle: An alt_st_rc_ft vehicle
-    :param year: The calendar year (yearID).
-    :param model_year: The model year.
-    :param fleet_dict: The fleet dictionary.
-    :return: The THC reduction in terms of the no action case less the action case (larger no action emissions result in positive reductions).
+    Returns: A single THC reduction for the given model year vehicle in the given year.
+
     """
     alt, st, rc, ft = vehicle
     age = year - model_year
-    thc_reduction = fleet_totals_dict[((0, st, rc, ft), model_year, age, 0)]['THC_UStons'] \
-                    - fleet_totals_dict[((vehicle), model_year, age, 0)]['THC_UStons']
+    thc_reduction = totals_dict[((settings.no_action_alt, st, rc, ft), model_year, age, 0)]['THC_UStons'] \
+                    - totals_dict[((vehicle), model_year, age, 0)]['THC_UStons']
     return thc_reduction
 
 
-def calc_adjusted_gallons(settings, vehicle, year, model_year, fleet_totals_dict):
+def calc_adjusted_gallons(settings, vehicle, year, model_year, totals_dict):
+    """
+
+    Args:
+        settings: The SetInputs class.
+        vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle.
+        year: The calendar year.
+        model_year: The model year of the passed vehicle.
+        totals_dict: A dictionary of fleet Gallons consumed by all vehicles.
+
+    Returns: The passed dictionary updated to reflect fuel consumption (Gallons) adjusted to account for the fuel saved in associated with  ORVR.
+
+    """
     age = year - model_year
     key = ((vehicle), model_year, age, 0)
     adjustment = get_orvr_adjustment(settings, vehicle)
-    thc_reduction = calc_thc_reduction(vehicle, year, model_year, fleet_totals_dict)
-    old_gallons = fleet_totals_dict[key]['Gallons']
+    thc_reduction = calc_thc_reduction(vehicle, year, model_year, totals_dict)
+    old_gallons = totals_dict[key]['Gallons']
     adjusted_gallons = old_gallons - thc_reduction * adjustment * settings.grams_per_short_ton * settings.gallons_per_ml
     return adjusted_gallons
 
 
-def calc_fuel_costs(settings, fleet_totals_dict):
+def calc_fuel_costs(settings, totals_dict):
+    """
+
+    Args:
+        settings: The SetInputs class.
+        totals_dict: A dictionary of fleet Gallons consumed by all vehicles.
+
+    Returns: The passed dictionary updated to reflect fuel consumption (Gallons) adjusted to account for the fuel saved in association with ORVR (note
+    that these fuel impacts are not included in the MOVES runs that serve as the input fleet data for the tool). The dictionary is also updated to
+    include the fuel costs associated with the gallons consumed (Gallons * $/gallon fuel).
+
+    """
     print('\nCalculating fuel total costs.\n')
-    for key in fleet_totals_dict.keys():
+    for key in totals_dict.keys():
         alt, st, rc, ft = key[0]
         vehicle, model_year, age = key[0], key[1], key[2]
         year = model_year + age
         fuel_price_retail = settings.fuel_prices_dict[(year, ft)]['retail_fuel_price']
         fuel_price_pretax = settings.fuel_prices_dict[(year, ft)]['pretax_fuel_price']
         if ft == 1:
-            gallons = calc_adjusted_gallons(settings, vehicle, year, model_year, fleet_totals_dict)
-            fleet_totals_dict[key].update({'Gallons': gallons})
+            gallons = calc_adjusted_gallons(settings, vehicle, year, model_year, totals_dict)
+            totals_dict[key].update({'Gallons': gallons})
         else:
-            gallons = fleet_totals_dict[key]['Gallons']
-        fleet_totals_dict[key].update({'FuelCost_Retail': fuel_price_retail * gallons})
-        fleet_totals_dict[key].update({'FuelCost_Pretax': fuel_price_pretax * gallons})
-    return fleet_totals_dict
+            gallons = totals_dict[key]['Gallons']
+        totals_dict[key].update({'FuelCost_Retail': fuel_price_retail * gallons})
+        totals_dict[key].update({'FuelCost_Pretax': fuel_price_pretax * gallons})
+    return totals_dict
 
 
-def calc_average_fuel_costs(fleet_totals_dict, fleet_averages_dict):
-    for key in fleet_averages_dict.keys():
+def calc_average_fuel_costs(totals_dict, averages_dict):
+    """
+
+    Args:
+        totals_dict: A dictionary of fleet "ORVR adjusted" Gallons consumed by all vehicles.
+        averages_dict: A dictionary into which fuel costs/vehicle and costs/mile will be updated.
+
+    Returns: The passed averages_dict updated to include fuel costs/vehicle and costs/mile.
+
+    """
+    for key in averages_dict.keys():
         vehicle, model_year, age_id = key[0], key[1], key[2]
         print(f'Calculating fuel average cost per mile and per vehicle for {vehicle}, MY {model_year}, age {age_id}')
-        fuel_cost = fleet_totals_dict[key]['FuelCost_Retail']
-        vmt = fleet_totals_dict[key]['VMT']
-        vpop = fleet_totals_dict[key]['VPOP']
-        fleet_averages_dict[key].update({'FuelCost_Retail_AvgPerMile': fuel_cost / vmt})
-        fleet_averages_dict[key].update({'FuelCost_Retail_AvgPerVeh': fuel_cost / vpop})
-    return fleet_averages_dict
+        fuel_cost = totals_dict[key]['FuelCost_Retail']
+        vmt = totals_dict[key]['VMT']
+        vpop = totals_dict[key]['VPOP']
+        averages_dict[key].update({'FuelCost_Retail_AvgPerMile': fuel_cost / vmt})
+        averages_dict[key].update({'FuelCost_Retail_AvgPerVeh': fuel_cost / vpop})
+    return averages_dict
 
 
 if __name__ == '__main__':
-    from cti_bca_tool.__main__ import SetInputs as settings
-    from cti_bca_tool.project_fleet import create_fleet_df, regclass_vehicles, sourcetype_vehicles
-    from cti_bca_tool.project_dicts import create_regclass_sales_dict, create_fleet_totals_dict, create_fleet_averages_dict
+    from cti_bca_tool.tool_setup import SetInputs as settings
+    from cti_bca_tool.project_fleet import create_fleet_df, sourcetype_vehicles
+    from cti_bca_tool.project_dicts import create_fleet_totals_dict, create_fleet_averages_dict
     from cti_bca_tool.general_functions import save_dict_to_csv
 
     project_fleet_df = create_fleet_df(settings)

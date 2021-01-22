@@ -24,7 +24,7 @@ from cti_bca_tool.sum_by_vehicle import calc_sum_of_costs
 from cti_bca_tool.discounting import discount_values
 from cti_bca_tool.weighted_results import create_weighted_cost_dict
 from cti_bca_tool.calc_deltas import calc_deltas, calc_deltas_weighted
-from cti_bca_tool.tool_postproc import doc_tables_post_process, create_output_paths
+from cti_bca_tool.tool_postproc import doc_tables_post_process, figure_tables_post_process, create_output_paths
 from cti_bca_tool.figures import create_figures
 
 from cti_bca_tool.general_functions import save_dict_to_csv, convert_dict_to_df, inputs_filenames, get_file_datetime
@@ -43,8 +43,8 @@ def main(settings):
 
     # create a sales (by regclass) and fleet dictionaries
     regclass_sales_dict = create_regclass_sales_dict(project_fleet_df)
-    fleet_totals_dict = create_fleet_totals_dict(settings, project_fleet_df, 0)
-    fleet_averages_dict = create_fleet_averages_dict(settings, project_fleet_df)
+    fleet_totals_dict = create_fleet_totals_dict(project_fleet_df, 0)
+    fleet_averages_dict = create_fleet_averages_dict(project_fleet_df)
 
     # calculate direct costs per reg class based on cumulative regclass sales (learning is applied to cumulative reg class sales)
     regclass_yoy_costs_per_step = calc_regclass_yoy_costs_per_step(settings, regclass_sales_dict)
@@ -97,11 +97,11 @@ def main(settings):
     fleet_averages_dict = discount_values(settings, fleet_averages_dict, 0.03, 0.07)
 
     # calculate deltas relative to the passed no action alternative ID
-    fleet_totals_dict = calc_deltas(settings, fleet_totals_dict, 0)
-    fleet_averages_dict = calc_deltas(settings, fleet_averages_dict, 0)
-    wtd_def_cpm_dict = calc_deltas_weighted(wtd_def_cpm_dict, 'DEFCost_AvgPerMile', 0)
-    wtd_fuel_cpm_dict = calc_deltas_weighted(wtd_fuel_cpm_dict, 'FuelCost_Retail_AvgPerMile', 0)
-    wtd_repair_cpm_dict = calc_deltas_weighted(wtd_repair_cpm_dict, 'EmissionRepairCost_AvgPerMile', 0)
+    fleet_totals_dict = calc_deltas(settings, fleet_totals_dict)
+    fleet_averages_dict = calc_deltas(settings, fleet_averages_dict)
+    wtd_def_cpm_dict = calc_deltas_weighted(settings, wtd_def_cpm_dict, 'DEFCost_AvgPerMile')
+    wtd_fuel_cpm_dict = calc_deltas_weighted(settings, wtd_fuel_cpm_dict, 'FuelCost_Retail_AvgPerMile')
+    wtd_repair_cpm_dict = calc_deltas_weighted(settings, wtd_repair_cpm_dict, 'EmissionRepairCost_AvgPerMile')
 
     # convert dictionary to DataFrame to generate pivot tables for copy/past to documents
     fleet_totals_df = convert_dict_to_df(fleet_totals_dict, 'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
@@ -119,7 +119,8 @@ def main(settings):
         path_of_run_folder, path_of_run_inputs_folder, path_of_run_results_folder, path_of_modified_inputs_folder, path_of_code_folder \
             = create_output_paths(settings)
 
-    document_tables_file, summary_table = doc_tables_post_process(path_of_run_results_folder, fleet_totals_df)
+    document_tables_file = doc_tables_post_process(path_of_run_results_folder, fleet_totals_df)
+    summary_table = figure_tables_post_process(fleet_totals_df)
 
     # copy input files into results folder; also save fuel_prices and reshaped files to this folder
     if settings.run_folder_identifier == 'test':

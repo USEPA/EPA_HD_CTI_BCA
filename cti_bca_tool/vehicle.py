@@ -4,10 +4,9 @@ vehicle.py
 Contains the Vehicle class along with MOVES definitions of fuel types, reg classes and source types.
 
 """
-import pandas as pd
+import attr
 
 
-# define elements of the Vehicle class
 fueltype_dict = {1: 'Gasoline',
                  2: 'Diesel',
                  3: 'CNG',
@@ -41,37 +40,21 @@ sourcetype_dict = {0:  'NotApplicable',
                    }
 
 
+@attr.s
 class Vehicle:
     """
-    The Vehicle class takes a vehicle tuple object consisting of 3 to 5 integers to uniquely identify
-    a vehicle and return names for those vehicles.
+    Define vehicle attributes of option, sourceType, regClass, fuelType.
 
-    :param _veh: A tuple of 3 to 5 integers, where the first entry is always the optionID.
-
-    Tuples of length 3 denote (alternative, regClassID, fuelTypeID).
-    Tuples of length 4 denote (alternative, sourcetypeID, regClassID, fuelTypeID).
+    Args:
+        id: The associated ID from the MOVES input file.
     """
+    id = attr.ib()
 
-    def __init__(self, _veh):
-        self._veh = _veh
+    def fueltype_name(self):
+        return fueltype_dict[self.id]
 
-    def name_regclass(self):
-        """
+    def regclass_name(self):
+        return regclass_dict[self.id]
 
-        :return: The name of the passed vehicle in terms of regClass_fuelType.
-        """
-        reg_class_id = self._veh[1]
-        fuel_type_id = self._veh[2]
-        veh_name = regClassID[reg_class_id] + '_' + fuelTypeID[fuel_type_id]
-        return veh_name
-
-    def name_moves(self):
-        """
-
-        :return: The name of the passed vehicle in terns of sourcetype_regClass_fuelType.
-        """
-        source_type_id = self._veh[1]
-        reg_class_id = self._veh[2]
-        fuel_type_id = self._veh[3]
-        veh_name = sourceTypeID[source_type_id] + '_' + regClassID[reg_class_id] + '_' + fuelTypeID[fuel_type_id]
-        return veh_name
+    def sourcetype_name(self):
+        return sourcetype_dict[self.id]

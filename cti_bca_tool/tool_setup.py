@@ -78,6 +78,7 @@ class SetInputs:
     model_years = range(year_min, model_year_max + 1)
 
     # parse values from the input files
+    no_action_alt = bca_inputs.at['no_action_alt', 'UserEntry']
     aeo_case = bca_inputs.at['aeo_fuel_price_case', 'UserEntry']
     discrate_social_low = pd.to_numeric(bca_inputs.at['discrate_social_low', 'UserEntry'])
     discrate_social_high = pd.to_numeric(bca_inputs.at['discrate_social_high', 'UserEntry'])
