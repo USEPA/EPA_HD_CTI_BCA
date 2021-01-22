@@ -5,7 +5,7 @@
 # import shutil
 # from datetime import datetime
 # from itertools import product
-# import time
+import time
 # import cti_bca_tool
 # from cti_bca_tool.get_context_data import GetFuelPrices, GetDeflators
 # from cti_bca_tool.fleet import Fleet
@@ -43,6 +43,8 @@ from cti_bca_tool.general_functions import save_dict_to_csv, convert_dict_to_df
 
 
 def new_main(settings):
+    print("\nDoing the work....")
+    start_time_calcs = time.time()
 
     # create project fleet data structures, both a DataFrame and a dictionary of regclass based sales
     project_fleet_df = create_fleet_df(settings)

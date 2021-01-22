@@ -1,5 +1,5 @@
 import cti_bca_tool
-from cti_bca_tool import cti_bca
+from cti_bca_tool import cti_bca_tool_main
 import cti_bca_tool.general_functions as gen_fxns
 from pathlib import Path
 from datetime import datetime
@@ -21,14 +21,14 @@ class SetInputs:
     path_inputs = path_project / 'inputs'
     path_context = path_project / 'context_inputs'
     path_outputs = path_project / 'outputs'
+    path_test = path_project / 'test'
 
     # create generator of files in path_code
     files_in_path_code = (entry for entry in path_code.iterdir() if entry.is_file())
 
     # set run id and files to generate
-    # run_folder_identifier = input('Provide a run identifier for your output folder name (press return to use the default name)\n')
-    # run_folder_identifier = run_folder_identifier if run_folder_identifier != '' else 'BCA-Results'
-    # create_all_files = input('Create and save the large "all_calcs" file? (y)es or (n)o?\n')
+    run_folder_identifier = input('Provide a run identifier for your output folder name (press return to use the default name)\n')
+    run_folder_identifier = run_folder_identifier if run_folder_identifier != '' else 'BCA-Results'
 
     start_time = time.time()
     start_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')
@@ -145,9 +145,8 @@ class SetInputs:
     if calc_pollution_effects == 'Y':
         criteria_cost_factors = gen_fxns.read_input_files(path_inputs, input_files_dict['criteria_emission_costs']['UserEntry.csv'], lambda x: 'Notes' not in x)
         criteria_cost_factors_dict = create_criteria_cost_factors_dict(criteria_cost_factors)
-    t = 0
+
 
 if __name__ == '__main__':
     settings = SetInputs()
-    cti_bca.new_main(settings)
-    cti_bca.main(settings)
+    cti_bca_tool_main.main(settings)

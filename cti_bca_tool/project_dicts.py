@@ -3,9 +3,9 @@ from cti_bca_tool.repair_costs import calc_per_veh_cumulative_vmt
 
 def create_fleet_totals_dict(settings, fleet_df, rate=0):
     df = fleet_df.copy()
-    df.insert(0, 'OptionName', '')
-    for alt in settings.options_dict.keys():
-        df.loc[df['optionID'] == alt, 'OptionName'] = settings.options_dict[alt]['OptionName']
+    # df.insert(0, 'OptionName', '')
+    # for alt in settings.options_dict.keys():
+    #     df.loc[df['optionID'] == alt, 'OptionName'] = settings.options_dict[alt]['OptionName']
     df.insert(0, 'DiscountRate', rate)
     id = pd.Series(zip(zip(df['optionID'], fleet_df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['modelYearID'], df['ageID'], df['DiscountRate']))
     df.insert(0, 'id', id)
@@ -15,10 +15,11 @@ def create_fleet_totals_dict(settings, fleet_df, rate=0):
 
 
 def create_fleet_averages_dict(settings, fleet_df, rate=0):
-    df = pd.DataFrame(fleet_df[['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'yearID', 'modelYearID', 'ageID']]).reset_index(drop=True)
-    df.insert(0, 'OptionName', '')
-    for alt in settings.options_dict.keys():
-        df.loc[df['optionID'] == alt, 'OptionName'] = settings.options_dict[alt]['OptionName']
+    df = pd.DataFrame(fleet_df[['OptionName', 'optionID', 'sourceTypeID', 'sourceTypeName', 'regClassID', 'regClassName',
+                                'fuelTypeID', 'fuelTypeName', 'yearID', 'modelYearID', 'ageID']]).reset_index(drop=True)
+    # df.insert(0, 'OptionName', '')
+    # for alt in settings.options_dict.keys():
+    #     df.loc[df['optionID'] == alt, 'OptionName'] = settings.options_dict[alt]['OptionName']
     df.insert(0, 'DiscountRate', rate)
     id = pd.Series(zip(zip(df['optionID'], df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['modelYearID'], df['ageID'], df['DiscountRate']))
     df.insert(0, 'id', id)

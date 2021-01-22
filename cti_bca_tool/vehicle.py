@@ -8,37 +8,37 @@ import pandas as pd
 
 
 # define elements of the Vehicle class
-fuelTypeID = {1: 'Gasoline',
-              2: 'Diesel',
-              3: 'CNG',
-              5: 'E85-Capable',
-              9: 'Electric',
-              }
-regClassID = {10: 'MC',
-              20: 'LDV',
-              30: 'LDT',
-              41: 'LHD',
-              42: 'LHD45',
-              46: 'MHD67',
-              47: 'HHD8',
-              48: 'Urban Bus',
-              49: 'Gliders',
-              }
-sourceTypeID = {0:  'NotApplicable',
-                11: 'Motorcycles',
-                21: 'Passenger Cars',
-                31: 'Passenger Trucks',
-                32: 'Light Commercial Trucks',
-                41: 'Other Buses',
-                42: 'Transit Buses',
-                43: 'School Buses',
-                51: 'Refuse Trucks',
-                52: 'Short-Haul Single Unit Trucks',
-                53: 'Long-Haul Single Unit Trucks',
-                54: 'Motor Homes',
-                61: 'Short-Haul Combination Trucks',
-                62: 'Long-Haul Combination Trucks',
-                }
+fueltype_dict = {1: 'Gasoline',
+                 2: 'Diesel',
+                 3: 'CNG',
+                 5: 'E85-Capable',
+                 9: 'Electric',
+                 }
+regclass_dict = {10: 'MC',
+                 20: 'LDV',
+                 30: 'LDT',
+                 41: 'LHD',
+                 42: 'LHD45',
+                 46: 'MHD67',
+                 47: 'HHD8',
+                 48: 'Urban Bus',
+                 49: 'Gliders',
+                 }
+sourcetype_dict = {0:  'NotApplicable',
+                   11: 'Motorcycles',
+                   21: 'Passenger Cars',
+                   31: 'Passenger Trucks',
+                   32: 'Light Commercial Trucks',
+                   41: 'Other Buses',
+                   42: 'Transit Buses',
+                   43: 'School Buses',
+                   51: 'Refuse Trucks',
+                   52: 'Short-Haul Single Unit Trucks',
+                   53: 'Long-Haul Single Unit Trucks',
+                   54: 'Motor Homes',
+                   61: 'Short-Haul Combination Trucks',
+                   62: 'Long-Haul Combination Trucks',
+                   }
 
 
 class Vehicle:

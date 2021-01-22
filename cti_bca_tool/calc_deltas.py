@@ -25,16 +25,50 @@ def calc_deltas(settings, dict_for_deltas, no_action_alt=0):
             for arg in args_to_delta:
                 arg_value = dict_for_deltas[key][arg] - dict_for_deltas[((no_action_alt, st, rc, ft), model_year, age_id, discount_rate)][arg]
                 delta_dict.update({'OptionName': delta_name, arg: arg_value})
-                # delta_dict.update({'optionID': delta_alt, 'OptionName': delta_name, arg: arg_value})
             for arg in id_args:
                 arg_value = dict_for_deltas[key][arg]
                 delta_dict.update({'OptionName': delta_name, arg: arg_value})
-                # delta_dict.update({'optionID': delta_alt, 'OptionName': delta_name, arg: arg_value})
             delta_dict.update({'optionID': delta_alt})
             update_dict[((delta_alt, st, rc, ft), model_year, age_id, discount_rate)] = delta_dict
     dict_for_deltas.update(update_dict)
     return dict_for_deltas
 
+
+def calc_deltas_weighted(dict_for_deltas, arg, no_action_alt=0):
+    """
+    There is no age_id or discount rate in the key for weighted dictionaries.
+    Args:
+        settings:
+        dict_for_deltas:
+        no_action_alt:
+
+    Returns:
+
+    """
+    # no_action_name = settings.options_dict[no_action_alt]['OptionName']
+    update_dict = dict()
+    for key in dict_for_deltas.keys():
+        vehicle, model_year = key[0], key[1]
+        alt, st, rc, ft = vehicle
+        print(f'Calculating weighted {arg} deltas for {vehicle}, MY {model_year}')
+        id_args = [k for k, v in dict_for_deltas[key].items() if 'ID' in k or 'Name' in k]
+        args_to_delta = [k for k, v in dict_for_deltas[key].items() if k not in id_args]
+        if alt != no_action_alt:
+            # action_name = settings.options_dict[alt]['OptionName']
+            # delta_name = f'{action_name}_minus_{no_action_name}'
+            delta_alt = f'{alt}{no_action_alt}'
+            delta_alt = int(delta_alt)
+            delta_dict = dict()
+            for arg in args_to_delta:
+                arg_value = dict_for_deltas[key][arg] - dict_for_deltas[((no_action_alt, st, rc, ft), model_year)][arg]
+                delta_dict.update({arg: arg_value})
+            for arg in id_args:
+                arg_value = dict_for_deltas[key][arg]
+                delta_dict.update({arg: arg_value})
+            delta_dict.update({'optionID': delta_alt})
+            update_dict[((delta_alt, st, rc, ft), model_year)] = delta_dict
+    dict_for_deltas.update(update_dict)
+    return dict_for_deltas
 
 
 class CalcDeltas:
