@@ -7,6 +7,8 @@ Contains the DocTables class.
 import pandas as pd
 
 import cti_bca_tool.general_functions as gen_fxns
+from cti_bca_tool.discounting import annualize_values
+from cti_bca_tool.figures import create_figures
 
 
 # lists of args to summarize for document tables
@@ -28,8 +30,22 @@ index_by_ft_by_alt = ['DiscountRate', 'fuelTypeID', 'optionID', 'OptionName']
 index_by_year = ['DiscountRate', 'yearID']
 
 
-def doc_tables_post_process(path_for_save, fleet_totals_df):
+def run_postproc(settings, path_save, totals_dict):
     print('\nDoing some post-processing....')
+    # Convert dictionary to DataFrame to generate summaries via pandas.
+    totals_df = gen_fxns.convert_dict_to_df(totals_dict, 'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
+    annual_df = create_annual_summary_df(settings, totals_df)
+    annual_df = annualize_values(settings, annual_df)
+
+    postproc_file = doc_tables_post_process(path_save, totals_df)
+    annual_df.to_excel(postproc_file, sheet_name='annualized')
+
+    create_figures(annual_df, 'US Dollars', path_save)
+
+    return postproc_file
+
+
+def doc_tables_post_process(path_for_save, fleet_totals_df):
     df = fleet_totals_df.copy()
 
     preamble_program_table = preamble_ria_tables(df, index_by_alt_by_year, sum, 1000000, 2, *preamble_program_args)
@@ -122,6 +138,40 @@ def bca_tables(input_df, index_list, cols, function, *args):
     table.insert(len(table.columns), 'Units', 'USD')
     table.insert(len(table.columns), 'SignificantDigits', 'No rounding')
     return table
+
+
+def create_annual_summary_df(settings, totals_df):
+    """
+
+    Args:
+        settings: The SetInputs class.
+        totals_df: A DataFrame of monetized values by optionID, yearID and DiscountRate; OptionName should exist for figures (as legend entries).
+
+    Returns:
+
+    """
+    # Create a list of args to groupby and args to group
+    args_to_groupby = ['optionID', 'OptionName', 'yearID', 'DiscountRate']
+    cost_args = [col for col in totals_df if 'Cost' in col]
+    args = args_to_groupby + cost_args
+
+    df = pd.DataFrame(totals_df, columns=args)
+
+    # First sum by args_to_groupby to get annual summaries.
+    df_sum = df.groupby(by=args_to_groupby, as_index=False).sum()
+
+    # Now do a cumulative sum of the annual values. Since they are discounted values, the cumulative sum will represent a running present value.
+    df_pv = df_sum.groupby(by=['optionID', 'DiscountRate'], as_index=False).cumsum()
+    df_pv.drop(columns='yearID', inplace=True)
+
+    # Rename the args in df_pv to include a present value notation
+    for cost_arg in cost_args:
+        df_pv.rename(columns={cost_arg: f'{cost_arg}_PresentValue'}, inplace=True)
+
+    # Bring the present values into the annual values
+    df = pd.concat([df_sum, df_pv], axis=1, ignore_index=False)
+
+    return df
 
 
 def create_output_paths(settings):

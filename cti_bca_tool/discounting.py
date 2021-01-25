@@ -1,10 +1,5 @@
-"""
-discounting.py
+import pandas as pd
 
-Contains the DiscountValues class.
-
-"""
-# TODO Do I need an annualization method? Ignoring for now.
 
 def discount_values(settings, dict_of_values, *discount_rates):
     """
@@ -45,6 +40,49 @@ def discount_values(settings, dict_of_values, *discount_rates):
             update_dict[((vehicle), model_year, age_id, discount_rate)] = rate_dict
     dict_of_values.update(update_dict)
     return dict_of_values
+
+
+def annualize_values(settings, input_df):
+    """
+    
+    See EPA Economic Guidelines (updated May 2014), Section 6.1.2, Equations 3 & 4.
+    This method makes use of the CumSum which, in this case is a running present value, and then determines the annual value that equates to that CumSum
+    (present value) if that annual value were discounted at a given discount rate. The Offset is included to reflect costs beginning at the start of the year (Offset=1) or the end of the year
+    (Offset=0).
+    The equation used here is shown below.
+
+    AC = PV * DR * (1+DR)^(period) / [(1+DR)^(period+Offset) - 1]
+
+    where,\n
+    AC = Annualized Cost\n
+    PV = Present Value (here, the cumulative summary of discounted annual values)\n
+    DR = Discount Rate\n
+    CY = Calendar Year (yearID)\n
+    period = the current CY minus the year to which to discount values + a discount_offset value where discount_offset equals the costs_start input value\n
+    Offset = 1 for costs at the start of the year, 0 for cost at the end of the year
+
+    Args:
+        settings: The SetInputs class.
+        input_df: A DataFrame of annual values containing optionID, yearID, DiscountRate and Cost arguments.
+
+    Returns: A DataFrame of the passed Cost arguments annualized by optionID in each of the passed yearIDs and at each discount rate.
+
+    """
+    if settings.costs_start == 'start-year':
+        discount_offset = 0
+        annualized_offset = 1
+    elif settings.costs_start == 'end-year': 
+        discount_offset = 1
+        annualized_offset = 0
+    discount_to_year = settings.discount_to_yearID
+    cost_args = [arg for arg in input_df.columns if 'Cost' in arg and 'PresentValue' not in arg]
+    input_df.insert(input_df.columns.get_loc('DiscountRate') + 1, 'periods', input_df['yearID'] - discount_to_year + discount_offset)
+    for cost_arg in cost_args:
+        input_df.insert(len(input_df.columns),
+                  f'{cost_arg}_Annualized',
+                  input_df[f'{cost_arg}_PresentValue'] * input_df['DiscountRate'] * (1 + input_df['DiscountRate']) ** input_df['periods']
+                  / ((1 + input_df['DiscountRate']) ** (input_df['periods'] + annualized_offset) - 1))
+    return input_df
 
 
 if __name__ == '__main__':

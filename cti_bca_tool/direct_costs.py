@@ -42,7 +42,7 @@ def calc_cumulative_sales_by_step(vehicle, model_year, cost_step, regclass_sales
         model_year: The model year of the passed vehicle.
         cost_step: If standards are implemented in stages (i.e., for MY2027 and then again for MY2030), then these would represent two cost steps. The cost_step
         here is a string representing a model year of implementation (i.e., '2027', not 2027).
-        regclass_sales_dict: A dictionary containing sales of alt_regclass_fueltype vehicles by model year.
+        regclass_sales_dict: A dictionary containing sales (VPOP at age=0) of alt_regclass_fueltype vehicles by model year.
 
     Returns: A single float of cumulative sales for the given alt_regclass_fueltype vehicle meeting the standards set in the given cost_step. In other words,
     new standards for MY2027 would have cumulative sales beginning in MY2027 and continuing each model year thereafter. New standards set in MY2030 would have
@@ -69,7 +69,7 @@ def tech_pkg_cost_withlearning(settings, vehicle, model_year, cost_step, regclas
         model_year: The model year of the passed vehicle.
         cost_step: If standards are implemented in stages (i.e., for MY2027 and then again for MY2030), then these would represent two cost steps. The cost_step
         here is a string representing a model year of implementation (i.e., '2027', not 2027).
-        regclass_sales_dict: A dictionary containing sales of alt_regclass_fueltype vehicles by model year.
+        regclass_sales_dict: A dictionary containing sales (VPOP at age=0) of alt_regclass_fueltype vehicles by model year.
 
     Returns: Two values - the package cost with learning applied for the passsed vehicle in the given model year and associated with the given cost_step;
     and, the cumulative sales of that vehicle used in calculating learning effects.
@@ -90,7 +90,7 @@ def calc_regclass_yoy_costs_per_step(settings, regclass_sales_dict):
 
     Args:
         settings: The SetInputs class.
-        regclass_sales_dict: A dictionary containing sales of alt_regclass_fueltype vehicles by model year.
+        regclass_sales_dict: A dictionary containing sales (VPOP at age=0) of alt_regclass_fueltype vehicles by model year.
 
     Returns: A dictionary containing the package cost and cumulative sales used to calculate that package cost (learning effects depend on cumulative
     sales) for the passed vehicle in the given model year and complying with the standards set in the given cost step.

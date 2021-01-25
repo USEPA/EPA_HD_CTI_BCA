@@ -8,6 +8,21 @@ project_markups_dict = dict()
 
 
 def calc_project_markup_value(settings, vehicle, markup_factor, model_year):
+    """
+    
+    This function calculates the project markup value for the markup_factor (Warranty, RnD, Other, Profit) passed. The project markup factor differs
+    from the input markup factors by scaling where that scaling is done based on the "Absolute" or "Relative" entries in the input file and by the
+    Miles or Age entries of the warranty/useful life input files. Whether Miles or Age is used is set via the BCA_General_Inputs file.
+    Args:
+        settings: The SetInputs classs.
+        vehicle: A tuple representing an alt_regclass_fueltype vehicle.
+        markup_factor: A string representing the name of the project markup factor value to return.
+        model_year: The model year of the passed vehicle.
+
+    Returns: A single markup factor value to be used in the project having been adjusted in accordance with the proposed warranty and useful life
+    changes and the Absolute/Relative scaling entries.
+
+    """
     alt, rc, ft = vehicle
     scaled_markups_dict_id = ((vehicle), markup_factor, model_year)
     scaling_metric = settings.indirect_cost_scaling_metric
@@ -35,13 +50,14 @@ def calc_project_markup_value(settings, vehicle, markup_factor, model_year):
 
 def per_veh_project_markups(settings, vehicles):
     """
-    This method is for use in testing to get an output CSV that shows the markups used within the project.
-    :param settings:
-    :param markup_factors:
-    :param vehicles:
-    :param scaling_dict:
-    :param markups_dict:
-    :return:
+    
+    This function is used for testing to allow for output of the project markup values.
+    Args:
+        settings: The SetInputs class.
+        vehicles: A list of tuples representing alt_regclass_fueltype vehicles.
+
+    Returns: A dictionary of project markup values.
+
     """
     for vehicle, model_year in product(vehicles, settings.years):
         for markup_factor in settings.markup_factors:
@@ -53,10 +69,20 @@ def per_veh_project_markups(settings, vehicles):
     return project_markups_dict
 
 
-def calc_per_veh_indirect_costs(settings, fleet_averages_dict):
+def calc_per_veh_indirect_costs(settings, averages_dict):
+    """
+    
+    Args:
+        settings: The SetInputs class.
+        averages_dict: A dictionary containing tech package direct costs/vehicle.
+
+    Returns: The passed dictionary updated with indirect costs associated with each markup value along with the summation of those individual indirect
+    costs as "IndirectCost_AvgPerVeh."
+
+    """
     print('\nCalculating per vehicle indirect costs\n')
 
-    for key in fleet_averages_dict.keys():
+    for key in averages_dict.keys():
         vehicle, model_year, age_id = key[0], key[1], key[2]
         alt, st, rc, ft = vehicle
         if age_id == 0:
@@ -64,25 +90,35 @@ def calc_per_veh_indirect_costs(settings, fleet_averages_dict):
             ic_sum = 0
             for markup_factor in settings.markup_factors:
                 markup_value = calc_project_markup_value(settings, (alt, rc, ft), markup_factor, model_year)
-                per_veh_direct_cost = fleet_averages_dict[key]['DirectCost_AvgPerVeh']
-                fleet_averages_dict[key].update({f'{markup_factor}Cost_AvgPerVeh': markup_value * per_veh_direct_cost})
+                per_veh_direct_cost = averages_dict[key]['DirectCost_AvgPerVeh']
+                averages_dict[key].update({f'{markup_factor}Cost_AvgPerVeh': markup_value * per_veh_direct_cost})
                 ic_sum += markup_value * per_veh_direct_cost
-            fleet_averages_dict[key].update({'IndirectCost_AvgPerVeh': ic_sum})
-    return fleet_averages_dict
+            averages_dict[key].update({'IndirectCost_AvgPerVeh': ic_sum})
+    return averages_dict
 
 
-def calc_indirect_costs(settings, fleet_totals_dict, fleet_averages_dict):
+def calc_indirect_costs(settings, totals_dict, averages_dict):
+    """
+
+    Args:
+        settings: The SetInputs class.
+        totals_dict: A dictionary containing sales (VPOP at age=0) and into which tech package indirect costs will be updated.
+        averages_dict: A dictionary containing individual indirect costs per vehicle.
+
+    Returns: The passed totals_dict updated with total indirect costs for each individual indirect cost property and a summation of those.
+
+    """
     print('\nCalculating total indirect costs.\n')
     markup_factors = [arg for arg in settings.markups['Markup_Factor'].unique()]
     markup_factors.append('Indirect')
-    for key in fleet_totals_dict.keys():
+    for key in totals_dict.keys():
         age = key[2]
         if age == 0:
             for markup_factor in markup_factors:
-                cost_per_veh = fleet_averages_dict[key][f'{markup_factor}Cost_AvgPerVeh']
-                sales = fleet_totals_dict[key]['VPOP']
-                fleet_totals_dict[key].update({f'{markup_factor}Cost': cost_per_veh * sales})
-    return fleet_totals_dict
+                cost_per_veh = averages_dict[key][f'{markup_factor}Cost_AvgPerVeh']
+                sales = totals_dict[key]['VPOP']
+                totals_dict[key].update({f'{markup_factor}Cost': cost_per_veh * sales})
+    return totals_dict
 
 
 if __name__ == '__main__':

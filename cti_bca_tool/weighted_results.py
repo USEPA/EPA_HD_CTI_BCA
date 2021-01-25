@@ -10,7 +10,7 @@ from cti_bca_tool.vehicle import sourcetype_dict
 
 def create_weighted_cost_dict(settings, fleet_averages_dict, arg_to_weight, arg_to_weight_by):
     """
-    This method weights arguments by the passed weight_by argument. The weighting is limited by the number of years (ages) to be included which is set
+    This function weights arguments by the passed weight_by argument. The weighting is limited by the number of years (ages) to be included which is set
     in the general inputs file. The weighted is further limited to model years for which sufficient data exits to include all of those ages. For example,
     if the maximum calendar year included in the input data is 2045, and the maximum numbers of ages of data to include for each model year is 9 (which
     would be 10 years of age since year 1 is age 0) then the maximum model year included will be 2035.

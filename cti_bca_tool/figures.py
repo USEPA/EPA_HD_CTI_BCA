@@ -83,12 +83,13 @@ class CreateFigures:
         return
 
 
-def create_figures(input_df, path_for_save):
+def create_figures(input_df, units, path_for_save):
     """
 
     This function is called by tool_main and then controls the generation of charts by the ChartFigures class.
     Args:
         input_df: A DataFrame of data.
+        units: The units used in the passed input_df.
         path_for_save: The path for saving figures.
 
     Returns: Charts are saved to the path_for_save folder by the ChartFigures class and this method returns to tool_main.
@@ -98,7 +99,7 @@ def create_figures(input_df, path_for_save):
     path_figures = path_for_save / 'figures'
     path_figures.mkdir(exist_ok=True)
     alt_names = pd.Series(input_df.loc[input_df['optionID'] >= 10, 'OptionName']).unique()
-    units = input_df['Units'].unique()[0]
+    # units = input_df['Units'].unique()[0]
     args = ['TechCost', 'EmissionRepairCost', 'DEFCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
     for alt_name in alt_names:
         CreateFigures(input_df, units, path_figures) \

@@ -21,11 +21,10 @@ from cti_bca_tool.repair_costs import calc_emission_repair_costs_per_mile, calc_
     calc_emission_repair_costs, estimated_ages_dict, repair_cpm_dict
 from cti_bca_tool.emission_costs import calc_criteria_emission_costs
 from cti_bca_tool.sum_by_vehicle import calc_sum_of_costs
-from cti_bca_tool.discounting import discount_values
+from cti_bca_tool.discounting import discount_values, annualize_values
 from cti_bca_tool.weighted_results import create_weighted_cost_dict
 from cti_bca_tool.calc_deltas import calc_deltas, calc_deltas_weighted
-from cti_bca_tool.tool_postproc import doc_tables_post_process, figure_tables_post_process, create_output_paths
-from cti_bca_tool.figures import create_figures
+from cti_bca_tool.tool_postproc import run_postproc, create_output_paths
 
 from cti_bca_tool.general_functions import save_dict_to_csv, convert_dict_to_df, inputs_filenames, get_file_datetime
 
@@ -103,8 +102,8 @@ def main(settings):
     wtd_fuel_cpm_dict = calc_deltas_weighted(settings, wtd_fuel_cpm_dict, 'FuelCost_Retail_AvgPerMile')
     wtd_repair_cpm_dict = calc_deltas_weighted(settings, wtd_repair_cpm_dict, 'EmissionRepairCost_AvgPerMile')
 
-    # convert dictionary to DataFrame to generate pivot tables for copy/past to documents
-    fleet_totals_df = convert_dict_to_df(fleet_totals_dict, 'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
+    # # convert dictionary to DataFrame to generate pivot tables for copy/past to documents
+    # fleet_totals_df = convert_dict_to_df(fleet_totals_dict, 'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
 
     elapsed_time_calcs = time.time() - start_time_calcs
 
@@ -119,10 +118,17 @@ def main(settings):
         path_of_run_folder, path_of_run_inputs_folder, path_of_run_results_folder, path_of_modified_inputs_folder, path_of_code_folder \
             = create_output_paths(settings)
 
-    document_tables_file = doc_tables_post_process(path_of_run_results_folder, fleet_totals_df)
-    summary_table = figure_tables_post_process(fleet_totals_df)
+    # do the post-processing to generate document tables, an annual summary and some figures
+    document_tables_file = run_postproc(settings, path_of_run_results_folder, fleet_totals_dict)
+
+    # document_tables_file = doc_tables_post_process(path_of_run_results_folder, fleet_totals_df)
+    # summary_table = figure_tables_post_process(fleet_totals_df)
+
+    # calculate the annualized costs using the fleet_totals_df
+    # annualized_totals_df = annualize_values(settings, fleet_totals_df)
 
     # copy input files into results folder; also save fuel_prices and reshaped files to this folder
+    print('Copy input files and code to the outputs folder.')
     if settings.run_folder_identifier == 'test':
         pass
     else:
@@ -142,7 +148,7 @@ def main(settings):
         gdp_deflators.to_csv(path_of_modified_inputs_folder / 'gdp_deflators.csv', index=True)
 
     # save dictionaries to csv
-    print("\nSaving the outputs....")
+    print("\nSaving the output files....")
     save_dict_to_csv(fleet_totals_dict, path_of_run_results_folder / 'cti_bca_fleet_totals', 'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
     save_dict_to_csv(fleet_averages_dict, path_of_run_results_folder / 'cti_bca_fleet_averages', 'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
     save_dict_to_csv(estimated_ages_dict, path_of_run_results_folder / 'cti_bca_estimated_ages', 'vehicle', 'modelYearID', 'identifier')
@@ -151,9 +157,6 @@ def main(settings):
     save_dict_to_csv(wtd_def_cpm_dict, path_of_run_results_folder / 'cti_bca_vmt_weighted_def_cpm', 'vehicle', 'modelYearID')
     save_dict_to_csv(wtd_fuel_cpm_dict, path_of_run_results_folder / 'cti_bca_vmt_weighted_fuel_cpm', 'vehicle', 'modelYearID')
     save_dict_to_csv(wtd_repair_cpm_dict, path_of_run_results_folder / 'cti_bca_vmt_weighted_emission_repair_cpm', 'vehicle', 'modelYearID')
-
-    # make some figures
-    create_figures(summary_table, path_of_run_results_folder)
 
     elapsed_time_outputs = time.time() - start_time_outputs
     end_time = time.time()
