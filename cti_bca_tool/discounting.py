@@ -87,10 +87,10 @@ def annualize_values(settings, input_df):
 
 if __name__ == '__main__':
     from cti_bca_tool.tool_setup import SetInputs as settings
-    from cti_bca_tool.project_fleet import create_fleet_df, regclass_vehicles, sourcetype_vehicles
+    from cti_bca_tool.project_fleet import create_fleet_df
     from cti_bca_tool.project_dicts import create_regclass_sales_dict, create_fleet_totals_dict, create_fleet_averages_dict
-    from cti_bca_tool.direct_costs2 import calc_regclass_yoy_costs_per_step, calc_direct_costs, calc_per_veh_direct_costs
-    from cti_bca_tool.indirect_costs2 import calc_per_veh_indirect_costs, calc_indirect_costs
+    from cti_bca_tool.direct_costs import calc_regclass_yoy_costs_per_step, calc_direct_costs, calc_per_veh_direct_costs
+    from cti_bca_tool.indirect_costs import calc_per_veh_indirect_costs, calc_indirect_costs
     from cti_bca_tool.general_functions import save_dict_to_csv
 
     # create project fleet data structures, both a DataFrame and a dictionary of regclass based sales
@@ -98,8 +98,8 @@ if __name__ == '__main__':
 
     # create a sales (by regclass) and fleet dictionaries
     regclass_sales_dict = create_regclass_sales_dict(project_fleet_df)
-    fleet_totals_dict = create_fleet_totals_dict(settings, project_fleet_df, 0)
-    fleet_averages_dict = create_fleet_averages_dict(settings, project_fleet_df, 0)
+    fleet_totals_dict = create_fleet_totals_dict(project_fleet_df)
+    fleet_averages_dict = create_fleet_averages_dict(project_fleet_df)
 
     # calculate direct costs per reg class based on cumulative regclass sales (learning is applied to cumulative reg class sales)
     regclass_yoy_costs_per_step = calc_regclass_yoy_costs_per_step(settings, regclass_sales_dict)

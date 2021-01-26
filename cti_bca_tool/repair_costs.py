@@ -128,12 +128,12 @@ def calc_emission_repair_costs(fleet_totals_dict, fleet_averages_dict):
 
 
 if __name__ == '__main__':
-    from cti_bca_tool.__main__ import SetInputs as settings
+    from cti_bca_tool.tool_setup import SetInputs as settings
     from cti_bca_tool.general_functions import save_dict_to_csv
-    from cti_bca_tool.project_fleet import create_fleet_df, regclass_vehicles, sourcetype_vehicles
+    from cti_bca_tool.project_fleet import create_fleet_df, regclass_vehicles
     from cti_bca_tool.project_dicts import create_regclass_sales_dict, create_fleet_totals_dict, create_fleet_averages_dict
-    from cti_bca_tool.direct_costs2 import calc_regclass_yoy_costs_per_step, calc_direct_costs, calc_per_veh_direct_costs
-    from cti_bca_tool.indirect_costs2 import calc_per_veh_indirect_costs, calc_indirect_costs
+    from cti_bca_tool.direct_costs import calc_regclass_yoy_costs_per_step, calc_direct_costs, calc_per_veh_direct_costs
+    from cti_bca_tool.indirect_costs import calc_per_veh_indirect_costs, calc_indirect_costs
     from cti_bca_tool.tech_costs import calc_per_veh_tech_costs, calc_tech_costs
 
     project_fleet_df = create_fleet_df(settings)

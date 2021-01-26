@@ -13,6 +13,7 @@ from project_dicts import *
 @attr.s
 class SetInputs:
     """
+
     The SetInputs class establishes the input files to use and other input settings set in the BCA_Inputs file and needed within the tool.
     """
     # set paths

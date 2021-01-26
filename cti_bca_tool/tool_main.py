@@ -32,17 +32,17 @@ from cti_bca_tool.general_functions import save_dict_to_csv, convert_dict_to_df,
 def main(settings):
     """
 
-    :param settings: The SetInputs class within __main__.py establishes the input files to use and other input settings set in the BCA_Inputs file and needed within the tool.
-    :return: The results of the cti_bca_tool.
+    :param settings: The SetInputs class.
+    :return: The results of the current run of the cti_bca_tool.
     """
     print("\nDoing the work....")
     start_time_calcs = time.time()
-    # create project fleet data structures, both a DataFrame and a dictionary of regclass based sales
+    # create project fleet DataFrame which will include adjustments to the MOVES input file that are unique to the project.
     project_fleet_df = create_fleet_df(settings)
 
     # create a sales (by regclass) and fleet dictionaries
     regclass_sales_dict = create_regclass_sales_dict(project_fleet_df)
-    fleet_totals_dict = create_fleet_totals_dict(project_fleet_df, 0)
+    fleet_totals_dict = create_fleet_totals_dict(project_fleet_df)
     fleet_averages_dict = create_fleet_averages_dict(project_fleet_df)
 
     # calculate direct costs per reg class based on cumulative regclass sales (learning is applied to cumulative reg class sales)
@@ -74,6 +74,8 @@ def main(settings):
     fleet_totals_dict = calc_emission_repair_costs(fleet_totals_dict, fleet_averages_dict)
 
     # sum operating costs and operating-tech costs into a single key, value
+    # the totals_dict here uses pre-tax fuel price since it serves as the basis for social costs
+    # the averages_dict uses retail fuel prices since it serves as the basis for average operating costs which are relevant to owners
     fleet_totals_dict = calc_sum_of_costs(fleet_totals_dict, 'OperatingCost', 'DEFCost', 'FuelCost_Pretax', 'EmissionRepairCost')
     fleet_totals_dict = calc_sum_of_costs(fleet_totals_dict, 'TechAndOperatingCost', 'TechCost', 'OperatingCost')
     fleet_averages_dict = calc_sum_of_costs(fleet_averages_dict,
@@ -91,9 +93,10 @@ def main(settings):
     wtd_fuel_cpm_dict = create_weighted_cost_dict(settings, fleet_averages_dict, 'FuelCost_Retail_AvgPerMile', 'VMT_AvgPerVeh')
     wtd_repair_cpm_dict = create_weighted_cost_dict(settings, fleet_averages_dict, 'EmissionRepairCost_AvgPerMile', 'VMT_AvgPerVeh')
 
-    # discount monetized values
-    fleet_totals_dict = discount_values(settings, fleet_totals_dict, 0.03, 0.07)
-    fleet_averages_dict = discount_values(settings, fleet_averages_dict, 0.03, 0.07)
+    # discount monetized values; if calculating emission costs, the discount rates entered in the BCA_General_Inputs workbook should be consistent with the
+    # criteria cost factors input workbook
+    fleet_totals_dict = discount_values(settings, fleet_totals_dict, settings.discrate_social_low, settings.discrate_social_high)
+    fleet_averages_dict = discount_values(settings, fleet_averages_dict, settings.discrate_social_low, settings.discrate_social_high)
 
     # calculate deltas relative to the passed no action alternative ID
     fleet_totals_dict = calc_deltas(settings, fleet_totals_dict)
@@ -101,9 +104,6 @@ def main(settings):
     wtd_def_cpm_dict = calc_deltas_weighted(settings, wtd_def_cpm_dict, 'DEFCost_AvgPerMile')
     wtd_fuel_cpm_dict = calc_deltas_weighted(settings, wtd_fuel_cpm_dict, 'FuelCost_Retail_AvgPerMile')
     wtd_repair_cpm_dict = calc_deltas_weighted(settings, wtd_repair_cpm_dict, 'EmissionRepairCost_AvgPerMile')
-
-    # # convert dictionary to DataFrame to generate pivot tables for copy/past to documents
-    # fleet_totals_df = convert_dict_to_df(fleet_totals_dict, 'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
 
     elapsed_time_calcs = time.time() - start_time_calcs
 
@@ -120,12 +120,6 @@ def main(settings):
 
     # do the post-processing to generate document tables, an annual summary and some figures
     document_tables_file = run_postproc(settings, path_of_run_results_folder, fleet_totals_dict)
-
-    # document_tables_file = doc_tables_post_process(path_of_run_results_folder, fleet_totals_df)
-    # summary_table = figure_tables_post_process(fleet_totals_df)
-
-    # calculate the annualized costs using the fleet_totals_df
-    # annualized_totals_df = annualize_values(settings, fleet_totals_df)
 
     # copy input files into results folder; also save fuel_prices and reshaped files to this folder
     print('Copy input files and code to the outputs folder.')

@@ -5,6 +5,15 @@ from vehicle import Vehicle
 
 
 def create_fleet_df(settings):
+    """
+
+    Args:
+        settings: The SetInputs class.
+
+    Returns: A DataFrame of the MOVES inputs with necessary MOVES adjustments made according to the MOVES adjustments input file. The DataFrame will also add
+    optionID/sourceTypeID/regClassID/fuelTypeID names.
+
+    """
     df = settings.moves.copy()
     if 'Alternative' in df.columns.tolist():
         df.rename(columns={'Alternative': 'optionID'}, inplace=True)
@@ -59,10 +68,26 @@ def create_fleet_df(settings):
 
 
 def regclass_vehicles(fleet_df):
+    """
+
+    Args:
+        fleet_df: A DataFrame of the project fleet.
+
+    Returns: A series of unique vehicles where a vehicle is an alt_regClass_fuelType vehicle.
+
+    """
     return pd.Series(zip(fleet_df['optionID'], fleet_df['regClassID'], fleet_df['fuelTypeID'])).unique()
 
 
 def sourcetype_vehicles(fleet_df):
+    """
+
+    Args:
+        fleet_df: A DataFrame of the project fleet.
+
+    Returns: A series of unique vehicles where a vehicle is an alt_sourcetype_regClass_fuelType vehicle.
+
+    """
     return pd.Series(zip(fleet_df['optionID'], fleet_df['sourceTypeID'], fleet_df['regClassID'], fleet_df['fuelTypeID'])).unique()
 
 
