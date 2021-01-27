@@ -7,7 +7,7 @@ import time
 import attr
 
 from cti_bca_tool.get_context_data import GetFuelPrices, GetDeflators
-from project_dicts import *
+from cti_bca_tool.project_dicts import *
 
 
 @attr.s

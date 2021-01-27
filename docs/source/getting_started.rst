@@ -26,7 +26,7 @@ With the requirements installed, you should be able to run the tool by typing th
 
 ::
 
-    python -m cti_bca_tool
+    python -m cti_bca_tool.tool_main
 
 This should create an outputs folder in your project folder (i.e., where you have placed the tool and repository), unless one has already been created, where the results of the run can be found.
 

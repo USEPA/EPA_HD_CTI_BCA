@@ -49,7 +49,7 @@ def run_postproc(settings, path_save, totals_dict):
     annual_df = annualize_values(settings, annual_df)
 
     postproc_file = doc_tables_post_process(path_save, totals_df)
-    annual_df.to_excel(postproc_file, sheet_name='annualized')
+    annual_df.to_excel(postproc_file, sheet_name='annualized', index=False)
 
     create_figures(annual_df, 'US Dollars', path_save)
 

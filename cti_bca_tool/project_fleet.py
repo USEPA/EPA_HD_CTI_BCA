@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-from vehicle import Vehicle
+from cti_bca_tool.vehicle import Vehicle
 
 
 def create_fleet_df(settings):
