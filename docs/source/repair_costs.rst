@@ -1,7 +1,7 @@
-group_metrics module
+repair_costs module
 ====================
 
-.. automodule:: group_metrics
+.. automodule:: repair_costs
    :members:
    :undoc-members:
    :show-inheritance:

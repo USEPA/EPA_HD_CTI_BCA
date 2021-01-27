@@ -1,26 +1,17 @@
-"""
-get_context_data.py
-
-Contains the GetFuelPrices & GetDeflators classes.
-
-"""
-
 import pandas as pd
-import sys
 
 
 class GetFuelPrices:
 
     def __init__(self, input_file, aeo_case, id_col, *fuels):
-        """
-
-        The GetFuelPrices class grabs the appropriate fuel prices from the aeo folder, cleans up some naming and creates a fuel_prices DataFrame for use in operating costs.
+        """The GetFuelPrices class grabs the appropriate fuel prices from the aeo folder, cleans up some naming and creates a fuel_prices DataFrame for use in operating costs.
 
         Args:
             input_file: The file containing fuel price data (this class assumes a file structured like those published by EIA in the Annual Energy Outlook).
             aeo_case: From the BCA inputs sheet - the AEO fuel case to use (a CSV of fuel prices must exist in the aeo directory).
             id_col: The column name where id data can be found.
             *fuels: AEO descriptor for the fuel prices needed in the project (e.g., Motor Gasoline, Diesel).
+
         """
         self.input_file = input_file
         self.aeo_case = aeo_case
@@ -120,22 +111,14 @@ class GetFuelPrices:
 
 
 class GetDeflators:
-    """
-
-
-
-    :param input_file: The file containing price deflator data (this class assumes a file structured like those published by the Bureau of Economic Analysis).
-    :param id_col: The column name where id data can be found.
-    :param id_value: The value within id_col to return.
-    """
     def __init__(self, input_file, id_col, id_value):
-        """
+        """The GetDeflators class returns the GDP Implicit Price Deflators for use in adjusting monetized values to a consistent cost basis.
 
-        The GetDeflators class returns the GDP Implicit Price Deflators for use in adjusting monetized values to a consistent cost basis.
         Args:
             input_file: The file containing price deflator data (this class assumes a file structured like those published by the Bureau of Economic Analysis).
             id_col: The column name where id data can be found.
             id_value: The value within id_col to return.
+
         """
         self.input_file = input_file
         self.id_col = id_col

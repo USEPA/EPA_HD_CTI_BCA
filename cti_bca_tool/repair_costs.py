@@ -7,42 +7,71 @@ estimated_ages_dict = dict()
 repair_cpm_dict = dict()
 
 
-def calc_per_veh_cumulative_vmt(fleet_averages_dict):
+def calc_per_veh_cumulative_vmt(averages_dict):
+    """This function calculates cumulative average VMT/vehicle year-over-year for use in estimating a typical VMT per year and for estimating emission
+    repair costs. Note that VMT does not differ across options.
+
+    Args:
+        averages_dict: A dictionary containing annual average VMT/vehicle.
+
+    Returns: The passed dictionary updated with cumulative annual average VMT/vehicle.
+
     """
-    VMT does not change between alternatives (optionIDs)
-    :param fleet_averages_dict:
-    :return:
-    """
-    for key in fleet_averages_dict.keys():
+    # this loop calculates the cumulative vmt for each key with the averages_dict and saves it in the cumulative_vmt_dict
+    for key in averages_dict.keys():
         vehicle, model_year, age_id = key[0], key[1], key[2]
         alt, st, rc, ft = vehicle
-        if ((0, st, rc, ft), model_year, age_id-1, 0) in cumulative_vmt_dict:
-            cumulative_vmt = cumulative_vmt_dict[((0, st, rc, ft), model_year, age_id-1, 0)] + fleet_averages_dict[key]['VMT_AvgPerVeh']
+        if ((0, st, rc, ft), model_year, age_id-1, 0) in cumulative_vmt_dict.keys():
+            cumulative_vmt = cumulative_vmt_dict[((0, st, rc, ft), model_year, age_id-1, 0)] + averages_dict[key]['VMT_AvgPerVeh']
         else:
-            cumulative_vmt = fleet_averages_dict[key]['VMT_AvgPerVeh']
+            cumulative_vmt = averages_dict[key]['VMT_AvgPerVeh']
         cumulative_vmt_dict[key] = cumulative_vmt
-
-    for key in fleet_averages_dict.keys():
+    # this loop updates the averages_dict with the contents of the cumulative_vmt_dict
+    for key in averages_dict.keys():
         cumulative_vmt = cumulative_vmt_dict[key]
-        fleet_averages_dict[key].update({'VMT_AvgPerVeh_Cumulative': cumulative_vmt})
-    return fleet_averages_dict
+        averages_dict[key].update({'VMT_AvgPerVeh_Cumulative': cumulative_vmt})
+    return averages_dict
 
 
-def calc_typical_vmt_per_year(settings, vehicle, model_year, fleet_averages_dict):
+def calc_typical_vmt_per_year(settings, vehicle, model_year, averages_dict):
+    """This function calculates a typical annual VMT/vehicle over a set number of years as set via the General Inputs workbook. This typical annual VMT/vehicle
+    can then be used to estimate the ages at which warranty and useful life will be reached.
+
+    Args:
+        settings: The SetInputs class.
+        vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle.
+        model_year: The model year of the passed vehicle.
+        averages_dict: A dictionary containing cumulative annual average VMT/vehicle.
+
+    Returns: A single typical annual VMT/veh value for the passed vehicle of the given model year.
+
+    """
     key = ((vehicle), model_year)
     if key in typical_vmt_dict:
         vmt = typical_vmt_dict[key]
     else:
         vmt_thru_age_id = settings.repair_inputs_dict['typical_vmt_thru_ageID']['Value']
         if model_year + vmt_thru_age_id <= settings.year_max:
-            vmt = fleet_averages_dict[((vehicle), model_year, vmt_thru_age_id, 0)]['VMT_AvgPerVeh_Cumulative'] / (vmt_thru_age_id + 1)
+            vmt = averages_dict[((vehicle), model_year, vmt_thru_age_id, 0)]['VMT_AvgPerVeh_Cumulative'] / (vmt_thru_age_id + 1)
         else:
             vmt = typical_vmt_dict[((vehicle), model_year-1)]
         typical_vmt_dict[key] = vmt
     return vmt
 
 
-def calc_estimated_age(settings, vehicle, model_year, identifier, fleet_averages_dict):
+def calc_estimated_age(settings, vehicle, model_year, identifier, averages_dict):
+    """
+
+    Args:
+        settings: The SetInputs class.
+        vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle.
+        model_year: The model year of the passed vehicle.
+        identifier: The identifier of the age being estimated (i.e., 'Warranty' or 'Usefullife')
+        averages_dict: A dictionary containing cumulative annual average VMT/veh.
+
+    Returns: An integer representing the age at which the identifier will be reached for the passed vehicle/model year.
+
+    """
     alt, st, rc, ft = vehicle
     key = ((vehicle), model_year, identifier)
     if key in estimated_ages_dict.keys():
@@ -50,7 +79,7 @@ def calc_estimated_age(settings, vehicle, model_year, identifier, fleet_averages
                                                         estimated_ages_dict[key]['calculated_age'], \
                                                         estimated_ages_dict[key]['estimated_age']
     else:
-        typcial_vmt = calc_typical_vmt_per_year(settings, vehicle, model_year, fleet_averages_dict)
+        typcial_vmt = calc_typical_vmt_per_year(settings, vehicle, model_year, averages_dict)
         required_age = settings.required_miles_and_ages_dict[((alt, rc, ft), identifier, 'Age')][str(model_year)]
         calculated_age = round(settings.required_miles_and_ages_dict[((alt, rc, ft), identifier, 'Miles')][str(model_year)] / typcial_vmt)
         estimated_age = min(required_age, calculated_age)
@@ -61,14 +90,24 @@ def calc_estimated_age(settings, vehicle, model_year, identifier, fleet_averages
     return estimated_age
 
 
-def calc_emission_repair_costs_per_mile(settings, fleet_averages_dict):
-    for key in fleet_averages_dict.keys():
+def calc_emission_repair_costs_per_mile(settings, averages_dict):
+    """
+
+    Args:
+        settings: The SetInputs class.
+        averages_dict: A dictionary containing tech package direct costs/vehicle and cumulative annual average VMT/vehicle.
+
+    Returns: The passed averages_dict updated to include emission repair costs/mile for each dictionary key. This function also populates the
+        repair_cpm_dict which is then written to an output file for the given run.
+
+    """
+    for key in averages_dict.keys():
         print(f'Calculating repair costs per mile for {key}')
         vehicle, model_year, age_id = key[0], key[1], key[2]
-        reference_direct_cost = fleet_averages_dict[((0, 61, 47, 2), model_year, 0, 0)]['DirectCost_AvgPerVeh'] # sourcetype here is arbitrary provided it is of diesel regclass 47
-        direct_cost_scaler = fleet_averages_dict[((vehicle), model_year, 0, 0)]['DirectCost_AvgPerVeh'] / reference_direct_cost
-        warranty_estimated_age = calc_estimated_age(settings, vehicle, model_year, 'Warranty', fleet_averages_dict)
-        usefullife_estimated_age = calc_estimated_age(settings, vehicle, model_year, 'Usefullife', fleet_averages_dict)
+        reference_direct_cost = averages_dict[((0, 61, 47, 2), model_year, 0, 0)]['DirectCost_AvgPerVeh'] # sourcetype here is arbitrary provided it is of diesel regclass 47
+        direct_cost_scaler = averages_dict[((vehicle), model_year, 0, 0)]['DirectCost_AvgPerVeh'] / reference_direct_cost
+        warranty_estimated_age = calc_estimated_age(settings, vehicle, model_year, 'Warranty', averages_dict)
+        usefullife_estimated_age = calc_estimated_age(settings, vehicle, model_year, 'Usefullife', averages_dict)
         in_warranty_cpm = settings.repair_inputs_dict['in-warranty_R&M_CPM']['Value'] \
                           * settings.repair_inputs_dict['emission_repair_share']['Value'] \
                           * direct_cost_scaler
@@ -94,7 +133,7 @@ def calc_emission_repair_costs_per_mile(settings, fleet_averages_dict):
             cpm = at_usefullife_cpm
         else:
             cpm = max_cpm
-        fleet_averages_dict[key].update({'EmissionRepairCost_AvgPerMile': cpm})
+        averages_dict[key].update({'EmissionRepairCost_AvgPerMile': cpm})
         repair_cpm_dict[key] = {'reference_direct_cost': reference_direct_cost, \
                                 'direct_cost_scaler': direct_cost_scaler, \
                                 'warranty_estimated_age': warranty_estimated_age, \
@@ -105,33 +144,50 @@ def calc_emission_repair_costs_per_mile(settings, fleet_averages_dict):
                                 'max_cpm': max_cpm, \
                                 'cpm': cpm
                                 }
-    return fleet_averages_dict
+    return averages_dict
 
 
-def calc_per_veh_emission_repair_costs(fleet_averages_dict):
-    for key in fleet_averages_dict.keys():
+def calc_per_veh_emission_repair_costs(averages_dict):
+    """
+
+    Args:
+        averages_dict: A dictionary containing annual emission repair costs/mile.
+
+    Returns: The passed dictionary updated with annual emission repair costs/vehicle for each dictionary key.
+
+    """
+    for key in averages_dict.keys():
         vehicle, model_year, age_id = key[0], key[1], key[2]
         print(f'Calculating repair costs per vehicle for {vehicle}, MY {model_year}, age {age_id}')
-        repair_cpm = fleet_averages_dict[key]['EmissionRepairCost_AvgPerMile']
-        vmt_per_veh = fleet_averages_dict[key]['VMT_AvgPerVeh']
-        fleet_averages_dict[key].update({'EmissionRepairCost_AvgPerVeh': repair_cpm * vmt_per_veh})
-    return fleet_averages_dict
+        repair_cpm = averages_dict[key]['EmissionRepairCost_AvgPerMile']
+        vmt_per_veh = averages_dict[key]['VMT_AvgPerVeh']
+        averages_dict[key].update({'EmissionRepairCost_AvgPerVeh': repair_cpm * vmt_per_veh})
+    return averages_dict
 
 
-def calc_emission_repair_costs(fleet_totals_dict, fleet_averages_dict):
+def calc_emission_repair_costs(totals_dict, averages_dict):
+    """
+
+    Args:
+        totals_dict: A dictionary containing annual vehicle populations (VPOP).
+        averages_dict: A dictionary containing annual average emission repair costs/mile.
+
+    Returns: The passed totals_dict updated with annual emission repair costs for all vehicles.
+
+    """
     print(f'\nCalculating total repair costs.\n')
-    for key in fleet_totals_dict.keys():
-        cost_per_veh = fleet_averages_dict[key]['EmissionRepairCost_AvgPerVeh']
-        vpop = fleet_totals_dict[key]['VPOP']
-        fleet_totals_dict[key].update({'EmissionRepairCost': cost_per_veh * vpop})
-    return fleet_totals_dict
+    for key in totals_dict.keys():
+        cost_per_veh = averages_dict[key]['EmissionRepairCost_AvgPerVeh']
+        vpop = totals_dict[key]['VPOP']
+        totals_dict[key].update({'EmissionRepairCost': cost_per_veh * vpop})
+    return totals_dict
 
 
 if __name__ == '__main__':
     from cti_bca_tool.tool_setup import SetInputs as settings
     from cti_bca_tool.general_functions import save_dict_to_csv
     from cti_bca_tool.project_fleet import create_fleet_df, regclass_vehicles
-    from cti_bca_tool.project_dicts import create_regclass_sales_dict, create_fleet_totals_dict, create_fleet_averages_dict
+    from cti_bca_tool.project_dicts import create_regclass_sales_dict, create_totals_dict, create_averages_dict
     from cti_bca_tool.direct_costs import calc_regclass_yoy_costs_per_step, calc_direct_costs, calc_per_veh_direct_costs
     from cti_bca_tool.indirect_costs import calc_per_veh_indirect_costs, calc_indirect_costs
     from cti_bca_tool.tech_costs import calc_per_veh_tech_costs, calc_tech_costs
@@ -140,30 +196,24 @@ if __name__ == '__main__':
     vehicles_rc = regclass_vehicles(project_fleet_df)
 
     regclass_sales_dict = create_regclass_sales_dict(project_fleet_df)
-    fleet_totals_dict = create_fleet_totals_dict(project_fleet_df)
-    fleet_averages_dict = create_fleet_averages_dict(project_fleet_df)
+    totals_dict = create_totals_dict(project_fleet_df)
+    averages_dict = create_averages_dict(project_fleet_df)
 
     regclass_yoy_costs_per_step = calc_regclass_yoy_costs_per_step(settings, regclass_sales_dict)
-    fleet_averages_dict = calc_per_veh_direct_costs(settings, regclass_yoy_costs_per_step, fleet_averages_dict)
-    fleet_totals_dict = calc_direct_costs(fleet_totals_dict, fleet_averages_dict)
+    averages_dict = calc_per_veh_direct_costs(settings, regclass_yoy_costs_per_step, averages_dict)
+    totals_dict = calc_direct_costs(totals_dict, averages_dict)
 
-    # per_veh_dc_by_year_dict = calc_per_regclass_direct_costs(settings, vehicles_rc, project_regclass_sales_dict)[1]
+    averages_dict = calc_per_veh_indirect_costs(settings, averages_dict)
+    averages_dict = calc_per_veh_tech_costs(averages_dict)
 
-    # fleet_totals_dict = calc_direct_costs(per_veh_dc_by_year_dict, fleet_totals_dict)
-    # fleet_averages_dict = calc_per_veh_direct_costs(fleet_totals_dict, fleet_averages_dict)
+    totals_dict = calc_indirect_costs(settings, totals_dict, averages_dict)
+    totals_dict = calc_tech_costs(totals_dict, averages_dict)
 
-    fleet_averages_dict = calc_per_veh_indirect_costs(settings, fleet_averages_dict)
-    fleet_averages_dict = calc_per_veh_tech_costs(fleet_averages_dict)
+    averages_dict = calc_emission_repair_costs_per_mile(settings, averages_dict)
+    averages_dict = calc_per_veh_emission_repair_costs(averages_dict)
+    totals_dict = calc_emission_repair_costs(totals_dict, averages_dict)
 
-    fleet_totals_dict = calc_indirect_costs(settings, fleet_totals_dict, fleet_averages_dict)
-    fleet_totals_dict = calc_tech_costs(fleet_totals_dict, fleet_averages_dict)
-
-    # fleet_averages_dict = calc_emission_repair_costs_per_mile(settings, per_veh_dc_by_year_dict, fleet_averages_dict)
-    fleet_averages_dict = calc_emission_repair_costs_per_mile(settings, fleet_averages_dict)
-    fleet_averages_dict = calc_per_veh_emission_repair_costs(fleet_averages_dict)
-    fleet_totals_dict = calc_emission_repair_costs(fleet_totals_dict, fleet_averages_dict)
-
-    save_dict_to_csv(fleet_averages_dict, settings.path_project / 'test/cti_fleet_averages', 'vehicle', 'modelYearID', 'ageID')
-    save_dict_to_csv(fleet_totals_dict, settings.path_project / 'test/cti_fleet_totals', 'vehicle', 'modelYearID', 'ageID')
+    save_dict_to_csv(averages_dict, settings.path_project / 'test/cti_fleet_averages', 'vehicle', 'modelYearID', 'ageID')
+    save_dict_to_csv(totals_dict, settings.path_project / 'test/cti_fleet_totals', 'vehicle', 'modelYearID', 'ageID')
     save_dict_to_csv(estimated_ages_dict, settings.path_project / 'test/estimated_ages', 'vehicle', 'modelYearID', 'identifier')
     save_dict_to_csv(repair_cpm_dict, settings.path_project / 'test/repair_cpm_details', 'vehicle', 'modelYearID', 'ageID')

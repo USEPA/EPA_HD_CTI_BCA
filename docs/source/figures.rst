@@ -1,7 +1,7 @@
-fleet module
-============
+figures module
+==============
 
-.. automodule:: fleet
+.. automodule:: figures
    :members:
    :undoc-members:
    :show-inheritance:

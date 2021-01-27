@@ -1,8 +1,3 @@
-"""
-general_functions.py
-
-"""
-
 import pandas as pd
 import numpy as np
 from pathlib import PurePath
@@ -19,7 +14,7 @@ def inputs_filenames(input_files_pathlist):
         input_files_pathlist: A list of those input files that are specified in the Input_Files.csv file contained in the inputs folder.
 
     Returns: A list of input file full paths - these will be copied directly to the output folder so that inputs and outputs end up bundled together
-    in the output folder associated with the given run.
+        in the output folder associated with the given run.
 
     """
     _filename_list = [PurePath(path).name for path in input_files_pathlist]
@@ -46,9 +41,8 @@ def reshape_df(df, value_variable_list, cols_to_melt, melted_header, new_column_
 
 
 def convert_dollars_to_analysis_basis(df, deflators, dollar_basis, *args):
-    """
+    """This function converts dollars into a consistent dollar basis as set via the get_context_data module.
 
-    This function converts dollars into a consistent dollar basis as set via the get_context_data module.
     Args:
         df: A DataFrame containing monetized values and their associated cost basis.
         deflators: A dictionary of GDP deflators for use in adjusting monetized values throughout the tool into a consistent dollar basis.
@@ -67,9 +61,8 @@ def convert_dollars_to_analysis_basis(df, deflators, dollar_basis, *args):
 
 
 def round_metrics(df, metrics, round_by):
-    """
+    """Note - this function is not being used.
 
-    Note - this function is not being used.
     Args:
         df: DataFrame containing data to be rounded.
         metrics: List of metrics within the passed DataFrame for which rounding is requested.

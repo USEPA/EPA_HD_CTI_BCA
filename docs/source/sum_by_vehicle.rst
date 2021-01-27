@@ -1,7 +1,7 @@
-operating_cost module
+sum_by_vehicle module
 =====================
 
-.. automodule:: operating_cost
+.. automodule:: sum_by_vehicle
    :members:
    :undoc-members:
    :show-inheritance:

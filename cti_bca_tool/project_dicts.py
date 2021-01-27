@@ -2,7 +2,7 @@ import pandas as pd
 from cti_bca_tool.repair_costs import calc_per_veh_cumulative_vmt
 
 def create_fleet_totals_dict(fleet_df, rate=0):
-    """
+    """This function creates a dictionary of fleet total values and adds a discount rate element to the key.
 
     Args:
         fleet_df: A DataFrame of the project fleet.
@@ -22,7 +22,8 @@ def create_fleet_totals_dict(fleet_df, rate=0):
 
 
 def create_fleet_averages_dict(fleet_df, rate=0):
-    """
+    """This function creates a dictionary of fleet average values and adds a discount rate element to the key. It also calculates an average annual VMT/vehicle and
+    a cumulative annual average VMT/vehicle.
 
     Args:
         fleet_df: A DataFrame of the project fleet.

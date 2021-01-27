@@ -3,16 +3,15 @@ from itertools import product
 
 
 def get_emission_cost_factors(settings, year):
-    """
-
-    Note that the BCA_General_Inputs file contains a toggle to stipulate whether to estimate emission (pollution) costs or not. This function is called
+    """Note that the BCA_General_Inputs file contains a toggle to stipulate whether to estimate emission (pollution) costs or not. This function is called
     only if that toggle is set to 'Y' (yes). The default setting is 'N' (no).
+
     Args:
         settings: The SetInputs class.
         year: The calendar year for which emission cost factors are needed.
 
     Returns: Eight values - the PM25 and NOx emission cost factors (dollars/ton) for each of two different mortality estimates and each of two 
-    different discount rates.
+        different discount rates.
 
     """
     pm_low_3, pm_high_3, pm_low_7, pm_high_7 = settings.criteria_cost_factors_dict[year]['pm25_low-mortality_0.03_USD_per_uston'], \

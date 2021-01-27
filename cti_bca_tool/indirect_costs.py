@@ -8,11 +8,10 @@ project_markups_dict = dict()
 
 
 def calc_project_markup_value(settings, vehicle, markup_factor, model_year):
-    """
-    
-    This function calculates the project markup value for the markup_factor (Warranty, RnD, Other, Profit) passed. The project markup factor differs
+    """This function calculates the project markup value for the markup_factor (Warranty, RnD, Other, Profit) passed. The project markup factor differs
     from the input markup factors by scaling where that scaling is done based on the "Absolute" or "Relative" entries in the input file and by the
     Miles or Age entries of the warranty/useful life input files. Whether Miles or Age is used is set via the BCA_General_Inputs file.
+
     Args:
         settings: The SetInputs classs.
         vehicle: A tuple representing an alt_regclass_fueltype vehicle.
@@ -20,7 +19,7 @@ def calc_project_markup_value(settings, vehicle, markup_factor, model_year):
         model_year: The model year of the passed vehicle.
 
     Returns: A single markup factor value to be used in the project having been adjusted in accordance with the proposed warranty and useful life
-    changes and the Absolute/Relative scaling entries.
+        changes and the Absolute/Relative scaling entries.
 
     """
     alt, rc, ft = vehicle
@@ -49,9 +48,8 @@ def calc_project_markup_value(settings, vehicle, markup_factor, model_year):
 
 
 def per_veh_project_markups(settings, vehicles):
-    """
-    
-    This function is used for testing to allow for output of the project markup values.
+    """This function is used for testing to allow for output of the project markup values.
+
     Args:
         settings: The SetInputs class.
         vehicles: A list of tuples representing alt_regclass_fueltype vehicles.
@@ -77,7 +75,7 @@ def calc_per_veh_indirect_costs(settings, averages_dict):
         averages_dict: A dictionary containing tech package direct costs/vehicle.
 
     Returns: The passed dictionary updated with indirect costs associated with each markup value along with the summation of those individual indirect
-    costs as "IndirectCost_AvgPerVeh."
+        costs as "IndirectCost_AvgPerVeh."
 
     """
     print('\nCalculating per vehicle indirect costs\n')

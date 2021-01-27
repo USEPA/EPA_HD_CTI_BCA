@@ -9,16 +9,14 @@ import matplotlib.pyplot as plt
 
 
 class CreateFigures:
-    """
-    The CreateFigures class generates charts.
-    """
     def __init__(self, df, units, destination):
-        """
+        """The CreateFigures class generates charts.
 
         Args:
             df: A DataFrame of data to be charted.
             units: Units for use on the y-axis of the created chart.
             destination: The path in which to save the created chart.
+
         """
         self.df = df
         self.destination = destination
@@ -26,9 +24,8 @@ class CreateFigures:
 
 
     def line_chart_args_by_option(self, dr, alt_name, year_min, year_max, *args):
-        """
+        """This method generate a chart showing passed arguments under the given alternative.
 
-        This method generate a chart showing passed arguments under the given alternative.
         Args:
             dr: The discount rate of the data to be charted.
             alt_name: The OptionName of the data to be charted.
@@ -54,9 +51,8 @@ class CreateFigures:
         return
 
     def line_chart_arg_by_options(self, dr, alt_names, year_min, year_max, arg):
-        """
+        """This method generate a chart showing the passed argument under each of the passed alternatives.
 
-        This method generate a chart showing the passed argument under each of the passed alternatives.
         Args:
             dr: The discount rate of the data to be charted.
             alt_names: The OptionNames for which to chart data.
@@ -84,15 +80,15 @@ class CreateFigures:
 
 
 def create_figures(input_df, units, path_for_save):
-    """
+    """This function is called by tool_main and then controls the generation of charts by the ChartFigures class.
 
-    This function is called by tool_main and then controls the generation of charts by the ChartFigures class.
     Args:
         input_df: A DataFrame of data.
         units: The units used in the passed input_df.
         path_for_save: The path for saving figures.
 
     Returns: Charts are saved to the path_for_save folder by the ChartFigures class and this method returns to tool_main.
+
     """
     yearID_min = int(input_df['yearID'].min())
     yearID_max = int(input_df['yearID'].max())

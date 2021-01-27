@@ -1,7 +1,7 @@
-estimated_age module
+project_dicts module
 ====================
 
-.. automodule:: estimated_age
+.. automodule:: project_dicts
    :members:
    :undoc-members:
    :show-inheritance:

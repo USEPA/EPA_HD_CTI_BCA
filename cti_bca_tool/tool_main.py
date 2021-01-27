@@ -1,11 +1,10 @@
 """
-cti_bca.py
+cti_bca_tool.tool_main.py
 
-This is the primary module of the benefit cost analysis tool. This module reads input files, calls other modules and generates output files.
+This is the main module of the tool.
 
 """
 import pandas as pd
-# import numpy as np
 import shutil
 from datetime import datetime
 import time
@@ -21,19 +20,22 @@ from cti_bca_tool.repair_costs import calc_emission_repair_costs_per_mile, calc_
     calc_emission_repair_costs, estimated_ages_dict, repair_cpm_dict
 from cti_bca_tool.emission_costs import calc_criteria_emission_costs
 from cti_bca_tool.sum_by_vehicle import calc_sum_of_costs
-from cti_bca_tool.discounting import discount_values, annualize_values
+from cti_bca_tool.discounting import discount_values
 from cti_bca_tool.weighted_results import create_weighted_cost_dict
 from cti_bca_tool.calc_deltas import calc_deltas, calc_deltas_weighted
 from cti_bca_tool.tool_postproc import run_postproc, create_output_paths
 
-from cti_bca_tool.general_functions import save_dict_to_csv, convert_dict_to_df, inputs_filenames, get_file_datetime
+from cti_bca_tool.general_functions import save_dict_to_csv, inputs_filenames, get_file_datetime
 
 
 def main(settings):
     """
 
-    :param settings: The SetInputs class.
-    :return: The results of the current run of the cti_bca_tool.
+    Args:
+        settings: The SetInputs class.
+
+    Returns: The results of the current run of the cti_bca_tool.
+
     """
     print("\nDoing the work....")
     start_time_calcs = time.time()

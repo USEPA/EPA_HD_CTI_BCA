@@ -11,7 +11,7 @@ def create_fleet_df(settings):
         settings: The SetInputs class.
 
     Returns: A DataFrame of the MOVES inputs with necessary MOVES adjustments made according to the MOVES adjustments input file. The DataFrame will also add
-    optionID/sourceTypeID/regClassID/fuelTypeID names.
+        optionID/sourceTypeID/regClassID/fuelTypeID names.
 
     """
     df = settings.moves.copy()

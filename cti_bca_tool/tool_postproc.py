@@ -1,7 +1,7 @@
 """
-doc_tables.py
+cti_bca_tool.tool_postproc.py
 
-Contains the DocTables class.
+This is the post-processing module of the tool. The run_postproc function is called by tool_main.main().
 
 """
 import pandas as pd
@@ -31,10 +31,21 @@ index_by_year = ['DiscountRate', 'yearID']
 
 
 def run_postproc(settings, path_save, totals_dict):
+    """
+
+    Args:
+        settings: The SetInputs class.
+        path_save: The path to which to save output files.
+        totals_dict: A dictionary containing the annual totals to be post-processed.
+
+    Returns: A postproc_file that provides annual results and annualized monetized results. This function also calls the function to generate document tables
+        for copy/paste into documents.
+
+    """
     print('\nDoing some post-processing....')
     # Convert dictionary to DataFrame to generate summaries via pandas.
     totals_df = gen_fxns.convert_dict_to_df(totals_dict, 'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
-    annual_df = create_annual_summary_df(settings, totals_df)
+    annual_df = create_annual_summary_df(totals_df)
     annual_df = annualize_values(settings, annual_df)
 
     postproc_file = doc_tables_post_process(path_save, totals_df)
@@ -46,6 +57,15 @@ def run_postproc(settings, path_save, totals_dict):
 
 
 def doc_tables_post_process(path_for_save, fleet_totals_df):
+    """
+
+    Args:
+        path_for_save: The path to which to save output files.
+        fleet_totals_df: A DataFrame containing the data to be used in generating pivot tables for use in documents.
+
+    Returns: An Excel writer containing several individual worksheets that are pivot tables of the fleet_totals_df DataFrame.
+
+    """
     df = fleet_totals_df.copy()
 
     preamble_program_table = preamble_ria_tables(df, index_by_alt_by_year, sum, 1000000, 2, *preamble_program_args)
@@ -97,6 +117,14 @@ def doc_tables_post_process(path_for_save, fleet_totals_df):
 
 
 def figure_tables_post_process(fleet_totals_df):
+    """
+
+    Args:
+        fleet_totals_df:
+
+    Returns:
+
+    """
     df = fleet_totals_df.copy()
     program_table = preamble_ria_tables(df, index_by_alt_by_year, sum, 1, 10, *preamble_program_args)
     return program_table
@@ -105,10 +133,16 @@ def figure_tables_post_process(fleet_totals_df):
 def preamble_ria_tables(input_df, index_list, function, divisor, sig_dig, *args):
     """
 
-    :param metrics: The list of metrics within the passed DataFrame to include as data in the returned table.
-    :param index_list: The list of metrics within the passed DataFrame to include as the row index of the returned table.
-    :param function: The function to use (e.g., 'sum', 'mean')
-    :return: A pivot table.
+    Args:
+        input_df: A DataFrame containing the data to be used for the pivot table.
+        index_list: The parameters to use as the pivot table row index.
+        function: The function to be used in generating the pivot table results.
+        divisor: A divisor to use to express results other than dollars.
+        sig_dig: The number of significant digits to use (this is not a rounder but a true significant digit determinant).
+        *args: The parameters to include in the pivot table results.
+
+    Returns: A pivot table of args by index_list summarized by the function and expressed in divisor terms to sig_dig significant digits.
+
     """
     args = [arg for arg in args]
     print(f'Creating pivot table for {args}')
@@ -126,10 +160,15 @@ def preamble_ria_tables(input_df, index_list, function, divisor, sig_dig, *args)
 def bca_tables(input_df, index_list, cols, function, *args):
     """
 
-    :param metrics: The list of metrics within the passed DataFrame to include as data in the returned table.
-    :param index_list: The list of metrics within the passed DataFrame to include as the row index of the returned table.
-    :param function: The function to use (e.g., 'sum', 'mean')
-    :return: A pivot table.
+    Args:
+        input_df: A DataFrame containing the data to be used for the pivot table.
+        index_list: The parameters to use as the pivot table row index.
+        cols: The columns to use as column headers.
+        function: The function to be used in generating the pivot table results.
+        *args: The parameters to include in the pivot table results.
+
+    Returns: A pivot table of args by index_list summarized by the function with col column headers.
+
     """
     args = [arg for arg in args]
     print(f'Creating pivot table for {args}')
@@ -140,14 +179,13 @@ def bca_tables(input_df, index_list, cols, function, *args):
     return table
 
 
-def create_annual_summary_df(settings, totals_df):
+def create_annual_summary_df(totals_df):
     """
 
     Args:
-        settings: The SetInputs class.
         totals_df: A DataFrame of monetized values by optionID, yearID and DiscountRate; OptionName should exist for figures (as legend entries).
 
-    Returns:
+    Returns: A DataFrame that summarizes the passed DataFrame by yearID.
 
     """
     # Create a list of args to groupby and args to group
@@ -175,6 +213,14 @@ def create_annual_summary_df(settings, totals_df):
 
 
 def create_output_paths(settings):
+    """
+
+    Args:
+        settings: The SetInputs class.
+
+    Returns: Output paths into which to save outputs of the given run.
+
+    """
     settings.path_outputs.mkdir(exist_ok=True)
     path_of_run_folder = settings.path_outputs / f'{settings.start_time_readable}_CTI_{settings.run_folder_identifier}'
     path_of_run_folder.mkdir(exist_ok=False)

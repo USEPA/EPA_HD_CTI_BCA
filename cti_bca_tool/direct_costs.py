@@ -12,7 +12,7 @@ def tech_package_cost(costs_df, vehicle, cost_step):
     """
 
     Args:
-        costs_df: A DataFrame of individual tech costs by regclass and fueltype based on the DirectCosts by regclass input file..
+        costs_df: A DataFrame of individual tech costs by regclass and fueltype based on the DirectCosts by regclass input file.
         vehicle: A tuple representing an alt_regclass_fueltype vehicle.
         cost_step: If standards are implemented in stages (i.e., for MY2027 and then again for MY2030), then these would represent two cost steps. The cost_step
         here is a string representing a model year of implementation (i.e., '2027', not 2027).

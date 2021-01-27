@@ -1,23 +1,14 @@
-"""
-calc_deltas.py
-
-Contains the CalcDeltas class.
-
-"""
-import pandas as pd
 
 
 def calc_deltas(settings, dict_for_deltas):
-    """
+    """This function calculates deltas for action alternatives relative to the no action alternative set via the General Inputs.
 
-    This function calculates deltas for action alternatives relative to the passed no action alternative.
     Args:
         settings: The SetInputs class.
         dict_for_deltas: The dictionary containing values for calculating deltas.
-        no_action_alt: An integer value representing the alt_id (option number) to use as the "No Action" option.
 
     Returns: An updated dictionary containing deltas relative to the no_action_alt. OptionIDs for the deltas will be the alt_id followed by the no_action_alt.
-    For example, deltas for optionID=1 relative to optionID=0 would have optionID=10. OptionNames will also show as 'OptionID=1_name minus OptionID=0_name'.
+        For example, deltas for optionID=1 relative to optionID=0 would have optionID=10. OptionNames will also show as 'OptionID=1_name minus OptionID=0_name'.
 
     """
     no_action_name = settings.options_dict[settings.no_action_alt]['OptionName']
@@ -47,17 +38,16 @@ def calc_deltas(settings, dict_for_deltas):
 
 
 def calc_deltas_weighted(settings, dict_for_deltas, weighted_arg):
-    """
-
-    This function calculates deltas for action alternatives relative to the passed no action alternative specifically for the weighted cost per mile dictionaries.
+    """This function calculates deltas for action alternatives relative to the passed no action alternative specifically for the weighted cost per mile dictionaries.
     Note that there is no age_id or discount rate in the key for the passed weighted dictionaries.
+
     Args:
         settings: The SetInputs class.
         dict_for_deltas: The dictionary containing values for calculating deltas.
-        no_action_alt: An integer value representing the alt_id (option number) to use as the "No Action" option.
+        weighted_arg: The parameter for calculating deltas.
 
     Returns: An updated dictionary containing deltas relative to the no_action_alt. OptionIDs for the deltas will be the alt_id followed by the no_action_alt.
-    For example, deltas for optionID=1 relative to optionID=0 would have optionID=10.
+        For example, deltas for optionID=1 relative to optionID=0 would have optionID=10.
 
     """
     update_dict = dict()

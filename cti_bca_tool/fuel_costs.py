@@ -71,8 +71,8 @@ def calc_fuel_costs(settings, totals_dict):
         totals_dict: A dictionary of fleet Gallons consumed by all vehicles.
 
     Returns: The passed dictionary updated to reflect fuel consumption (Gallons) adjusted to account for the fuel saved in association with ORVR (note
-    that these fuel impacts are not included in the MOVES runs that serve as the input fleet data for the tool). The dictionary is also updated to
-    include the fuel costs associated with the gallons consumed (Gallons * $/gallon fuel).
+        that these fuel impacts are not included in the MOVES runs that serve as the input fleet data for the tool). The dictionary is also updated to
+        include the fuel costs associated with the gallons consumed (Gallons * $/gallon fuel).
 
     """
     print('\nCalculating fuel total costs.\n')

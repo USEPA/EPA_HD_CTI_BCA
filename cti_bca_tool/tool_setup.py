@@ -15,6 +15,7 @@ class SetInputs:
     """
 
     The SetInputs class establishes the input files to use and other input settings set in the BCA_Inputs file and needed within the tool.
+
     """
     # set paths
     path_code = Path(__file__).parent
