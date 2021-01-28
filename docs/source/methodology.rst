@@ -5,16 +5,22 @@ Methodology
 General
 ^^^^^^^
 
-The project folder for using the tool should contain an "inputs" folder containing necessary input files, an "aeo" folder containing AEO fuel price information, and a "project_code" folder containing the Python modules.
-Optionally, a virtual environment folder may be desirable. The tool will create an "outputs" folder within the project folder into which all run results will be saved.
+The project folder for using the tool should contain an "inputs" folder containing necessary input files, a "context_inputs" folder containing AEO fuel price information and
+BEA GDP price deflator information, and a "cti_bca_tool" folder containing the Python modules.
+Optionally, a virtual environment folder may be desirable. When running the tool, the user will be asked to provide a run ID. If a run ID is entered, that run ID will be
+included in the run-results folder-ID for the given run. Hitting return will use the default run ID. The tool will create an "outputs" folder within the project folder
+into which all run results will be saved. A timestamp is included in any run-results folder-ID so that new results never overwrite prior results. The user can enter 'test'
+at the run ID prompt. This will send outputs to a 'test' folder in the project folder. Note that any run having run ID 'test' will overwrite all output files
+already in the test output folder, so use 'test' as a run ID with caution.
 
-The tool first reads inputs and input files, then calculates appropriate technology costs, operating costs and emission costs. Once complete, these are brought together
+The tool first reads inputs and input files, then calculates appropriate technology costs, operating costs and emission costs (if selected by the user). Once complete, these are brought together
 in a set of BCA (benefit-cost analysis) results with those results saved to a run folder within the outputs folder.
 
-Importantly, monetized values in the tool are treated as costs. Also, for the most part, everything is treated in absolute terms. So absolute costs are calculated
-for each scenario/option/alternative and then deltas are calculated as costs in the alternative case less costs in the baseline case. As such, higher technology costs
-in an alternative case than those in the baseline case would result in positive delta costs, or increased costs. Likewise, lower emission costs in an alternative case
-relative to those in the baseline case would result in negative delta costs, or decreased costs. A decrease in emission costs represents an increase in emission benefits.
+Importantly, monetized values in the tool are treated as costs throughout. So a negative cost represents a savings. Also, for the most part,
+everything is treated in absolute terms. So absolute costs are calculated for each scenario/option/alternative and then deltas are calculated as costs in the action alternative
+case less costs in the no action, baseline case. As such, higher technology costs in an alternative case than those in the baseline case would result in positive delta costs, or increased costs.
+Likewise, lower operating costs in an alternative case relative to those in the baseline case would result in negative delta costs, or decreased costs. A decrease in operating costs represents
+an increase in operating savings.
 
 
 Calculations and Equations

@@ -4,11 +4,12 @@ from cti_bca_tool.repair_costs import calc_per_veh_cumulative_vmt
 def create_fleet_totals_dict(fleet_df, rate=0):
     """This function creates a dictionary of fleet total values and adds a discount rate element to the key.
 
-    Args:
-        fleet_df: A DataFrame of the project fleet.
+    Parameters:
+        fleet_df: A DataFrame of the project fleet.\n
         rate: The discount rate to associate with the passed data.
 
-    Returns: A dictionary of the fleet having keys equal to ((vehicle), modelYearID, ageID, discount_rate) where vehicle is a tuple representing
+    Returns:
+        A dictionary of the fleet having keys equal to ((vehicle), modelYearID, ageID, discount_rate) where vehicle is a tuple representing
         an alt_sourcetype_regclass_fueltype vehicle, and values representing totals for each key over time.
 
     """
@@ -25,11 +26,12 @@ def create_fleet_averages_dict(fleet_df, rate=0):
     """This function creates a dictionary of fleet average values and adds a discount rate element to the key. It also calculates an average annual VMT/vehicle and
     a cumulative annual average VMT/vehicle.
 
-    Args:
-        fleet_df: A DataFrame of the project fleet.
+    Parameters:
+        fleet_df: A DataFrame of the project fleet.\n
         rate: The discount rate to associate with the passed data.
 
-    Returns: A dictionary of the fleet having keys equal to ((vehicle), modelYearID, ageID, discount_rate) where vehicle is a tuple representing
+    Returns:
+        A dictionary of the fleet having keys equal to ((vehicle), modelYearID, ageID, discount_rate) where vehicle is a tuple representing
         an alt_sourcetype_regclass_fueltype vehicle, and values representing per vehicle or per mile averages for each key over time.
 
     """
@@ -49,10 +51,11 @@ def create_fleet_averages_dict(fleet_df, rate=0):
 def create_regclass_sales_dict(fleet_df):
     """
 
-    Args:
+    Parameters:
         fleet_df: A DataFrame of the project fleet.
 
-    Returns: A dictionary of the fleet having keys equal to ((vehicle), modelYearID) where vehicle is a tuple representing
+    Returns:
+        A dictionary of the fleet having keys equal to ((vehicle), modelYearID) where vehicle is a tuple representing
         an alt_regclass_fueltype vehicle, and values representing sales (sales=VPOP at ageID=0) for each key by model year.
 
     """
@@ -68,11 +71,12 @@ def create_regclass_sales_dict(fleet_df):
 def create_moves_adjustments_dict(input_df, *args):
     """
 
-    Args:
-        input_df: A DataFrame of the MOVES adjustments input file.
-        *args: Vehicle parameters to adjust.
+    Parameters:
+        input_df: A DataFrame of the MOVES adjustments input file.\n
+        args: Vehicle parameters to adjust.
 
-    Returns: The passed DataFrame as a dictionary.
+    Returns:
+        The passed DataFrame as a dictionary.
 
     """
     df = input_df.copy()
@@ -87,10 +91,11 @@ def create_moves_adjustments_dict(input_df, *args):
 def create_seedvol_factor_dict(input_df):
     """
 
-    Args:
+    Parameters:
         input_df: A DataFrame that provides seed volume factors by optionID, regClassID and fuelTypeID.
 
-    Returns: The passed DataFrame as a dictionary.
+    Returns:
+        The passed DataFrame as a dictionary.
 
     """
     df = input_df.copy()
@@ -104,10 +109,11 @@ def create_seedvol_factor_dict(input_df):
 def create_markup_inputs_dict(input_df):
     """
 
-    Args:
+    Parameters:
         input_df: A DataFrame that provides indirect cost markup factor values by fuelTypeID.
 
-    Returns: A dictionary with 'fueltype, markup factor' keys and 'markup value' values.
+    Returns:
+        A dictionary with 'fueltype, markup factor' keys and 'markup value' values.
 
     """
     df = input_df.copy()
@@ -121,13 +127,14 @@ def create_markup_inputs_dict(input_df):
 def create_required_miles_and_ages_dict(warranty_inputs, warranty_id, usefullife_inputs, usefullife_id):
     """
 
-    Args:
-        warranty_inputs: A DataFrame of the warranty inputs.
-        warranty_id: A string "Warranty."
-        usefullife_inputs: A DataFrame of the useful life Inputs.
+    Parameters:
+        warranty_inputs: A DataFrame of the warranty inputs.\n
+        warranty_id: A string "Warranty."\n
+        usefullife_inputs: A DataFrame of the useful life Inputs.\n
         usefullife_id: A string "Usefullife."
 
-    Returns: A single dictionary having keys equal to ((vehicle), identifier, period) where vehicle is an alt_regclass_fueltype
+    Returns:
+        A single dictionary having keys equal to ((vehicle), identifier, period) where vehicle is an alt_regclass_fueltype
         vehicle, identifier is "Warranty" or "Usefullife" and period is "Age" or "Miles" and having values consistent with the passed DataFrames.
 
     """
@@ -148,10 +155,11 @@ def create_required_miles_and_ages_dict(warranty_inputs, warranty_id, usefullife
 def create_def_doserate_inputs_dict(input_df):
     """
 
-    Args:
+    Parameters:
         input_df: A DataFrame of the DEF dose rate inputs file.
 
-    Returns: A dictionary having keys equal to (regclassID, fuelTypeID) and values consisting of the DEF dose rate inputs for each key.
+    Returns:
+        A dictionary having keys equal to (regclassID, fuelTypeID) and values consisting of the DEF dose rate inputs for each key.
 
     """
     df = input_df.copy()
@@ -165,10 +173,11 @@ def create_def_doserate_inputs_dict(input_df):
 def create_def_prices_dict(input_df):
     """
 
-    Args:
+    Parameters:
         input_df: A DataFrame of the DEF prices.
 
-    Returns: A dictionary of the passed DEF prices.
+    Returns:
+        A dictionary of the passed DEF prices.
 
     """
     df = input_df.copy()
@@ -179,10 +188,11 @@ def create_def_prices_dict(input_df):
 def create_orvr_inputs_dict(input_df):
     """
 
-    Args:
+    Parameters:
         input_df: A DataFrame of the ORVR inputs.
 
-    Returns: A dictionary of the passed ORVR inputs.
+    Returns:
+        A dictionary of the passed ORVR inputs.
 
     """
     df = input_df.copy()
@@ -196,10 +206,11 @@ def create_orvr_inputs_dict(input_df):
 def create_fuel_prices_dict(input_df):
     """
 
-    Args:
+    Parameters:
         input_df: A DataFrame of the fuel prices to be used in the given run.
 
-    Returns: A dictionary of the passed fuel prices by yearID and fuelTypeID.
+    Returns:
+        A dictionary of the passed fuel prices by yearID and fuelTypeID.
 
     """
     df = input_df.copy()
@@ -213,10 +224,11 @@ def create_fuel_prices_dict(input_df):
 def create_repair_inputs_dict(input_df):
     """
 
-    Args:
+    Parameters:
         input_df: A DataFrame of the repair cost curve inputs.
 
-    Returns: A dictionary of the passed DataFrame.
+    Returns:
+        A dictionary of the passed DataFrame.
 
     """
     df = input_df.copy()
@@ -227,10 +239,11 @@ def create_repair_inputs_dict(input_df):
 def create_criteria_cost_factors_dict(input_df):
     """
 
-    Args:
+    Parameters:
         input_df: A DataFrame of the criteria cost factor inputs.
 
-    Returns: A dictionary of the passed DataFrame.
+    Returns:
+        A dictionary of the passed DataFrame.
 
     """
     df = input_df.copy()

@@ -7,10 +7,11 @@ from cti_bca_tool.vehicle import Vehicle
 def create_fleet_df(settings):
     """
 
-    Args:
+    Parameters:
         settings: The SetInputs class.
 
-    Returns: A DataFrame of the MOVES inputs with necessary MOVES adjustments made according to the MOVES adjustments input file. The DataFrame will also add
+    Returns:
+        A DataFrame of the MOVES inputs with necessary MOVES adjustments made according to the MOVES adjustments input file. The DataFrame will also add
         optionID/sourceTypeID/regClassID/fuelTypeID names.
 
     """
@@ -70,10 +71,11 @@ def create_fleet_df(settings):
 def regclass_vehicles(fleet_df):
     """
 
-    Args:
+    Parameters:
         fleet_df: A DataFrame of the project fleet.
 
-    Returns: A series of unique vehicles where a vehicle is an alt_regClass_fuelType vehicle.
+    Returns:
+        A series of unique vehicles where a vehicle is an alt_regClass_fuelType vehicle.
 
     """
     return pd.Series(zip(fleet_df['optionID'], fleet_df['regClassID'], fleet_df['fuelTypeID'])).unique()
@@ -82,10 +84,11 @@ def regclass_vehicles(fleet_df):
 def sourcetype_vehicles(fleet_df):
     """
 
-    Args:
+    Parameters:
         fleet_df: A DataFrame of the project fleet.
 
-    Returns: A series of unique vehicles where a vehicle is an alt_sourcetype_regClass_fuelType vehicle.
+    Returns:
+        A series of unique vehicles where a vehicle is an alt_sourcetype_regClass_fuelType vehicle.
 
     """
     return pd.Series(zip(fleet_df['optionID'], fleet_df['sourceTypeID'], fleet_df['regClassID'], fleet_df['fuelTypeID'])).unique()

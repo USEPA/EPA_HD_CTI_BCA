@@ -2,18 +2,22 @@ from cti_bca_tool.vehicle import Vehicle
 
 
 def create_weighted_cost_dict(settings, fleet_averages_dict, arg_to_weight, arg_to_weight_by):
-    """This function weights arguments by the passed weight_by argument. The weighting is limited by the number of years (ages) to be included which is set
-    in the general inputs file. The weighted is further limited to model years for which sufficient data exits to include all of those ages. For example,
-    if the maximum calendar year included in the input data is 2045, and the maximum numbers of ages of data to include for each model year is 9 (which
-    would be 10 years of age since year 1 is age 0) then the maximum model year included will be 2035.
+    """This function weights arguments by the passed weight_by argument.
 
-    Args:
-        settings: The SetInputs class.
-        fleet_averages_dict: A dictionary of fleet average data (e.g., miles/year, cost/year, cost/mile).
-        arg_to_weight: The argument to be weighted by the arg_to_weight_by argument.
+    Parameters::
+        settings: The SetInputs class.\n
+        fleet_averages_dict: A dictionary of fleet average data (e.g., miles/year, cost/year, cost/mile).\n
+        arg_to_weight: The argument to be weighted by the arg_to_weight_by argument.\n
         arg_to_weight_by: The argument to weight by.
 
-    Returns: A dictionary of arguments weighted by the weight by argument.
+    Returns:
+        A dictionary of arguments weighted by the weight_by argument.
+
+    Note:
+        The weighting is limited by the number of years (ages) to be included which is set in the general inputs file. The weighting is also
+        limited to model years for which sufficient data exits to include all of those ages. For example, if the maximum calendar year included
+        in the input data is 2045, and the maximum numbers of ages of data to include for each model year is 9 (which would be 10 years of age
+        since year 1 is age 0) then the maximum model year included will be 2035.
 
     """
     wtd_result_dict = dict()

@@ -5,11 +5,14 @@ per_veh_tech_cost_dict = dict()
 def calc_per_veh_tech_costs(averages_dict):
     """
     
-    Args:
+    Parameters::
         averages_dict: A dictionary containing average direct and indirect costs per vehicle.
 
-    Returns: The passed dictionary updated with average tech costs per vehicle (direct plus indirect). Note that direct and indirect costs apply
-    only for ageID=0 (i.e., new sales).
+    Returns:
+        The averages_dict dictionary updated with average tech costs per vehicle (direct plus indirect).
+
+    Note:
+        Direct and indirect costs apply only for ageID=0 (i.e., new sales).
 
     """
     print('\nCalculating per vehicle technology costs.\n')
@@ -25,11 +28,12 @@ def calc_per_veh_tech_costs(averages_dict):
 def calc_tech_costs(totals_dict, averages_dict):
     """
 
-    Args:
-        totals_dict: A dictionary containing vehicle population (VPOP).
-        averages_dict: A dicitonary containing average tech costs per vehicle.
+    Parameters::
+        totals_dict: A dictionary containing vehicle population (VPOP).\n
+        averages_dict: A dictionary containing average tech costs per vehicle.
 
-    Returns: The passed totals dictionary updated with annual technology costs for all vehicles.
+    Returns:
+        The totals_dict dictionary updated with annual technology costs for all vehicles.
 
     """
     print('\nCalculating total technology costs.\n')

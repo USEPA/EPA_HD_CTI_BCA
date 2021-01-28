@@ -3,12 +3,13 @@
 def calc_sum_of_costs(dict_to_sum, name_of_sum, *args):
     """
 
-    Args:
-        dict_to_sum: A dictionary containing the parameters to be summed.
-        name_of_sum: A string used to identify the sum being done.
-        *args: The parameters (strings) to be summed.
+    Parameters::
+        dict_to_sum: A dictionary containing the parameters to be summed.\n
+        name_of_sum: A string used to identify the sum being done.\n
+        args: The parameters (strings) to be summed.
 
-    Returns: The passed dictionary updated to include a new 'name_of_sum' parameter that sums the passed args for each dictionary key.
+    Returns:
+        The passed dictionary updated to include a new 'name_of_sum' parameter that sums the passed args for each dictionary key.
 
     """
     for key in dict_to_sum.keys():

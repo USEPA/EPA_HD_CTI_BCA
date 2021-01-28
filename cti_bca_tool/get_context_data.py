@@ -6,11 +6,14 @@ class GetFuelPrices:
     def __init__(self, input_file, aeo_case, id_col, *fuels):
         """The GetFuelPrices class grabs the appropriate fuel prices from the aeo folder, cleans up some naming and creates a fuel_prices DataFrame for use in operating costs.
 
-        Args:
-            input_file: The file containing fuel price data (this class assumes a file structured like those published by EIA in the Annual Energy Outlook).
-            aeo_case: From the BCA inputs sheet - the AEO fuel case to use (a CSV of fuel prices must exist in the aeo directory).
-            id_col: The column name where id data can be found.
+        Parameters:
+            input_file: The file containing fuel price data.\n
+            aeo_case: From the BCA inputs sheet - the AEO fuel case to use (a CSV of fuel prices must exist in the aeo directory).\n
+            id_col: The column name where id data can be found.\n
             *fuels: AEO descriptor for the fuel prices needed in the project (e.g., Motor Gasoline, Diesel).
+
+        Note:
+            This class assumes a file structured like those published by EIA in the Annual Energy Outlook.
 
         """
         self.input_file = input_file
@@ -28,7 +31,8 @@ class GetFuelPrices:
     def aeo_dollars(self):
         """
 
-        Returns: An integer value representing the dollar basis of the AEO report.
+        Returns:
+            An integer value representing the dollar basis of the AEO report.
 
         """
         return int(self.input_file.at[0, 'units'][0: 4])
@@ -36,11 +40,12 @@ class GetFuelPrices:
     def select_aeo_table_rows(self, df_source, row):
         """
 
-        Args:
-            df_source: The DataFrame of AEO fuel prices.
+        Parameters:
+            df_source: The DataFrame of AEO fuel prices.\n
             row: The specific row to select.
 
-        Returns: A DataFrame of the specific fuel price row.
+        Returns:
+            A DataFrame of the specific fuel price row.
 
         """
         df_return = df_source.loc[df_source[self.id_col] == row[self.id_col], :]
@@ -50,10 +55,11 @@ class GetFuelPrices:
     def row_dict(self, fuel):
         """
 
-        Args:
+        Parameters:
             fuel: The fuel (gasoline/diesel).
 
-        Returns: A dictionary of fuel prices.
+        Returns:
+            A dictionary of fuel prices.
 
         """
         return_dict = dict()
@@ -66,11 +72,12 @@ class GetFuelPrices:
     def melt_df(self, df, value_name):
         """
 
-        Args:
-            df: The DataFrame of fuel prices to melt.
+        Parameters:
+            df: The DataFrame of fuel prices to melt.\n
             value_name: The name of the melted values.
 
-        Returns:A DataFrame of melted value_name data by year.
+        Returns:
+            A DataFrame of melted value_name data by year.
 
         """
         df = pd.melt(df, id_vars=[self.id_col], value_vars=[col for col in df.columns if '20' in col], var_name='yearID', value_name=value_name)
@@ -80,7 +87,8 @@ class GetFuelPrices:
     def get_prices(self):
         """
 
-        Returns: A DataFrame of fuel prices for the given AEO case. Note that CNG prices are set equivalent to gasoline prices.
+        Returns:
+            A DataFrame of fuel prices for the given AEO case. Note that CNG prices are set equivalent to gasoline prices.
 
         """
         fuel_prices_dict = dict()
@@ -114,11 +122,13 @@ class GetDeflators:
     def __init__(self, input_file, id_col, id_value):
         """The GetDeflators class returns the GDP Implicit Price Deflators for use in adjusting monetized values to a consistent cost basis.
 
-        Args:
-            input_file: The file containing price deflator data (this class assumes a file structured like those published by the Bureau of Economic Analysis).
-            id_col: The column name where id data can be found.
+        Parameters:
+            input_file: The file containing price deflator data.\n
+            id_col: The column name where id data can be found.\n
             id_value: The value within id_col to return.
 
+        Note:
+             This class assumes a file structured like those published by the Bureau of Economic Analysis.
         """
         self.input_file = input_file
         self.id_col = id_col
@@ -130,7 +140,8 @@ class GetDeflators:
     def deflator_df(self):
         """
 
-        Returns: A DataFrame consisting of only the data for the given AEO case; the name of the AEO case is also removed from the 'full name' column entries.
+        Returns:
+            A DataFrame consisting of only the data for the given AEO case; the name of the AEO case is also removed from the 'full name' column entries.
 
         """
         df_return = pd.DataFrame(self.input_file)
@@ -141,11 +152,12 @@ class GetDeflators:
     def melt_df(self, value_name, drop_col=None):
         """
 
-        Args:
-            value_name: The name for the resultant data column.
+        Parameters:
+            value_name: The name for the resultant data column.\n
             drop_col: The name of any columns to be dropped after melt.
 
-        Returns: The melted DataFrame with a column of data named value_name.
+        Returns:
+            The melted DataFrame with a column of data named value_name.
 
         """
         deflator_df = self.deflator_df()
@@ -158,10 +170,11 @@ class GetDeflators:
     def calc_adjustment_factors(self, dollar_basis):
         """
 
-        Args:
+        Parameters:
             dollar_basis: The dollar basis for the analysis which is determined in-code using the AEO file.
 
-        Returns: A dictionary of deflators and adjustment_factors to apply to monetized values to put them all on a consistent dollar basis.
+        Returns:
+            A dictionary of deflators and adjustment_factors to apply to monetized values to put them all on a consistent dollar basis.
 
         """
         deflators = self.melt_df('price_deflator', self.id_col)

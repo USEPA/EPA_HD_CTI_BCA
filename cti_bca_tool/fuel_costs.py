@@ -4,11 +4,13 @@ orvr_adjust_dict = dict()
 def get_orvr_adjustment(settings, vehicle):
     """
     
-    Args:
-        settings: The SetInputs class.
+    Parameters:
+        settings: The SetInputs class.\n
         vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle.
 
-    Returns:A single value representing the milliliter per gram adjustment to be applied to total hydrocarbon emission reductions to estimate the gallons of fuel saved.
+    Returns:
+        A single value representing the milliliter per gram adjustment to be applied to total hydrocarbon emission reductions to
+        estimate the gallons of fuel saved.
 
     """
     alt, st, rc, ft = vehicle
@@ -24,14 +26,15 @@ def get_orvr_adjustment(settings, vehicle):
 def calc_thc_reduction(settings, vehicle, year, model_year, totals_dict):
     """
     
-    Args:
-        settings: The SetInputs class.
-        vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle.
-        year: The calendar year.
-        model_year: The model year of the passed vehicle.
+    Parameters:
+        settings: The SetInputs class.\n
+        vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle.\n
+        year: The calendar year.\n
+        model_year: The model year of the passed vehicle.\n
         totals_dict: A dictionary of fleet total hydrocarbon (THC) tons by vehicle.
 
-    Returns: A single THC reduction for the given model year vehicle in the given year.
+    Returns:
+        A single THC reduction for the given model year vehicle in the given year.
 
     """
     alt, st, rc, ft = vehicle
@@ -44,14 +47,15 @@ def calc_thc_reduction(settings, vehicle, year, model_year, totals_dict):
 def calc_adjusted_gallons(settings, vehicle, year, model_year, totals_dict):
     """
 
-    Args:
-        settings: The SetInputs class.
-        vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle.
-        year: The calendar year.
-        model_year: The model year of the passed vehicle.
+    Parameters:
+        settings: The SetInputs class.\n
+        vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle.\n
+        year: The calendar year.\n
+        model_year: The model year of the passed vehicle.\n
         totals_dict: A dictionary of fleet Gallons consumed by all vehicles.
 
-    Returns: The passed dictionary updated to reflect fuel consumption (Gallons) adjusted to account for the fuel saved in associated with  ORVR.
+    Returns:
+        The passed dictionary updated to reflect fuel consumption (Gallons) adjusted to account for the fuel saved in associated with  ORVR.
 
     """
     age = year - model_year
@@ -66,13 +70,16 @@ def calc_adjusted_gallons(settings, vehicle, year, model_year, totals_dict):
 def calc_fuel_costs(settings, totals_dict):
     """
 
-    Args:
-        settings: The SetInputs class.
+    Parameters:
+        settings: The SetInputs class.\n
         totals_dict: A dictionary of fleet Gallons consumed by all vehicles.
 
-    Returns: The passed dictionary updated to reflect fuel consumption (Gallons) adjusted to account for the fuel saved in association with ORVR (note
-        that these fuel impacts are not included in the MOVES runs that serve as the input fleet data for the tool). The dictionary is also updated to
-        include the fuel costs associated with the gallons consumed (Gallons * $/gallon fuel).
+    Returns:
+        The passed dictionary updated to reflect fuel consumption (Gallons) adjusted to account for the fuel saved in association with ORVR.
+        The dictionary is also updated to include the fuel costs associated with the gallons consumed (Gallons * $/gallon fuel).
+
+    Note:
+        Note that these fuel impacts are not included in the MOVES runs that serve as the input fleet data for the tool.
 
     """
     print('\nCalculating fuel total costs.\n')
@@ -95,11 +102,12 @@ def calc_fuel_costs(settings, totals_dict):
 def calc_average_fuel_costs(totals_dict, averages_dict):
     """
 
-    Args:
-        totals_dict: A dictionary of fleet "ORVR adjusted" Gallons consumed by all vehicles.
+    Parameters:
+        totals_dict: A dictionary of fleet "ORVR adjusted" Gallons consumed by all vehicles.\n
         averages_dict: A dictionary into which fuel costs/vehicle and costs/mile will be updated.
 
-    Returns: The passed averages_dict updated to include fuel costs/vehicle and costs/mile.
+    Returns:
+        The passed averages_dict updated to include fuel costs/vehicle and costs/mile.
 
     """
     for key in averages_dict.keys():

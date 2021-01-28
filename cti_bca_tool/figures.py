@@ -10,11 +10,11 @@ import matplotlib.pyplot as plt
 
 class CreateFigures:
     def __init__(self, df, units, destination):
-        """The CreateFigures class generates charts.
+        """The CreateFigures class  is used to generate charts.
 
-        Args:
-            df: A DataFrame of data to be charted.
-            units: Units for use on the y-axis of the created chart.
+        Parameters:
+            df: A DataFrame of data to be charted.\n
+            units: Units for use on the y-axis of the created chart.\n
             destination: The path in which to save the created chart.
 
         """
@@ -24,16 +24,17 @@ class CreateFigures:
 
 
     def line_chart_args_by_option(self, dr, alt_name, year_min, year_max, *args):
-        """This method generate a chart showing passed arguments under the given alternative.
+        """This method generates a chart showing passed arguments under the given alternative.
 
-        Args:
-            dr: The discount rate of the data to be charted.
-            alt_name: The OptionName of the data to be charted.
-            year_min: The minimum calendar year of data to be charted.
-            year_max: The maximum calendar year of data t be charted.
-            *args: The data arguments to be charted.
+        Parameters:
+            dr: The discount rate of the data to be charted.\n
+            alt_name: The OptionName of the data to be charted.\n
+            year_min: The minimum calendar year of data to be charted.\n
+            year_max: The maximum calendar year of data t be charted.\n
+            args: The data arguments to be charted.
 
-        Returns: A single chart saved to the destination folder.
+        Returns:
+            A single chart saved to the destination folder.
 
         """
         data = self.df.loc[(self.df['DiscountRate'] == dr)
@@ -51,16 +52,17 @@ class CreateFigures:
         return
 
     def line_chart_arg_by_options(self, dr, alt_names, year_min, year_max, arg):
-        """This method generate a chart showing the passed argument under each of the passed alternatives.
+        """This method generates a chart showing the passed argument under each of the passed alternatives.
 
-        Args:
-            dr: The discount rate of the data to be charted.
-            alt_names: The OptionNames for which to chart data.
-            year_min: The minimum calendar year of data to be charted.
-            year_max: The maximum calendar year of data t be charted.
+        Parameters:
+            dr: The discount rate of the data to be charted.\n
+            alt_names: The OptionNames for which to chart data.\n
+            year_min: The minimum calendar year of data to be charted.\n
+            year_max: The maximum calendar year of data t be charted.\n
             arg: The single data argument to be charted.
 
-        Returns: A single chart saved to the destination folder.
+        Returns:
+            A single chart saved to the destination folder.
 
         """
         for alt_name in alt_names:
@@ -82,12 +84,13 @@ class CreateFigures:
 def create_figures(input_df, units, path_for_save):
     """This function is called by tool_main and then controls the generation of charts by the ChartFigures class.
 
-    Args:
-        input_df: A DataFrame of data.
-        units: The units used in the passed input_df.
+    Parameters:
+        input_df: A DataFrame of data.\n
+        units: The units used in the passed input_df.\n
         path_for_save: The path for saving figures.
 
-    Returns: Charts are saved to the path_for_save folder by the ChartFigures class and this method returns to tool_main.
+    Returns:
+        Charts are saved to the path_for_save folder by the ChartFigures class and this method returns to tool_main.
 
     """
     yearID_min = int(input_df['yearID'].min())

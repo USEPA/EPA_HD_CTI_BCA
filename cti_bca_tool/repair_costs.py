@@ -9,12 +9,16 @@ repair_cpm_dict = dict()
 
 def calc_per_veh_cumulative_vmt(averages_dict):
     """This function calculates cumulative average VMT/vehicle year-over-year for use in estimating a typical VMT per year and for estimating emission
-    repair costs. Note that VMT does not differ across options.
+    repair costs.
 
-    Args:
+    Parameters:
         averages_dict: A dictionary containing annual average VMT/vehicle.
 
-    Returns: The passed dictionary updated with cumulative annual average VMT/vehicle.
+    Returns:
+        The averages_dict dictionary updated with cumulative annual average VMT/vehicle.
+
+    Note:
+        VMT does not differ across options.
 
     """
     # this loop calculates the cumulative vmt for each key with the averages_dict and saves it in the cumulative_vmt_dict
@@ -37,13 +41,14 @@ def calc_typical_vmt_per_year(settings, vehicle, model_year, averages_dict):
     """This function calculates a typical annual VMT/vehicle over a set number of years as set via the General Inputs workbook. This typical annual VMT/vehicle
     can then be used to estimate the ages at which warranty and useful life will be reached.
 
-    Args:
-        settings: The SetInputs class.
-        vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle.
-        model_year: The model year of the passed vehicle.
+    Parameters:
+        settings: The SetInputs class.\n
+        vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle.\n
+        model_year: The model year of the passed vehicle.\n
         averages_dict: A dictionary containing cumulative annual average VMT/vehicle.
 
-    Returns: A single typical annual VMT/veh value for the passed vehicle of the given model year.
+    Returns:
+        A single typical annual VMT/veh value for the passed vehicle of the given model year.
 
     """
     key = ((vehicle), model_year)
@@ -62,14 +67,15 @@ def calc_typical_vmt_per_year(settings, vehicle, model_year, averages_dict):
 def calc_estimated_age(settings, vehicle, model_year, identifier, averages_dict):
     """
 
-    Args:
-        settings: The SetInputs class.
-        vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle.
-        model_year: The model year of the passed vehicle.
-        identifier: The identifier of the age being estimated (i.e., 'Warranty' or 'Usefullife')
+    Parameters:
+        settings: The SetInputs class.\n
+        vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle.\n
+        model_year: The model year of the passed vehicle.\n
+        identifier: The identifier of the age being estimated (i.e., 'Warranty' or 'Usefullife')\n
         averages_dict: A dictionary containing cumulative annual average VMT/veh.
 
-    Returns: An integer representing the age at which the identifier will be reached for the passed vehicle/model year.
+    Returns:
+        An integer representing the age at which the identifier will be reached for the passed vehicle/model year.
 
     """
     alt, st, rc, ft = vehicle
@@ -93,11 +99,12 @@ def calc_estimated_age(settings, vehicle, model_year, identifier, averages_dict)
 def calc_emission_repair_costs_per_mile(settings, averages_dict):
     """
 
-    Args:
-        settings: The SetInputs class.
+    Parameters:
+        settings: The SetInputs class.\n
         averages_dict: A dictionary containing tech package direct costs/vehicle and cumulative annual average VMT/vehicle.
 
-    Returns: The passed averages_dict updated to include emission repair costs/mile for each dictionary key. This function also populates the
+    Returns:
+        The averages_dict dictionary updated to include emission repair costs/mile for each dictionary key. This function also populates the
         repair_cpm_dict which is then written to an output file for the given run.
 
     """
@@ -150,10 +157,11 @@ def calc_emission_repair_costs_per_mile(settings, averages_dict):
 def calc_per_veh_emission_repair_costs(averages_dict):
     """
 
-    Args:
+    Parameters:
         averages_dict: A dictionary containing annual emission repair costs/mile.
 
-    Returns: The passed dictionary updated with annual emission repair costs/vehicle for each dictionary key.
+    Returns:
+        The passed dictionary updated with annual emission repair costs/vehicle for each dictionary key.
 
     """
     for key in averages_dict.keys():
@@ -168,11 +176,12 @@ def calc_per_veh_emission_repair_costs(averages_dict):
 def calc_emission_repair_costs(totals_dict, averages_dict):
     """
 
-    Args:
-        totals_dict: A dictionary containing annual vehicle populations (VPOP).
+    Parameters:
+        totals_dict: A dictionary containing annual vehicle populations (VPOP).\n
         averages_dict: A dictionary containing annual average emission repair costs/mile.
 
-    Returns: The passed totals_dict updated with annual emission repair costs for all vehicles.
+    Returns:
+        The totals_dict dictionary updated with annual emission repair costs for all vehicles.
 
     """
     print(f'\nCalculating total repair costs.\n')

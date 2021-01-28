@@ -3,16 +3,20 @@ import pandas as pd
 
 def discount_values(settings, dict_of_values, *discount_rates):
     """The discount function determines metrics appropriate for discounted (those contained in dict_of_values) and does the discounting
-    calculation to a given year and point within that year. The costs_start entry of the BCA_General_Inputs file should be set to 'start-year'
-    or 'end-year', where start-year represents costs starting at time t=0 (i.e., first year costs are undiscounted), and end-year represents
-    costs starting at time t=1 (i.e., first year costs are discounted).
+    calculation to a given year and point within that year.
 
-    Args:
-        settings: The SetInputs class.
-        dict_of_values: A dictionary of values to be discounted with keys consisting of vehicle, model_year, age_id and discount rate.
-        *discount_rates: The discount rates (as floats and excluding 0%, a 3% discount rate would be entered as 0.03) to be used for discounting.
+    Parameters:
+        settings: The SetInputs class.\n
+        dict_of_values: A dictionary of values to be discounted with keys consisting of vehicle, model_year, age_id and discount rate.\n
+        discount_rates: The discount rates (as floats and excluding 0%, a 3% discount rate would be entered as 0.03) to be used for discounting.
 
-    Returns: The passed dictionary with new key, value pairs where keys stipulate the discount rate and monetized values are discounted at that rate.
+    Returns:
+        The passed dictionary with new key, value pairs where keys stipulate the discount rate and monetized values are discounted at that rate.
+
+    Note:
+        The costs_start entry of the BCA_General_Inputs file should be set to 'start-year' or 'end-year', where start-year represents costs
+        starting at time t=0 (i.e., first year costs are undiscounted), and end-year represents costs starting at time t=1 (i.e., first year
+        costs are discounted).
 
     """
     if settings.costs_start == 'start-year': discount_offset = 0
@@ -41,27 +45,31 @@ def discount_values(settings, dict_of_values, *discount_rates):
 
 
 def annualize_values(settings, input_df):
-    """See EPA Economic Guidelines (updated May 2014), Section 6.1.2, Equations 3 & 4.
-    This method makes use of the CumSum which, in this case is a running present value, and then determines the annual value that equates to that CumSum\n
-    (present value) if that annual value were discounted at a given discount rate. The Offset is included to reflect costs beginning at the start of the year (Offset=1) or the end of the year\n
-    (Offset=0).
-    The equation used here is shown below.
+    """This function determines the annual value that equates to a present value if that annual value were discounted at a given discount rate.
+    See EPA Economic Guidelines (updated May 2014), Section 6.1.2, Equations 3 & 4.
 
-    AC = PV * DR * (1+DR)^(period) / [(1+DR)^(period+Offset) - 1]\n
-
-    where,\n
-    AC = Annualized Cost\n
-    PV = Present Value (here, the cumulative summary of discounted annual values)\n
-    DR = Discount Rate\n
-    CY = Calendar Year (yearID)\n
-    period = the current CY minus the year to which to discount values + a discount_offset value where discount_offset equals the costs_start input value\n
-    Offset = 1 for costs at the start of the year, 0 for cost at the end of the year\n
-
-    Args:
-        settings: The SetInputs class.
+    Parameters:
+        settings: The SetInputs class.\n
         input_df: A DataFrame of annual values containing optionID, yearID, DiscountRate and Cost arguments.
 
-    Returns: A DataFrame of the passed Cost arguments annualized by optionID in each of the passed yearIDs and at each discount rate.
+    Returns:
+        A DataFrame of the passed Cost arguments annualized by optionID in each of the passed yearIDs and at each discount rate.
+
+    Note:
+        This function makes use of a cumulative sum of annual discounted values. As such, the cumulative sums represent a present value
+        through the given calendar year. The Offset is included to reflect costs beginning at the start of the year (Offset=1)
+        or the end of the year (Offset=0).\n
+        The equation used here is shown below.
+
+        AC = PV * DR * (1+DR)^(period) / [(1+DR)^(period+Offset) - 1]
+
+        where,\n
+        AC = Annualized Cost\n
+        PV = Present Value (here, the cumulative summary of discounted annual values)\n
+        DR = Discount Rate\n
+        CY = Calendar Year (yearID)\n
+        period = the current CY minus the year to which to discount values + a discount_offset value where discount_offset equals the costs_start input value\n
+        Offset = 1 for costs at the start of the year, 0 for cost at the end of the year
 
     """
     if settings.costs_start == 'start-year':

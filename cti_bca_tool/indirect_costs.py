@@ -8,18 +8,22 @@ project_markups_dict = dict()
 
 
 def calc_project_markup_value(settings, vehicle, markup_factor, model_year):
-    """This function calculates the project markup value for the markup_factor (Warranty, RnD, Other, Profit) passed. The project markup factor differs
-    from the input markup factors by scaling where that scaling is done based on the "Absolute" or "Relative" entries in the input file and by the
-    Miles or Age entries of the warranty/useful life input files. Whether Miles or Age is used is set via the BCA_General_Inputs file.
+    """This function calculates the project markup value for the markup_factor (Warranty, RnD, Other, Profit) passed.
 
-    Args:
-        settings: The SetInputs classs.
-        vehicle: A tuple representing an alt_regclass_fueltype vehicle.
-        markup_factor: A string representing the name of the project markup factor value to return.
+    Parameters:
+        settings: The SetInputs classs.\n
+        vehicle: A tuple representing an alt_regclass_fueltype vehicle.\n
+        markup_factor: A string representing the name of the project markup factor value to return.\n
         model_year: The model year of the passed vehicle.
 
-    Returns: A single markup factor value to be used in the project having been adjusted in accordance with the proposed warranty and useful life
+    Returns:
+        A single markup factor value to be used in the project having been adjusted in accordance with the proposed warranty and useful life
         changes and the Absolute/Relative scaling entries.
+
+    Note:
+        The project markup factor differs from the input markup factors by scaling where that scaling is done based on the "Absolute" or "Relative"
+        entries in the input file and by the Miles or Age entries of the warranty/useful life input files. Whether Miles or Age is used is set
+        via the BCA_General_Inputs file.
 
     """
     alt, rc, ft = vehicle
@@ -50,11 +54,12 @@ def calc_project_markup_value(settings, vehicle, markup_factor, model_year):
 def per_veh_project_markups(settings, vehicles):
     """This function is used for testing to allow for output of the project markup values.
 
-    Args:
-        settings: The SetInputs class.
+    Parameters:
+        settings: The SetInputs class.\n
         vehicles: A list of tuples representing alt_regclass_fueltype vehicles.
 
-    Returns: A dictionary of project markup values.
+    Returns:
+        A dictionary of project markup values.
 
     """
     for vehicle, model_year in product(vehicles, settings.years):
@@ -70,11 +75,12 @@ def per_veh_project_markups(settings, vehicles):
 def calc_per_veh_indirect_costs(settings, averages_dict):
     """
     
-    Args:
-        settings: The SetInputs class.
+    Parameters:
+        settings: The SetInputs class.\n
         averages_dict: A dictionary containing tech package direct costs/vehicle.
 
-    Returns: The passed dictionary updated with indirect costs associated with each markup value along with the summation of those individual indirect
+    Returns:
+        The averages_dict dictionary updated with indirect costs associated with each markup value along with the summation of those individual indirect
         costs as "IndirectCost_AvgPerVeh."
 
     """
@@ -98,12 +104,13 @@ def calc_per_veh_indirect_costs(settings, averages_dict):
 def calc_indirect_costs(settings, totals_dict, averages_dict):
     """
 
-    Args:
-        settings: The SetInputs class.
-        totals_dict: A dictionary containing sales (VPOP at age=0) and into which tech package indirect costs will be updated.
+    Parameters:
+        settings: The SetInputs class.\n
+        totals_dict: A dictionary containing sales (VPOP at age=0) and into which tech package indirect costs will be updated.\n
         averages_dict: A dictionary containing individual indirect costs per vehicle.
 
-    Returns: The passed totals_dict updated with total indirect costs for each individual indirect cost property and a summation of those.
+    Returns:
+        The totals_dict dictionary updated with total indirect costs for each individual indirect cost property and a summation of those.
 
     """
     print('\nCalculating total indirect costs.\n')

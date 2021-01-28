@@ -6,11 +6,12 @@ base_doserate_dict = dict()
 def calc_def_doserate(settings, vehicle):
     """
 
-    Args:
-        settings: The SetInputs class.
+    Parameters:
+        settings: The SetInputs class. \n
         vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle.
 
-    Returns: The DEF dose rate for the passed vehicle based on the DEF dose rate input file.
+    Returns:
+        The DEF dose rate for the passed vehicle based on the DEF dose rate input file.
 
     """
     alt, st, rc, ft = vehicle
@@ -30,14 +31,15 @@ def calc_def_doserate(settings, vehicle):
 def calc_nox_reduction(settings, vehicle, year, model_year, totals_dict):
     """
 
-    Args:
-        settings: The SetInputs class.
-        vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle.
-        year: The calendar year (yearID).
-        model_year: The model year of the passed vehicle.
+    Parameters:
+        settings: The SetInputs class. \n
+        vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle. \n
+        year: The calendar year (yearID). \n
+        model_year: The model year of the passed vehicle. \n
         totals_dict: A dictionary of fleet NOx tons by vehicle.
 
-    Returns: The NOx reduction for the passed model year vehicle in the given calendar year.
+    Returns:
+        The NOx reduction for the passed model year vehicle in the given calendar year.
 
     """
     alt, st, rc, ft = vehicle
@@ -50,14 +52,15 @@ def calc_nox_reduction(settings, vehicle, year, model_year, totals_dict):
 def calc_def_gallons(settings, vehicle, year, model_year, totals_dict):
     """
 
-    Args:
-        settings: The SetInputs class.
-        vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle.
-        year: The calendar year (yearID).
-        model_year: The model year of the passed vehicle.
+    Parameters:
+        settings: The SetInputs class. \n
+        vehicle: A tuple representing an alt_sourcetype_regclass_fueltype vehicle. \n
+        year: The calendar year (yearID). \n
+        model_year: The model year of the passed vehicle. \n
         totals_dict: A dictionary of fleet Gallons (fuel consumption) by vehicle.
 
-    Returns: The gallons of DEF consumption for the passed model year vehicle in the given calendar year.
+    Returns:
+        The gallons of DEF consumption for the passed model year vehicle in the given calendar year.
 
     """
     age_id = year - model_year
@@ -71,11 +74,12 @@ def calc_def_gallons(settings, vehicle, year, model_year, totals_dict):
 def calc_def_costs(settings, totals_dict):
     """
 
-    Args:
-        settings: The SetInputs class.
+    Parameters:
+        settings: The SetInputs class. \n
         totals_dict: A dictionary of fleet DEF consumption by vehicle.
 
-    Returns: The passed dictionary updated with costs associated with DEF consumption.
+    Returns:
+        The passed dictionary updated with costs associated with DEF consumption.
 
     """
     print('\nCalculating total DEF costs.')
@@ -93,11 +97,12 @@ def calc_def_costs(settings, totals_dict):
 def calc_average_def_costs(totals_dict, averages_dict):
     """
 
-    Args:
-        totals_dict: A dictionary of fleet DEF costs by vehicle.
+    Parameters:
+        totals_dict: A dictionary of fleet DEF costs by vehicle. \n
         averages_dict: A dictionary into which DEF costs/vehicle will be updated.
 
-    Returns: The passed dictionary updated with costs/mile and costs/vehicle associated with DEF consumption.
+    Returns:
+        The passed dictionary updated with costs/mile and costs/vehicle associated with DEF consumption.
 
     """
     for key in averages_dict.keys():

@@ -3,10 +3,9 @@ import attr
 
 @attr.s
 class Vehicle:
-    """
-    Define vehicle attributes of option, sourceType, regClass, fuelType.
+    """Define vehicle attribute names for, sourceTypeID, regClassID, fuelTypeID.
 
-    Args:
+    Parameters::
         id: The associated ID from the MOVES input file.
 
     """

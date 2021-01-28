@@ -31,10 +31,11 @@ from cti_bca_tool.general_functions import save_dict_to_csv, inputs_filenames, g
 def main(settings):
     """
 
-    Args:
+    Parameters::
         settings: The SetInputs class.
 
-    Returns: The results of the current run of the cti_bca_tool.
+    Returns:
+        The results of the current run of the cti_bca_tool.
 
     """
     print("\nDoing the work....")
@@ -109,8 +110,6 @@ def main(settings):
 
     elapsed_time_calcs = time.time() - start_time_calcs
 
-    start_time_outputs = time.time()
-
     # determine run output paths
     if settings.run_folder_identifier == 'test':
         path_of_run_results_folder = settings.path_test
@@ -120,8 +119,14 @@ def main(settings):
         path_of_run_folder, path_of_run_inputs_folder, path_of_run_results_folder, path_of_modified_inputs_folder, path_of_code_folder \
             = create_output_paths(settings)
 
+    start_time_postproc = time.time()
+
     # do the post-processing to generate document tables, an annual summary and some figures
     document_tables_file = run_postproc(settings, path_of_run_results_folder, fleet_totals_dict)
+
+    elapsed_time_postproc = time.time() - start_time_postproc
+
+    start_time_outputs = time.time()
 
     # copy input files into results folder; also save fuel_prices and reshaped files to this folder
     print('Copy input files and code to the outputs folder.')
@@ -159,9 +164,9 @@ def main(settings):
     end_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')
     elapsed_time = end_time - settings.start_time
 
-    summary_log = pd.DataFrame(data={'Item': ['Version', 'Run folder', 'Start of run', 'Elapsed time read inputs', 'Elapsed time calculations', 'Elapsed time save outputs', 'End of run', 'Elapsed runtime'],
-                                     'Results': [cti_bca_tool.__version__, path_of_run_folder, settings.start_time_readable, settings.elapsed_time_read, elapsed_time_calcs, elapsed_time_outputs, end_time_readable, elapsed_time],
-                                     'Units': ['', '', 'YYYYmmdd-HHMMSS', 'seconds', 'seconds', 'seconds', 'YYYYmmdd-HHMMSS', 'seconds']})
+    summary_log = pd.DataFrame(data={'Item': ['Version', 'Run folder', 'Start of run', 'Elapsed time read inputs', 'Elapsed time calculations', 'Elapsed time post-processing', 'Elapsed time save outputs', 'End of run', 'Elapsed runtime'],
+                                     'Results': [cti_bca_tool.__version__, path_of_run_folder, settings.start_time_readable, settings.elapsed_time_read, elapsed_time_calcs, elapsed_time_postproc, elapsed_time_outputs, end_time_readable, elapsed_time],
+                                     'Units': ['', '', 'YYYYmmdd-HHMMSS', 'seconds', 'seconds', 'seconds', 'seconds', 'YYYYmmdd-HHMMSS', 'seconds']})
     summary_log = pd.concat([summary_log, get_file_datetime(settings.input_files_pathlist)], axis=0, sort=False, ignore_index=True)
 
     # add summary log to document_tables_file for tracking this file which is the most likely to be shared
