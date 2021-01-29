@@ -140,7 +140,10 @@ def main(settings):
             path_destination = path_of_run_inputs_folder / file
             shutil.copy2(path_source, path_destination)
         for file in settings.files_in_path_code:
-            shutil.copy2(file, path_of_code_folder / file.name)
+            try:
+                shutil.copy2(file, path_of_code_folder / file.name)
+            except:
+                print('Unable to copy Python code to run results folder when using the executable.')
         settings.fuel_prices.to_csv(path_of_modified_inputs_folder / f'fuel_prices_{settings.aeo_case}.csv', index=False)
         settings.regclass_costs.to_csv(path_of_modified_inputs_folder / 'regclass_costs.csv', index=False)
         settings.repair_and_maintenance.to_csv(path_of_modified_inputs_folder / 'repair_and_maintenance.csv')

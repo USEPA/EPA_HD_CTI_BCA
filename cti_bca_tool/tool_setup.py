@@ -1,11 +1,13 @@
-import cti_bca_tool
-from cti_bca_tool import tool_main
-import cti_bca_tool.general_functions as gen_fxns
+
 from pathlib import Path
 from datetime import datetime
 import time
 import attr
 
+import cti_bca_tool
+from cti_bca_tool.input_output import get_folder
+from cti_bca_tool import tool_main
+import cti_bca_tool.general_functions as gen_fxns
 from cti_bca_tool.get_context_data import GetFuelPrices, GetDeflators
 from cti_bca_tool.project_dicts import *
 
@@ -18,10 +20,10 @@ class SetInputs:
 
     """
     # set paths
-    path_code = Path(__file__).parent
+    # path_code = Path(__file__).parent
+    path_code = Path.cwd()
     path_project = Path(path_code).parent
-    path_inputs = path_project / 'inputs'
-    path_context = path_project / 'context_inputs'
+    path_inputs = get_folder('folder containing input files for the run')
     path_outputs = path_project / 'outputs'
     path_test = path_project / 'test'
 
@@ -41,8 +43,6 @@ class SetInputs:
     start_time_read = time.time()
     input_files_df = gen_fxns.read_input_files(path_inputs, 'Input_Files.csv', usecols=lambda x: 'Notes' not in x, index_col=0)
     input_files_dict = input_files_df.to_dict('index')
-    context_files_df = gen_fxns.read_input_files(path_inputs, 'Context_Files.csv', usecols=lambda x: 'Notes' not in x, index_col=0)
-    context_files_dict = context_files_df.to_dict('index')
 
     bca_inputs = gen_fxns.read_input_files(path_inputs, input_files_dict['bca_inputs']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x, index_col=0)
     regclass_costs = gen_fxns.read_input_files(path_inputs, input_files_dict['regclass_costs']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
@@ -60,8 +60,8 @@ class SetInputs:
     repair_and_maintenance = gen_fxns.read_input_files(path_inputs, input_files_dict['repair_and_maintenance']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x, index_col=0)
     unit_conversions = gen_fxns.read_input_files(path_inputs, input_files_dict['unit_conversions']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x, index_col=0)
 
-    fuel_prices_file = gen_fxns.read_input_files(path_context, context_files_dict['fuel_prices_file']['UserEntry.csv'], skiprows=4, reset_index=True)
-    deflators_file = gen_fxns.read_input_files(path_context, context_files_dict['deflators_file']['UserEntry.csv'], skiprows=4, reset_index=True)
+    fuel_prices_file = gen_fxns.read_input_files(path_inputs, input_files_dict['fuel_prices_file']['UserEntry.csv'], skiprows=4, reset_index=True)
+    deflators_file = gen_fxns.read_input_files(path_inputs, input_files_dict['deflators_file']['UserEntry.csv'], skiprows=4, reset_index=True)
 
     input_files_pathlist = list()
     for item in pd.Series(input_files_df['UserEntry.csv']):
@@ -92,22 +92,7 @@ class SetInputs:
     indirect_cost_scaling_metric = bca_inputs.at['scale_indirect_costs_by', 'UserEntry']
     calc_pollution_effects = bca_inputs.at['calculate_pollution_effects', 'UserEntry']
     def_gallons_per_ton_nox_reduction = pd.to_numeric(bca_inputs.at['def_gallons_per_ton_nox_reduction', 'UserEntry'])
-    weighted_operating_cost_years = bca_inputs.at['weighted_operating_cost_years', 'UserEntry']
-    weighted_operating_cost_years = weighted_operating_cost_years.split(',')
-    for i, v in enumerate(weighted_operating_cost_years):
-        weighted_operating_cost_years[i] = pd.to_numeric(weighted_operating_cost_years[i])
     max_age_included = pd.to_numeric(bca_inputs.at['weighted_operating_cost_thru_ageID', 'UserEntry'])
-    techcost_summary_years = bca_inputs.at['techcost_summary_years', 'UserEntry']
-    techcost_summary_years = techcost_summary_years.split(',')
-    for i, v in enumerate(techcost_summary_years):
-        techcost_summary_years[i] = pd.to_numeric(techcost_summary_years[i])
-    bca_summary_years = bca_inputs.at['bca_summary_years', 'UserEntry']
-    bca_summary_years = bca_summary_years.split(',')
-    for i, v in enumerate(bca_summary_years):
-        bca_summary_years[i] = pd.to_numeric(bca_summary_years[i])
-    generate_emissionrepair_cpm_figures = bca_inputs.at['generate_emissionrepair_cpm_figures', 'UserEntry']
-    generate_BCA_ArgsByOption_figures = bca_inputs.at['generate_BCA_ArgsByOption_figures', 'UserEntry']
-    generate_BCA_ArgByOptions_figures = bca_inputs.at['generate_BCA_ArgByOptions_figures', 'UserEntry']
 
     grams_per_short_ton = unit_conversions.at['grams_per_short_ton', 'UserEntry']
     gallons_per_ml = unit_conversions.at['gallons_per_ml', 'UserEntry']
