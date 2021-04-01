@@ -24,7 +24,7 @@ copyright = '2019, OTAQ ASD'
 author = 'OTAQ ASD'
 
 # The full version, including alpha/beta/rc tags
-release = "0.26.9"
+release = "0.27.0"
 
 # -- General configuration ---------------------------------------------------
 
