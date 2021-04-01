@@ -95,7 +95,7 @@ def sourcetype_vehicles(fleet_df):
 
 
 if __name__ == '__main__':
-    from cti_bca_tool.__main__ import SetInputs as settings
+    from cti_bca_tool.tool_setup import SetInputs as settings
     from cti_bca_tool.project_fleet import create_fleet_df, regclass_vehicles, sourcetype_vehicles
 
     project_fleet_df = create_fleet_df(settings)

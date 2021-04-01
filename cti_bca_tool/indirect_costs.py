@@ -27,23 +27,24 @@ def calc_project_markup_value(settings, vehicle, markup_factor, model_year):
 
     """
     alt, rc, ft = vehicle
-    scaled_markups_dict_id = ((vehicle), markup_factor, model_year)
+    scaled_markups_dict_id = (vehicle, markup_factor, model_year)
     scaling_metric = settings.indirect_cost_scaling_metric
     if scaled_markups_dict_id in scaled_markups_dict:
         project_markup_value = scaled_markups_dict[scaled_markups_dict_id]
     else:
-        input_markup_value, scaler, scaled_by = settings.markup_inputs_dict[(ft, markup_factor)]['Value'], \
-                                                settings.markup_inputs_dict[(ft, markup_factor)]['Scaler'], \
-                                                settings.markup_inputs_dict[(ft, markup_factor)]['Scaled_by']
+        input_markup_value, scaler, scaled_by, num_years = settings.markup_inputs_dict[(ft, markup_factor)]['Value'], \
+                                                           settings.markup_inputs_dict[(ft, markup_factor)]['Scaler'], \
+                                                           settings.markup_inputs_dict[(ft, markup_factor)]['Scaled_by'], \
+                                                           settings.markup_inputs_dict[(ft, markup_factor)]['NumberOfYears']
         if scaler == 'Absolute':
             project_markup_value = \
-                (settings.required_miles_and_ages_dict[((vehicle), scaled_by, scaling_metric)][f'{model_year}']
-                 / settings.required_miles_and_ages_dict[((vehicle), scaled_by, scaling_metric)]['2024']) \
+                (settings.required_miles_and_ages_dict[(vehicle, scaled_by, scaling_metric)][f'{model_year}']
+                 / settings.required_miles_and_ages_dict[(vehicle, scaled_by, scaling_metric)]['2024']) \
                 * input_markup_value
         if scaler == 'Relative':
             project_markup_value = \
-                (settings.required_miles_and_ages_dict[((vehicle), scaled_by, scaling_metric)][f'{model_year}']
-                 / settings.required_miles_and_ages_dict[((vehicle), scaled_by, scaling_metric)][str(int(model_year) - 3)]) \
+                (settings.required_miles_and_ages_dict[(vehicle, scaled_by, scaling_metric)][f'{model_year}']
+                 / settings.required_miles_and_ages_dict[(vehicle, scaled_by, scaling_metric)][str(int(model_year) - int(num_years))]) \
                 * input_markup_value
         if scaler == 'None':
             project_markup_value = input_markup_value
@@ -66,9 +67,9 @@ def per_veh_project_markups(settings, vehicles):
         for markup_factor in settings.markup_factors:
             markup_value = calc_project_markup_value(settings, vehicle, markup_factor, model_year)
             if markup_factor == settings.markup_factors[0]:
-                project_markups_dict[((vehicle), model_year)] = {markup_factor: markup_value}
+                project_markups_dict[(vehicle, model_year)] = {markup_factor: markup_value}
             else:
-                project_markups_dict[((vehicle), model_year)].update({markup_factor: markup_value})
+                project_markups_dict[(vehicle, model_year)].update({markup_factor: markup_value})
     return project_markups_dict
 
 
@@ -87,7 +88,7 @@ def calc_per_veh_indirect_costs(settings, averages_dict):
     print('\nCalculating per vehicle indirect costs\n')
 
     for key in averages_dict.keys():
-        vehicle, model_year, age_id = key[0], key[1], key[2]
+        vehicle, model_year, age_id, disc_rate = key
         alt, st, rc, ft = vehicle
         if age_id == 0:
             print(f'Calculating per vehicle direct costs for {vehicle}, MY {model_year}.')
@@ -117,8 +118,8 @@ def calc_indirect_costs(settings, totals_dict, averages_dict):
     markup_factors = [arg for arg in settings.markups['Markup_Factor'].unique()]
     markup_factors.append('Indirect')
     for key in totals_dict.keys():
-        age = key[2]
-        if age == 0:
+        vehicle, model_year, age_id, disc_rate = key
+        if age_id == 0:
             for markup_factor in markup_factors:
                 cost_per_veh = averages_dict[key][f'{markup_factor}Cost_AvgPerVeh']
                 sales = totals_dict[key]['VPOP']

@@ -14,12 +14,12 @@ def get_orvr_adjustment(settings, vehicle):
 
     """
     alt, st, rc, ft = vehicle
-    key = (alt, rc, ft)
-    if key in orvr_adjust_dict:
-        adjustment = orvr_adjust_dict[key]
+    orvr_adjust_dict_id = (alt, rc, ft)
+    if orvr_adjust_dict_id in orvr_adjust_dict.keys():
+        adjustment = orvr_adjust_dict[orvr_adjust_dict_id]
     else:
-        adjustment = settings.orvr_inputs_dict[key]['ml/g']
-        orvr_adjust_dict[key] = adjustment
+        adjustment = settings.orvr_inputs_dict[orvr_adjust_dict_id]['ml/g']
+        orvr_adjust_dict[orvr_adjust_dict_id] = adjustment
     return adjustment
 
 
@@ -40,7 +40,7 @@ def calc_thc_reduction(settings, vehicle, year, model_year, totals_dict):
     alt, st, rc, ft = vehicle
     age = year - model_year
     thc_reduction = totals_dict[((settings.no_action_alt, st, rc, ft), model_year, age, 0)]['THC_UStons'] \
-                    - totals_dict[((vehicle), model_year, age, 0)]['THC_UStons']
+                    - totals_dict[(vehicle, model_year, age, 0)]['THC_UStons']
     return thc_reduction
 
 
@@ -59,10 +59,10 @@ def calc_adjusted_gallons(settings, vehicle, year, model_year, totals_dict):
 
     """
     age = year - model_year
-    key = ((vehicle), model_year, age, 0)
+    totals_dict_key = (vehicle, model_year, age, 0)
     adjustment = get_orvr_adjustment(settings, vehicle)
     thc_reduction = calc_thc_reduction(settings, vehicle, year, model_year, totals_dict)
-    old_gallons = totals_dict[key]['Gallons']
+    old_gallons = totals_dict[totals_dict_key]['Gallons']
     adjusted_gallons = old_gallons - thc_reduction * adjustment * settings.grams_per_short_ton * settings.gallons_per_ml
     return adjusted_gallons
 
@@ -84,9 +84,9 @@ def calc_fuel_costs(settings, totals_dict):
     """
     print('\nCalculating fuel total costs.\n')
     for key in totals_dict.keys():
-        alt, st, rc, ft = key[0]
-        vehicle, model_year, age = key[0], key[1], key[2]
-        year = model_year + age
+        vehicle, model_year, age_id, disc_rate = key
+        alt, st, rc, ft = vehicle
+        year = model_year + age_id
         fuel_price_retail = settings.fuel_prices_dict[(year, ft)]['retail_fuel_price']
         fuel_price_pretax = settings.fuel_prices_dict[(year, ft)]['pretax_fuel_price']
         if ft == 1:
@@ -111,7 +111,7 @@ def calc_average_fuel_costs(totals_dict, averages_dict):
 
     """
     for key in averages_dict.keys():
-        vehicle, model_year, age_id = key[0], key[1], key[2]
+        vehicle, model_year, age_id, disc_rate = key
         print(f'Calculating fuel average cost per mile and per vehicle for {vehicle}, MY {model_year}, age {age_id}')
         fuel_cost = totals_dict[key]['FuelCost_Retail']
         vmt = totals_dict[key]['VMT']

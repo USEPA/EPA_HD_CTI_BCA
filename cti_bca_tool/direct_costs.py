@@ -53,7 +53,7 @@ def calc_cumulative_sales_by_step(vehicle, model_year, cost_step, regclass_sales
         cumulative sales beginning in MY2030 and continuing each model year thereafter. These sales "streams" are never combined.
 
     """
-    cumulative_sales_dict_id = ((vehicle), model_year, cost_step)
+    cumulative_sales_dict_id = (vehicle, model_year, cost_step)
     if cumulative_sales_dict_id in cumulative_sales_dict.keys():
         cumulative_sales = cumulative_sales_dict[cumulative_sales_dict_id]
     else:
@@ -80,7 +80,7 @@ def tech_pkg_cost_withlearning(settings, vehicle, model_year, cost_step, regclas
         and, the cumulative sales of that vehicle used in calculating learning effects.
 
     """
-    sales_year1 = regclass_sales_dict[((vehicle), int(cost_step))]['VPOP']
+    sales_year1 = regclass_sales_dict[(vehicle, int(cost_step))]['VPOP']
     cumulative_sales = calc_cumulative_sales_by_step(vehicle, model_year, cost_step, regclass_sales_dict)
     seedvolume_factor = settings.seedvol_factor_dict[vehicle]['SeedVolumeFactor']
     pkg_cost = tech_package_cost(settings.regclass_costs, vehicle, cost_step)
@@ -103,11 +103,11 @@ def calc_regclass_yoy_costs_per_step(settings, regclass_sales_dict):
 
     """
     for key in regclass_sales_dict.keys():
-        vehicle, model_year = key[0], key[1]
+        vehicle, model_year = key
         for cost_step in settings.cost_steps:
             if model_year >= int(cost_step):
                 pkg_cost, cumulative_sales = tech_pkg_cost_withlearning(settings, vehicle, model_year, cost_step, regclass_sales_dict)
-                regclass_yoy_costs_per_step_dict[((vehicle), model_year, cost_step)] = {'CumulativeSales': cumulative_sales, 'DirectCost_AvgPerVeh': pkg_cost}
+                regclass_yoy_costs_per_step_dict[(vehicle, model_year, cost_step)] = {'CumulativeSales': cumulative_sales, 'DirectCost_AvgPerVeh': pkg_cost}
     return regclass_yoy_costs_per_step_dict
 
 
@@ -125,7 +125,7 @@ def calc_per_veh_direct_costs(settings, regclass_yoy_costs_per_step_dict, averag
 
     """
     for key in averages_dict.keys():
-        vehicle, model_year, age_id = key[0], key[1], key[2]
+        vehicle, model_year, age_id, disc_rate = key
         alt, st, rc, ft = vehicle
         if age_id == 0:
             print(f'Calculating per vehicle direct costs for {vehicle}, MY {model_year}.')
@@ -153,7 +153,7 @@ def calc_direct_costs(totals_dict, averages_dict):
     """
     print('\nCalculating total direct costs.\n')
     for key in totals_dict.keys():
-        age_id = key[2]
+        vehicle, model_year, age_id, disc_rate = key
         if age_id == 0:
             cost_per_veh = averages_dict[key]['DirectCost_AvgPerVeh']
             sales = totals_dict[key]['VPOP']
