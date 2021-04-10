@@ -179,7 +179,7 @@ def create_annual_summary_df(totals_df):
         A DataFrame that summarizes the passed DataFrame by yearID.
 
     """
-    # Create a list of args to groupby and args to group
+    # Create a list of args to groupby and args to group; args should be passed, not hardcoded - lots of this has too much hardcoding making it inflexible
     args_to_groupby = ['optionID', 'OptionName', 'yearID', 'DiscountRate']
     cost_args = [col for col in totals_df if 'Cost' in col]
     args = args_to_groupby + cost_args
