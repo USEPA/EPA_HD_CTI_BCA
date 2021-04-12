@@ -80,20 +80,21 @@ def annualize_values(settings, input_df):
         annualized_offset = 0
     discount_to_year = settings.discount_to_yearID
     cost_args = [arg for arg in input_df.columns if 'Cost' in arg and 'PresentValue' not in arg]
-    # input_df.insert(input_df.columns.get_loc('DiscountRate') + 1, 'periods', input_df['yearID'] - discount_to_year + discount_offset)
+    input_df.insert(input_df.columns.get_loc('DiscountRate') + 1, 'periods', input_df['yearID'] - discount_to_year + discount_offset)
     for cost_arg in cost_args:
         input_df.insert(len(input_df.columns),
                         f'{cost_arg}_Annualized',
                         input_df[f'{cost_arg}_PresentValue']
                         * input_df['DiscountRate']
                         * (1 + input_df['DiscountRate']) ** (input_df['yearID'] - discount_to_year + discount_offset)
-                        / ((1 + input_df['DiscountRate']) ** (input_df['yearID'] - discount_to_year + discount_offset + annualized_offset) - 1))
+                        / ((1 + input_df['DiscountRate']) ** (input_df['periods'] + annualized_offset) - 1))
     return input_df
 
 
 if __name__ == '__main__':
     import pandas as pd
     from cti_bca_tool.tool_setup import SetInputs as settings
+    from cti_bca_tool.input_output import get_folder
     from cti_bca_tool.project_fleet import create_fleet_df
     from cti_bca_tool.project_dicts import create_regclass_sales_dict, create_fleet_totals_dict, create_fleet_averages_dict
     from cti_bca_tool.direct_costs import calc_regclass_yoy_costs_per_step, calc_direct_costs, calc_per_veh_direct_costs
@@ -102,20 +103,22 @@ if __name__ == '__main__':
     from cti_bca_tool.tool_postproc import create_annual_summary_df
 
     # test discount_values and annualize_values functions
-    vehicle = (0, 62, 47, 2)
+    vehicle = (0)
     dr = 0.03
     my = 2027
-    # st_name = Vehicle(vehicle[1]).sourcetype_name()
+    cost = 100
+    growth = 0.5
     data_df = pd.DataFrame({'vehicle': [(vehicle, my, 0, dr), (vehicle, my, 1, dr), (vehicle, my, 2, dr),
                                         (vehicle, my, 3, dr), (vehicle, my, 4, dr), (vehicle, my, 5, dr),
                                         (vehicle, my, 6, dr), (vehicle, my, 7, dr), (vehicle, my, 8, dr),
                                         (vehicle, my, 9, dr), (vehicle, my, 10, dr)],
-                            'Cost': [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]})
+                            'Cost': [cost*(1+growth)**0, cost*(1+growth)**1, cost*(1+growth)**2, cost*(1+growth)**3,
+                                     cost*(1+growth)**4, cost*(1+growth)**5, cost*(1+growth)**6, cost*(1+growth)**7,
+                                     cost*(1+growth)**8, cost*(1+growth)**9, cost*(1+growth)**10]})
 
     data_df.insert(0, 'st_Name', 'test')
     data_df.insert(0, 'OptionName', 'test')
     data_df.set_index('vehicle', inplace=True)
-    # data_dict = data_df.to_dict('index')
 
     settings.costs_start = 'start-year'
     print('\n\nData\n', data_df)
@@ -131,7 +134,8 @@ if __name__ == '__main__':
     discounted_df.insert(0, 'yearID', discounted_df[['modelYearID', 'ageID']].sum(axis=1))
     discounted_df = create_annual_summary_df(discounted_df)
     discounted_df = annualize_values(settings, discounted_df)
-    print(f'\n\n\nCosts start = {settings.costs_start}\n', discounted_df)
+    print(f'\n\n\nCosts start = {settings.costs_start}\n',
+          discounted_df[['yearID', 'periods', 'Cost', 'Cost_PresentValue', 'Cost_Annualized']])
 
     settings.costs_start = 'end-year'
     print('\n\nData\n', data_df)
@@ -147,8 +151,9 @@ if __name__ == '__main__':
     discounted_df.insert(0, 'yearID', discounted_df[['modelYearID', 'ageID']].sum(axis=1))
     discounted_df = create_annual_summary_df(discounted_df)
     discounted_df = annualize_values(settings, discounted_df)
-    print(f'\n\n\nCosts start = {settings.costs_start}\n', discounted_df)
-
+    print(f'\n\n\nCosts start = {settings.costs_start}\n',
+          discounted_df[['yearID', 'periods', 'Cost', 'Cost_PresentValue', 'Cost_Annualized']])
+    stop = 0
     # # create project fleet data structures, both a DataFrame and a dictionary of regclass based sales
     # project_fleet_df = create_fleet_df(settings)
     #
