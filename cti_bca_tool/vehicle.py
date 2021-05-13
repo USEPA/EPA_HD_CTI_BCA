@@ -74,12 +74,15 @@ def vehicle_name(settings, dict_of_vehicles):
             action_alt = alt / 10
             action_name = settings.options_dict[action_alt]['OptionName']
             option_name = f'{action_name}_minus_{no_action_name}'
-            # option_name = dict_of_vehicles[key]['OptionName']
         else: option_name = settings.options_dict[alt]['OptionName']
         sourcetype_name = Vehicle(st).sourcetype_name()
         regclass_name = Vehicle(rc).regclass_name()
         fueltype_name = Vehicle(ft).fueltype_name()
-        dict_of_vehicles[key].update({'OptionName': option_name,
+        dict_of_vehicles[key].update({'optionID': alt,
+                                      'sourceTypeID': st,
+                                      'regClassID': rc,
+                                      'fuelTypeID': ft,
+                                      'OptionName': option_name,
                                       'sourceTypeName': sourcetype_name,
                                       'regClassName': regclass_name,
                                       'fuelTypeName': fueltype_name,

@@ -176,12 +176,13 @@ def get_common_metrics(df_left, df_right, ignore=None):
         return
 
 
-def save_dict_to_csv(dict_to_save, save_path, *args):
+def save_dict_to_csv(dict_to_save, save_path, row_header=None, *args):
     """
 
     Parameters:
         dict_to_save: A dictionary having a tuple of args as keys.\n
         save_path: The path for saving the passed CSV.\n
+        row_header: A list of the column names to use a the row header for the preferred structure of the output file.
         args: The arguments contained in the tuple key - these will be pulled out and named according to the passed arguments.
 
     Returns:
@@ -193,6 +194,10 @@ def save_dict_to_csv(dict_to_save, save_path, *args):
     df.reset_index(inplace=True)
     for idx, arg in enumerate(args):
         df.rename(columns={f'level_{idx}': arg}, inplace=True)
+    if row_header and 'yearID' not in df.columns.tolist():
+        df.insert(0, 'yearID', df[['modelYearID', 'ageID']].sum(axis=1))
+    cols = [col for col in df.columns if col not in row_header]
+    df = pd.DataFrame(df, columns=row_header + cols)
     df.to_csv(f'{save_path}.csv', index=False)
     return
 

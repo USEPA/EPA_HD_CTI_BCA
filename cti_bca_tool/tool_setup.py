@@ -5,7 +5,7 @@ import time
 import attr
 
 import cti_bca_tool
-from cti_bca_tool.input_output import get_folder
+# from cti_bca_tool.input_output import get_folder
 from cti_bca_tool import tool_main
 import cti_bca_tool.general_functions as gen_fxns
 from cti_bca_tool.get_context_data import GetFuelPrices, GetDeflators
@@ -33,6 +33,8 @@ class SetInputs:
     # set run id and files to generate
     run_folder_identifier = input('Provide a run identifier for your output folder name (press return to use the default name)\n')
     run_folder_identifier = run_folder_identifier if run_folder_identifier != '' else 'BCA-Results'
+
+    generate_post_processing_files = True
 
     start_time = time.time()
     start_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')
@@ -137,6 +139,12 @@ class SetInputs:
     if calc_pollution_effects == 'Y':
         criteria_cost_factors = gen_fxns.read_input_files(path_inputs, input_files_dict['criteria_emission_costs']['UserEntry.csv'], lambda x: 'Notes' not in x)
         criteria_cost_factors_dict = create_criteria_cost_factors_dict(criteria_cost_factors)
+
+    # create a row header list for the structure of the main output files
+    row_header_for_fleet_files = ['vehicle', 'yearID', 'modelYearID', 'ageID', 'optionID', 'OptionName',
+                                  'sourceTypeID', 'sourceTypeName', 'regClassID', 'regClassName', 'fuelTypeID', 'fuelTypeName',
+                                  'DiscountRate',
+                                   ]
 
 
 if __name__ == '__main__':

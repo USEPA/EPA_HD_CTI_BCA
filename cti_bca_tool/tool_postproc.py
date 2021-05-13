@@ -21,16 +21,15 @@ econ_args = ['TechCost']
 bca_cost_args = ['TechAndOperatingCost']
 
 # lists of indexes for summary tables
-index_by_alt_by_year = ['DiscountRate', 'OptionName', 'yearID']
-index_by_alt = ['DiscountRate', 'OptionName']
-index_by_alt_by_ft_by_year = ['DiscountRate', 'OptionName', 'fuelTypeName', 'yearID']
-index_by_alt_by_ft = ['DiscountRate', 'OptionName', 'fuelTypeName']
-index_by_ft_by_alt_by_rc = ['DiscountRate', 'fuelTypeName', 'OptionName', 'regClassName']
-index_by_ft_by_alt = ['DiscountRate', 'fuelTypeName', 'OptionName']
+index_by_alt_by_year = ['DiscountRate', 'optionID', 'OptionName', 'yearID']
+index_by_alt = ['DiscountRate', 'optionID', 'OptionName']
+index_by_alt_by_ft_by_year = ['DiscountRate', 'optionID', 'fuelTypeID', 'OptionName', 'fuelTypeName', 'yearID']
+index_by_alt_by_ft = ['DiscountRate', 'optionID', 'fuelTypeID', 'OptionName', 'fuelTypeName']
+index_by_ft_by_alt_by_rc = ['DiscountRate', 'fuelTypeID', 'optionID', 'regClassID', 'OptionName', 'regClassName', 'fuelTypeName']
+index_by_ft_by_alt = ['DiscountRate', 'fuelTypeID', 'optionID', 'OptionName', 'fuelTypeName']
 index_by_year = ['DiscountRate', 'yearID']
 
-# TODO QA/QC new emission_cost.py and discounting.py with emission costs calcs included
-# TODO sort the preamble_ria_tables like before - it used to sort automatically by optionID but optionID is no longer present so it sorts by
+
 def run_postproc(settings, path_save, totals_dict):
     """
 
@@ -47,18 +46,20 @@ def run_postproc(settings, path_save, totals_dict):
     print('\nDoing some post-processing....')
     # Convert dictionary to DataFrame to generate summaries via pandas.
     totals_df = gen_fxns.convert_dict_to_df(totals_dict, 'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
+    # # create vehicle identifier columns for auto sorting of pivot tables
+    # totals_df = add_vehicle_identifiers_to_df(totals_df)
     annual_df = create_annual_summary_df(totals_df)
     annual_df = annualize_values(settings, annual_df)
 
-    postproc_file = doc_tables_post_process(path_save, totals_df)
+    postproc_file = doc_tables_post_process(settings, path_save, totals_df)
     annual_df.to_excel(postproc_file, sheet_name='annualized', index=False)
 
     create_figures(annual_df, 'US Dollars', path_save)
 
-    return postproc_file
+    return postproc_file, totals_df
 
 
-def doc_tables_post_process(path_for_save, fleet_totals_df):
+def doc_tables_post_process(settings, path_for_save, fleet_totals_df):
     """
 
     Parameters::
@@ -70,6 +71,9 @@ def doc_tables_post_process(path_for_save, fleet_totals_df):
 
     """
     df = fleet_totals_df.copy()
+
+    # # create vehicle identifier columns for auto sorting of pivot tables
+    # df = add_vehicle_identifiers_to_df(df)
 
     preamble_program_table = preamble_ria_tables(df, index_by_alt_by_year, sum, 1000000, 2, *preamble_program_args)
     preamble_program_table_pv = preamble_ria_tables(df, index_by_alt, sum, 1000000, 2, *preamble_program_args)
@@ -89,9 +93,9 @@ def doc_tables_post_process(path_for_save, fleet_totals_df):
     operating_by_ft_by_alt_table = preamble_ria_tables(df, index_by_ft_by_alt, sum, 1000000, 2, *operating_args)
     operating_by_alt_table = preamble_ria_tables(df, index_by_alt, sum, 1000000, 2, *operating_args)
 
-    econ_table = bca_tables(df, index_by_year, ['OptionName'], sum, *econ_args)
-    bca_cost_table = bca_tables(df, index_by_year, ['OptionName'], sum, *bca_cost_args)
-    bca_cost_table_pv = bca_tables(df, ['DiscountRate'], ['OptionName'], sum, *bca_cost_args)
+    econ_table = bca_tables(df, index_by_year, ['optionID', 'OptionName'], sum, *econ_args)
+    bca_cost_table = bca_tables(df, index_by_year, ['optionID', 'OptionName'], sum, *bca_cost_args)
+    bca_cost_table_pv = bca_tables(df, ['DiscountRate'], ['optionID', 'OptionName'], sum, *bca_cost_args)
 
     doc_table_dict = {'program': preamble_program_table,
                       'program_pv': preamble_program_table_pv,
@@ -112,11 +116,35 @@ def doc_tables_post_process(path_for_save, fleet_totals_df):
                       'bca_cost_pv': bca_cost_table_pv,
                       }
 
-    document_tables_file = pd.ExcelWriter(path_for_save / 'cti_bca_preamble_ria_tables.xlsx')
+    document_tables_file = pd.ExcelWriter(path_for_save / f'cti_bca_preamble_ria_tables_{settings.start_time_readable}.xlsx')
     for sheet_name in doc_table_dict:
         doc_table_dict[sheet_name].to_excel(document_tables_file, sheet_name=sheet_name)
 
     return document_tables_file
+
+
+def add_vehicle_identifiers_to_df(df):
+    """
+
+    Args:
+        df: A DataFrame having a "vehicle" column of tuples representing an alt, st, rc, ft vehicle.
+
+    Returns:
+        The passed DataFrame with four new columns representing the 4 elements of each vehicle tuple.
+
+    """
+    alt_list, st_list, rc_list, ft_list = list(), list(), list(), list()
+    for veh in df['vehicle']:
+        alt, st, rc, ft = veh[0], veh[1], veh[2], veh[3]
+        alt_list.append(alt)
+        st_list.append(st)
+        rc_list.append(rc)
+        ft_list.append(ft)
+    df.insert(0, 'fuelTypeID', ft_list)
+    df.insert(0, 'regClassID', rc_list)
+    df.insert(0, 'sourceTypeID', st_list)
+    df.insert(0, 'optionID', alt_list)
+    return df
 
 
 def preamble_ria_tables(input_df, index_list, function, divisor, sig_dig, *args):
@@ -181,7 +209,7 @@ def create_annual_summary_df(totals_df):
 
     """
     # Create a list of args to groupby and args to group; args should be passed, not hardcoded - lots of this has too much hardcoding making it inflexible
-    args_to_groupby = ['OptionName', 'yearID', 'DiscountRate']
+    args_to_groupby = ['optionID', 'OptionName', 'yearID', 'DiscountRate']
     # now create a 'yearID' col since it may not be part of the key that was used to generate the passed totals_df
     if 'yearID' not in totals_df.columns.tolist():
         totals_df.insert(totals_df.columns.get_loc('modelYearID') + 1, 'yearID', totals_df[['modelYearID', 'ageID']].sum(axis=1))
@@ -194,7 +222,7 @@ def create_annual_summary_df(totals_df):
     df_sum = df.groupby(by=args_to_groupby, as_index=False).sum()
 
     # Now do a cumulative sum of the annual values. Since they are discounted values, the cumulative sum will represent a running present value.
-    df_pv = df_sum.groupby(by=['OptionName', 'DiscountRate'], as_index=False).cumsum()
+    df_pv = df_sum.groupby(by=['optionID', 'OptionName', 'DiscountRate'], as_index=False).cumsum()
     df_pv.drop(columns='yearID', inplace=True)
 
     # Rename the args in df_pv to include a present value notation

@@ -25,7 +25,6 @@ def discount_values(settings, dict_of_values):
 
     for key in dict_of_values.keys():
         args = [k for k, v in dict_of_values[key].items()]
-    # id_args = [k for k, v in dict_of_values[key].items() if 'ID' in k or 'Name' in k]
     emission_costs_cap_dr1 = [arg for arg in args if 'Cost' in arg and f'{str(cap_dr1)}' in arg]
     emission_costs_cap_dr2 = [arg for arg in args if 'Cost' in arg and f'{str(cap_dr2)}' in arg]
 
@@ -37,12 +36,9 @@ def discount_values(settings, dict_of_values):
         vehicle, model_year, age_id = key[0], key[1], key[2]
         print(f'Discounting values for {vehicle}, MY {model_year}, age {age_id}')
         year = model_year + age_id
-        # id_args = [k for k, v in dict_of_values[key].items() if 'ID' in k or 'Name' in k]
         # create list of non_emission_cost_args by key, this avoids DEF costs for gasolines
         non_emission_cost_args = [k for k, v in dict_of_values[key].items() if 'Cost' in k and '_0.0' not in k]
         for social_discrate in social_discrates:
-            # emission_cost_args = [k for k, v in dict_of_values[key].items() if str(discount_rate) in k]
-            # args_to_discount = non_emission_cost_args + emission_cost_args
             rate_dict = dict()
             for arg in non_emission_cost_args:
                 arg_value = dict_of_values[key][arg] / ((1 + social_discrate) ** (year - discount_to_year + discount_offset))
@@ -53,9 +49,6 @@ def discount_values(settings, dict_of_values):
             for arg in emission_costs_cap_dr2:
                 arg_value = dict_of_values[key][arg] / ((1 + cap_dr2) ** (year - discount_to_year + discount_offset))
                 rate_dict.update({arg: arg_value})
-            # for arg in id_args:
-            #     arg_value = dict_of_values[key][arg]
-            #     rate_dict.update({arg: arg_value})
             update_dict[((vehicle), model_year, age_id, social_discrate)] = rate_dict
     dict_of_values.update(update_dict)
     return dict_of_values
@@ -126,13 +119,6 @@ def annualize_values(settings, input_df):
                         * (1 + cap_dr2) ** (input_df['yearID'] - discount_to_year + discount_offset)
                         / ((1 + cap_dr2) ** (input_df['periods'] + annualized_offset) - 1))
 
-    # for cost_arg in cost_args:
-    #     input_df.insert(len(input_df.columns),
-    #                     f'{cost_arg}_Annualized',
-    #                     input_df[f'{cost_arg}_PresentValue']
-    #                     * input_df['DiscountRate']
-    #                     * (1 + input_df['DiscountRate']) ** (input_df['yearID'] - discount_to_year + discount_offset)
-    #                     / ((1 + input_df['DiscountRate']) ** (input_df['periods'] + annualized_offset) - 1))
     return input_df
 
 

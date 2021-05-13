@@ -98,7 +98,7 @@ def main(settings):
     wtd_repair_cpm_dict = create_weighted_cost_dict(settings, fleet_averages_dict, 'EmissionRepairCost_AvgPerMile', 'VMT_AvgPerVeh')
 
     # discount monetized values; if calculating emission costs, the discount rates entered in the BCA_General_Inputs workbook should be consistent with the
-    # criteria cost factors input workbook
+    # criteria cost factors in that input workbook
     fleet_totals_dict = discount_values(settings, fleet_totals_dict)
     fleet_averages_dict = discount_values(settings, fleet_averages_dict)
 
@@ -127,7 +127,8 @@ def main(settings):
     fleet_totals_dict = vehicle_name(settings, fleet_totals_dict)
     fleet_averages_dict = vehicle_name(settings, fleet_averages_dict)
 
-    document_tables_file = run_postproc(settings, path_of_run_results_folder, fleet_totals_dict)
+    if settings.generate_post_processing_files:
+        document_tables_file, fleet_totals_df = run_postproc(settings, path_of_run_results_folder, fleet_totals_dict)
 
     elapsed_time_postproc = time.time() - start_time_postproc
 
@@ -158,35 +159,38 @@ def main(settings):
 
     # save dictionaries to csv and also add some identifying info using the vehicle_name function
     print("\nSaving the output files....")
-    # save_dict_to_csv(vehicle_name(settings, fleet_totals_dict),
-    #                  path_of_run_results_folder / f'cti_bca_fleet_totals_{settings.start_time_readable}',
-    #                  'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
-    # save_dict_to_csv(vehicle_name(settings, fleet_averages_dict),
-    #                  path_of_run_results_folder / f'cti_bca_fleet_averages_{settings.start_time_readable}',
-    #                  'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
 
-    save_dict_to_csv(fleet_totals_dict,
-                     path_of_run_results_folder / f'cti_bca_fleet_totals_{settings.start_time_readable}',
-                     'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
+    if 'yearID' not in fleet_totals_df.columns.tolist():
+        fleet_totals_df.insert(0, 'yearID', fleet_totals_df[['modelYearID', 'ageID']].sum(axis=1))
+    cols = [col for col in fleet_totals_df.columns if col not in settings.row_header_for_fleet_files]
+    fleet_totals_df = pd.DataFrame(fleet_totals_df, columns=settings.row_header_for_fleet_files + cols)
+    fleet_totals_df.to_csv(path_of_run_results_folder / f'cti_bca_fleet_averages_{settings.start_time_readable}.csv', index=False)
+
     save_dict_to_csv(fleet_averages_dict,
                      path_of_run_results_folder / f'cti_bca_fleet_averages_{settings.start_time_readable}',
+                     settings.row_header_for_fleet_files,
                      'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
 
     save_dict_to_csv(vehicle_name(settings, estimated_ages_dict),
                      path_of_run_results_folder / f'cti_bca_estimated_ages_{settings.start_time_readable}',
+                     list(),
                      'vehicle', 'modelYearID', 'identifier')
     save_dict_to_csv(vehicle_name(settings, repair_cpm_dict),
                      path_of_run_results_folder / f'cti_bca_repair_cpm_details_{settings.start_time_readable}',
+                     list(),
                      'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
 
     save_dict_to_csv(wtd_def_cpm_dict,
                      path_of_run_results_folder / f'cti_bca_vmt_weighted_def_cpm_{settings.start_time_readable}',
+                     list(),
                      'vehicle', 'modelYearID')
     save_dict_to_csv(wtd_fuel_cpm_dict,
                      path_of_run_results_folder / f'cti_bca_vmt_weighted_fuel_cpm_{settings.start_time_readable}',
+                     list(),
                      'vehicle', 'modelYearID')
     save_dict_to_csv(wtd_repair_cpm_dict,
                      path_of_run_results_folder / f'cti_bca_vmt_weighted_emission_repair_cpm_{settings.start_time_readable}',
+                     list(),
                      'vehicle', 'modelYearID')
 
     elapsed_time_outputs = time.time() - start_time_outputs
@@ -200,8 +204,9 @@ def main(settings):
     summary_log = pd.concat([summary_log, get_file_datetime(settings.input_files_pathlist)], axis=0, sort=False, ignore_index=True)
 
     # add summary log to document_tables_file for tracking this file which is the most likely to be shared
-    summary_log.to_excel(document_tables_file, sheet_name='summary_log', index=False)
-    document_tables_file.save()
+    if settings.generate_post_processing_files:
+        summary_log.to_excel(document_tables_file, sheet_name='summary_log', index=False)
+        document_tables_file.save()
     summary_log.to_csv(path_of_run_results_folder.joinpath('summary_log.csv'), index=False)
     print(f'\nOutput files have been saved to {path_of_run_folder}')
 
