@@ -18,15 +18,13 @@ def get_emission_cost_factors(settings, year):
         only if that toggle is set to 'Y' (yes). The default setting is 'N' (no).
 
     """
-    pm_low_3, pm_high_3, pm_low_7, pm_high_7 = settings.criteria_cost_factors_dict[year]['pm25_low-mortality_0.03_USD_per_uston'], \
-                                               settings.criteria_cost_factors_dict[year]['pm25_high-mortality_0.03_USD_per_uston'], \
-                                               settings.criteria_cost_factors_dict[year]['pm25_low-mortality_0.07_USD_per_uston'], \
-                                               settings.criteria_cost_factors_dict[year]['pm25_high-mortality_0.07_USD_per_uston']
-    nox_low_3, nox_high_3, nox_low_7, nox_high_7 = settings.criteria_cost_factors_dict[year]['nox_low-mortality_0.03_USD_per_uston'], \
-                                                   settings.criteria_cost_factors_dict[year]['nox_high-mortality_0.03_USD_per_uston'], \
-                                                   settings.criteria_cost_factors_dict[year]['nox_low-mortality_0.07_USD_per_uston'], \
-                                                   settings.criteria_cost_factors_dict[year]['nox_high-mortality_0.07_USD_per_uston']
-    return pm_low_3, pm_high_3, pm_low_7, pm_high_7, nox_low_3, nox_high_3, nox_low_7, nox_high_7
+    cap_dr1 = settings.criteria_discount_rate_1
+    cap_dr2 = settings.criteria_discount_rate_2
+    pm_tailpipe_cap_dr1, pm_tailpipe_cap_dr2 = settings.criteria_cost_factors_dict[year][f'pm25_tailpipe_{str(cap_dr1)}_USD_per_uston'], \
+                                               settings.criteria_cost_factors_dict[year][f'pm25_tailpipe_{str(cap_dr2)}_USD_per_uston']
+    nox_tailpipe_cap_dr1, nox_tailpipe_cap_dr2 = settings.criteria_cost_factors_dict[year][f'nox_tailpipe_{str(cap_dr1)}_USD_per_uston'], \
+                                                 settings.criteria_cost_factors_dict[year][f'nox_tailpipe_{str(cap_dr2)}_USD_per_uston']
+    return pm_tailpipe_cap_dr1, pm_tailpipe_cap_dr2, nox_tailpipe_cap_dr1, nox_tailpipe_cap_dr2
 
 
 def calc_criteria_emission_costs(settings, totals_dict):
@@ -40,25 +38,21 @@ def calc_criteria_emission_costs(settings, totals_dict):
         The totals_dict dictionary updated with emission costs ($/ton * inventory tons).
 
     """
+    cap_dr1 = settings.criteria_discount_rate_1
+    cap_dr2 = settings.criteria_discount_rate_2
     for key in totals_dict.keys():
         vehicle, model_year, age_id = key[0], key[1], key[2]
         print(f'Calculating criteria emission costs for {vehicle}, MY {model_year}, age {age_id}')
         year = model_year + age_id
-        pm_low_3, pm_high_3, pm_low_7, pm_high_7, nox_low_3, nox_high_3, nox_low_7, nox_high_7 = get_emission_cost_factors(settings, year)
+        pm_tailpipe_cap_dr1, pm_tailpipe_cap_dr2, nox_tailpipe_cap_dr1, nox_tailpipe_cap_dr2 = get_emission_cost_factors(settings, year)
         pm_tons = totals_dict[key]['PM25_UStons']
         nox_tons = totals_dict[key]['NOx_UStons']
-        update_dict = {'PM25Cost_low_0.03': pm_low_3 * pm_tons,
-                       'PM25Cost_high_0.03': pm_high_3 * pm_tons,
-                       'PMCost_low_0.07': pm_low_7 * pm_tons,
-                       'PMCost_high_0.07': pm_high_7 * pm_tons,
-                       'NOxCost_low_0.03': nox_low_3 * nox_tons,
-                       'NOxCost_high_0.03': nox_high_3 * nox_tons,
-                       'NOxCost_low_0.07': nox_low_7 * nox_tons,
-                       'NOxCost_high_0.07': nox_high_7 * nox_tons,
-                       'CriteriaCost_low_0.03': pm_low_3 * pm_tons + nox_low_3 * nox_tons,
-                       'CriteriaCost_high_0.03': pm_high_3 * pm_tons + nox_high_3 * nox_tons,
-                       'CriteriaCost_low_0.07': pm_low_7 * pm_tons + nox_low_7 * nox_tons,
-                       'CriteriaCost_high_0.07': pm_high_7 * pm_tons + nox_high_7 * nox_tons,
+        update_dict = {f'PM25Cost_tailpipe_{str(cap_dr1)}': pm_tailpipe_cap_dr1 * pm_tons,
+                       f'PM25Cost_tailpipe_{str(cap_dr2)}': pm_tailpipe_cap_dr2 * pm_tons,
+                       f'NOxCost_tailpipe_{str(cap_dr1)}': nox_tailpipe_cap_dr1 * nox_tons,
+                       f'NOxCost_tailpipe_{str(cap_dr2)}': nox_tailpipe_cap_dr2 * nox_tons,
+                       f'CriteriaCost_{str(cap_dr1)}': pm_tailpipe_cap_dr1 * pm_tons + nox_tailpipe_cap_dr1 * nox_tons,
+                       f'CriteriaCost_{str(cap_dr2)}': pm_tailpipe_cap_dr2 * pm_tons + nox_tailpipe_cap_dr2 * nox_tons,
                        }
         totals_dict[key].update(update_dict)
     return totals_dict

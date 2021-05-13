@@ -97,7 +97,8 @@ def create_figures(input_df, units, path_for_save):
     yearID_max = int(input_df['yearID'].max())
     path_figures = path_for_save / 'figures'
     path_figures.mkdir(exist_ok=True)
-    alt_names = pd.Series(input_df.loc[input_df['optionID'] >= 10, 'OptionName']).unique()
+    # alt_names = pd.Series(input_df.loc[input_df['optionID'] >= 10, 'OptionName']).unique()
+    alt_names = [arg for arg in pd.Series(input_df['OptionName'].unique()) if '_minus_' in arg]
     # units = input_df['Units'].unique()[0]
     args = ['TechCost', 'EmissionRepairCost', 'DEFCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
     for alt_name in alt_names:

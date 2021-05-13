@@ -3,6 +3,9 @@ import pandas as pd
 
 from cti_bca_tool.vehicle import Vehicle
 
+# TODO: Redo the discounting function to report all discounted values in single rows but discounted at the stream's rate (like what I
+# did recently in the ntr post-processing tool
+# TODO: remove the user input request for inputs folder (too flaky) and scrap idea for an executable?
 
 def create_fleet_df(settings):
     """
@@ -28,23 +31,23 @@ def create_fleet_df(settings):
     df = pd.DataFrame(df.loc[df['modelYearID'] >= settings.year_min, :]).reset_index(drop=True)
 
     # add some vehicle identifiers
-    df.insert(0, 'OptionName', '')
-    for alt in settings.options_dict.keys():
-        df.loc[df['optionID'] == alt, 'OptionName'] = settings.options_dict[alt]['OptionName']
-
-    df.insert(0, 'sourceTypeName', '')
-    for st in Vehicle.sourcetype_dict.keys():
-        df.loc[df['sourceTypeID'] == st, 'sourceTypeName'] = Vehicle(st).sourcetype_name()
-        # df.loc[df['sourceTypeID'] == st, 'sourceTypeName'] = sourcetype_dict[st]
-
-    df.insert(0, 'regClassName', '')
-    for rc in Vehicle.regclass_dict.keys():
-        df.loc[df['regClassID'] == rc, 'regClassName'] = Vehicle(rc).regclass_name()
-        # df.loc[df['regClassID'] == rc, 'regClassName'] = regclass_dict[rc]
-
-    df.insert(0, 'fuelTypeName', '')
-    for ft in Vehicle.fueltype_dict.keys():
-        df.loc[df['fuelTypeID'] == ft, 'fuelTypeName'] = Vehicle(ft).fueltype_name()
+    # df.insert(0, 'OptionName', '')
+    # for alt in settings.options_dict.keys():
+    #     df.loc[df['optionID'] == alt, 'OptionName'] = settings.options_dict[alt]['OptionName']
+    #
+    # df.insert(0, 'sourceTypeName', '')
+    # for st in Vehicle.sourcetype_dict.keys():
+    #     df.loc[df['sourceTypeID'] == st, 'sourceTypeName'] = Vehicle(st).sourcetype_name()
+    #     # df.loc[df['sourceTypeID'] == st, 'sourceTypeName'] = sourcetype_dict[st]
+    #
+    # df.insert(0, 'regClassName', '')
+    # for rc in Vehicle.regclass_dict.keys():
+    #     df.loc[df['regClassID'] == rc, 'regClassName'] = Vehicle(rc).regclass_name()
+    #     # df.loc[df['regClassID'] == rc, 'regClassName'] = regclass_dict[rc]
+    #
+    # df.insert(0, 'fuelTypeName', '')
+    # for ft in Vehicle.fueltype_dict.keys():
+    #     df.loc[df['fuelTypeID'] == ft, 'fuelTypeName'] = Vehicle(ft).fueltype_name()
         # df.loc[df['fuelTypeID'] == ft, 'fuelTypeName'] = fueltype_dict[ft]
 
     # sum the PM constituents into a single constituent

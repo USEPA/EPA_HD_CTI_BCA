@@ -20,10 +20,10 @@ class SetInputs:
 
     """
     # set paths
-    # path_code = Path(__file__).parent
-    path_code = Path.cwd()
-    path_project = Path(path_code).parent
-    path_inputs = get_folder('folder containing input files for the run')
+    path_project = Path.cwd()
+    path_code = path_project / 'cti_bca_tool'
+    path_inputs = path_project / 'inputs'
+    # path_inputs = get_folder('folder containing input files for the run')
     path_outputs = path_project / 'outputs'
     path_test = path_project / 'test'
 
@@ -93,6 +93,10 @@ class SetInputs:
     calc_pollution_effects = bca_inputs.at['calculate_pollution_effects', 'UserEntry']
     def_gallons_per_ton_nox_reduction = pd.to_numeric(bca_inputs.at['def_gallons_per_ton_nox_reduction', 'UserEntry'])
     max_age_included = pd.to_numeric(bca_inputs.at['weighted_operating_cost_thru_ageID', 'UserEntry'])
+    social_discount_rate_1 = pd.to_numeric(bca_inputs.at['social_discount_rate_1', 'UserEntry'])
+    social_discount_rate_2 = pd.to_numeric(bca_inputs.at['social_discount_rate_2', 'UserEntry'])
+    criteria_discount_rate_1 = pd.to_numeric(bca_inputs.at['criteria_discount_rate_1', 'UserEntry'])
+    criteria_discount_rate_2 = pd.to_numeric(bca_inputs.at['criteria_discount_rate_2', 'UserEntry'])
 
     grams_per_short_ton = unit_conversions.at['grams_per_short_ton', 'UserEntry']
     gallons_per_ml = unit_conversions.at['gallons_per_ml', 'UserEntry']

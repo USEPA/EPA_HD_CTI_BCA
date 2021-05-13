@@ -21,15 +21,16 @@ econ_args = ['TechCost']
 bca_cost_args = ['TechAndOperatingCost']
 
 # lists of indexes for summary tables
-index_by_alt_by_year = ['DiscountRate', 'optionID', 'OptionName', 'yearID']
-index_by_alt = ['DiscountRate', 'optionID', 'OptionName']
-index_by_alt_by_ft_by_year = ['DiscountRate', 'optionID', 'OptionName', 'fuelTypeID', 'yearID']
-index_by_alt_by_ft = ['DiscountRate', 'optionID', 'OptionName', 'fuelTypeID']
-index_by_ft_by_alt_by_rc = ['DiscountRate', 'fuelTypeID', 'optionID', 'OptionName', 'regClassID']
-index_by_ft_by_alt = ['DiscountRate', 'fuelTypeID', 'optionID', 'OptionName']
+index_by_alt_by_year = ['DiscountRate', 'OptionName', 'yearID']
+index_by_alt = ['DiscountRate', 'OptionName']
+index_by_alt_by_ft_by_year = ['DiscountRate', 'OptionName', 'fuelTypeName', 'yearID']
+index_by_alt_by_ft = ['DiscountRate', 'OptionName', 'fuelTypeName']
+index_by_ft_by_alt_by_rc = ['DiscountRate', 'fuelTypeName', 'OptionName', 'regClassName']
+index_by_ft_by_alt = ['DiscountRate', 'fuelTypeName', 'OptionName']
 index_by_year = ['DiscountRate', 'yearID']
 
-
+# TODO QA/QC new emission_cost.py and discounting.py with emission costs calcs included
+# TODO sort the preamble_ria_tables like before - it used to sort automatically by optionID but optionID is no longer present so it sorts by
 def run_postproc(settings, path_save, totals_dict):
     """
 
@@ -88,9 +89,9 @@ def doc_tables_post_process(path_for_save, fleet_totals_df):
     operating_by_ft_by_alt_table = preamble_ria_tables(df, index_by_ft_by_alt, sum, 1000000, 2, *operating_args)
     operating_by_alt_table = preamble_ria_tables(df, index_by_alt, sum, 1000000, 2, *operating_args)
 
-    econ_table = bca_tables(df, index_by_year, ['optionID', 'OptionName'], sum, *econ_args)
-    bca_cost_table = bca_tables(df, index_by_year, ['optionID', 'OptionName'], sum, *bca_cost_args)
-    bca_cost_table_pv = bca_tables(df, ['DiscountRate'], ['optionID', 'OptionName'], sum, *bca_cost_args)
+    econ_table = bca_tables(df, index_by_year, ['OptionName'], sum, *econ_args)
+    bca_cost_table = bca_tables(df, index_by_year, ['OptionName'], sum, *bca_cost_args)
+    bca_cost_table_pv = bca_tables(df, ['DiscountRate'], ['OptionName'], sum, *bca_cost_args)
 
     doc_table_dict = {'program': preamble_program_table,
                       'program_pv': preamble_program_table_pv,
@@ -173,14 +174,17 @@ def create_annual_summary_df(totals_df):
     """
 
     Parameters::
-        totals_df: A DataFrame of monetized values by optionID, yearID and DiscountRate; OptionName should exist for figures (as legend entries).
+        totals_df: A DataFrame of monetized values by option name, yearID and DiscountRate; OptionName should exist for figures (as legend entries).
 
     Returns:
         A DataFrame that summarizes the passed DataFrame by yearID.
 
     """
     # Create a list of args to groupby and args to group; args should be passed, not hardcoded - lots of this has too much hardcoding making it inflexible
-    args_to_groupby = ['optionID', 'OptionName', 'yearID', 'DiscountRate']
+    args_to_groupby = ['OptionName', 'yearID', 'DiscountRate']
+    # now create a 'yearID' col since it may not be part of the key that was used to generate the passed totals_df
+    if 'yearID' not in totals_df.columns.tolist():
+        totals_df.insert(totals_df.columns.get_loc('modelYearID') + 1, 'yearID', totals_df[['modelYearID', 'ageID']].sum(axis=1))
     cost_args = [col for col in totals_df if 'Cost' in col]
     args = args_to_groupby + cost_args
 
@@ -190,7 +194,7 @@ def create_annual_summary_df(totals_df):
     df_sum = df.groupby(by=args_to_groupby, as_index=False).sum()
 
     # Now do a cumulative sum of the annual values. Since they are discounted values, the cumulative sum will represent a running present value.
-    df_pv = df_sum.groupby(by=['optionID', 'DiscountRate'], as_index=False).cumsum()
+    df_pv = df_sum.groupby(by=['OptionName', 'DiscountRate'], as_index=False).cumsum()
     df_pv.drop(columns='yearID', inplace=True)
 
     # Rename the args in df_pv to include a present value notation

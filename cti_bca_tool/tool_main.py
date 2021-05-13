@@ -23,6 +23,7 @@ from cti_bca_tool.sum_by_vehicle import calc_sum_of_costs
 from cti_bca_tool.discounting import discount_values
 from cti_bca_tool.weighted_results import create_weighted_cost_dict
 from cti_bca_tool.calc_deltas import calc_deltas, calc_deltas_weighted
+from cti_bca_tool.vehicle import vehicle_name
 from cti_bca_tool.tool_postproc import run_postproc, create_output_paths
 
 from cti_bca_tool.general_functions import save_dict_to_csv, inputs_filenames, get_file_datetime
@@ -98,8 +99,8 @@ def main(settings):
 
     # discount monetized values; if calculating emission costs, the discount rates entered in the BCA_General_Inputs workbook should be consistent with the
     # criteria cost factors input workbook
-    fleet_totals_dict = discount_values(settings, fleet_totals_dict, settings.discrate_social_low, settings.discrate_social_high)
-    fleet_averages_dict = discount_values(settings, fleet_averages_dict, settings.discrate_social_low, settings.discrate_social_high)
+    fleet_totals_dict = discount_values(settings, fleet_totals_dict)
+    fleet_averages_dict = discount_values(settings, fleet_averages_dict)
 
     # calculate deltas relative to the passed no action alternative ID
     fleet_totals_dict = calc_deltas(settings, fleet_totals_dict)
@@ -121,7 +122,11 @@ def main(settings):
 
     start_time_postproc = time.time()
 
+    # pass dicts thru the vehicle_name function to add some identifiers and then
     # do the post-processing to generate document tables, an annual summary and some figures
+    fleet_totals_dict = vehicle_name(settings, fleet_totals_dict)
+    fleet_averages_dict = vehicle_name(settings, fleet_averages_dict)
+
     document_tables_file = run_postproc(settings, path_of_run_results_folder, fleet_totals_dict)
 
     elapsed_time_postproc = time.time() - start_time_postproc
@@ -151,16 +156,38 @@ def main(settings):
         gdp_deflators = pd.DataFrame(settings.gdp_deflators)  # from dict to df
         gdp_deflators.to_csv(path_of_modified_inputs_folder / 'gdp_deflators.csv', index=True)
 
-    # save dictionaries to csv
+    # save dictionaries to csv and also add some identifying info using the vehicle_name function
     print("\nSaving the output files....")
-    save_dict_to_csv(fleet_totals_dict, path_of_run_results_folder / 'cti_bca_fleet_totals', 'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
-    save_dict_to_csv(fleet_averages_dict, path_of_run_results_folder / 'cti_bca_fleet_averages', 'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
-    save_dict_to_csv(estimated_ages_dict, path_of_run_results_folder / 'cti_bca_estimated_ages', 'vehicle', 'modelYearID', 'identifier')
-    save_dict_to_csv(repair_cpm_dict, path_of_run_results_folder / 'cti_bca_repair_cpm_details', 'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
+    # save_dict_to_csv(vehicle_name(settings, fleet_totals_dict),
+    #                  path_of_run_results_folder / f'cti_bca_fleet_totals_{settings.start_time_readable}',
+    #                  'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
+    # save_dict_to_csv(vehicle_name(settings, fleet_averages_dict),
+    #                  path_of_run_results_folder / f'cti_bca_fleet_averages_{settings.start_time_readable}',
+    #                  'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
 
-    save_dict_to_csv(wtd_def_cpm_dict, path_of_run_results_folder / 'cti_bca_vmt_weighted_def_cpm', 'vehicle', 'modelYearID')
-    save_dict_to_csv(wtd_fuel_cpm_dict, path_of_run_results_folder / 'cti_bca_vmt_weighted_fuel_cpm', 'vehicle', 'modelYearID')
-    save_dict_to_csv(wtd_repair_cpm_dict, path_of_run_results_folder / 'cti_bca_vmt_weighted_emission_repair_cpm', 'vehicle', 'modelYearID')
+    save_dict_to_csv(fleet_totals_dict,
+                     path_of_run_results_folder / f'cti_bca_fleet_totals_{settings.start_time_readable}',
+                     'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
+    save_dict_to_csv(fleet_averages_dict,
+                     path_of_run_results_folder / f'cti_bca_fleet_averages_{settings.start_time_readable}',
+                     'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
+
+    save_dict_to_csv(vehicle_name(settings, estimated_ages_dict),
+                     path_of_run_results_folder / f'cti_bca_estimated_ages_{settings.start_time_readable}',
+                     'vehicle', 'modelYearID', 'identifier')
+    save_dict_to_csv(vehicle_name(settings, repair_cpm_dict),
+                     path_of_run_results_folder / f'cti_bca_repair_cpm_details_{settings.start_time_readable}',
+                     'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
+
+    save_dict_to_csv(wtd_def_cpm_dict,
+                     path_of_run_results_folder / f'cti_bca_vmt_weighted_def_cpm_{settings.start_time_readable}',
+                     'vehicle', 'modelYearID')
+    save_dict_to_csv(wtd_fuel_cpm_dict,
+                     path_of_run_results_folder / f'cti_bca_vmt_weighted_fuel_cpm_{settings.start_time_readable}',
+                     'vehicle', 'modelYearID')
+    save_dict_to_csv(wtd_repair_cpm_dict,
+                     path_of_run_results_folder / f'cti_bca_vmt_weighted_emission_repair_cpm_{settings.start_time_readable}',
+                     'vehicle', 'modelYearID')
 
     elapsed_time_outputs = time.time() - start_time_outputs
     end_time = time.time()

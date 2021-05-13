@@ -17,7 +17,7 @@ def create_fleet_totals_dict(fleet_df, rate=0):
     df.insert(0, 'DiscountRate', rate)
     id = pd.Series(zip(zip(df['optionID'], fleet_df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['modelYearID'], df['ageID'], df['DiscountRate']))
     df.insert(0, 'id', id)
-    df.drop(columns=['modelYearID', 'ageID', 'DiscountRate'], inplace=True)
+    df.drop(columns=['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'yearID', 'modelYearID', 'ageID', 'DiscountRate'], inplace=True)
     df.set_index('id', inplace=True)
     return df.to_dict('index')
 
@@ -35,12 +35,13 @@ def create_fleet_averages_dict(fleet_df, rate=0):
         an alt_sourcetype_regclass_fueltype vehicle, and values representing per vehicle or per mile averages for each key over time.
 
     """
-    df = pd.DataFrame(fleet_df[['OptionName', 'optionID', 'sourceTypeID', 'sourceTypeName', 'regClassID', 'regClassName',
-                                'fuelTypeID', 'fuelTypeName', 'yearID', 'modelYearID', 'ageID']]).reset_index(drop=True)
+    # df = pd.DataFrame(fleet_df[['OptionName', 'optionID', 'sourceTypeID', 'sourceTypeName', 'regClassID', 'regClassName',
+    #                             'fuelTypeID', 'fuelTypeName', 'yearID', 'modelYearID', 'ageID']]).reset_index(drop=True)
+    df = pd.DataFrame(fleet_df[['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'yearID', 'modelYearID', 'ageID']]).reset_index(drop=True)
     df.insert(0, 'DiscountRate', rate)
     id = pd.Series(zip(zip(df['optionID'], df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['modelYearID'], df['ageID'], df['DiscountRate']))
     df.insert(0, 'id', id)
-    df.drop(columns=['modelYearID', 'ageID', 'DiscountRate'], inplace=True)
+    df.drop(columns=['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'yearID', 'modelYearID', 'ageID', 'DiscountRate'], inplace=True)
     df.insert(len(df.columns), 'VMT_AvgPerVeh', fleet_df['VMT'] / fleet_df['VPOP'])
     df.set_index('id', inplace=True)
     return_dict = df.to_dict('index')
