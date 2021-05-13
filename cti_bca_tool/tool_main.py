@@ -164,7 +164,7 @@ def main(settings):
         fleet_totals_df.insert(0, 'yearID', fleet_totals_df[['modelYearID', 'ageID']].sum(axis=1))
     cols = [col for col in fleet_totals_df.columns if col not in settings.row_header_for_fleet_files]
     fleet_totals_df = pd.DataFrame(fleet_totals_df, columns=settings.row_header_for_fleet_files + cols)
-    fleet_totals_df.to_csv(path_of_run_results_folder / f'cti_bca_fleet_averages_{settings.start_time_readable}.csv', index=False)
+    fleet_totals_df.to_csv(path_of_run_results_folder / f'cti_bca_fleet_totals_{settings.start_time_readable}.csv', index=False)
 
     save_dict_to_csv(fleet_averages_dict,
                      path_of_run_results_folder / f'cti_bca_fleet_averages_{settings.start_time_readable}',
