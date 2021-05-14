@@ -23,6 +23,7 @@ eggs/
 moves/
 #inputs/
 #Inputs/
+test/
 ib/
 lib64/
 outputs/
