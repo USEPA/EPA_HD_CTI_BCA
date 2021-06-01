@@ -2,7 +2,7 @@ import pandas as pd
 
 
 def discount_values(settings, dict_of_values):
-    """The discount function determines metrics appropriate for discounted (those contained in dict_of_values) and does the discounting
+    """The discount function determines metrics appropriate for discounting (those contained in dict_of_values) and does the discounting
     calculation to a given year and point within that year.
 
     Parameters:
