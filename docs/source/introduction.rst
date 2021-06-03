@@ -19,11 +19,11 @@ What are the input files?
 -------------------------
 
 The list of necessary input files contained in the "inputs" folder is:
-    - BCA_General_Inputs.csv which specifies which AEO fuel prices to use, what calendar year to which to discount costs, the dollar basis year for all monetized values in the analysis, among other parameters.
+    - BCA_General_Inputs.csv which specifies which AEO fuel prices to use, what calendar year to which to discount costs, among other parameters.
     - Input_Files.csv which specifies the specific filenames from which to read-in the necessary runtime data. A user can use different input files/filenames provided they are in the same format as the default files.
     - options.csv which specifies the number of options to be run along with an Option Name for each optionID. Note that "option" and "alternative" and "scenario" tend to be used interchangeably.
     - A MOVES or fleet file which provides inventories and VMT, etc., to support the analysis.
-    - MOVES_Adjustments.csv which provides adjustments to data in the MOVES data file that might be necessary within the BCA tool. Currently, this adjusts regclass 41 diesel data to reflect engine-certs only
+    - MOVES_Adjustments.csv which provides adjustments to data in the MOVES data file that might be necessary within the BCA tool. Currently, this adjusts regclass 41 diesel data to reflect engine-certs only.
     - DirectCostInputs_byRegClass_byFuelType.csv which provides the direct technology costs by Regulatory Class.
     - LearningRateScalars_byRegClass.csv which provides scalars to be applied in estimating learning effects on direct costs.
     - IndirectCostInputs_byFuelType.csv which provides indirect cost markup factors applied to direct costs to estimate indirect costs.
@@ -36,7 +36,7 @@ The list of necessary input files contained in the "inputs" folder is:
     - Warranty_Inputs.csv which provides warranty miles and ages under each alternative.
 
 Context files
--------------
+.............
 
 The "context files" describe the context of a given run of the tool. There are two primary elements of the context: The fuel prices to use and the dollar basis of those fuel prices. The dollar basis
 subsequently establishes the dollar basis for all other monetized values within a given run. This is done in-code using Implicit Price Deflators reported by the Bureau of Economic Analysis. The user
@@ -59,10 +59,10 @@ Output files generated are:
     - cti_bca_fleet_totals.csv which contains total results for all vehicles by calendar year/model year/age.
     - summary_log.csv which contains the version number of the tool, date and time statistics for the run and input file data specific to the run.
 
-A folder called "run_results" will be created within the outputs folder that contains the output files described above. A subfolder called "figures" will be created where figures are saved.
+A folder called "run_results" will be created within the specific run's output folder that contains the output files described above. A subfolder called "figures" will be created where figures are saved.
 A folder called "modified_inputs" is also created which holds modified versions of the input files. Those modifications include reshaping of the input files along with conversions of the
 dollar-based inputs into a consistent dollar basis.
-A folder called "run_inputs" is also created which holds a direct copy/paste of all input files used for the given run.
+A folder called "run_inputs" is also created which holds a direct copy/paste of all input files used for the given run (those specified in Input_Files.csv).
 A folder called "code" is also created which holds a direct copy/paste of all files in the cti_bca_tool package folder (i.e., the python code).
 
 Note that outputs are saved to an outputs folder that will be created (if it does not already exist) in the parent directory of the directory in which the code resides.
