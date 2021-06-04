@@ -1,4 +1,4 @@
-import pandas as pd
+# import pandas as pd
 
 
 cumulative_vmt_dict = dict()
@@ -141,14 +141,14 @@ def calc_emission_repair_costs_per_mile(settings, averages_dict):
         else:
             cpm = max_cpm
         averages_dict[key].update({'EmissionRepairCost_AvgPerMile': cpm})
-        repair_cpm_dict[key] = {'reference_direct_cost': reference_direct_cost, \
-                                'direct_cost_scaler': direct_cost_scaler, \
-                                'warranty_estimated_age': warranty_estimated_age, \
-                                'usefullife_estimated_age': usefullife_estimated_age, \
-                                'in_warranty_cpm': in_warranty_cpm, \
-                                'at_usefullife_cpm': at_usefullife_cpm, \
-                                'slope_within_usefullife': slope_within_usefullife, \
-                                'max_cpm': max_cpm, \
+        repair_cpm_dict[key] = {'reference_direct_cost': reference_direct_cost,
+                                'direct_cost_scaler': direct_cost_scaler,
+                                'warranty_estimated_age': warranty_estimated_age,
+                                'usefullife_estimated_age': usefullife_estimated_age,
+                                'in_warranty_cpm': in_warranty_cpm,
+                                'at_usefullife_cpm': at_usefullife_cpm,
+                                'slope_within_usefullife': slope_within_usefullife,
+                                'max_cpm': max_cpm,
                                 'cpm': cpm
                                 }
     return averages_dict

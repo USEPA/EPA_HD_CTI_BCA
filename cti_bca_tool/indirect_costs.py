@@ -8,7 +8,9 @@ project_markups_dict = dict()
 
 
 def calc_project_markup_value(settings, vehicle, markup_factor, model_year):
-    """This function calculates the project markup value for the markup_factor (Warranty, RnD, Other, Profit) passed.
+    """
+
+    This function calculates the project markup value for the markup_factor (Warranty, RnD, Other, Profit) passed.
 
     Parameters:
         settings: The SetInputs classs.\n

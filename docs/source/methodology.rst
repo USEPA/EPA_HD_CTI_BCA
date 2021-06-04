@@ -56,7 +56,7 @@ where,
 - *CumulativeSales* = cumulative sales of MY2027 and later vehicles in model year, MY, of implementation
 - *SeedVolumeFactor* = 0 or greater to represent the number of years of learning already having occurred on a technology
 
-For step-2 and later direct costs (equations show step-2 occurring in MY2030):
+For subsequent steps, e.g., new direct costs implemented in 2030:
 
 .. math::
     :label:
@@ -168,23 +168,30 @@ input file to the tool.
 
 For any given optionID/vehicle/MY where vehicle is a unique sourcetype-regclass-fueltype within MOVES, the emission-repair cost per mile (EmissionRepairCPM) at any given age would be calculated as:
 
-When Age<=EstimatedWarrantyAge:
+When Age+1 < EstimatedWarrantyAge:
 
 .. math::
     :label:
 
     EmissionRepairCPM_{optionID;vehicle;MY;age}=InWarrantyCPM_{optionID;vehicle;MY}
 
-When EstimatedWarrantyAge<Age<=EstimatedUsefulLifeAge:
+When EstimatedWarrantyAge <= Age+1 < EstimatedUsefulLifeAge:
 
 .. math::
     :label:
 
     & EmissionRepairCPM_{optionID;vehicle;MY;age}\\
-    & = \small SlopeCPM_{optionID;vehicle;MY} \times (Age_{optionID;vehicle;MY}-EstimatedWarrantyAge_{optionID;vehicle;MY})\\
+    & = \small SlopeCPM_{optionID;vehicle;MY} \times ((Age_{optionID;vehicle;MY}+1)-EstimatedWarrantyAge_{optionID;vehicle;MY})\\
     & + \small InWarrantyCPM_{optionID;vehicle;MY}
 
-When Age>EstimatedUsefulLifeAge:
+When Age+1 = EstimatedUsefulLifeAge:
+
+.. math::
+    :label:
+
+    EmissionRepairCPM_{optionID;vehicle;MY;age}=AtUsefulLifeCPM_{optionID;vehicle;MY}
+
+Otherwise:
 
 .. math::
     :label:
