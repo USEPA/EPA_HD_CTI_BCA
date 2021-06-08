@@ -1,5 +1,5 @@
 import pandas as pd
-from cti_bca_tool.repair_costs import calc_per_veh_cumulative_vmt
+from bca_tool_code.repair_costs import calc_per_veh_cumulative_vmt
 
 def create_fleet_totals_dict(fleet_df, rate=0):
     """This function creates a dictionary of fleet total values and adds a discount rate element to the key.
@@ -253,13 +253,4 @@ def create_criteria_cost_factors_dict(input_df):
 
 
 if __name__ == '__main__':
-    from cti_bca_tool.tool_setup import SetInputs as settings
-    from cti_bca_tool.project_fleet import create_fleet_df
-
-    project_fleet_df = create_fleet_df(settings)
-    regclass_sales_dict = create_regclass_sales_dict(project_fleet_df)
-    fleet_dict = create_fleet_totals_dict(project_fleet_df)
-
-    moves_adjustments_dict = create_moves_adjustments_dict(settings.moves_adjustments, 'optionID', 'regClassID', 'fuelTypeID')
-    seedvol_factor_dict = create_seedvol_factor_dict(settings.regclass_learningscalers)
-    markup_inputs_dict = create_markup_inputs_dict(settings.markups)
+    print('\nModule not meant to run as a script.')

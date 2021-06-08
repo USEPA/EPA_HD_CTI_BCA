@@ -59,13 +59,4 @@ def calc_criteria_emission_costs(settings, totals_dict):
 
 
 if __name__ == '__main__':
-    from cti_bca_tool.tool_setup import SetInputs as settings
-    from cti_bca_tool.general_functions import save_dict_to_csv
-    from cti_bca_tool.project_fleet import create_fleet_df
-    from cti_bca_tool.project_dicts import create_fleet_totals_dict
-
-    project_fleet_df = create_fleet_df(settings)
-    fleet_totals_dict = create_fleet_totals_dict(project_fleet_df)
-
-    fleet_totals_dict = calc_criteria_emission_costs(settings, fleet_totals_dict)
-    save_dict_to_csv(fleet_totals_dict, settings.path_project / 'test/emission_costs', 'vehicle', 'modelYearID', 'ageID')
+    print('\nModule not meant to run as a script.')

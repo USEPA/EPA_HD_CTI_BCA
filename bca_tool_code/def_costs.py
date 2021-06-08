@@ -119,19 +119,4 @@ def calc_average_def_costs(totals_dict, averages_dict):
 
 
 if __name__ == '__main__':
-    from cti_bca_tool.tool_setup import SetInputs as settings
-    from cti_bca_tool.project_fleet import create_fleet_df, sourcetype_vehicles
-    from cti_bca_tool.project_dicts import create_fleet_totals_dict, create_fleet_averages_dict
-    from cti_bca_tool.general_functions import save_dict_to_csv
-
-    project_fleet_df = create_fleet_df(settings)
-    fleet_totals_dict = create_fleet_totals_dict(project_fleet_df)
-    fleet_averages_dict = create_fleet_averages_dict(project_fleet_df)
-
-    vehicles_st = sourcetype_vehicles(project_fleet_df)
-
-    fleet_totals_dict = calc_def_costs(settings, fleet_totals_dict)
-    fleet_averages_dict = calc_average_def_costs(fleet_totals_dict, fleet_averages_dict)
-
-    save_dict_to_csv(fleet_totals_dict, settings.path_project / 'test/cti_fleet_totals', 'vehicle', 'modelYearID', 'ageID')
-    save_dict_to_csv(fleet_averages_dict, settings.path_project / 'test/cti_fleet_averages', 'vehicle', 'modelYearID', 'ageID')
+    print('\nModule not meant to run as a script.')

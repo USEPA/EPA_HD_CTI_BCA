@@ -4,12 +4,12 @@ from datetime import datetime
 import time
 import attr
 
-import cti_bca_tool
+import bca_tool_code
 # from cti_bca_tool.input_output import get_folder
-from cti_bca_tool import tool_main
-import cti_bca_tool.general_functions as gen_fxns
-from cti_bca_tool.get_context_data import GetFuelPrices, GetDeflators
-from cti_bca_tool.project_dicts import *
+from bca_tool_code import tool_main
+import bca_tool_code.general_functions as gen_fxns
+from bca_tool_code.get_context_data import GetFuelPrices, GetDeflators
+from bca_tool_code.project_dicts import *
 
 
 @attr.s
@@ -21,7 +21,7 @@ class SetInputs:
     """
     # set paths
     path_project = Path.cwd()
-    path_code = path_project / 'cti_bca_tool'
+    path_code = path_project / 'bca_tool_code'
     path_inputs = path_project / 'inputs'
     # path_inputs = get_folder('folder containing input files for the run')
     path_outputs = path_project / 'outputs'
@@ -32,13 +32,13 @@ class SetInputs:
 
     # set run id and files to generate
     run_folder_identifier = input('Provide a run identifier for your output folder name (press return to use the default name)\n')
-    run_folder_identifier = run_folder_identifier if run_folder_identifier != '' else 'BCA-Results'
+    run_folder_identifier = run_folder_identifier if run_folder_identifier != '' else 'BCA-Tool-Results'
 
     generate_post_processing_files = True
 
     start_time = time.time()
     start_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')
-    print(f'\nCTI BCA tool version: {cti_bca_tool.__version__}')
+    print(f'\nHD BCA tool version: {bca_tool_code.__version__}')
     print(f'\nStart date and time:  {start_time_readable}')
 
     print("\nReading input files....")
@@ -116,7 +116,6 @@ class SetInputs:
 
     # generate a dictionary of gdp deflators, calc adjustment values and apply adjustment values to cost inputs
     deflators_obj = GetDeflators(deflators_file, 'Unnamed: 1', 'Gross domestic product')
-    print(deflators_obj)
     gdp_deflators = deflators_obj.calc_adjustment_factors(dollar_basis_analysis)
     cost_steps = [col for col in regclass_costs.columns if '20' in col]
     gen_fxns.convert_dollars_to_analysis_basis(regclass_costs, gdp_deflators, dollar_basis_analysis, [step for step in cost_steps])

@@ -1,6 +1,6 @@
 Getting started
 ===============
-Required files for using the tool can be found in the docket associated with the CTI rulemaking.
+Required files for using the tool can be found in the docket associated with the proposed rulemaking.
 
 In addition, the code repository can be found at https://github.com/USEPA/EPA_HD_CTI_BCA.
 Navigate to the above link and select "Clone or download" to either clone the repository to your local machine or download it as a ZIP file. Alternatively, you may wish to Fork the repo to your
@@ -26,7 +26,7 @@ With the requirements installed, you should be able to run the tool by typing th
 
 ::
 
-    python -m cti_bca_tool.tool_main
+    python -m bca_tool_code.tool_main
 
 This should create an outputs folder in your project folder (i.e., where you have placed the tool and repository), unless one has already been created, where the results of the run can be found.
 

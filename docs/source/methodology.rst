@@ -5,7 +5,7 @@ Methodology
 General
 ^^^^^^^
 
-The project folder for using the tool should contain an "inputs" folder containing necessary input files and a "cti_bca_tool" folder containing the Python modules.
+The project folder for using the tool should contain an "inputs" folder containing necessary input files and a "bca_tool_code" folder containing the Python modules.
 Optionally, a virtual environment folder may be desirable. When running the tool, the user will be asked to provide a run ID. If a run ID is entered, that run ID will be
 included in the run-results folder-ID for the given run. Hitting return will use the default run ID. The tool will create an "outputs" folder within the project folder
 into which all run results will be saved. A timestamp is included in any run-results folder-ID so that new results never overwrite prior results. The user can enter 'test'

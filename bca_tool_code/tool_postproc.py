@@ -6,9 +6,9 @@ This is the post-processing module of the tool. The run_postproc function is cal
 """
 import pandas as pd
 
-import cti_bca_tool.general_functions as gen_fxns
-from cti_bca_tool.discounting import annualize_values
-from cti_bca_tool.figures import create_figures
+import bca_tool_code.general_functions as gen_fxns
+from bca_tool_code.discounting import annualize_values
+from bca_tool_code.figures import create_figures
 
 
 # lists of args to summarize for document tables
@@ -46,8 +46,7 @@ def run_postproc(settings, path_save, totals_dict):
     print('\nDoing some post-processing....')
     # Convert dictionary to DataFrame to generate summaries via pandas.
     totals_df = gen_fxns.convert_dict_to_df(totals_dict, 'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
-    # # create vehicle identifier columns for auto sorting of pivot tables
-    # totals_df = add_vehicle_identifiers_to_df(totals_df)
+
     annual_df = create_annual_summary_df(totals_df)
     annual_df = annualize_values(settings, annual_df)
 
@@ -71,9 +70,6 @@ def doc_tables_post_process(settings, path_for_save, fleet_totals_df):
 
     """
     df = fleet_totals_df.copy()
-
-    # # create vehicle identifier columns for auto sorting of pivot tables
-    # df = add_vehicle_identifiers_to_df(df)
 
     preamble_program_table = preamble_ria_tables(df, index_by_alt_by_year, sum, 1000000, 2, *preamble_program_args)
     preamble_program_table_pv = preamble_ria_tables(df, index_by_alt, sum, 1000000, 2, *preamble_program_args)
@@ -116,7 +112,7 @@ def doc_tables_post_process(settings, path_for_save, fleet_totals_df):
                       'bca_cost_pv': bca_cost_table_pv,
                       }
 
-    document_tables_file = pd.ExcelWriter(path_for_save / f'cti_bca_preamble_ria_tables_{settings.start_time_readable}.xlsx')
+    document_tables_file = pd.ExcelWriter(path_for_save / f'bca_tool_preamble_ria_tables_{settings.start_time_readable}.xlsx')
     for sheet_name in doc_table_dict:
         doc_table_dict[sheet_name].to_excel(document_tables_file, sheet_name=sheet_name)
 
@@ -246,7 +242,7 @@ def create_output_paths(settings):
 
     """
     settings.path_outputs.mkdir(exist_ok=True)
-    path_of_run_folder = settings.path_outputs / f'{settings.start_time_readable}_CTI_{settings.run_folder_identifier}'
+    path_of_run_folder = settings.path_outputs / f'{settings.start_time_readable}_{settings.run_folder_identifier}'
     path_of_run_folder.mkdir(exist_ok=False)
     path_of_run_inputs_folder = path_of_run_folder / 'run_inputs'
     path_of_run_inputs_folder.mkdir(exist_ok=False)

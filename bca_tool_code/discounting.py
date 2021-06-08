@@ -124,14 +124,8 @@ def annualize_values(settings, input_df):
 
 if __name__ == '__main__':
     import pandas as pd
-    from cti_bca_tool.tool_setup import SetInputs as settings
-    from cti_bca_tool.input_output import get_folder
-    from cti_bca_tool.project_fleet import create_fleet_df
-    from cti_bca_tool.project_dicts import create_regclass_sales_dict, create_fleet_totals_dict, create_fleet_averages_dict
-    from cti_bca_tool.direct_costs import calc_regclass_yoy_costs_per_step, calc_direct_costs, calc_per_veh_direct_costs
-    from cti_bca_tool.indirect_costs import calc_per_veh_indirect_costs, calc_indirect_costs
-    from cti_bca_tool.general_functions import save_dict_to_csv
-    from cti_bca_tool.tool_postproc import create_annual_summary_df
+    from bca_tool_code.tool_setup import SetInputs as settings
+    from bca_tool_code.tool_postproc import create_annual_summary_df
 
     # test discount_values and annualize_values functions
     vehicle = (0)
@@ -139,6 +133,8 @@ if __name__ == '__main__':
     my = 2027
     cost = 100
     growth = 0.5
+    settings.social_discount_rate_1, settings.social_discount_rate_2 = dr, dr
+
     data_df = pd.DataFrame({'vehicle': [(vehicle, my, 0, dr), (vehicle, my, 1, dr), (vehicle, my, 2, dr),
                                         (vehicle, my, 3, dr), (vehicle, my, 4, dr), (vehicle, my, 5, dr),
                                         (vehicle, my, 6, dr), (vehicle, my, 7, dr), (vehicle, my, 8, dr),
@@ -147,8 +143,6 @@ if __name__ == '__main__':
                                      cost*(1+growth)**4, cost*(1+growth)**5, cost*(1+growth)**6, cost*(1+growth)**7,
                                      cost*(1+growth)**8, cost*(1+growth)**9, cost*(1+growth)**10]})
 
-    # data_df.insert(0, 'st_Name', 'test')
-    # data_df.insert(0, 'OptionName', 'test')
     data_df.set_index('vehicle', inplace=True)
 
     settings.costs_start = 'start-year'
@@ -162,6 +156,7 @@ if __name__ == '__main__':
                                   'level_2': 'ageID',
                                   'level_3': 'DiscountRate'}, inplace=True)
     discounted_df.insert(0, 'optionID', 0)
+    discounted_df.insert(0, 'OptionName', 'TestOption')
     discounted_df.insert(0, 'yearID', discounted_df[['modelYearID', 'ageID']].sum(axis=1))
     discounted_df = create_annual_summary_df(discounted_df)
     discounted_df = annualize_values(settings, discounted_df)
@@ -179,32 +174,9 @@ if __name__ == '__main__':
                                   'level_2': 'ageID',
                                   'level_3': 'DiscountRate'}, inplace=True)
     discounted_df.insert(0, 'optionID', 0)
+    discounted_df.insert(0, 'OptionName', 'TestOption')
     discounted_df.insert(0, 'yearID', discounted_df[['modelYearID', 'ageID']].sum(axis=1))
     discounted_df = create_annual_summary_df(discounted_df)
     discounted_df = annualize_values(settings, discounted_df)
     print(f'\n\n\nCosts start = {settings.costs_start}\n',
           discounted_df[['yearID', 'periods', 'Cost', 'Cost_PresentValue', 'Cost_Annualized']])
-    stop = 0
-    # # create project fleet data structures, both a DataFrame and a dictionary of regclass based sales
-    # project_fleet_df = create_fleet_df(settings)
-    #
-    # # create a sales (by regclass) and fleet dictionaries
-    # regclass_sales_dict = create_regclass_sales_dict(project_fleet_df)
-    # fleet_totals_dict = create_fleet_totals_dict(project_fleet_df)
-    # fleet_averages_dict = create_fleet_averages_dict(project_fleet_df)
-    #
-    # # calculate direct costs per reg class based on cumulative regclass sales (learning is applied to cumulative reg class sales)
-    # regclass_yoy_costs_per_step = calc_regclass_yoy_costs_per_step(settings, regclass_sales_dict)
-    #
-    # # calculate total direct costs and then per vehicle costs (per sourcetype)
-    # fleet_averages_dict = calc_per_veh_direct_costs(settings, regclass_yoy_costs_per_step, fleet_averages_dict)
-    # fleet_totals_dict = calc_direct_costs(fleet_totals_dict, fleet_averages_dict)
-    #
-    # fleet_averages_dict = calc_per_veh_indirect_costs(settings, fleet_averages_dict)
-    # fleet_totals_dict = calc_indirect_costs(settings, fleet_totals_dict, fleet_averages_dict)
-    #
-    # fleet_totals_dict = discount_values(settings, fleet_totals_dict, 0.03, 0.07)
-    # fleet_averages_dict = discount_values(settings, fleet_averages_dict, 0.03, 0.07)
-    # # save dicts to csv
-    # save_dict_to_csv(fleet_totals_dict, settings.path_project / 'test/cti_fleet_totals', 'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
-    # save_dict_to_csv(fleet_averages_dict, settings.path_project / 'test/cti_fleet_averages', 'vehicle', 'modelYearID', 'ageID', 'DiscountRate')

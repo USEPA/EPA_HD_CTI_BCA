@@ -70,41 +70,16 @@ def calc_deltas_weighted(settings, dict_for_deltas, weighted_arg):
 
 
 if __name__ == '__main__':
-    from cti_bca_tool.tool_setup import SetInputs as settings
-    from cti_bca_tool.project_fleet import create_fleet_df
-    from cti_bca_tool.project_dicts import create_regclass_sales_dict, create_fleet_totals_dict, create_fleet_averages_dict
-    from cti_bca_tool.direct_costs import calc_regclass_yoy_costs_per_step, calc_direct_costs, calc_per_veh_direct_costs
-    from cti_bca_tool.indirect_costs import calc_per_veh_indirect_costs, calc_indirect_costs
-    from cti_bca_tool.discounting import discount_values
-    from cti_bca_tool.general_functions import save_dict_to_csv, convert_dict_to_df
+    from bca_tool_code.tool_setup import SetInputs as settings
+    from bca_tool_code.general_functions import convert_dict_to_df
 
-    # create project fleet data structures, both a DataFrame and a dictionary of regclass based sales
-    project_fleet_df = create_fleet_df(settings)
+    data = {((0, 1, 1, 1), 2027, 0, 0): {'A': 100, 'B': 200},
+            ((0, 1, 1, 1), 2027, 1, 0): {'A': 150, 'B': 250},
+            ((1, 1, 1, 1), 2027, 0, 0): {'A': 50, 'B': 150},
+            ((1, 1, 1, 1), 2027, 1, 0): {'A': 100, 'B': 200}}
 
-    # create a sales (by regclass) and fleet dictionaries
-    regclass_sales_dict = create_regclass_sales_dict(project_fleet_df)
-    fleet_totals_dict = create_fleet_totals_dict(project_fleet_df)
-    fleet_averages_dict = create_fleet_averages_dict(project_fleet_df)
+    data = calc_deltas(settings, data)
 
-    # calculate direct costs per reg class based on cumulative regclass sales (learning is applied to cumulative reg class sales)
-    regclass_yoy_costs_per_step = calc_regclass_yoy_costs_per_step(settings, regclass_sales_dict)
+    data_df = convert_dict_to_df(data, 'vehicle', 'model_year', 'age', 'discount_rate')
 
-    # calculate total direct costs and then per vehicle costs (per sourcetype)
-    fleet_averages_dict = calc_per_veh_direct_costs(settings, regclass_yoy_costs_per_step, fleet_averages_dict)
-    fleet_totals_dict = calc_direct_costs(fleet_totals_dict, fleet_averages_dict)
-
-    fleet_averages_dict = calc_per_veh_indirect_costs(settings, fleet_averages_dict)
-    fleet_totals_dict = calc_indirect_costs(settings, fleet_totals_dict, fleet_averages_dict)
-
-    # fleet_totals_dict_3 = create_fleet_totals_dict(project_fleet_df, rate=0.03)
-    fleet_totals_dict_3 = discount_values(settings, fleet_totals_dict, 0.03)
-    fleet_totals_dict_7 = discount_values(settings, fleet_totals_dict, 0.07)
-
-    # now prep for deltas
-    fleet_totals_df = convert_dict_to_df(fleet_totals_dict, 0, 'vehicle', 'modelYearID', 'ageID')
-
-    # now calc deltas
-    fleet_totals_dict_deltas = calc_deltas(settings, fleet_totals_dict)
-    fleet_totals_dict_3_deltas = calc_deltas(settings, fleet_totals_dict_3)
-
-    print(fleet_totals_dict_deltas)
+    print(data_df) # delta values should all be -50

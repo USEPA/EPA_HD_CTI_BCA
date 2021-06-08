@@ -1,4 +1,4 @@
-from cti_bca_tool.vehicle import Vehicle
+from bca_tool_code.vehicle import Vehicle
 
 
 def create_weighted_cost_dict(settings, fleet_averages_dict, arg_to_weight, arg_to_weight_by):

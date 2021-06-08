@@ -162,21 +162,4 @@ def calc_direct_costs(totals_dict, averages_dict):
 
 
 if __name__ == '__main__':
-    from cti_bca_tool.tool_setup import SetInputs as settings
-    from cti_bca_tool.project_fleet import create_fleet_df
-    from cti_bca_tool.project_dicts import create_regclass_sales_dict, create_fleet_totals_dict, create_fleet_averages_dict
-    from cti_bca_tool.general_functions import save_dict_to_csv
-
-    project_fleet_df = create_fleet_df(settings)
-    fleet_totals_dict = create_fleet_totals_dict(project_fleet_df)
-    fleet_averages_dict = create_fleet_averages_dict(project_fleet_df)
-    regclass_sales_dict = create_regclass_sales_dict(project_fleet_df)
-
-    regclass_yoy_costs_per_step_dict = calc_regclass_yoy_costs_per_step(settings, regclass_sales_dict)
-    fleet_averages_dict = calc_per_veh_direct_costs(settings, regclass_yoy_costs_per_step_dict, fleet_averages_dict)
-    fleet_totals_dict = calc_direct_costs(fleet_totals_dict, fleet_averages_dict)
-
-    # save dicts to csv
-    save_dict_to_csv(regclass_yoy_costs_per_step_dict, settings.path_project / 'test/regclass_direct_costs_by_year_by_step', 'vehicle', 'modelYearID', 'cost_step')
-    save_dict_to_csv(fleet_totals_dict, settings.path_project / 'test/cti_fleet_totals', 'vehicle', 'modelYearID', 'ageID')
-    save_dict_to_csv(fleet_averages_dict, settings.path_project / 'test/cti_fleet_averages', 'vehicle', 'modelYearID', 'ageID')
+    print('\nModule not meant to run as a script.')

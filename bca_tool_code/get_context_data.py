@@ -194,20 +194,18 @@ if __name__ == '__main__':
     This tests the context data creation if run as a script (python -m cti_bca_tool.get_context_data).
     """
     from pathlib import Path
-    import cti_bca_tool.general_functions as gen_fxns
+    import bca_tool_code.general_functions as gen_fxns
 
     path_project = Path.cwd()
     path_dev = path_project / 'dev'
     path_dev.mkdir(exist_ok=True)
     path_inputs = path_project / 'inputs'
-    path_context = path_project / 'context_inputs'
 
     input_files_df = gen_fxns.read_input_files(path_inputs, 'Input_Files.csv', usecols=lambda x: 'Notes' not in x, index_col=0)
     input_files_dict = input_files_df.to_dict('index')    
-    context_files_df = gen_fxns.read_input_files(path_inputs, 'Context_Files.csv', usecols=lambda x: 'Notes' not in x, index_col=0)
-    context_files_dict = context_files_df.to_dict('index')
-    fuel_prices_file = gen_fxns.read_input_files(path_context, context_files_dict['fuel_prices_file']['UserEntry.csv'], skiprows=4, reset_index=True)
-    deflators_file = gen_fxns.read_input_files(path_context, context_files_dict['deflators_file']['UserEntry.csv'], skiprows=4, reset_index=True)
+
+    fuel_prices_file = gen_fxns.read_input_files(path_inputs, input_files_dict['fuel_prices_file']['UserEntry.csv'], skiprows=4, reset_index=True)
+    deflators_file = gen_fxns.read_input_files(path_inputs, input_files_dict['deflators_file']['UserEntry.csv'], skiprows=4, reset_index=True)
 
     aeo_case_1 = 'Reference case'
     fuel_prices_obj = GetFuelPrices(fuel_prices_file, aeo_case_1, 'full name', 'Motor Gasoline', 'Diesel')
@@ -219,10 +217,15 @@ if __name__ == '__main__':
     fuel_prices = fuel_prices_obj.get_prices()
     fuel_prices.to_csv(path_project / f'dev/fuel_prices_{aeo_case_2}.csv', index=False)
 
+    aeo_case_3 = 'Low oil price'
+    fuel_prices_obj = GetFuelPrices(fuel_prices_file, aeo_case_3, 'full name', 'Motor Gasoline', 'Diesel')
+    fuel_prices = fuel_prices_obj.get_prices()
+    fuel_prices.to_csv(path_project / f'dev/fuel_prices_{aeo_case_3}.csv', index=False)
+
     deflators_obj = GetDeflators(deflators_file, 'Unnamed: 1', 'Gross domestic product')
     dollar_basis_analysis = fuel_prices_obj.aeo_dollars()
     deflators = deflators_obj.calc_adjustment_factors(dollar_basis_analysis)
     deflators = pd.DataFrame(deflators)
     deflators.to_csv(path_project / f'dev/gdp_deflators.csv', index=True)
 
-    print(f'\nfuel_prices_{aeo_case_1}.csv, fuel_prices_{aeo_case_2}.csv & gdp_deflators.csv (dollar basis = {dollar_basis_analysis}) have been saved to the {path_dev} folder.')
+    print(f'\nFuel prices in {dollar_basis_analysis} dollars have been saved to the {path_dev} folder.')

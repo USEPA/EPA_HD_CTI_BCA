@@ -14,7 +14,7 @@ Welcome to the usepa-cti-bca documentation!
    introduction
    getting_started
    methodology
-   cti_bca_tool
+   bca_tool_code
    software_policy
 
 

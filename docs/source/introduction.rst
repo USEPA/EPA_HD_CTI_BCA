@@ -5,13 +5,13 @@ Introduction
 ============
 
 
-EPA Heavy-duty Clean Truck Initiative (CTI) Benefit-Cost Analysis (BCA) calculation tool
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+EPA Heavy-duty Benefit-Cost Analysis (BCA) calculation tool
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-What is the CTI BCA tool?
--------------------------
+What is the BCA tool?
+---------------------
 
-The CTI BCA tool was developed by EPA to estimate costs and benefits (only those based on a dollar-per-ton accounting) of the proposed CTI rulemaking options.
+The heavy-duty BCA tool was developed by EPA to estimate costs and benefits (only those based on a dollar-per-ton accounting) of proposed rulemaking options.
 The tool is written in Python (version 3.8) and makes use of several input files that specify, for example, costs for technology expected to be added to vehicles to facilitate compliance,
 vehicle populations and sales, fuel consumption, vehicle miles traveled, etc.
 
@@ -49,20 +49,20 @@ What are the output files?
 The output files are pretty self-explanatory by their file names.
 
 Output files generated are:
-    - cti_bca_preamble_ria_tables.xlsx which contains pivot tables that should correspond roughly to many of the tables presented in regulatory documents (tech and operating cost tables only, not pollution costs or benefits). This file also has annualized results.
-    - cti_bca_estimated_ages.csv which contains the required, calculated and estimated warranty and useful life ages.
-    - cti_bca_vmt_weighted_emission_repair_cpm.csv which contains weighted cost per mile emission repair results by sourcetype/regclass/fueltype.
-    - cti_bca_vmt_weighted_fuel_cpm.csv which contains weighted cost per mile fuel costs results by sourcetype/regclass/fueltype.
-    - cti_bca_vmt_weighted_def_cpm.csv which contains weighted cost per mile diesel exhaust fluid costs results by sourcetype/regclass/fueltype.
-    - cti_bca_repair_cpm_details.csv which contains details of calculations used to estimate repair costs per mile.
-    - cti_bca_fleet_averages.csv which contains average results for all vehicles by calendar year/model year/age.
-    - cti_bca_fleet_totals.csv which contains total results for all vehicles by calendar year/model year/age.
+    - bca_tool_preamble_ria_tables.xlsx which contains pivot tables that should correspond roughly to many of the tables presented in regulatory documents (tech and operating cost tables only, not pollution costs or benefits). This file also has annualized results.
+    - bca_tool_estimated_ages.csv which contains the required, calculated and estimated warranty and useful life ages.
+    - bca_tool_vmt_weighted_emission_repair_cpm.csv which contains weighted cost per mile emission repair results by sourcetype/regclass/fueltype.
+    - bca_tool_vmt_weighted_fuel_cpm.csv which contains weighted cost per mile fuel costs results by sourcetype/regclass/fueltype.
+    - bca_tool_vmt_weighted_def_cpm.csv which contains weighted cost per mile diesel exhaust fluid costs results by sourcetype/regclass/fueltype.
+    - bca_tool_repair_cpm_details.csv which contains details of calculations used to estimate repair costs per mile.
+    - bca_tool_fleet_averages.csv which contains average results for all vehicles by calendar year/model year/age.
+    - bca_tool_fleet_totals.csv which contains total results for all vehicles by calendar year/model year/age.
     - summary_log.csv which contains the version number of the tool, date and time statistics for the run and input file data specific to the run.
 
 A folder called "run_results" will be created within the specific run's output folder that contains the output files described above. A subfolder called "figures" will be created where figures are saved.
 A folder called "modified_inputs" is also created which holds modified versions of the input files. Those modifications include reshaping of the input files along with conversions of the
 dollar-based inputs into a consistent dollar basis.
 A folder called "run_inputs" is also created which holds a direct copy/paste of all input files used for the given run (those specified in Input_Files.csv).
-A folder called "code" is also created which holds a direct copy/paste of all files in the cti_bca_tool package folder (i.e., the python code).
+A folder called "code" is also created which holds a direct copy/paste of all files in the bca_tool_code package folder (i.e., the python code).
 
 Note that outputs are saved to an outputs folder that will be created (if it does not already exist) in the parent directory of the directory in which the code resides.

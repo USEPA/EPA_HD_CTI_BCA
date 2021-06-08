@@ -193,36 +193,4 @@ def calc_emission_repair_costs(totals_dict, averages_dict):
 
 
 if __name__ == '__main__':
-    from cti_bca_tool.tool_setup import SetInputs as settings
-    from cti_bca_tool.general_functions import save_dict_to_csv
-    from cti_bca_tool.project_fleet import create_fleet_df, regclass_vehicles
-    from cti_bca_tool.project_dicts import create_regclass_sales_dict, create_totals_dict, create_averages_dict
-    from cti_bca_tool.direct_costs import calc_regclass_yoy_costs_per_step, calc_direct_costs, calc_per_veh_direct_costs
-    from cti_bca_tool.indirect_costs import calc_per_veh_indirect_costs, calc_indirect_costs
-    from cti_bca_tool.tech_costs import calc_per_veh_tech_costs, calc_tech_costs
-
-    project_fleet_df = create_fleet_df(settings)
-    vehicles_rc = regclass_vehicles(project_fleet_df)
-
-    regclass_sales_dict = create_regclass_sales_dict(project_fleet_df)
-    totals_dict = create_totals_dict(project_fleet_df)
-    averages_dict = create_averages_dict(project_fleet_df)
-
-    regclass_yoy_costs_per_step = calc_regclass_yoy_costs_per_step(settings, regclass_sales_dict)
-    averages_dict = calc_per_veh_direct_costs(settings, regclass_yoy_costs_per_step, averages_dict)
-    totals_dict = calc_direct_costs(totals_dict, averages_dict)
-
-    averages_dict = calc_per_veh_indirect_costs(settings, averages_dict)
-    averages_dict = calc_per_veh_tech_costs(averages_dict)
-
-    totals_dict = calc_indirect_costs(settings, totals_dict, averages_dict)
-    totals_dict = calc_tech_costs(totals_dict, averages_dict)
-
-    averages_dict = calc_emission_repair_costs_per_mile(settings, averages_dict)
-    averages_dict = calc_per_veh_emission_repair_costs(averages_dict)
-    totals_dict = calc_emission_repair_costs(totals_dict, averages_dict)
-
-    save_dict_to_csv(averages_dict, settings.path_project / 'test/cti_fleet_averages', 'vehicle', 'modelYearID', 'ageID')
-    save_dict_to_csv(totals_dict, settings.path_project / 'test/cti_fleet_totals', 'vehicle', 'modelYearID', 'ageID')
-    save_dict_to_csv(estimated_ages_dict, settings.path_project / 'test/estimated_ages', 'vehicle', 'modelYearID', 'identifier')
-    save_dict_to_csv(repair_cpm_dict, settings.path_project / 'test/repair_cpm_details', 'vehicle', 'modelYearID', 'ageID')
+    print('\nModule not meant to run as a script.')

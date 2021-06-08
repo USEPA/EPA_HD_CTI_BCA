@@ -8,25 +8,25 @@ import pandas as pd
 import shutil
 from datetime import datetime
 import time
-import cti_bca_tool
-from cti_bca_tool.project_fleet import create_fleet_df
-from cti_bca_tool.project_dicts import create_regclass_sales_dict, create_fleet_totals_dict, create_fleet_averages_dict
-from cti_bca_tool.direct_costs import calc_regclass_yoy_costs_per_step, calc_per_veh_direct_costs, calc_direct_costs
-from cti_bca_tool.indirect_costs import calc_per_veh_indirect_costs, calc_indirect_costs
-from cti_bca_tool.tech_costs import calc_per_veh_tech_costs, calc_tech_costs
-from cti_bca_tool.def_costs import calc_def_costs, calc_average_def_costs
-from cti_bca_tool.fuel_costs import calc_fuel_costs, calc_average_fuel_costs
-from cti_bca_tool.repair_costs import calc_emission_repair_costs_per_mile, calc_per_veh_emission_repair_costs, \
+import bca_tool_code
+from bca_tool_code.project_fleet import create_fleet_df
+from bca_tool_code.project_dicts import create_regclass_sales_dict, create_fleet_totals_dict, create_fleet_averages_dict
+from bca_tool_code.direct_costs import calc_regclass_yoy_costs_per_step, calc_per_veh_direct_costs, calc_direct_costs
+from bca_tool_code.indirect_costs import calc_per_veh_indirect_costs, calc_indirect_costs
+from bca_tool_code.tech_costs import calc_per_veh_tech_costs, calc_tech_costs
+from bca_tool_code.def_costs import calc_def_costs, calc_average_def_costs
+from bca_tool_code.fuel_costs import calc_fuel_costs, calc_average_fuel_costs
+from bca_tool_code.repair_costs import calc_emission_repair_costs_per_mile, calc_per_veh_emission_repair_costs, \
     calc_emission_repair_costs, estimated_ages_dict, repair_cpm_dict
-from cti_bca_tool.emission_costs import calc_criteria_emission_costs
-from cti_bca_tool.sum_by_vehicle import calc_sum_of_costs
-from cti_bca_tool.discounting import discount_values
-from cti_bca_tool.weighted_results import create_weighted_cost_dict
-from cti_bca_tool.calc_deltas import calc_deltas, calc_deltas_weighted
-from cti_bca_tool.vehicle import vehicle_name
-from cti_bca_tool.tool_postproc import run_postproc, create_output_paths
+from bca_tool_code.emission_costs import calc_criteria_emission_costs
+from bca_tool_code.sum_by_vehicle import calc_sum_of_costs
+from bca_tool_code.discounting import discount_values
+from bca_tool_code.weighted_results import create_weighted_cost_dict
+from bca_tool_code.calc_deltas import calc_deltas, calc_deltas_weighted
+from bca_tool_code.vehicle import vehicle_name
+from bca_tool_code.tool_postproc import run_postproc, create_output_paths
 
-from cti_bca_tool.general_functions import save_dict_to_csv, inputs_filenames, get_file_datetime
+from bca_tool_code.general_functions import save_dict_to_csv, inputs_filenames, get_file_datetime
 
 
 def main(settings):
@@ -164,32 +164,32 @@ def main(settings):
         fleet_totals_df.insert(0, 'yearID', fleet_totals_df[['modelYearID', 'ageID']].sum(axis=1))
     cols = [col for col in fleet_totals_df.columns if col not in settings.row_header_for_fleet_files]
     fleet_totals_df = pd.DataFrame(fleet_totals_df, columns=settings.row_header_for_fleet_files + cols)
-    fleet_totals_df.to_csv(path_of_run_results_folder / f'cti_bca_fleet_totals_{settings.start_time_readable}.csv', index=False)
+    fleet_totals_df.to_csv(path_of_run_results_folder / f'bca_tool_fleet_totals_{settings.start_time_readable}.csv', index=False)
 
     save_dict_to_csv(fleet_averages_dict,
-                     path_of_run_results_folder / f'cti_bca_fleet_averages_{settings.start_time_readable}',
+                     path_of_run_results_folder / f'bca_tool_fleet_averages_{settings.start_time_readable}',
                      settings.row_header_for_fleet_files,
                      'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
 
     save_dict_to_csv(vehicle_name(settings, estimated_ages_dict),
-                     path_of_run_results_folder / f'cti_bca_estimated_ages_{settings.start_time_readable}',
+                     path_of_run_results_folder / f'bca_tool_estimated_ages_{settings.start_time_readable}',
                      list(),
                      'vehicle', 'modelYearID', 'identifier')
     save_dict_to_csv(vehicle_name(settings, repair_cpm_dict),
-                     path_of_run_results_folder / f'cti_bca_repair_cpm_details_{settings.start_time_readable}',
+                     path_of_run_results_folder / f'bca_tool_repair_cpm_details_{settings.start_time_readable}',
                      list(),
                      'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
 
     save_dict_to_csv(wtd_def_cpm_dict,
-                     path_of_run_results_folder / f'cti_bca_vmt_weighted_def_cpm_{settings.start_time_readable}',
+                     path_of_run_results_folder / f'bca_tool_vmt_weighted_def_cpm_{settings.start_time_readable}',
                      list(),
                      'vehicle', 'modelYearID')
     save_dict_to_csv(wtd_fuel_cpm_dict,
-                     path_of_run_results_folder / f'cti_bca_vmt_weighted_fuel_cpm_{settings.start_time_readable}',
+                     path_of_run_results_folder / f'bca_tool_vmt_weighted_fuel_cpm_{settings.start_time_readable}',
                      list(),
                      'vehicle', 'modelYearID')
     save_dict_to_csv(wtd_repair_cpm_dict,
-                     path_of_run_results_folder / f'cti_bca_vmt_weighted_emission_repair_cpm_{settings.start_time_readable}',
+                     path_of_run_results_folder / f'bca_tool_vmt_weighted_emission_repair_cpm_{settings.start_time_readable}',
                      list(),
                      'vehicle', 'modelYearID')
 
@@ -199,7 +199,7 @@ def main(settings):
     elapsed_time = end_time - settings.start_time
 
     summary_log = pd.DataFrame(data={'Item': ['Version', 'Run folder', 'Start of run', 'Elapsed time read inputs', 'Elapsed time calculations', 'Elapsed time post-processing', 'Elapsed time save outputs', 'End of run', 'Elapsed runtime'],
-                                     'Results': [cti_bca_tool.__version__, path_of_run_folder, settings.start_time_readable, settings.elapsed_time_read, elapsed_time_calcs, elapsed_time_postproc, elapsed_time_outputs, end_time_readable, elapsed_time],
+                                     'Results': [bca_tool_code.__version__, path_of_run_folder, settings.start_time_readable, settings.elapsed_time_read, elapsed_time_calcs, elapsed_time_postproc, elapsed_time_outputs, end_time_readable, elapsed_time],
                                      'Units': ['', '', 'YYYYmmdd-HHMMSS', 'seconds', 'seconds', 'seconds', 'seconds', 'YYYYmmdd-HHMMSS', 'seconds']})
     summary_log = pd.concat([summary_log, get_file_datetime(settings.input_files_pathlist)], axis=0, sort=False, ignore_index=True)
 
@@ -212,5 +212,5 @@ def main(settings):
 
 
 if __name__ == '__main__':
-    from cti_bca_tool.tool_setup import SetInputs as settings
+    from bca_tool_code.tool_setup import SetInputs as settings
     main(settings)
