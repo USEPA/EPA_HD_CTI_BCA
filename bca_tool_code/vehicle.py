@@ -88,8 +88,8 @@ def vehicle_name(settings, dict_of_vehicles):
     """
     no_action_name = settings.options_dict[settings.no_action_alt]['OptionName']
     for key in dict_of_vehicles.keys():
-        vehicle = key[0]
-        alt, st, rc, ft = vehicle
+        vehicle, alt = key[0], key[1]
+        st, rc, ft = vehicle
         if alt > len(settings.options_dict):
             action_alt = alt / 10
             action_name = settings.options_dict[action_alt]['OptionName']

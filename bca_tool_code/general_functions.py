@@ -193,7 +193,10 @@ def save_dict_to_csv(dict_to_save, save_path, row_header=None, *args):
     df = pd.DataFrame(dict_to_save).transpose()
     df.reset_index(inplace=True)
     for idx, arg in enumerate(args):
-        df.rename(columns={f'level_{idx}': arg}, inplace=True)
+        if arg in df.columns:
+            df.drop(columns=f'level_{idx}', inplace=True)
+        else:
+            df.rename(columns={f'level_{idx}': arg}, inplace=True)
     if row_header and 'yearID' not in df.columns.tolist():
         df.insert(0, 'yearID', df[['modelYearID', 'ageID']].sum(axis=1))
     cols = [col for col in df.columns if col not in row_header]
@@ -217,6 +220,9 @@ def convert_dict_to_df(dict_to_convert, *args):
     df = pd.DataFrame(dict_to_convert).transpose()
     df.reset_index(inplace=True)
     for idx, arg in enumerate(args):
-        df.rename(columns={f'level_{idx}': arg}, inplace=True)
+        if arg in df.columns:
+            df.drop(columns=f'level_{idx}', inplace=True)
+        else:
+            df.rename(columns={f'level_{idx}': arg}, inplace=True)
     df.reset_index(drop=True, inplace=True)
     return df

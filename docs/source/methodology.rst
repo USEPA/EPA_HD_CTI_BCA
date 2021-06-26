@@ -42,8 +42,8 @@ For step-1 and later direct costs (equations show step-1 occurring in MY2027):
 .. math::
     :label:
 
-    & DirectCost_{optionID;vehicle;MY} \\
-    & =\small(\frac{CumulativeSales_{2027+}+Sales_{MY2027} \times SeedVolumeFactor} {Sales_{MY2027} \times (1+SeedVolumeFactor)})^{b} \times DirectCost_{optionID;vehicle;MY2027}
+    & DirectCost_{optionID;engine;MY} \\
+    & =\small(\frac{CumulativeSales_{2027+}+Sales_{MY2027} \times SeedVolumeFactor} {Sales_{MY2027} \times (1+SeedVolumeFactor)})^{b} \times DirectCost_{optionID;engine;MY2027}
 
 where,
 
@@ -52,7 +52,7 @@ where,
   DirectCostInputs_byRegClass_byFuelType file
 - *optionID* = the option considered (i.e, baseline or one of the action alternatives)
 - *MY* = the model year being considered
-- *vehicle* = a unique regclass-fueltype vehicle within MOVES
+- *engine* = a unique regclass-fueltype engine within MOVES
 - *CumulativeSales* = cumulative sales of MY2027 and later vehicles in model year, MY, of implementation
 - *SeedVolumeFactor* = 0 or greater to represent the number of years of learning already having occurred on a technology
 
@@ -61,8 +61,8 @@ For subsequent steps, e.g., new direct costs implemented in 2030:
 .. math::
     :label:
 
-    & DirectCost_{optionID;vehicle;MY} \\
-    & =\small(\frac{CumulativeSales_{2030+}+Sales_{MY2030} \times SeedVolumeFactor} {Sales_{MY2030} \times (1+SeedVolumeFactor)})^{b} \times DirectCost_{optionID;vehicle;MY2030}
+    & DirectCost_{optionID;engine;MY} \\
+    & =\small(\frac{CumulativeSales_{2030+}+Sales_{MY2030} \times SeedVolumeFactor} {Sales_{MY2030} \times (1+SeedVolumeFactor)})^{b} \times DirectCost_{optionID;engine;MY2030}
 
 where,
 
@@ -79,7 +79,7 @@ Direct cost scalars
 .. math::
     :label:
 
-    DirectCostScalar_{optionID;vehicle;MY}=\small\frac{DirectCost_{optionID;vehicle;MY}} {DirectCost_{Baseline;HHDDE;MY}}
+    DirectCostScalar_{optionID;engine;MY}=\small\frac{DirectCost_{optionID;engine;MY}} {DirectCost_{Baseline;HHDDE;MY}}
 
 where,
 
@@ -87,7 +87,7 @@ where,
 - *optionID* = the option considered (i.e, baseline or one of the action alternatives)
 - *HHDDE* = heavy heavy-duty diesel engine regulatory class
 - *MY* = the model year being considered
-- *vehicle* = a unique regclass-fueltype vehicle within MOVES
+- *engine* = a unique regclass-fueltype engine within MOVES
 
 Estimated warranty & useful life ages
 .....................................
@@ -129,20 +129,20 @@ Cost per mile by age (for emission-related repairs)
 .. math::
     :label: inw_cpm
 
-    & InWarrantyCPM_{optionID;vehicle;MY}\\
-    & = \small FleetAdvantageCPM_{Year1} \times EmissionRepairShare \times DirectCostScalar_{optionID;vehicle;MY}
+    & InWarrantyCPM_{optionID;engine;MY}\\
+    & = \small FleetAdvantageCPM_{Year1} \times EmissionRepairShare \times DirectCostScalar_{optionID;engine;MY}
 
 .. math::
     :label: atul_cpm
 
-    & AtUsefulLifeCPM_{optionID;vehicle;MY}\\
-    & = \small FleetAdvantageCPM_{Year6} \times EmissionRepairShare \times DirectCostScalar_{optionID;vehicle;MY}
+    & AtUsefulLifeCPM_{optionID;engine;MY}\\
+    & = \small FleetAdvantageCPM_{Year6} \times EmissionRepairShare \times DirectCostScalar_{optionID;engine;MY}
 
 .. math::
     :label: max_cpm
 
-    & MaxCPM_{optionID;vehicle;MY}\\
-    & = \small FleetAdvantageCPM_{Year7} \times EmissionRepairShare \times DirectCostScalar_{optionID;vehicle;MY}
+    & MaxCPM_{optionID;engine;MY}\\
+    & = \small FleetAdvantageCPM_{Year7} \times EmissionRepairShare \times DirectCostScalar_{optionID;engine;MY}
 
 .. math::
     :label: slope_cpm
@@ -161,7 +161,8 @@ where,
 - *FleetAdvantageCPMYear6* = year six cost per mile from the Fleet Advantage white paper (14.56 cents/mile in 2018 dollars)
 - *FleetAdvantageCPMYear7* = year seven cost per mile from the Fleet Advantage white paper (19.82 cents/mile in 2018 dollars)
 - *EmissionRepairShare* = EPA developed share of Fleet Advantage Maintenance and Repair costs that are emission-related (10.8%)
-- *vehicle* = a unique regclass-fueltype vehicle for equations :math:numref:`inw_cpm`, :math:numref:`atul_cpm` and :math:numref:`max_cpm` and a unique sourcetype-regclass-fueltype vehicle in equation :math:numref:`slope_cpm`
+- *engine* = a unique regclass-fueltype engine for equations :math:numref:`inw_cpm`, :math:numref:`atul_cpm` and :math:numref:`max_cpm`
+- *vehicle* = a unique sourcetype-regclass-fueltype vehicle in equation :math:numref:`slope_cpm`
 
 Repair and maintenance cost per mile values—currently based on the Fleet Advantage whitepaper—are controlled via the “Repair_and_Maintenance_Curve_Inputs.csv”
 input file to the tool.

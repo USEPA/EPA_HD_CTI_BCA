@@ -23,14 +23,14 @@ def create_weighted_cost_dict(settings, fleet_averages_dict, arg_to_weight, arg_
     wtd_result_dict = dict()
     weighted_results_dict = dict()
     for key in fleet_averages_dict.keys():
-        vehicle, model_year, age_id = key[0], key[1], key[2]
-        alt, st, rc, ft = vehicle
+        vehicle, alt, model_year, age_id = key[0], key[1], key[2], key[3]
+        st, rc, ft = vehicle
         if arg_to_weight == 'DEFCost_AvgPerMile' and ft != 2:
             pass
         else:
             if model_year <= (settings.year_max - settings.max_age_included - 1):
-                print(f'Calculating weighted {arg_to_weight} for {vehicle}, MY {model_year}')
-                wtd_result_dict_id = ((vehicle), model_year)
+                print(f'Calculating weighted {arg_to_weight} for {vehicle}, optionID {alt}, MY {model_year}')
+                wtd_result_dict_id = (vehicle, alt, model_year)
                 numerator, denominator = 0, 0
                 if wtd_result_dict_id in wtd_result_dict:
                     numerator, denominator = wtd_result_dict[wtd_result_dict_id]['numerator'], wtd_result_dict[wtd_result_dict_id]['denominator']
@@ -42,8 +42,8 @@ def create_weighted_cost_dict(settings, fleet_averages_dict, arg_to_weight, arg_
                     wtd_result_dict[wtd_result_dict_id] = {'numerator': numerator, 'denominator': denominator}
     for key in wtd_result_dict.keys():
         numerator, denominator = wtd_result_dict[key]['numerator'], wtd_result_dict[key]['denominator']
-        vehicle = key[0]
-        alt, st, rc, ft = vehicle
+        vehicle, alt = key[0], key[1]
+        st, rc, ft = vehicle
         source_type = Vehicle(st).sourcetype_name()
         weighted_results_dict[key] = {'optionID': alt, 'sourceTypeName': source_type, 'cents_per_mile': 100 * numerator / denominator}
     return weighted_results_dict

@@ -169,29 +169,29 @@ def main(settings):
     save_dict_to_csv(fleet_averages_dict,
                      path_of_run_results_folder / f'bca_tool_fleet_averages_{settings.start_time_readable}',
                      settings.row_header_for_fleet_files,
-                     'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
+                     'vehicle', 'optionID', 'modelYearID', 'ageID', 'DiscountRate')
 
     save_dict_to_csv(vehicle_name(settings, estimated_ages_dict),
                      path_of_run_results_folder / f'bca_tool_estimated_ages_{settings.start_time_readable}',
                      list(),
-                     'vehicle', 'modelYearID', 'identifier')
+                     'vehicle', 'optionID', 'modelYearID', 'identifier')
     save_dict_to_csv(vehicle_name(settings, repair_cpm_dict),
                      path_of_run_results_folder / f'bca_tool_repair_cpm_details_{settings.start_time_readable}',
                      list(),
-                     'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
+                     'vehicle', 'optionID', 'modelYearID', 'ageID', 'DiscountRate')
 
     save_dict_to_csv(wtd_def_cpm_dict,
                      path_of_run_results_folder / f'bca_tool_vmt_weighted_def_cpm_{settings.start_time_readable}',
                      list(),
-                     'vehicle', 'modelYearID')
+                     'vehicle', 'optionID', 'modelYearID')
     save_dict_to_csv(wtd_fuel_cpm_dict,
                      path_of_run_results_folder / f'bca_tool_vmt_weighted_fuel_cpm_{settings.start_time_readable}',
                      list(),
-                     'vehicle', 'modelYearID')
+                     'vehicle', 'optionID', 'modelYearID')
     save_dict_to_csv(wtd_repair_cpm_dict,
                      path_of_run_results_folder / f'bca_tool_vmt_weighted_emission_repair_cpm_{settings.start_time_readable}',
                      list(),
-                     'vehicle', 'modelYearID')
+                     'vehicle', 'optionID', 'modelYearID')
 
     elapsed_time_outputs = time.time() - start_time_outputs
     end_time = time.time()

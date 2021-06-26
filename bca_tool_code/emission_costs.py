@@ -41,8 +41,8 @@ def calc_criteria_emission_costs(settings, totals_dict):
     cap_dr1 = settings.criteria_discount_rate_1
     cap_dr2 = settings.criteria_discount_rate_2
     for key in totals_dict.keys():
-        vehicle, model_year, age_id = key[0], key[1], key[2]
-        print(f'Calculating criteria emission costs for {vehicle}, MY {model_year}, age {age_id}')
+        vehicle, alt, model_year, age_id = key[0], key[1], key[2], key[3]
+        print(f'Calculating criteria emission costs for {vehicle}, optionID {alt}, MY {model_year}, age {age_id}')
         year = model_year + age_id
         pm_tailpipe_cap_dr1, pm_tailpipe_cap_dr2, nox_tailpipe_cap_dr1, nox_tailpipe_cap_dr2 = get_emission_cost_factors(settings, year)
         pm_tons = totals_dict[key]['PM25_UStons']

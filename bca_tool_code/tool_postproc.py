@@ -45,7 +45,7 @@ def run_postproc(settings, path_save, totals_dict):
     """
     print('\nDoing some post-processing....')
     # Convert dictionary to DataFrame to generate summaries via pandas.
-    totals_df = gen_fxns.convert_dict_to_df(totals_dict, 'vehicle', 'modelYearID', 'ageID', 'DiscountRate')
+    totals_df = gen_fxns.convert_dict_to_df(totals_dict, 'vehicle', 'optionID', 'modelYearID', 'ageID', 'DiscountRate')
 
     annual_df = create_annual_summary_df(totals_df)
     annual_df = annualize_values(settings, annual_df)

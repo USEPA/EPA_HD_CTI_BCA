@@ -33,8 +33,8 @@ def discount_values(settings, dict_of_values):
     discount_to_year = settings.discount_to_yearID
     update_dict = dict()
     for key in dict_of_values.keys():
-        vehicle, model_year, age_id = key[0], key[1], key[2]
-        print(f'Discounting values for {vehicle}, MY {model_year}, age {age_id}')
+        vehicle, alt, model_year, age_id = key[0], key[1], key[2], key[3]
+        print(f'Discounting values for {vehicle}, optionID {alt}, MY {model_year}, age {age_id}')
         year = model_year + age_id
         # create list of non_emission_cost_args by key, this avoids DEF costs for gasolines
         non_emission_cost_args = [k for k, v in dict_of_values[key].items() if 'Cost' in k and '_0.0' not in k]
@@ -49,7 +49,7 @@ def discount_values(settings, dict_of_values):
             for arg in emission_costs_cap_dr2:
                 arg_value = dict_of_values[key][arg] / ((1 + cap_dr2) ** (year - discount_to_year + discount_offset))
                 rate_dict.update({arg: arg_value})
-            update_dict[((vehicle), model_year, age_id, social_discrate)] = rate_dict
+            update_dict[(vehicle, alt, model_year, age_id, social_discrate)] = rate_dict
     dict_of_values.update(update_dict)
     return dict_of_values
 
@@ -129,16 +129,17 @@ if __name__ == '__main__':
 
     # test discount_values and annualize_values functions
     vehicle = (0)
+    alt = 0
     dr = 0.03
     my = 2027
     cost = 100
     growth = 0.5
     settings.social_discount_rate_1, settings.social_discount_rate_2 = dr, dr
 
-    data_df = pd.DataFrame({'vehicle': [(vehicle, my, 0, dr), (vehicle, my, 1, dr), (vehicle, my, 2, dr),
-                                        (vehicle, my, 3, dr), (vehicle, my, 4, dr), (vehicle, my, 5, dr),
-                                        (vehicle, my, 6, dr), (vehicle, my, 7, dr), (vehicle, my, 8, dr),
-                                        (vehicle, my, 9, dr), (vehicle, my, 10, dr)],
+    data_df = pd.DataFrame({'vehicle': [(vehicle, alt, my, 0, dr), (vehicle, alt, my, 1, dr), (vehicle, alt, my, 2, dr),
+                                        (vehicle, alt, my, 3, dr), (vehicle, alt, my, 4, dr), (vehicle, alt, my, 5, dr),
+                                        (vehicle, alt, my, 6, dr), (vehicle, alt, my, 7, dr), (vehicle, alt, my, 8, dr),
+                                        (vehicle, alt, my, 9, dr), (vehicle, alt, my, 10, dr)],
                             'Cost': [cost*(1+growth)**0, cost*(1+growth)**1, cost*(1+growth)**2, cost*(1+growth)**3,
                                      cost*(1+growth)**4, cost*(1+growth)**5, cost*(1+growth)**6, cost*(1+growth)**7,
                                      cost*(1+growth)**8, cost*(1+growth)**9, cost*(1+growth)**10]})
@@ -152,10 +153,10 @@ if __name__ == '__main__':
     discounted_df = pd.DataFrame(discounted_dict).transpose()
     discounted_df.reset_index(drop=False, inplace=True)
     discounted_df.rename(columns={'level_0': 'vehicle',
-                                  'level_1': 'modelYearID',
-                                  'level_2': 'ageID',
-                                  'level_3': 'DiscountRate'}, inplace=True)
-    discounted_df.insert(0, 'optionID', 0)
+                                  'level_1': 'optionID',
+                                  'level_2': 'modelYearID',
+                                  'level_3': 'ageID',
+                                  'level_4': 'DiscountRate'}, inplace=True)
     discounted_df.insert(0, 'OptionName', 'TestOption')
     discounted_df.insert(0, 'yearID', discounted_df[['modelYearID', 'ageID']].sum(axis=1))
     discounted_df = create_annual_summary_df(discounted_df)
@@ -170,10 +171,10 @@ if __name__ == '__main__':
     discounted_df = pd.DataFrame(discounted_dict).transpose()
     discounted_df.reset_index(drop=False, inplace=True)
     discounted_df.rename(columns={'level_0': 'vehicle',
-                                  'level_1': 'modelYearID',
-                                  'level_2': 'ageID',
-                                  'level_3': 'DiscountRate'}, inplace=True)
-    discounted_df.insert(0, 'optionID', 0)
+                                  'level_1': 'optionID',
+                                  'level_2': 'modelYearID',
+                                  'level_3': 'ageID',
+                                  'level_4': 'DiscountRate'}, inplace=True)
     discounted_df.insert(0, 'OptionName', 'TestOption')
     discounted_df.insert(0, 'yearID', discounted_df[['modelYearID', 'ageID']].sum(axis=1))
     discounted_df = create_annual_summary_df(discounted_df)

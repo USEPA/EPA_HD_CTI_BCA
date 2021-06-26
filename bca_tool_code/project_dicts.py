@@ -15,7 +15,7 @@ def create_fleet_totals_dict(fleet_df, rate=0):
     """
     df = fleet_df.copy()
     df.insert(0, 'DiscountRate', rate)
-    id = pd.Series(zip(zip(df['optionID'], fleet_df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['modelYearID'], df['ageID'], df['DiscountRate']))
+    id = pd.Series(zip(zip(fleet_df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['optionID'], df['modelYearID'], df['ageID'], df['DiscountRate']))
     df.insert(0, 'id', id)
     df.drop(columns=['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'yearID', 'modelYearID', 'ageID', 'DiscountRate'], inplace=True)
     df.set_index('id', inplace=True)
@@ -35,11 +35,9 @@ def create_fleet_averages_dict(fleet_df, rate=0):
         an alt_sourcetype_regclass_fueltype vehicle, and values representing per vehicle or per mile averages for each key over time.
 
     """
-    # df = pd.DataFrame(fleet_df[['OptionName', 'optionID', 'sourceTypeID', 'sourceTypeName', 'regClassID', 'regClassName',
-    #                             'fuelTypeID', 'fuelTypeName', 'yearID', 'modelYearID', 'ageID']]).reset_index(drop=True)
     df = pd.DataFrame(fleet_df[['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'yearID', 'modelYearID', 'ageID']]).reset_index(drop=True)
     df.insert(0, 'DiscountRate', rate)
-    id = pd.Series(zip(zip(df['optionID'], df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['modelYearID'], df['ageID'], df['DiscountRate']))
+    id = pd.Series(zip(zip(df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['optionID'], df['modelYearID'], df['ageID'], df['DiscountRate']))
     df.insert(0, 'id', id)
     df.drop(columns=['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'yearID', 'modelYearID', 'ageID', 'DiscountRate'], inplace=True)
     df.insert(len(df.columns), 'VMT_AvgPerVeh', fleet_df['VMT'] / fleet_df['VPOP'])
@@ -63,7 +61,7 @@ def create_regclass_sales_dict(fleet_df):
     df = fleet_df.copy()
     df = pd.DataFrame(df.loc[df['ageID'] == 0, ['optionID', 'regClassID', 'fuelTypeID', 'modelYearID', 'VPOP']]).reset_index(drop=True)
     df = df.groupby(by=['optionID', 'regClassID', 'fuelTypeID', 'modelYearID'], as_index=False).sum()
-    df.insert(0, 'id', pd.Series(zip(zip(df['optionID'], df['regClassID'], df['fuelTypeID']), df['modelYearID'])))
+    df.insert(0, 'id', pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID'], df['modelYearID'])))
     df.drop(columns=['optionID', 'regClassID', 'fuelTypeID', 'modelYearID'], inplace=True)
     df.set_index('id', inplace=True)
     return df.to_dict('index')
@@ -82,7 +80,7 @@ def create_moves_adjustments_dict(input_df, *args):
     """
     df = input_df.copy()
     cols = [arg for arg in args]
-    id = pd.Series(zip(df[cols[0]], df[cols[1]], df[cols[2]]))
+    id = pd.Series(zip(zip(df[cols[0]], df[cols[1]]), df[cols[2]]))
     df.insert(0, 'id', id)
     df.drop(columns=cols, inplace=True)
     df.set_index('id', inplace=True)
@@ -100,7 +98,7 @@ def create_seedvol_factor_dict(input_df):
 
     """
     df = input_df.copy()
-    id = pd.Series(zip(df['optionID'], df['regClassID'], df['fuelTypeID']))
+    id = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID']))
     df.insert(0, 'id', id)
     df.drop(columns=['optionID', 'regClassID', 'fuelTypeID'], inplace=True)
     df.set_index('id', inplace=True)
@@ -118,7 +116,6 @@ def create_markup_inputs_dict(input_df):
 
     """
     df = input_df.copy()
-    # insert a unique id to use as a dictionary key
     df.insert(0, 'id', pd.Series(zip(df['fuelTypeID'], df['Markup_Factor'])))
     df.set_index('id', inplace=True)
     df.drop(columns=['fuelTypeID', 'Markup_Factor'], inplace=True)
@@ -145,7 +142,7 @@ def create_required_miles_and_ages_dict(warranty_inputs, warranty_id, usefullife
     df1.insert(0, 'identifier', f'{warranty_id}')
     df2.insert(0, 'identifier', f'{usefullife_id}')
     for df in [df1, df2]:
-        df.insert(0, 'id', pd.Series(zip(zip(df['optionID'], df['regClassID'], df['fuelTypeID']), df['identifier'], df['period'])))
+        df.insert(0, 'id', pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID'], df['identifier'], df['period'])))
         df = df[['id'] + [col for col in df.columns if '20' in col]]
         df_all = pd.concat([df_all, df], axis=0, ignore_index=True)
     df_all.set_index('id', inplace=True)
@@ -197,7 +194,7 @@ def create_orvr_inputs_dict(input_df):
 
     """
     df = input_df.copy()
-    id = pd.Series(zip(df['optionID'], df['regClassID'], df['fuelTypeID']))
+    id = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID']))
     df.insert(0, 'id', id)
     df.drop(columns=['optionID', 'regClassID', 'fuelTypeID'], inplace=True)
     df.set_index('id', inplace=True)

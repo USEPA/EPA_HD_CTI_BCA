@@ -123,7 +123,7 @@ class SetInputs:
     gen_fxns.convert_dollars_to_analysis_basis(repair_and_maintenance, gdp_deflators, dollar_basis_analysis, 'Value')
 
     # create any DataFrames and dictionaries and lists that are useful as part of settings (used throughout project)
-    moves_adjustments_dict = create_moves_adjustments_dict(moves_adjustments, 'optionID', 'regClassID', 'fuelTypeID')
+    moves_adjustments_dict = create_moves_adjustments_dict(moves_adjustments, 'regClassID', 'fuelTypeID', 'optionID')
     seedvol_factor_dict = create_seedvol_factor_dict(regclass_learningscalers)
     markup_inputs_dict = create_markup_inputs_dict(markups)
     markup_factors = [arg for arg in markups['Markup_Factor'].unique()]

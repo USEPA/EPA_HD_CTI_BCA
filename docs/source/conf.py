@@ -15,7 +15,7 @@ import sys
 # sys.path.insert(0, os.path.abspath('.'))
 path = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(path, '..', '..'))
-sys.path.insert(0, os.path.join(path, '..', '..', 'cti_bca_tool'))
+sys.path.insert(0, os.path.join(path, '..', '..', 'bca_tool_code'))
 
 # -- Project information -----------------------------------------------------
 

@@ -30,11 +30,11 @@ def create_fleet_df(settings):
 
     rc_vehicles = regclass_vehicles(df)
     # make adjustments to MOVES values as needed for cost analysis
-    for vehicle in rc_vehicles:
-        alt, rc, ft = vehicle
-        if vehicle in settings.moves_adjustments_dict.keys():
-            adjustment = settings.moves_adjustments_dict[(vehicle)]['percent']
-            growth = settings.moves_adjustments_dict[(vehicle)]['growth']
+    for (engine, alt) in rc_vehicles:
+        rc, ft = engine
+        if (engine, alt) in settings.moves_adjustments_dict.keys():
+            adjustment = settings.moves_adjustments_dict[(engine, alt)]['percent']
+            growth = settings.moves_adjustments_dict[(engine, alt)]['growth']
         else:
             adjustment, growth = 1, 0
         args_to_adjust = ['VPOP', 'VMT', 'Gallons']
@@ -55,7 +55,7 @@ def regclass_vehicles(fleet_df):
         A series of unique vehicles where a vehicle is an alt_regClass_fuelType vehicle.
 
     """
-    return pd.Series(zip(fleet_df['optionID'], fleet_df['regClassID'], fleet_df['fuelTypeID'])).unique()
+    return pd.Series(zip(zip(fleet_df['regClassID'], fleet_df['fuelTypeID']), fleet_df['optionID'])).unique()
 
 
 def sourcetype_vehicles(fleet_df):
@@ -68,7 +68,7 @@ def sourcetype_vehicles(fleet_df):
         A series of unique vehicles where a vehicle is an alt_sourcetype_regClass_fuelType vehicle.
 
     """
-    return pd.Series(zip(fleet_df['optionID'], fleet_df['sourceTypeID'], fleet_df['regClassID'], fleet_df['fuelTypeID'])).unique()
+    return pd.Series(zip(zip(fleet_df['sourceTypeID'], fleet_df['regClassID'], fleet_df['fuelTypeID']), fleet_df['optionID'])).unique()
 
 
 if __name__ == '__main__':

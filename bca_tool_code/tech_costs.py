@@ -17,7 +17,7 @@ def calc_per_veh_tech_costs(averages_dict):
     """
     print('\nCalculating per vehicle technology costs.\n')
     for key in averages_dict.keys():
-        vehicle, model_year, age_id, disc_rate = key
+        vehicle, alt, model_year, age_id, disc_rate = key
         if age_id == 0:
             dc_per_veh = averages_dict[key]['DirectCost_AvgPerVeh']
             ic_per_veh = averages_dict[key]['IndirectCost_AvgPerVeh']
@@ -38,7 +38,7 @@ def calc_tech_costs(totals_dict, averages_dict):
     """
     print('\nCalculating total technology costs.\n')
     for key in totals_dict.keys():
-        vehicle, model_year, age_id, disc_rate = key
+        vehicle, alt, model_year, age_id, disc_rate = key
         if age_id == 0:
             cost_per_veh = averages_dict[key]['TechCost_AvgPerVeh']
             sales = totals_dict[key]['VPOP']
