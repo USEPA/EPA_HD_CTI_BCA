@@ -12,8 +12,9 @@ into which all run results will be saved. A timestamp is included in any run-res
 at the run ID prompt. This will send outputs to a 'test' folder in the project folder. Note that any run having run ID 'test' will overwrite all output files
 already in the test output folder, so use 'test' as a run ID with caution.
 
-The tool first reads inputs and input files, then calculates appropriate technology costs, operating costs and emission costs (if selected by the user). Once complete, these are brought together
-in a set of BCA (benefit-cost analysis) results with those results saved to a run folder within the outputs folder.
+The tool first reads inputs and input files. The specific input files to use (i.e., their filenames) must be specified in the Input_Files.csv file in the "UserEntry.csv" column. The tool then
+calculates appropriate technology costs, operating costs and emission costs (if selected by the user). Once complete, these are brought together in a set of BCA (benefit-cost analysis) results
+with those results saved to a run folder within the outputs folder.
 
 Importantly, monetized values in the tool are treated as costs throughout. So a negative cost represents a savings. Also, for the most part,
 everything is treated in absolute terms. So absolute costs are calculated for each scenario/option/alternative and then deltas are calculated as costs in the action alternative
@@ -21,6 +22,11 @@ case less costs in the no action, baseline case. As such, higher technology cost
 Likewise, lower operating costs in an alternative case relative to those in the baseline case would result in negative delta costs, or decreased costs. A decrease in operating costs represents
 an increase in operating savings.
 
+Note that the calculation of emission impacts is done using the $/ton estimates included in the CriteriaCostFactors.csv input files The $/ton estimates provided in those files are best understood
+to be the marginal costs associated with the reduction of the individual pollutants as opposed to the absolute costs associated with a ton of each pollutant. As such, the emission "costs" calculated
+by the tool should not be seen as true costs associated with emissions, but rather the first step in estimating the benefits associated with reductions of those emissions. For that reason, the user
+must be careful not to consider those as absolute costs, but once compared to the "costs" of another scenario (presumably via calculation of a difference in "costs" between two scenarios) the result
+can be interpreted as a benefit.
 
 Calculations and Equations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -129,19 +135,19 @@ Cost per mile by age (for emission-related repairs)
 .. math::
     :label: inw_cpm
 
-    & InWarrantyCPM_{optionID;engine;MY}\\
+    & InWarrantyCPM_{optionID;vehicle;MY}\\
     & = \small FleetAdvantageCPM_{Year1} \times EmissionRepairShare \times DirectCostScalar_{optionID;engine;MY}
 
 .. math::
     :label: atul_cpm
 
-    & AtUsefulLifeCPM_{optionID;engine;MY}\\
+    & AtUsefulLifeCPM_{optionID;vehicle;MY}\\
     & = \small FleetAdvantageCPM_{Year6} \times EmissionRepairShare \times DirectCostScalar_{optionID;engine;MY}
 
 .. math::
     :label: max_cpm
 
-    & MaxCPM_{optionID;engine;MY}\\
+    & MaxCPM_{optionID;vehicle;MY}\\
     & = \small FleetAdvantageCPM_{Year7} \times EmissionRepairShare \times DirectCostScalar_{optionID;engine;MY}
 
 .. math::
