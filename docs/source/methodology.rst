@@ -9,8 +9,7 @@ The project folder for using the tool should contain an "inputs" folder containi
 Optionally, a virtual environment folder may be desirable. When running the tool, the user will be asked to provide a run ID. If a run ID is entered, that run ID will be
 included in the run-results folder-ID for the given run. Hitting return will use the default run ID. The tool will create an "outputs" folder within the project folder
 into which all run results will be saved. A timestamp is included in any run-results folder-ID so that new results never overwrite prior results. The user can enter 'test'
-at the run ID prompt. This will send outputs to a 'test' folder in the project folder. Note that any run having run ID 'test' will overwrite all output files
-already in the test output folder, so use 'test' as a run ID with caution.
+at the run ID prompt. This will send outputs to a 'test' folder in the project folder.
 
 The tool first reads inputs and input files. The specific input files to use (i.e., their filenames) must be specified in the Input_Files.csv file in the "UserEntry.csv" column. The tool then
 calculates appropriate technology costs, operating costs and emission costs (if selected by the user). Once complete, these are brought together in a set of BCA (benefit-cost analysis) results
