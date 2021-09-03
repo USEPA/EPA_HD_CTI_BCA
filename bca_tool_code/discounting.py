@@ -8,10 +8,9 @@ def discount_values(settings, dict_of_values):
     Parameters:
         settings: The SetInputs class.\n
         dict_of_values: A dictionary of values to be discounted with keys consisting of vehicle, model_year, age_id and discount rate.\n
-        discount_rates: The discount rates (as floats and excluding 0%, a 3% discount rate would be entered as 0.03) to be used for discounting.
 
     Returns:
-        The passed dictionary with new key, value pairs where keys stipulate the discount rate and monetized values are discounted at that rate.
+        The passed dictionary with new key, value pairs where keys stipulate the discount rate and monetized values are discounted at their internally consistent discount rate.
 
     Note:
         The costs_start entry of the BCA_General_Inputs file should be set to 'start-year' or 'end-year', where start-year represents costs

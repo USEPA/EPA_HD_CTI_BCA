@@ -20,8 +20,8 @@ class SetInputs:
 
     """
     # set paths
-    path_project = Path.cwd()
-    path_code = path_project / 'bca_tool_code'
+    path_code = Path(__file__).parent
+    path_project = path_code.parent
     path_inputs = path_project / 'inputs'
     # path_inputs = get_folder('folder containing input files for the run')
     path_outputs = path_project / 'outputs'
