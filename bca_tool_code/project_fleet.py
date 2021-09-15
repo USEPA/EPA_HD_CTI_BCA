@@ -9,7 +9,7 @@ def create_fleet_df(settings):
 
     Returns:
         A DataFrame of the MOVES inputs with necessary MOVES adjustments made according to the MOVES adjustments input file. The DataFrame will also add
-        optionID/sourceTypeID/regClassID/fuelTypeID names.
+        optionID/sourceTypeID/regClassID/fuelTypeID names and will use only those options included in the options.csv input file.
 
     """
     df = settings.moves.copy()
@@ -24,11 +24,21 @@ def create_fleet_df(settings):
 
     df = pd.DataFrame(df.loc[df['modelYearID'] >= settings.year_min, :]).reset_index(drop=True)
 
-    # sum the PM constituents into a single constituent
-    cols = [col for col in df.columns if 'PM25' in col]
-    df.insert(len(df.columns), 'PM25_UStons', df[cols].sum(axis=1))  # sum PM25 metrics
+    # select only the options included in the options.csv input file
+    option_id_list = [key for key in settings.options_dict.keys()]
+    df_alts = dict()
+    df_return = pd.DataFrame()
+    for alt in option_id_list:
+        df_alts[alt] = df.loc[df['optionID'] == alt, :]
+        df_return = pd.concat([df_return, df_alts[alt]], axis=0, ignore_index=True)
+    
+    df_return.reset_index(drop=True, inplace=True)
 
-    rc_vehicles = regclass_vehicles(df)
+    # sum the PM constituents into a single constituent
+    cols = [col for col in df_return.columns if 'PM25' in col]
+    df_return.insert(len(df_return.columns), 'PM25_UStons', df_return[cols].sum(axis=1))  # sum PM25 metrics
+
+    rc_vehicles = regclass_vehicles(df_return)
     # make adjustments to MOVES values as needed for cost analysis
     for (engine, alt) in rc_vehicles:
         rc, ft = engine
@@ -39,10 +49,10 @@ def create_fleet_df(settings):
             adjustment, growth = 1, 0
         args_to_adjust = ['VPOP', 'VMT', 'Gallons']
         for arg in args_to_adjust:
-            df.loc[(df['optionID'] == alt) & (df['regClassID'] == rc) & (df['fuelTypeID'] == ft), arg] \
-                = df.loc[(df['optionID'] == alt) & (df['regClassID'] == rc) & (df['fuelTypeID'] == ft), arg] \
+            df_return.loc[(df_return['optionID'] == alt) & (df_return['regClassID'] == rc) & (df_return['fuelTypeID'] == ft), arg] \
+                = df_return.loc[(df_return['optionID'] == alt) & (df_return['regClassID'] == rc) & (df_return['fuelTypeID'] == ft), arg] \
                   * adjustment * (1 + growth)
-    return df
+    return df_return
 
 
 def regclass_vehicles(fleet_df):
