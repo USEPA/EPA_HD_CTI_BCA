@@ -9,18 +9,20 @@ import matplotlib.pyplot as plt
 
 
 class CreateFigures:
-    def __init__(self, df, units, destination):
+    def __init__(self, df, units, destination, program):
         """The CreateFigures class  is used to generate charts.
 
         Parameters:
             df: A DataFrame of data to be charted.\n
             units: Units for use on the y-axis of the created chart.\n
             destination: The path in which to save the created chart.
+            program: The program identifier string (i.e., 'CAP' or 'GHG') to include in the saved filename.
 
         """
         self.df = df
         self.destination = destination
         self.units = units
+        self.program = program
 
 
     def line_chart_args_by_option(self, dr, alt_name, year_min, year_max, *args):
@@ -42,12 +44,12 @@ class CreateFigures:
                            & ((self.df['yearID'] >= year_min) & (self.df['yearID'] <= year_max)), :]
         for arg in args:
             plt.plot((data['yearID']), (data[arg]), label=arg)
-        plt.title(f'Annual Costs, {alt_name}, {dr}DR')
+        plt.title(f'{self.program}, Annual Costs, {alt_name}, {dr}DR')
         plt.xlabel('calendar year')
         plt.ylabel(f'{self.units}')
         plt.legend()
         plt.grid()
-        plt.savefig(self.destination.joinpath(f'AnnualCosts_{alt_name}_{dr}DR.png'))
+        plt.savefig(self.destination.joinpath(f'{self.program}_AnnualCosts_{alt_name}_{dr}DR.png'))
         plt.close()
         return
 
@@ -71,23 +73,25 @@ class CreateFigures:
                                & ((self.df['yearID'] >= year_min) & (self.df['yearID'] <= year_max)), :]
             plt.plot((data.loc[data['OptionName'] == alt_name, 'yearID']), (data.loc[data['OptionName'] == alt_name, arg]),
                      label=alt_name)
-        plt.title(f'Annual Costs, {arg}, {dr}DR')
+        plt.title(f'{self.program}, Annual Costs, {arg}, {dr}DR')
         plt.xlabel('calendar year')
         plt.ylabel(f'{self.units}')
         plt.legend(loc=5)
         plt.grid()
-        plt.savefig(self.destination.joinpath(f'AnnualCosts_{arg}_{dr}DR.png'))
+        plt.savefig(self.destination.joinpath(f'{self.program}_AnnualCosts_{arg}_{dr}DR.png'))
         plt.close()
         return
 
 
-def create_figures(input_df, units, path_for_save):
+def create_figures(input_df, units, path_for_save, program, args):
     """This function is called by tool_main and then controls the generation of charts by the ChartFigures class.
 
     Parameters:
         input_df: A DataFrame of data.\n
         units: The units used in the passed input_df.\n
         path_for_save: The path for saving figures.
+        program: The program identifier string (i.e., 'CAP' or 'GHG') to include in the saved filename.
+        args: A list of args to include in figures.
 
     Returns:
         Charts are saved to the path_for_save folder by the ChartFigures class and this method returns to tool_main.
@@ -100,12 +104,12 @@ def create_figures(input_df, units, path_for_save):
     # alt_names = pd.Series(input_df.loc[input_df['optionID'] >= 10, 'OptionName']).unique()
     alt_names = [arg for arg in pd.Series(input_df['OptionName'].unique()) if '_minus_' in arg]
     # units = input_df['Units'].unique()[0]
-    args = ['TechCost', 'EmissionRepairCost', 'DEFCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
+    # args = ['TechCost', 'EmissionRepairCost', 'DEFCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
     for alt_name in alt_names:
-        CreateFigures(input_df, units, path_figures) \
+        CreateFigures(input_df, units, path_figures, program) \
             .line_chart_args_by_option(0, alt_name, yearID_min, yearID_max, *args)
 
     for arg in args:
-        CreateFigures(input_df, units, path_figures).line_chart_arg_by_options(0, alt_names, yearID_min, yearID_max, arg)
+        CreateFigures(input_df, units, path_figures, program).line_chart_arg_by_options(0, alt_names, yearID_min, yearID_max, arg)
 
     return

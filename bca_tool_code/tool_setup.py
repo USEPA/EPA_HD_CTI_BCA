@@ -48,11 +48,15 @@ class SetInputs:
 
     bca_inputs = gen_fxns.read_input_files(path_inputs, input_files_dict['bca_inputs']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x, index_col=0)
     regclass_costs = gen_fxns.read_input_files(path_inputs, input_files_dict['regclass_costs']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
+    sourcetype_costs = gen_fxns.read_input_files(path_inputs, input_files_dict['sourcetype_costs']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
     regclass_learningscalers = gen_fxns.read_input_files(path_inputs, input_files_dict['regclass_learningscalers']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
-    markups = gen_fxns.read_input_files(path_inputs, input_files_dict['markups']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
+    sourcetype_learningscalers = gen_fxns.read_input_files(path_inputs, input_files_dict['sourcetype_learningscalers']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
+    markups_regclass = gen_fxns.read_input_files(path_inputs, input_files_dict['markups_regclass']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
+    markups_sourcetype = gen_fxns.read_input_files(path_inputs, input_files_dict['markups_sourcetype']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
     warranty_inputs = gen_fxns.read_input_files(path_inputs, input_files_dict['warranty_inputs']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
     usefullife_inputs = gen_fxns.read_input_files(path_inputs, input_files_dict['usefullife_inputs']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
-    moves = gen_fxns.read_input_files(path_inputs, input_files_dict['moves']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
+    moves = gen_fxns.read_input_files(path_inputs, input_files_dict['moves_cap']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
+    moves_ghg = gen_fxns.read_input_files(path_inputs, input_files_dict['moves_ghg']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
     moves_adjustments = gen_fxns.read_input_files(path_inputs, input_files_dict['moves_adjustments']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
     options = gen_fxns.read_input_files(path_inputs, input_files_dict['options']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x, index_col=0)
     options_dict = options.to_dict('index')
@@ -75,6 +79,7 @@ class SetInputs:
 
     # set some year data
     moves.insert(moves.columns.get_loc('modelYearID') + 1, 'ageID', moves['yearID'] - moves['modelYearID'])
+    moves_ghg.insert(moves_ghg.columns.get_loc('modelYearID') + 1, 'ageID', moves_ghg['yearID'] - moves_ghg['modelYearID'])
     year_min = moves.loc[moves['ageID'] == 0, 'yearID'].min() # this will work for both calendar year and model year
     year_max = moves['yearID'].max() # this is the last calendar year included
     model_year_max = moves.loc[moves['ageID'] == 0, 'modelYearID'].max() # calendar years could extend beyond the last model year included
@@ -106,6 +111,8 @@ class SetInputs:
     # now adjust some things and get dollar values on a consistent valuation
     if 'Alternative' in moves.columns.tolist():
         moves.rename(columns={'Alternative': 'optionID'}, inplace=True)
+    if 'Alternative' in moves_ghg.columns.tolist():
+        moves_ghg.rename(columns={'Alternative': 'optionID'}, inplace=True)
     number_alts = len(moves['optionID'].unique())
 
     # get the fuel price inputs and usd basis for the analysis
@@ -117,16 +124,21 @@ class SetInputs:
     # generate a dictionary of gdp deflators, calc adjustment values and apply adjustment values to cost inputs
     deflators_obj = GetDeflators(deflators_file, 'Unnamed: 1', 'Gross domestic product')
     gdp_deflators = deflators_obj.calc_adjustment_factors(dollar_basis_analysis)
-    cost_steps = [col for col in regclass_costs.columns if '20' in col]
-    gen_fxns.convert_dollars_to_analysis_basis(regclass_costs, gdp_deflators, dollar_basis_analysis, [step for step in cost_steps])
+    cost_steps_regclass = [col for col in regclass_costs.columns if '20' in col]
+    cost_steps_sourcetype = [col for col in sourcetype_costs.columns if '20' in col]
+    gen_fxns.convert_dollars_to_analysis_basis(regclass_costs, gdp_deflators, dollar_basis_analysis, [step for step in cost_steps_regclass])
+    gen_fxns.convert_dollars_to_analysis_basis(sourcetype_costs, gdp_deflators, dollar_basis_analysis, [step for step in cost_steps_sourcetype])
     gen_fxns.convert_dollars_to_analysis_basis(def_prices, gdp_deflators, dollar_basis_analysis, 'DEF_USDperGal')
     gen_fxns.convert_dollars_to_analysis_basis(repair_and_maintenance, gdp_deflators, dollar_basis_analysis, 'Value')
 
     # create any DataFrames and dictionaries and lists that are useful as part of settings (used throughout project)
     moves_adjustments_dict = create_moves_adjustments_dict(moves_adjustments, 'regClassID', 'fuelTypeID', 'optionID')
-    seedvol_factor_dict = create_seedvol_factor_dict(regclass_learningscalers)
-    markup_inputs_dict = create_markup_inputs_dict(markups)
-    markup_factors = [arg for arg in markups['Markup_Factor'].unique()]
+    seedvol_factor_regclass_dict = create_seedvol_factor_dict(regclass_learningscalers, 'regClassID', 'fuelTypeID', 'optionID')
+    seedvol_factor_sourcetype_dict = create_seedvol_factor_dict(sourcetype_learningscalers, 'sourceTypeID', 'regClassID', 'fuelTypeID', 'optionID')
+    markup_inputs_regclass_dict = create_markup_inputs_dict(markups_regclass)
+    markup_inputs_sourcetype_dict = create_markup_inputs_dict(markups_sourcetype)
+    markup_factors_unique_names = [arg for arg in markups_regclass['Markup_Factor'].unique()]
+    markup_factors_sourcetype = [arg for arg in markups_sourcetype['Markup_Factor'].unique()]
     required_miles_and_ages_dict = create_required_miles_and_ages_dict(warranty_inputs, 'Warranty', usefullife_inputs, 'Usefullife')
     def_doserate_inputs_dict = create_def_doserate_inputs_dict(def_doserate_inputs)
     def_prices_dict = create_def_prices_dict(def_prices)

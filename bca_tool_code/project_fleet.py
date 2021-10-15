@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-def create_fleet_df(settings):
+def create_fleet_df(settings, input_df):
     """
 
     Parameters:
@@ -12,7 +12,7 @@ def create_fleet_df(settings):
         optionID/sourceTypeID/regClassID/fuelTypeID names and will use only those options included in the options.csv input file.
 
     """
-    df = settings.moves.copy()
+    df = input_df.copy()
     if 'Alternative' in df.columns.tolist():
         df.rename(columns={'Alternative': 'optionID'}, inplace=True)
 

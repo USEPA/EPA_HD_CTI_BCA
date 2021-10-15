@@ -3,13 +3,12 @@
 base_doserate_dict = dict()
 
 
-def calc_def_doserate(settings, vehicle, alt):
+def calc_def_doserate(settings, vehicle):
     """
 
     Parameters:
         settings: The SetInputs class. \n
         vehicle: A tuple representing a sourcetype_regclass_fueltype vehicle.\n
-        alt: The Alternative or option ID.
 
     Returns:
         The DEF dose rate for the passed vehicle based on the DEF dose rate input file.
@@ -66,7 +65,7 @@ def calc_def_gallons(settings, vehicle, alt, year, model_year, totals_dict):
     """
     age_id = year - model_year
     gallons_fuel = totals_dict[(vehicle, alt, model_year, age_id, 0)]['Gallons']
-    base_doserate = calc_def_doserate(settings, vehicle, alt)
+    base_doserate = calc_def_doserate(settings, vehicle)
     nox_reduction = calc_nox_reduction(settings, vehicle, alt, year, model_year, totals_dict)
     gallons_def = gallons_fuel * base_doserate + nox_reduction * settings.def_gallons_per_ton_nox_reduction
     return gallons_def

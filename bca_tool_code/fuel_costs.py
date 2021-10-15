@@ -46,7 +46,7 @@ def calc_thc_reduction(settings, vehicle, alt, year, model_year, totals_dict):
     return thc_reduction
 
 
-def calc_adjusted_gallons(settings, vehicle, alt, year, model_year, totals_dict):
+def calc_captured_gallons(settings, vehicle, alt, year, model_year, totals_dict):
     """
 
     Parameters:
@@ -58,19 +58,20 @@ def calc_adjusted_gallons(settings, vehicle, alt, year, model_year, totals_dict)
         totals_dict: A dictionary of fleet Gallons consumed by all vehicles.
 
     Returns:
-        The passed dictionary updated to reflect fuel consumption (Gallons) adjusted to account for the fuel saved in associated with  ORVR.
+        The gallons captured by ORVR that would have otherwise evaporated during refueling.
 
     """
     age = year - model_year
-    totals_dict_key = (vehicle, alt, model_year, age, 0)
+    # totals_dict_key = (vehicle, alt, model_year, age, 0)
     adjustment = get_orvr_adjustment(settings, vehicle, alt)
     thc_reduction = calc_thc_reduction(settings, vehicle, alt, year, model_year, totals_dict)
-    old_gallons = totals_dict[totals_dict_key]['Gallons']
-    adjusted_gallons = old_gallons - thc_reduction * adjustment * settings.grams_per_short_ton * settings.gallons_per_ml
-    return adjusted_gallons
+    # old_gallons = totals_dict[totals_dict_key]['Gallons']
+    # adjusted_gallons = old_gallons - thc_reduction * adjustment * settings.grams_per_short_ton * settings.gallons_per_ml
+    captured_gallons = thc_reduction * adjustment * settings.grams_per_short_ton * settings.gallons_per_ml
+    return captured_gallons
 
 
-def calc_fuel_costs(settings, totals_dict):
+def calc_cap_fuel_costs(settings, totals_dict):
     """
 
     Parameters:
@@ -82,10 +83,12 @@ def calc_fuel_costs(settings, totals_dict):
         The dictionary is also updated to include the fuel costs associated with the gallons consumed (Gallons * $/gallon fuel).
 
     Note:
-        Note that these fuel impacts are not included in the MOVES runs that serve as the input fleet data for the tool.
+        Note that gallons of fuel captured are not included in the MOVES runs that serve as the input fleet data for the tool although the inventory impacts
+        are included in the MOVES runs.
 
     """
-    print('\nCalculating fuel total costs.\n')
+    print('\nCalculating CAP-related fuel costs.\n')
+    captured_gallons = 0
     for key in totals_dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
         st, rc, ft = vehicle
@@ -93,10 +96,34 @@ def calc_fuel_costs(settings, totals_dict):
         fuel_price_retail = settings.fuel_prices_dict[(year, ft)]['retail_fuel_price']
         fuel_price_pretax = settings.fuel_prices_dict[(year, ft)]['pretax_fuel_price']
         if ft == 1:
-            gallons = calc_adjusted_gallons(settings, vehicle, alt, year, model_year, totals_dict)
-            totals_dict[key].update({'Gallons': gallons})
-        else:
-            gallons = totals_dict[key]['Gallons']
+            captured_gallons = calc_captured_gallons(settings, vehicle, alt, year, model_year, totals_dict)
+        totals_dict[key]['GallonsCaptured_byORVR'] = captured_gallons
+        gallons_paid_for = totals_dict[key]['Gallons'] - captured_gallons
+        totals_dict[key].update({'FuelCost_Retail': fuel_price_retail * gallons_paid_for})
+        totals_dict[key].update({'FuelCost_Pretax': fuel_price_pretax * gallons_paid_for})
+    return totals_dict
+
+
+def calc_ghg_fuel_costs(settings, totals_dict):
+    """
+
+    Parameters:
+        settings: The SetInputs class.\n
+        totals_dict: A dictionary of fleet Gallons consumed by all vehicles.
+
+    Returns:
+        The passed dictionary updated to reflect fuel consumption (Gallons) adjusted to account for the fuel saved in association with ORVR.
+        The dictionary is also updated to include the fuel costs associated with the gallons consumed (Gallons * $/gallon fuel).
+
+    """
+    print('\nCalculating GHG_related fuel costs.\n')
+    for key in totals_dict.keys():
+        vehicle, alt, model_year, age_id, disc_rate = key
+        st, rc, ft = vehicle
+        year = model_year + age_id
+        fuel_price_retail = settings.fuel_prices_dict[(year, ft)]['retail_fuel_price']
+        fuel_price_pretax = settings.fuel_prices_dict[(year, ft)]['pretax_fuel_price']
+        gallons = totals_dict[key]['Gallons']
         totals_dict[key].update({'FuelCost_Retail': fuel_price_retail * gallons})
         totals_dict[key].update({'FuelCost_Pretax': fuel_price_pretax * gallons})
     return totals_dict
@@ -106,7 +133,7 @@ def calc_average_fuel_costs(totals_dict, averages_dict):
     """
 
     Parameters:
-        totals_dict: A dictionary of fleet "ORVR adjusted" Gallons consumed by all vehicles.\n
+        totals_dict: A dictionary of fleet fuel costs for all vehicles.\n
         averages_dict: A dictionary into which fuel costs/vehicle and costs/mile will be updated.
 
     Returns:

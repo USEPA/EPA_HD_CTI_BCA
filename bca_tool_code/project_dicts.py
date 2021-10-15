@@ -1,6 +1,7 @@
 import pandas as pd
 from bca_tool_code.repair_costs import calc_per_veh_cumulative_vmt
 
+
 def create_fleet_totals_dict(fleet_df, rate=0):
     """This function creates a dictionary of fleet total values and adds a discount rate element to the key.
 
@@ -54,8 +55,8 @@ def create_regclass_sales_dict(fleet_df):
         fleet_df: A DataFrame of the project fleet.
 
     Returns:
-        A dictionary of the fleet having keys equal to ((vehicle), modelYearID) where vehicle is a tuple representing
-        an alt_regclass_fueltype vehicle, and values representing sales (sales=VPOP at ageID=0) for each key by model year.
+        A dictionary of the fleet having keys equal to ((unit), alt, modelYearID) where unit is a tuple representing
+        a regclass_fueltype, and values representing sales (sales=VPOP at ageID=0) for each key by model year.
 
     """
     df = fleet_df.copy()
@@ -63,6 +64,26 @@ def create_regclass_sales_dict(fleet_df):
     df = df.groupby(by=['optionID', 'regClassID', 'fuelTypeID', 'modelYearID'], as_index=False).sum()
     df.insert(0, 'id', pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID'], df['modelYearID'])))
     df.drop(columns=['optionID', 'regClassID', 'fuelTypeID', 'modelYearID'], inplace=True)
+    df.set_index('id', inplace=True)
+    return df.to_dict('index')
+
+
+def create_sourcetype_sales_dict(fleet_df):
+    """
+
+    Parameters:
+        fleet_df: A DataFrame of the project fleet.
+
+    Returns:
+        A dictionary of the fleet having keys equal to ((unit), alt, modelYearID) where unit is a tuple representing
+        a sourcetype_regclass_fueltype, and values representing sales (sales=VPOP at ageID=0) for each key by model year.
+
+    """
+    df = fleet_df.copy()
+    df = pd.DataFrame(df.loc[df['ageID'] == 0, ['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'modelYearID', 'VPOP']]).reset_index(drop=True)
+    df = df.groupby(by=['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'modelYearID'], as_index=False).sum()
+    df.insert(0, 'id', pd.Series(zip(zip(df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['optionID'], df['modelYearID'])))
+    df.drop(columns=['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'modelYearID'], inplace=True)
     df.set_index('id', inplace=True)
     return df.to_dict('index')
 
@@ -87,7 +108,7 @@ def create_moves_adjustments_dict(input_df, *args):
     return df.to_dict('index')
 
 
-def create_seedvol_factor_dict(input_df):
+def create_seedvol_factor_dict(input_df, *args):
     """
 
     Parameters:
@@ -98,11 +119,34 @@ def create_seedvol_factor_dict(input_df):
 
     """
     df = input_df.copy()
-    id = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID']))
+    cols = [arg for arg in args]
+    len_cols = len(cols)
+    if len_cols == 3: id = pd.Series(zip(zip(df[cols[0]], df[cols[1]]), df[cols[2]]))
+    elif len_cols == 4: id = pd.Series(zip(zip(df[cols[0]], df[cols[1]], df[cols[2]]), df[cols[3]]))
+    else: print('Improper number of args passed to function.')
+    # id = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID']))
     df.insert(0, 'id', id)
-    df.drop(columns=['optionID', 'regClassID', 'fuelTypeID'], inplace=True)
+    df.drop(columns=cols, inplace=True)
+    # df.drop(columns=['optionID', 'regClassID', 'fuelTypeID'], inplace=True)
     df.set_index('id', inplace=True)
     return df.to_dict('index')
+
+
+# def create_markup_inputs_dict(input_df):
+#     """
+#
+#     Parameters:
+#         input_df: A DataFrame that provides indirect cost markup factor values by fuelTypeID.
+#
+#     Returns:
+#         A dictionary with 'fueltype, markup factor' keys and 'markup value' values.
+#
+#     """
+#     df = input_df.copy()
+#     df.insert(0, 'id', pd.Series(zip(df['fuelTypeID'], df['Markup_Factor'])))
+#     df.set_index('id', inplace=True)
+#     df.drop(columns=['fuelTypeID', 'Markup_Factor'], inplace=True)
+#     return df.to_dict('index')
 
 
 def create_markup_inputs_dict(input_df):
@@ -116,9 +160,9 @@ def create_markup_inputs_dict(input_df):
 
     """
     df = input_df.copy()
-    df.insert(0, 'id', pd.Series(zip(df['fuelTypeID'], df['Markup_Factor'])))
+    df.insert(0, 'id', pd.Series(zip(zip(df['fuelTypeID'], df['Markup_Factor']), df['optionID'])))
     df.set_index('id', inplace=True)
-    df.drop(columns=['fuelTypeID', 'Markup_Factor'], inplace=True)
+    df.drop(columns=['optionID', 'fuelTypeID', 'Markup_Factor'], inplace=True)
     return df.to_dict('index')
 
 

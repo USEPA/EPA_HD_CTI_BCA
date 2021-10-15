@@ -12,11 +12,14 @@ from bca_tool_code.figures import create_figures
 
 
 # lists of args to summarize for document tables
-preamble_program_args = ['DirectCost', 'WarrantyCost', 'RnDCost', 'OtherCost', 'ProfitCost', 'TechCost',
-                         'EmissionRepairCost', 'DEFCost', 'FuelCost_Pretax', 'OperatingCost', 'TechAndOperatingCost']
+preamble_cap_program_args = ['DirectCost', 'WarrantyCost', 'RnDCost', 'OtherCost', 'ProfitCost', 'TechCost',
+                             'EmissionRepairCost', 'DEFCost', 'FuelCost_Pretax', 'OperatingCost', 'TechAndOperatingCost']
+preamble_ghg_program_args = ['TechCost', 'FuelCost_Pretax', 'OperatingCost', 'TechAndOperatingCost']
 ria_program_args = ['TechCost', 'OperatingCost', 'TechAndOperatingCost']
-tech_args = ['DirectCost', 'WarrantyCost', 'RnDCost', 'OtherCost', 'ProfitCost', 'TechCost']
-operating_args = ['EmissionRepairCost', 'DEFCost', 'FuelCost_Pretax', 'OperatingCost']
+tech_args_cap = ['DirectCost', 'WarrantyCost', 'RnDCost', 'OtherCost', 'ProfitCost', 'TechCost']
+tech_args_ghg = ['TechCost']
+operating_args_cap = ['EmissionRepairCost', 'DEFCost', 'FuelCost_Pretax', 'OperatingCost']
+operating_args_ghg = ['FuelCost_Pretax', 'OperatingCost']
 econ_args = ['TechCost']
 bca_cost_args = ['TechAndOperatingCost']
 
@@ -30,13 +33,14 @@ index_by_ft_by_alt = ['DiscountRate', 'fuelTypeID', 'optionID', 'OptionName', 'f
 index_by_year = ['DiscountRate', 'yearID']
 
 
-def run_postproc(settings, path_save, totals_dict):
+def run_postproc(settings, path_save, totals_dict, program):
     """
 
     Parameters::
         settings: The SetInputs class.\n
         path_save: The path to which to save output files.\n
         totals_dict: A dictionary containing the annual totals to be post-processed.
+        program: The program identifier string (i.e., 'CAP' or 'GHG') to include in the saved filename.
 
     Returns:
         A postproc_file that provides annual results and annualized monetized results. This function also calls the function to generate document tables
@@ -50,20 +54,23 @@ def run_postproc(settings, path_save, totals_dict):
     annual_df = create_annual_summary_df(totals_df)
     annual_df = annualize_values(settings, annual_df)
 
-    postproc_file = doc_tables_post_process(settings, path_save, totals_df)
+    postproc_file = doc_tables_post_process(settings, path_save, totals_df, program)
     annual_df.to_excel(postproc_file, sheet_name='annualized', index=False)
 
-    create_figures(annual_df, 'US Dollars', path_save)
+    if program == 'CAP': arg_list = ['TechCost', 'EmissionRepairCost', 'DEFCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
+    else: arg_list = ['TechCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
+    create_figures(annual_df, 'US Dollars', path_save, program, arg_list)
 
     return postproc_file, totals_df
 
 
-def doc_tables_post_process(settings, path_for_save, fleet_totals_df):
+def doc_tables_post_process(settings, path_for_save, fleet_totals_df, program):
     """
 
     Parameters::
         path_for_save: The path to which to save output files.\n
         fleet_totals_df: A DataFrame containing the data to be used in generating pivot tables for use in documents.
+        program: The program identifier string (i.e., 'CAP' or 'GHG') to include in the saved filename.
 
     Returns:
         An Excel writer object containing several individual worksheets that are pivot tables of the fleet_totals_df DataFrame.
@@ -71,18 +78,24 @@ def doc_tables_post_process(settings, path_for_save, fleet_totals_df):
     """
     df = fleet_totals_df.copy()
 
+    if program == 'CAP': preamble_program_args = preamble_cap_program_args
+    else: preamble_program_args = preamble_ghg_program_args
     preamble_program_table = preamble_ria_tables(df, index_by_alt_by_year, sum, 1000000, 2, *preamble_program_args)
     preamble_program_table_pv = preamble_ria_tables(df, index_by_alt, sum, 1000000, 2, *preamble_program_args)
 
     ria_program_table = preamble_ria_tables(df, index_by_alt_by_year, sum, 1000000, 2, *ria_program_args)
     ria_program_table_pv = preamble_ria_tables(df, index_by_alt, sum, 1000000, 2, *ria_program_args)
 
+    if program == 'CAP': tech_args = tech_args_cap
+    else: tech_args = tech_args_ghg
     tech_by_alt_by_ft_by_year_table = preamble_ria_tables(df, index_by_alt_by_ft_by_year, sum, 1000000, 2, *tech_args)
     tech_by_alt_by_ft_by_year_table_pv = preamble_ria_tables(df, index_by_alt_by_ft, sum, 1000000, 2, *tech_args)
     tech_by_ft_by_alt_by_rc_table = preamble_ria_tables(df, index_by_ft_by_alt_by_rc, sum, 1000000, 2, *tech_args)
     tech_by_ft_by_alt_table = preamble_ria_tables(df, index_by_ft_by_alt, sum, 1000000, 2, *tech_args)
     tech_by_alt_table = preamble_ria_tables(df, index_by_alt, sum, 1000000, 2, *tech_args)
 
+    if program == 'CAP': operating_args = operating_args_cap
+    else: operating_args = operating_args_ghg
     operating_by_alt_by_ft_by_year_table = preamble_ria_tables(df, index_by_alt_by_ft_by_year, sum, 1000000, 2, *operating_args)
     operating_by_alt_by_ft_by_year_table_pv = preamble_ria_tables(df, index_by_alt_by_ft, sum, 1000000, 2, *operating_args)
     operating_by_ft_by_alt_by_rc_table = preamble_ria_tables(df, index_by_ft_by_alt_by_rc, sum, 1000000, 2, *operating_args)
@@ -112,7 +125,7 @@ def doc_tables_post_process(settings, path_for_save, fleet_totals_df):
                       'bca_cost_pv': bca_cost_table_pv,
                       }
 
-    document_tables_file = pd.ExcelWriter(path_for_save / f'bca_tool_preamble_ria_tables_{settings.start_time_readable}.xlsx')
+    document_tables_file = pd.ExcelWriter(path_for_save / f'{program}_bca_tool_preamble_ria_tables_{settings.start_time_readable}.xlsx')
     for sheet_name in doc_table_dict:
         doc_table_dict[sheet_name].to_excel(document_tables_file, sheet_name=sheet_name)
 
