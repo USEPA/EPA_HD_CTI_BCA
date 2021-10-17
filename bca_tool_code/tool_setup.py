@@ -5,7 +5,6 @@ import time
 import attr
 
 import bca_tool_code
-# from cti_bca_tool.input_output import get_folder
 from bca_tool_code import tool_main
 import bca_tool_code.general_functions as gen_fxns
 from bca_tool_code.get_context_data import GetFuelPrices, GetDeflators
@@ -87,6 +86,11 @@ class SetInputs:
     model_years = range(year_min, model_year_max + 1)
 
     # parse values from the input files
+    calc_cap_value = bca_inputs.at['calculate_cap_costs', 'UserEntry']
+    calc_ghg_value = bca_inputs.at['calculate_ghg_costs', 'UserEntry']
+    calc_cap_pollution_effects_value = bca_inputs.at['calculate_cap_pollution_effects', 'UserEntry']
+    calc_ghg_pollution_effects_value = bca_inputs.at['calculate_ghg_pollution_effects', 'UserEntry']
+
     no_action_alt = pd.to_numeric(bca_inputs.at['no_action_alt', 'UserEntry'])
     aeo_case = bca_inputs.at['aeo_fuel_price_case', 'UserEntry']
     discrate_social_low = pd.to_numeric(bca_inputs.at['discrate_social_low', 'UserEntry'])
@@ -94,10 +98,10 @@ class SetInputs:
     discount_to_yearID = pd.to_numeric(bca_inputs.at['discount_to_yearID', 'UserEntry'])
     costs_start = bca_inputs.at['costs_start', 'UserEntry']
     learning_rate = pd.to_numeric(bca_inputs.at['learning_rate', 'UserEntry'])
+
     warranty_vmt_share = pd.to_numeric(bca_inputs.at['warranty_vmt_share', 'UserEntry'])
     r_and_d_vmt_share = pd.to_numeric(bca_inputs.at['r_and_d_vmt_share', 'UserEntry'])
     indirect_cost_scaling_metric = bca_inputs.at['scale_indirect_costs_by', 'UserEntry']
-    calc_pollution_effects = bca_inputs.at['calculate_pollution_effects', 'UserEntry']
     def_gallons_per_ton_nox_reduction = pd.to_numeric(bca_inputs.at['def_gallons_per_ton_nox_reduction', 'UserEntry'])
     max_age_included = pd.to_numeric(bca_inputs.at['weighted_operating_cost_thru_ageID', 'UserEntry'])
     social_discount_rate_1 = pd.to_numeric(bca_inputs.at['social_discount_rate_1', 'UserEntry'])
@@ -107,6 +111,11 @@ class SetInputs:
 
     grams_per_short_ton = unit_conversions.at['grams_per_short_ton', 'UserEntry']
     gallons_per_ml = unit_conversions.at['gallons_per_ml', 'UserEntry']
+
+    calc_cap = True if calc_cap_value == 'Y' else None
+    calc_ghg = True if calc_ghg_value == 'Y' else None
+    calc_cap_pollution_effects = True if calc_cap_pollution_effects_value == 'Y' else None
+    calc_ghg_pollution_effects = True if calc_ghg_pollution_effects_value == 'Y' else None
 
     # now adjust some things and get dollar values on a consistent valuation
     if 'Alternative' in moves.columns.tolist():
@@ -147,9 +156,12 @@ class SetInputs:
     repair_inputs_dict = repair_and_maintenance.to_dict('index')
 
     # read criteria cost factors if needed
-    if calc_pollution_effects == 'Y':
+    if calc_cap_pollution_effects:
         criteria_cost_factors = gen_fxns.read_input_files(path_inputs, input_files_dict['criteria_emission_costs']['UserEntry.csv'], lambda x: 'Notes' not in x)
         criteria_cost_factors_dict = create_criteria_cost_factors_dict(criteria_cost_factors)
+
+    if calc_ghg_pollution_effects:
+        print('WARNING: The tool is not configured to calculate GHG effects at this time.')
 
     # create a row header list for the structure of the main output files
     row_header_for_fleet_files = ['vehicle', 'yearID', 'modelYearID', 'ageID', 'optionID', 'OptionName',

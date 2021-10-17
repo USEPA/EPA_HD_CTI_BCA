@@ -25,8 +25,11 @@ The list of necessary input files contained in the "inputs" folder is:
     - A MOVES or fleet file which provides inventories and VMT, etc., to support the analysis.
     - MOVES_Adjustments.csv which provides adjustments to data in the MOVES data file that might be necessary within the BCA tool. Currently, this adjusts regclass 41 diesel data to reflect engine-certs only.
     - DirectCostInputs_byRegClass_byFuelType.csv which provides the direct technology costs by Regulatory Class.
+    - TechCostInputs_bySourceType_byFuelType.csv which provides the tech costs (direct plus indirect) by SourceType.
     - LearningRateScalars_byRegClass.csv which provides scalars to be applied in estimating learning effects on direct costs.
-    - IndirectCostInputs_byFuelType.csv which provides indirect cost markup factors applied to direct costs to estimate indirect costs.
+    - LearningRateScalars_bySourceType.csv which provides scalars to be applied in estimating learning effects on direct costs.
+    - IndirectCostInputs_RegClass.csv which provides indirect cost markup factors applied to reg class direct costs to estimate indirect costs.
+    - IndirectCostInputs_SourceType.csv which provides indirect cost markup factors applied to sourcetype direct costs to estimate indirect costs.
     - ORVR_FuelChangeInputs.csv which provides the fuel consumption impacts expected from adding onboard refueling vapor recovery systems to HD gasoline vehicles.
     - DEF_DoseRateInputs.csv which provides the diesel exhaust fluid (DEF) dosing rates expected in the baseline scenario.
     - DEF_Prices.csv which provides DEFs prices by calendar year.
@@ -34,30 +37,42 @@ The list of necessary input files contained in the "inputs" folder is:
     - Repair_and_Maintenance_Curve_Inputs.csv which provides inputs used in estimating emission repair costs.
     - UsefulLife_Inputs.csv which provides useful life miles and ages under each alternative.
     - Warranty_Inputs.csv which provides warranty miles and ages under each alternative.
+    - UnitConversions.csv which provides conversion factors as needed by the tool.
+    - Components_of_Selected_Petroleum_Product_Prices.csv which provides fuel prices.
+    - Table_1.1.9_ImplicitPriceDeflators.csv which provides price deflators used by the tool to convert all monetary values to a consistent basis.
 
-Context files
-.............
+Runtime settings set within the BCA_General_Inputs.csv input file
+-----------------------------------------------------------------
 
-The "context files" describe the context of a given run of the tool. There are two primary elements of the context: The fuel prices to use and the dollar basis of those fuel prices. The dollar basis
-subsequently establishes the dollar basis for all other monetized values within a given run. This is done in-code using Implicit Price Deflators reported by the Bureau of Economic Analysis. The user
-can specify a different fuel price context (e.g., high oil price) via the BCA_General_Inputs file. However, if a different set of AEO fuel prices is desired (a more recent AEO publication), then a more
-recent BEA price deflator file may also be required to ensure that sufficient data are available to make all dollar basis adjustments. Note that the dollar basis of the criteria cost factors are not
-adjusted by the tool.
+The user can specify what to run and what AEO fuel prices to use. Runtime settings consist of:
+    - calculate_cap_costs where 'cap' refers to Criteria Air Pollutant and can be set to 'Y' or 'N'.
+    - calculate_cap_pollution_effects which can be set to 'Y' or 'N' (the default is 'N').
+    - calculate_ghg_costs where 'ghg' refers to Greenhouse Gas and can be set ot 'Y' or 'N'.
+    - calculate_ghg_pollution_effects which can be set to 'Y' or 'N' (this should not be set to 'Y' since necessary inputs are not included).
+    - no_action_alt which specifies the 'No action' alternative against which any delta calculation will be made (the default is 0).
+    - aeo_fuel_price_case which specifies the AEO fuel price case to use and can be set to 'Reference', 'High oil price' or 'Low oil price' (the default is 'Reference').
 
 What are the output files?
 --------------------------
 The output files are pretty self-explanatory by their file names.
 
-Output files generated are:
-    - bca_tool_preamble_ria_tables.xlsx which contains pivot tables that should correspond roughly to many of the tables presented in regulatory documents (tech and operating cost tables only, not pollution costs or benefits). This file also has annualized results.
-    - bca_tool_estimated_ages.csv which contains the required, calculated and estimated warranty and useful life ages.
-    - bca_tool_vmt_weighted_emission_repair_cpm.csv which contains weighted cost per mile emission repair results by sourcetype/regclass/fueltype.
-    - bca_tool_vmt_weighted_fuel_cpm.csv which contains weighted cost per mile fuel costs results by sourcetype/regclass/fueltype.
-    - bca_tool_vmt_weighted_def_cpm.csv which contains weighted cost per mile diesel exhaust fluid costs results by sourcetype/regclass/fueltype.
-    - bca_tool_repair_cpm_details.csv which contains details of calculations used to estimate repair costs per mile.
-    - bca_tool_fleet_averages.csv which contains average results for all vehicles by calendar year/model year/age.
-    - bca_tool_fleet_totals.csv which contains total results for all vehicles by calendar year/model year/age.
-    - summary_log.csv which contains the version number of the tool, date and time statistics for the run and input file data specific to the run.
+Output files generated if calculating CAP costs are:
+    - CAP_bca_tool_preamble_ria_tables.xlsx which contains pivot tables that should correspond roughly to many of the tables presented in regulatory documents (tech and operating cost tables only, not pollution costs or benefits). This file also has annualized results.
+    - CAP_bca_tool_estimated_ages.csv which contains the required, calculated and estimated warranty and useful life ages.
+    - CAP_bca_tool_vmt_weighted_emission_repair_cpm.csv which contains weighted cost per mile emission repair results by sourcetype/regclass/fueltype.
+    - CAP_bca_tool_vmt_weighted_fuel_cpm.csv which contains weighted cost per mile fuel costs results by sourcetype/regclass/fueltype.
+    - CAP_bca_tool_vmt_weighted_def_cpm.csv which contains weighted cost per mile diesel exhaust fluid costs results by sourcetype/regclass/fueltype.
+    - CAP_bca_tool_repair_cpm_details.csv which contains details of calculations used to estimate repair costs per mile.
+    - CAP_bca_tool_fleet_averages.csv which contains average results for all vehicles by calendar year/model year/age.
+    - CAP_bca_tool_fleet_totals.csv which contains total results for all vehicles by calendar year/model year/age.
+
+Output files generated if calculating GHG costs are:
+    - GHG_bca_tool_preamble_ria_tables.xlsx which contains pivot tables that should correspond roughly to many of the tables presented in regulatory documents (tech and operating cost tables only, not pollution costs or benefits). This file also has annualized results.
+    - GHG_bca_tool_vmt_weighted_fuel_cpm.csv which contains weighted cost per mile fuel costs results by sourcetype/regclass/fueltype.
+    - GHG_bca_tool_fleet_averages.csv which contains average results for all vehicles by calendar year/model year/age.
+    - GHG_bca_tool_fleet_totals.csv which contains total results for all vehicles by calendar year/model year/age.
+
+A summary_log.csv is also created which contains the version number of the tool, date and time statistics for the run and input file data specific to the run.
 
 A folder called "run_results" will be created within the specific run's output folder that contains the output files described above. A subfolder called "figures" will be created where figures are saved.
 A folder called "modified_inputs" is also created which holds modified versions of the input files. Those modifications include reshaping of the input files along with conversions of the

@@ -42,105 +42,133 @@ def main(settings):
     """
     print("\nDoing the work....")
     start_time_calcs = time.time()
-    # create project fleet DataFrame which will include adjustments to the MOVES input file that are unique to the project.
-    cap_fleet_df = create_fleet_df(settings, settings.moves)
-    ghg_fleet_df = create_fleet_df(settings, settings.moves_ghg)
 
-    # create a sales (by regclass) and fleet dictionaries
-    regclass_sales_dict = create_regclass_sales_dict(cap_fleet_df)
-    sourcetype_sales_dict = create_sourcetype_sales_dict(ghg_fleet_df)
-    # fleet_totals_dict = create_fleet_totals_dict(project_fleet_df)
-    # fleet_averages_dict = create_fleet_averages_dict(project_fleet_df)
-    cap_totals_dict = create_fleet_totals_dict(cap_fleet_df)
-    cap_averages_dict = create_fleet_averages_dict(cap_fleet_df)
-    ghg_totals_dict = create_fleet_totals_dict(ghg_fleet_df)
-    ghg_averages_dict = create_fleet_averages_dict(ghg_fleet_df)
+    if settings.calc_cap:
+        # create project fleet DataFrame which will include adjustments to the MOVES input file that are unique to the project.
+        cap_fleet_df = create_fleet_df(settings, settings.moves)
 
-    # calculate direct costs per reg class based on cumulative regclass sales (learning is applied to cumulative reg class sales)
-    regclass_yoy_costs_per_step = calc_yoy_costs_per_step(settings, regclass_sales_dict)
-    sourctype_yoy_costs_per_step = calc_yoy_costs_per_step(settings, sourcetype_sales_dict)
+        # create a sales (by regclass) and fleet dictionaries
+        regclass_sales_dict = create_regclass_sales_dict(cap_fleet_df)
+        cap_totals_dict = create_fleet_totals_dict(cap_fleet_df)
+        cap_averages_dict = create_fleet_averages_dict(cap_fleet_df)
 
-    # calculate total direct costs and then per vehicle costs (per sourcetype)
-    # fleet_averages_dict = calc_per_veh_direct_costs(settings, regclass_yoy_costs_per_step, fleet_averages_dict)
-    # fleet_totals_dict = calc_direct_costs(fleet_totals_dict, fleet_averages_dict)
-    cap_averages_dict = calc_per_veh_direct_costs(regclass_yoy_costs_per_step, settings.cost_steps_regclass, cap_averages_dict, 'CAP')
-    cap_totals_dict = calc_direct_costs(cap_totals_dict, cap_averages_dict, 'CAP')
-    ghg_averages_dict = calc_per_veh_direct_costs(sourctype_yoy_costs_per_step, settings.cost_steps_sourcetype, ghg_averages_dict, 'GHG')
-    ghg_totals_dict = calc_direct_costs(ghg_totals_dict, ghg_averages_dict, 'GHG')
+        # calculate direct costs per reg class based on cumulative regclass sales (learning is applied to cumulative sales)
+        regclass_yoy_costs_per_step = calc_yoy_costs_per_step(settings, regclass_sales_dict)
 
-    # calculate indirect costs per vehicle and then total indirect costs (note that GHG program costs include indirect costs)
-    # fleet_averages_dict = calc_per_veh_indirect_costs(settings, fleet_averages_dict)
-    # fleet_totals_dict = calc_indirect_costs(settings, fleet_totals_dict, fleet_averages_dict)
-    cap_averages_dict = calc_per_veh_indirect_costs(settings, cap_averages_dict)
-    cap_totals_dict = calc_indirect_costs(settings, cap_totals_dict, cap_averages_dict)
-    # ghg_averages_dict = calc_per_veh_indirect_costs(settings, ghg_averages_dict)
-    # ghg_totals_dict = calc_indirect_costs(settings, ghg_totals_dict, ghg_averages_dict)
+        # calculate total direct costs and then per vehicle costs (per sourcetype)
+        cap_averages_dict = calc_per_veh_direct_costs(regclass_yoy_costs_per_step, settings.cost_steps_regclass, cap_averages_dict, 'CAP')
+        cap_totals_dict = calc_direct_costs(cap_totals_dict, cap_averages_dict, 'CAP')
 
-    # calculate tech costs per vehicle and total tech costs
-    # fleet_averages_dict = calc_per_veh_tech_costs(fleet_averages_dict)
-    # fleet_totals_dict = calc_tech_costs(fleet_totals_dict, fleet_averages_dict)
-    cap_averages_dict = calc_per_veh_tech_costs(cap_averages_dict)
-    cap_totals_dict = calc_tech_costs(cap_totals_dict, cap_averages_dict)
-    # ghg_averages_dict = calc_per_veh_tech_costs(ghg_averages_dict)
-    # ghg_totals_dict = calc_tech_costs(ghg_totals_dict, ghg_averages_dict)
+        # calculate indirect costs per vehicle and then total indirect costs (note that GHG program costs include indirect costs)
+        cap_averages_dict = calc_per_veh_indirect_costs(settings, cap_averages_dict)
+        cap_totals_dict = calc_indirect_costs(settings, cap_totals_dict, cap_averages_dict)
 
-    # calculate DEF costs
-    cap_totals_dict = calc_def_costs(settings, cap_totals_dict)
-    cap_averages_dict = calc_average_def_costs(cap_totals_dict, cap_averages_dict)
+        # calculate tech costs per vehicle and total tech costs
+        cap_averages_dict = calc_per_veh_tech_costs(cap_averages_dict)
+        cap_totals_dict = calc_tech_costs(cap_totals_dict, cap_averages_dict)
 
-    # calculate fuel costs, including adjustments for fuel consumption associated with ORVR
-    cap_totals_dict = calc_cap_fuel_costs(settings, cap_totals_dict)
-    cap_averages_dict = calc_average_fuel_costs(cap_totals_dict, cap_averages_dict)
-    ghg_totals_dict = calc_ghg_fuel_costs(settings, ghg_totals_dict)
-    ghg_averages_dict = calc_average_fuel_costs(ghg_totals_dict, ghg_averages_dict)
+        # calculate DEF costs
+        cap_totals_dict = calc_def_costs(settings, cap_totals_dict)
+        cap_averages_dict = calc_average_def_costs(cap_totals_dict, cap_averages_dict)
 
-    # calculate emission repair costs
-    cap_averages_dict = calc_emission_repair_costs_per_mile(settings, cap_averages_dict)
-    cap_averages_dict = calc_per_veh_emission_repair_costs(cap_averages_dict)
-    cap_totals_dict = calc_emission_repair_costs(cap_totals_dict, cap_averages_dict)
+        # calculate fuel costs, including adjustments for fuel consumption associated with ORVR
+        cap_totals_dict = calc_cap_fuel_costs(settings, cap_totals_dict)
+        cap_averages_dict = calc_average_fuel_costs(cap_totals_dict, cap_averages_dict)
 
-    # sum operating costs and operating-tech costs into a single key, value
-    # the totals_dict here uses pre-tax fuel price since it serves as the basis for social costs
-    # the averages_dict uses retail fuel prices since it serves as the basis for average operating costs which are relevant to owners
-    cap_totals_dict = calc_sum_of_costs(cap_totals_dict, 'OperatingCost', 'DEFCost', 'FuelCost_Pretax', 'EmissionRepairCost')
-    cap_totals_dict = calc_sum_of_costs(cap_totals_dict, 'TechAndOperatingCost', 'TechCost', 'OperatingCost')
-    cap_averages_dict = calc_sum_of_costs(cap_averages_dict,
-                                          'OperatingCost_Owner_AvgPerMile',
-                                          'DEFCost_AvgPerMile', 'FuelCost_Retail_AvgPerMile', 'EmissionRepairCost_AvgPerMile')
-    cap_averages_dict = calc_sum_of_costs(cap_averages_dict,
-                                          'OperatingCost_Owner_AvgPerVeh',
-                                          'DEFCost_AvgPerVeh', 'FuelCost_Retail_AvgPerVeh', 'EmissionRepairCost_AvgPerVeh')
+        # calculate emission repair costs
+        cap_averages_dict = calc_emission_repair_costs_per_mile(settings, cap_averages_dict)
+        cap_averages_dict = calc_per_veh_emission_repair_costs(cap_averages_dict)
+        cap_totals_dict = calc_emission_repair_costs(cap_totals_dict, cap_averages_dict)
 
-    ghg_totals_dict = calc_sum_of_costs(ghg_totals_dict, 'OperatingCost', 'FuelCost_Pretax')
-    ghg_totals_dict = calc_sum_of_costs(ghg_totals_dict, 'TechAndOperatingCost', 'TechCost', 'OperatingCost')
-    ghg_averages_dict = calc_sum_of_costs(ghg_averages_dict, 'OperatingCost_Owner_AvgPerVeh', 'FuelCost_Retail_AvgPerVeh')
+        # sum operating costs and operating-tech costs into a single key, value
+        # the totals_dict here uses pre-tax fuel price since it serves as the basis for social costs
+        # the averages_dict uses retail fuel prices since it serves as the basis for average operating costs which are relevant to owners
+        cap_totals_dict = calc_sum_of_costs(cap_totals_dict, 'OperatingCost', 'DEFCost', 'FuelCost_Pretax', 'EmissionRepairCost')
+        cap_totals_dict = calc_sum_of_costs(cap_totals_dict, 'TechAndOperatingCost', 'TechCost', 'OperatingCost')
+        cap_averages_dict = calc_sum_of_costs(cap_averages_dict,
+                                              'OperatingCost_Owner_AvgPerMile',
+                                              'DEFCost_AvgPerMile', 'FuelCost_Retail_AvgPerMile', 'EmissionRepairCost_AvgPerMile')
+        cap_averages_dict = calc_sum_of_costs(cap_averages_dict,
+                                              'OperatingCost_Owner_AvgPerVeh',
+                                              'DEFCost_AvgPerVeh', 'FuelCost_Retail_AvgPerVeh', 'EmissionRepairCost_AvgPerVeh')
 
-    if settings.calc_pollution_effects == 'Y':
-        cap_totals_dict = calc_criteria_emission_costs(settings, cap_totals_dict)
+        if settings.calc_cap_pollution_effects:
+            cap_totals_dict = calc_criteria_emission_costs(settings, cap_totals_dict)
 
-    # calculate some weighted (wtd) cost per mile (cpm) operating costs
-    wtd_def_cpm_dict = create_weighted_cost_dict(settings, cap_averages_dict, 'DEFCost_AvgPerMile', 'VMT_AvgPerVeh')
-    wtd_repair_cpm_dict = create_weighted_cost_dict(settings, cap_averages_dict, 'EmissionRepairCost_AvgPerMile', 'VMT_AvgPerVeh')
-    wtd_cap_fuel_cpm_dict = create_weighted_cost_dict(settings, cap_averages_dict, 'FuelCost_Retail_AvgPerMile', 'VMT_AvgPerVeh')
-    wtd_ghg_fuel_cpm_dict = create_weighted_cost_dict(settings, ghg_averages_dict, 'FuelCost_Retail_AvgPerMile', 'VMT_AvgPerVeh')
+        # calculate some weighted (wtd) cost per mile (cpm) operating costs
+        wtd_def_cpm_dict = create_weighted_cost_dict(settings, cap_averages_dict, 'DEFCost_AvgPerMile', 'VMT_AvgPerVeh')
+        wtd_repair_cpm_dict = create_weighted_cost_dict(settings, cap_averages_dict, 'EmissionRepairCost_AvgPerMile', 'VMT_AvgPerVeh')
+        wtd_cap_fuel_cpm_dict = create_weighted_cost_dict(settings, cap_averages_dict, 'FuelCost_Retail_AvgPerMile', 'VMT_AvgPerVeh')
 
-    # discount monetized values; if calculating emission costs, the discount rates entered in the BCA_General_Inputs workbook should be consistent with the
-    # criteria cost factors in that input workbook
-    cap_totals_dict = discount_values(settings, cap_totals_dict)
-    cap_averages_dict = discount_values(settings, cap_averages_dict)
-    ghg_totals_dict = discount_values(settings, ghg_totals_dict)
-    ghg_averages_dict = discount_values(settings, ghg_averages_dict)
+        # discount monetized values; if calculating emission costs, the discount rates entered in the BCA_General_Inputs workbook should be consistent with the
+        # criteria cost factors in that input workbook
+        cap_totals_dict = discount_values(settings, cap_totals_dict)
+        cap_averages_dict = discount_values(settings, cap_averages_dict)
 
-    # calculate deltas relative to the passed no action alternative ID
-    cap_totals_dict = calc_deltas(settings, cap_totals_dict)
-    cap_averages_dict = calc_deltas(settings, cap_averages_dict)
-    ghg_totals_dict = calc_deltas(settings, ghg_totals_dict)
-    ghg_averages_dict = calc_deltas(settings, ghg_averages_dict)
+        # calculate deltas relative to the passed no action alternative ID
+        cap_totals_dict = calc_deltas(settings, cap_totals_dict)
+        cap_averages_dict = calc_deltas(settings, cap_averages_dict)
 
-    wtd_def_cpm_dict = calc_deltas_weighted(settings, wtd_def_cpm_dict, 'DEFCost_AvgPerMile')
-    wtd_repair_cpm_dict = calc_deltas_weighted(settings, wtd_repair_cpm_dict, 'EmissionRepairCost_AvgPerMile')
-    wtd_cap_fuel_cpm_dict = calc_deltas_weighted(settings, wtd_cap_fuel_cpm_dict, 'FuelCost_Retail_AvgPerMile')
-    wtd_ghg_fuel_cpm_dict = calc_deltas_weighted(settings, wtd_ghg_fuel_cpm_dict, 'FuelCost_Retail_AvgPerMile')
+        wtd_def_cpm_dict = calc_deltas_weighted(settings, wtd_def_cpm_dict, 'DEFCost_AvgPerMile')
+        wtd_repair_cpm_dict = calc_deltas_weighted(settings, wtd_repair_cpm_dict, 'EmissionRepairCost_AvgPerMile')
+        wtd_cap_fuel_cpm_dict = calc_deltas_weighted(settings, wtd_cap_fuel_cpm_dict, 'FuelCost_Retail_AvgPerMile')
+
+    if settings.calc_ghg:
+        # create project fleet DataFrame which will include adjustments to the MOVES input file that are unique to the project.
+        ghg_fleet_df = create_fleet_df(settings, settings.moves_ghg)
+        
+        # create a sales (by sourcetype) and fleet dictionaries
+        sourcetype_sales_dict = create_sourcetype_sales_dict(ghg_fleet_df)
+        ghg_totals_dict = create_fleet_totals_dict(ghg_fleet_df)
+        ghg_averages_dict = create_fleet_averages_dict(ghg_fleet_df)
+
+        # calculate direct costs per sourcetype based on cumulative sourcetype sales (learning is applied to cumulative sales)
+        sourctype_yoy_costs_per_step = calc_yoy_costs_per_step(settings, sourcetype_sales_dict)
+
+        # calculate total direct costs and then per vehicle costs (per sourcetype)
+        ghg_averages_dict = calc_per_veh_direct_costs(sourctype_yoy_costs_per_step, settings.cost_steps_sourcetype, ghg_averages_dict, 'GHG')
+        ghg_totals_dict = calc_direct_costs(ghg_totals_dict, ghg_averages_dict, 'GHG')
+
+        # calculate indirect costs per vehicle and then total indirect costs (note that GHG program costs include indirect costs)
+        # ghg_averages_dict = calc_per_veh_indirect_costs(settings, ghg_averages_dict)
+        # ghg_totals_dict = calc_indirect_costs(settings, ghg_totals_dict, ghg_averages_dict)
+
+        # calculate tech costs per vehicle and total tech costs
+        # ghg_averages_dict = calc_per_veh_tech_costs(ghg_averages_dict)
+        # ghg_totals_dict = calc_tech_costs(ghg_totals_dict, ghg_averages_dict)
+
+        # calculate fuel costs, including adjustments for fuel consumption associated with ORVR
+        ghg_totals_dict = calc_ghg_fuel_costs(settings, ghg_totals_dict)
+        ghg_averages_dict = calc_average_fuel_costs(ghg_totals_dict, ghg_averages_dict)
+
+        # calculate emission repair costs
+        # ghg_averages_dict = calc_emission_repair_costs_per_mile(settings, ghg_averages_dict)
+        # ghg_averages_dict = calc_per_veh_emission_repair_costs(ghg_averages_dict)
+        # ghg_totals_dict = calc_emission_repair_costs(ghg_totals_dict, ghg_averages_dict)
+
+        # sum operating costs and operating-tech costs into a single key, value
+        # the totals_dict here uses pre-tax fuel price since it serves as the basis for social costs
+        # the averages_dict uses retail fuel prices since it serves as the basis for average operating costs which are relevant to owners
+        ghg_totals_dict = calc_sum_of_costs(ghg_totals_dict, 'OperatingCost', 'FuelCost_Pretax')
+        ghg_totals_dict = calc_sum_of_costs(ghg_totals_dict, 'TechAndOperatingCost', 'TechCost', 'OperatingCost')
+        ghg_averages_dict = calc_sum_of_costs(ghg_averages_dict, 'OperatingCost_Owner_AvgPerVeh', 'FuelCost_Retail_AvgPerVeh')
+
+        if settings.calc_ghg_pollution_effects:
+            pass
+            # ghg_totals_dict = calc_ghg_emission_costs(settings, ghg_totals_dict)
+
+        # calculate some weighted (wtd) cost per mile (cpm) operating costs
+        wtd_ghg_fuel_cpm_dict = create_weighted_cost_dict(settings, ghg_averages_dict, 'FuelCost_Retail_AvgPerMile', 'VMT_AvgPerVeh')
+
+        # discount monetized values
+        ghg_totals_dict = discount_values(settings, ghg_totals_dict)
+        ghg_averages_dict = discount_values(settings, ghg_averages_dict)
+
+        # calculate deltas relative to the passed no action alternative ID
+        ghg_totals_dict = calc_deltas(settings, ghg_totals_dict)
+        ghg_averages_dict = calc_deltas(settings, ghg_averages_dict)
+
+        wtd_ghg_fuel_cpm_dict = calc_deltas_weighted(settings, wtd_ghg_fuel_cpm_dict, 'FuelCost_Retail_AvgPerMile')
 
     elapsed_time_calcs = time.time() - start_time_calcs
 
@@ -157,14 +185,16 @@ def main(settings):
 
     # pass dicts thru the vehicle_name function to add some identifiers and then
     # do the post-processing to generate document tables, an annual summary and some figures
-    cap_totals_dict = vehicle_name(settings, cap_totals_dict)
-    cap_averages_dict = vehicle_name(settings, cap_averages_dict)
-    ghg_totals_dict = vehicle_name(settings, ghg_totals_dict)
-    ghg_averages_dict = vehicle_name(settings, ghg_averages_dict)
+    if settings.calc_cap:
+        cap_totals_dict = vehicle_name(settings, cap_totals_dict)
+        cap_averages_dict = vehicle_name(settings, cap_averages_dict)
+    if settings.calc_ghg:
+        ghg_totals_dict = vehicle_name(settings, ghg_totals_dict)
+        ghg_averages_dict = vehicle_name(settings, ghg_averages_dict)
 
     if settings.generate_post_processing_files:
-        document_cap_tables_file, cap_totals_df = run_postproc(settings, path_of_run_results_folder, cap_totals_dict, 'CAP')
-        document_ghg_tables_file, ghg_totals_df = run_postproc(settings, path_of_run_results_folder, ghg_totals_dict, 'GHG')
+        if settings.calc_cap: document_cap_tables_file, cap_totals_df = run_postproc(settings, path_of_run_results_folder, cap_totals_dict, 'CAP')
+        if settings.calc_ghg: document_ghg_tables_file, ghg_totals_df = run_postproc(settings, path_of_run_results_folder, ghg_totals_dict, 'GHG')
 
     elapsed_time_postproc = time.time() - start_time_postproc
 
@@ -194,72 +224,87 @@ def main(settings):
         gdp_deflators = pd.DataFrame(settings.gdp_deflators)  # from dict to df
         gdp_deflators.to_csv(path_of_modified_inputs_folder / 'gdp_deflators.csv', index=True)
 
+
     # save dictionaries to csv and also add some identifying info using the vehicle_name function
     print("\nSaving the output files....")
 
-    if 'yearID' not in cap_totals_df.columns.tolist():
-        cap_totals_df.insert(0, 'yearID', cap_totals_df[['modelYearID', 'ageID']].sum(axis=1))
-    cols = [col for col in cap_totals_df.columns if col not in settings.row_header_for_fleet_files]
-    cap_totals_df = pd.DataFrame(cap_totals_df, columns=settings.row_header_for_fleet_files + cols)
-    cap_totals_df.to_csv(path_of_run_results_folder / f'CAP_bca_tool_fleet_totals_{settings.start_time_readable}.csv', index=False)
+    if settings.calc_cap:
+        if 'yearID' not in cap_totals_df.columns.tolist():
+            cap_totals_df.insert(0, 'yearID', cap_totals_df[['modelYearID', 'ageID']].sum(axis=1))
+        cols = [col for col in cap_totals_df.columns if col not in settings.row_header_for_fleet_files]
+        cap_totals_df = pd.DataFrame(cap_totals_df, columns=settings.row_header_for_fleet_files + cols)
+        cap_totals_df.to_csv(path_of_run_results_folder / f'CAP_bca_tool_fleet_totals_{settings.start_time_readable}.csv', index=False)
 
-    if 'yearID' not in ghg_totals_df.columns.tolist():
-        ghg_totals_df.insert(0, 'yearID', ghg_totals_df[['modelYearID', 'ageID']].sum(axis=1))
-    cols = [col for col in ghg_totals_df.columns if col not in settings.row_header_for_fleet_files]
-    ghg_totals_df = pd.DataFrame(ghg_totals_df, columns=settings.row_header_for_fleet_files + cols)
-    ghg_totals_df.to_csv(path_of_run_results_folder / f'GHG_bca_tool_fleet_totals_{settings.start_time_readable}.csv', index=False)
+        save_dict_to_csv(cap_averages_dict,
+                         path_of_run_results_folder / f'CAP_bca_tool_fleet_averages_{settings.start_time_readable}',
+                         settings.row_header_for_fleet_files,
+                         'vehicle', 'optionID', 'modelYearID', 'ageID', 'DiscountRate')
 
-    save_dict_to_csv(cap_averages_dict,
-                     path_of_run_results_folder / f'CAP_bca_tool_fleet_averages_{settings.start_time_readable}',
-                     settings.row_header_for_fleet_files,
-                     'vehicle', 'optionID', 'modelYearID', 'ageID', 'DiscountRate')
-    save_dict_to_csv(ghg_averages_dict,
-                     path_of_run_results_folder / f'GHG_bca_tool_fleet_averages_{settings.start_time_readable}',
-                     settings.row_header_for_fleet_files,
-                     'vehicle', 'optionID', 'modelYearID', 'ageID', 'DiscountRate')
+        save_dict_to_csv(vehicle_name(settings, estimated_ages_dict),
+                         path_of_run_results_folder / f'CAP_bca_tool_estimated_ages_{settings.start_time_readable}',
+                         list(),
+                         'vehicle', 'optionID', 'modelYearID', 'identifier')
+        save_dict_to_csv(vehicle_name(settings, repair_cpm_dict),
+                         path_of_run_results_folder / f'CAP_bca_tool_repair_cpm_details_{settings.start_time_readable}',
+                         list(),
+                         'vehicle', 'optionID', 'modelYearID', 'ageID', 'DiscountRate')
 
-    save_dict_to_csv(vehicle_name(settings, estimated_ages_dict),
-                     path_of_run_results_folder / f'CAP_bca_tool_estimated_ages_{settings.start_time_readable}',
-                     list(),
-                     'vehicle', 'optionID', 'modelYearID', 'identifier')
-    save_dict_to_csv(vehicle_name(settings, repair_cpm_dict),
-                     path_of_run_results_folder / f'CAP_bca_tool_repair_cpm_details_{settings.start_time_readable}',
-                     list(),
-                     'vehicle', 'optionID', 'modelYearID', 'ageID', 'DiscountRate')
+        save_dict_to_csv(wtd_def_cpm_dict,
+                         path_of_run_results_folder / f'CAP_bca_tool_vmt_weighted_def_cpm_{settings.start_time_readable}',
+                         list(),
+                         'vehicle', 'optionID', 'modelYearID')
+        save_dict_to_csv(wtd_repair_cpm_dict,
+                         path_of_run_results_folder / f'CAP_bca_tool_vmt_weighted_emission_repair_cpm_{settings.start_time_readable}',
+                         list(),
+                         'vehicle', 'optionID', 'modelYearID')
+        save_dict_to_csv(wtd_cap_fuel_cpm_dict,
+                         path_of_run_results_folder / f'CAP_bca_tool_vmt_weighted_fuel_cpm_{settings.start_time_readable}',
+                         list(),
+                         'vehicle', 'optionID', 'modelYearID')
 
-    save_dict_to_csv(wtd_def_cpm_dict,
-                     path_of_run_results_folder / f'CAP_bca_tool_vmt_weighted_def_cpm_{settings.start_time_readable}',
-                     list(),
-                     'vehicle', 'optionID', 'modelYearID')
-    save_dict_to_csv(wtd_repair_cpm_dict,
-                     path_of_run_results_folder / f'CAP_bca_tool_vmt_weighted_emission_repair_cpm_{settings.start_time_readable}',
-                     list(),
-                     'vehicle', 'optionID', 'modelYearID')
-    save_dict_to_csv(wtd_cap_fuel_cpm_dict,
-                     path_of_run_results_folder / f'CAP_bca_tool_vmt_weighted_fuel_cpm_{settings.start_time_readable}',
-                     list(),
-                     'vehicle', 'optionID', 'modelYearID')
-    save_dict_to_csv(wtd_ghg_fuel_cpm_dict,
-                     path_of_run_results_folder / f'GHG_bca_tool_vmt_weighted_fuel_cpm_{settings.start_time_readable}',
-                     list(),
-                     'vehicle', 'optionID', 'modelYearID')
+    if settings.calc_ghg:
+        if 'yearID' not in ghg_totals_df.columns.tolist():
+            ghg_totals_df.insert(0, 'yearID', ghg_totals_df[['modelYearID', 'ageID']].sum(axis=1))
+        cols = [col for col in ghg_totals_df.columns if col not in settings.row_header_for_fleet_files]
+        ghg_totals_df = pd.DataFrame(ghg_totals_df, columns=settings.row_header_for_fleet_files + cols)
+        ghg_totals_df.to_csv(path_of_run_results_folder / f'GHG_bca_tool_fleet_totals_{settings.start_time_readable}.csv', index=False)
+
+        save_dict_to_csv(ghg_averages_dict,
+                         path_of_run_results_folder / f'GHG_bca_tool_fleet_averages_{settings.start_time_readable}',
+                         settings.row_header_for_fleet_files,
+                         'vehicle', 'optionID', 'modelYearID', 'ageID', 'DiscountRate')
+
+        save_dict_to_csv(wtd_ghg_fuel_cpm_dict,
+                         path_of_run_results_folder / f'GHG_bca_tool_vmt_weighted_fuel_cpm_{settings.start_time_readable}',
+                         list(),
+                         'vehicle', 'optionID', 'modelYearID')
 
     elapsed_time_outputs = time.time() - start_time_outputs
     end_time = time.time()
     end_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')
     elapsed_time = end_time - settings.start_time
 
-    summary_log = pd.DataFrame(data={'Item': ['Version', 'Run folder', 'Start of run', 'Elapsed time read inputs', 'Elapsed time calculations', 'Elapsed time post-processing', 'Elapsed time save outputs', 'End of run', 'Elapsed runtime'],
-                                     'Results': [bca_tool_code.__version__, path_of_run_folder, settings.start_time_readable, settings.elapsed_time_read, elapsed_time_calcs, elapsed_time_postproc, elapsed_time_outputs, end_time_readable, elapsed_time],
-                                     'Units': ['', '', 'YYYYmmdd-HHMMSS', 'seconds', 'seconds', 'seconds', 'seconds', 'YYYYmmdd-HHMMSS', 'seconds']})
+    summary_log = pd.DataFrame(data={'Item': ['Version', 'Run folder',
+                                              'Calc CAP costs', 'Calc CAP pollution',
+                                              'Calc GHG costs', 'Calc GHG pollution',
+                                              'Start of run', 'Elapsed time read inputs', 'Elapsed time calculations', 'Elapsed time post-processing',
+                                              'Elapsed time save outputs', 'End of run', 'Elapsed runtime'],
+                                     'Results': [bca_tool_code.__version__, path_of_run_folder,
+                                                 settings.calc_cap_value, settings.calc_cap_pollution_effects_value,
+                                                 settings.calc_ghg_value, settings.calc_ghg_pollution_effects_value,
+                                                 settings.start_time_readable, settings.elapsed_time_read, elapsed_time_calcs, elapsed_time_postproc,
+                                                 elapsed_time_outputs, end_time_readable, elapsed_time],
+                                     'Units': ['', '', '', '', '', '', 'YYYYmmdd-HHMMSS', 'seconds', 'seconds', 'seconds', 'seconds', 'YYYYmmdd-HHMMSS', 'seconds']})
     summary_log = pd.concat([summary_log, get_file_datetime(settings.input_files_pathlist)], axis=0, sort=False, ignore_index=True)
 
     # add summary log to document_tables_file for tracking this file which is the most likely to be shared
     if settings.generate_post_processing_files:
-        summary_log.to_excel(document_cap_tables_file, sheet_name='summary_log', index=False)
-        summary_log.to_excel(document_ghg_tables_file, sheet_name='summary_log', index=False)
-        document_cap_tables_file.save()
-        document_ghg_tables_file.save()
+        if settings.calc_cap:
+            summary_log.to_excel(document_cap_tables_file, sheet_name='summary_log', index=False)
+            document_cap_tables_file.save()
+        if settings.calc_ghg:
+            summary_log.to_excel(document_ghg_tables_file, sheet_name='summary_log', index=False)
+            document_ghg_tables_file.save()
     summary_log.to_csv(path_of_run_results_folder.joinpath('summary_log.csv'), index=False)
     print(f'\nOutput files have been saved to {path_of_run_folder}')
 
