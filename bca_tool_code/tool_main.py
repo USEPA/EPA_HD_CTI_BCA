@@ -9,7 +9,7 @@ import shutil
 from datetime import datetime
 import time
 import bca_tool_code
-from bca_tool_code.project_fleet import create_fleet_df
+from bca_tool_code.project_fleet import create_cap_fleet_df, create_ghg_fleet_df
 from bca_tool_code.project_dicts import create_regclass_sales_dict, create_sourcetype_sales_dict, \
     create_fleet_totals_dict, create_fleet_averages_dict
 from bca_tool_code.direct_costs import calc_yoy_costs_per_step, calc_per_veh_direct_costs, calc_direct_costs
@@ -45,7 +45,7 @@ def main(settings):
 
     if settings.calc_cap:
         # create project fleet DataFrame which will include adjustments to the MOVES input file that are unique to the project.
-        cap_fleet_df = create_fleet_df(settings, settings.moves)
+        cap_fleet_df = create_cap_fleet_df(settings, settings.moves_cap, 'VPOP', 'VMT', 'Gallons')
 
         # create a sales (by regclass) and fleet dictionaries
         regclass_sales_dict = create_regclass_sales_dict(cap_fleet_df)
@@ -115,7 +115,7 @@ def main(settings):
 
     if settings.calc_ghg:
         # create project fleet DataFrame which will include adjustments to the MOVES input file that are unique to the project.
-        ghg_fleet_df = create_fleet_df(settings, settings.moves_ghg)
+        ghg_fleet_df = create_ghg_fleet_df(settings, settings.moves_ghg, 'VPOP', 'VMT')
         
         # create a sales (by sourcetype) and fleet dictionaries
         sourcetype_sales_dict = create_sourcetype_sales_dict(ghg_fleet_df)
@@ -186,11 +186,11 @@ def main(settings):
     # pass dicts thru the vehicle_name function to add some identifiers and then
     # do the post-processing to generate document tables, an annual summary and some figures
     if settings.calc_cap:
-        cap_totals_dict = vehicle_name(settings, cap_totals_dict)
-        cap_averages_dict = vehicle_name(settings, cap_averages_dict)
+        cap_totals_dict = vehicle_name(settings, settings.options_cap_dict, cap_totals_dict)
+        cap_averages_dict = vehicle_name(settings, settings.options_cap_dict, cap_averages_dict)
     if settings.calc_ghg:
-        ghg_totals_dict = vehicle_name(settings, ghg_totals_dict)
-        ghg_averages_dict = vehicle_name(settings, ghg_averages_dict)
+        ghg_totals_dict = vehicle_name(settings, settings.options_ghg_dict, ghg_totals_dict)
+        ghg_averages_dict = vehicle_name(settings, settings.options_ghg_dict, ghg_averages_dict)
 
     if settings.generate_post_processing_files:
         if settings.calc_cap: document_cap_tables_file, cap_totals_df = run_postproc(settings, path_of_run_results_folder, cap_totals_dict, 'CAP')
@@ -240,11 +240,11 @@ def main(settings):
                          settings.row_header_for_fleet_files,
                          'vehicle', 'optionID', 'modelYearID', 'ageID', 'DiscountRate')
 
-        save_dict_to_csv(vehicle_name(settings, estimated_ages_dict),
+        save_dict_to_csv(vehicle_name(settings, settings.options_cap_dict, estimated_ages_dict),
                          path_of_run_results_folder / f'CAP_bca_tool_estimated_ages_{settings.start_time_readable}',
                          list(),
                          'vehicle', 'optionID', 'modelYearID', 'identifier')
-        save_dict_to_csv(vehicle_name(settings, repair_cpm_dict),
+        save_dict_to_csv(vehicle_name(settings, settings.options_cap_dict, repair_cpm_dict),
                          path_of_run_results_folder / f'CAP_bca_tool_repair_cpm_details_{settings.start_time_readable}',
                          list(),
                          'vehicle', 'optionID', 'modelYearID', 'ageID', 'DiscountRate')

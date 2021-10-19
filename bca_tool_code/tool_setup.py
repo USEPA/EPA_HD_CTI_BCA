@@ -10,7 +10,7 @@ import bca_tool_code.general_functions as gen_fxns
 from bca_tool_code.get_context_data import GetFuelPrices, GetDeflators
 from bca_tool_code.project_dicts import *
 
-
+# TODO update introduction.rst to reflect some new input files to distinguish btw CAP and GHG
 @attr.s
 class SetInputs:
     """
@@ -54,11 +54,14 @@ class SetInputs:
     markups_sourcetype = gen_fxns.read_input_files(path_inputs, input_files_dict['markups_sourcetype']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
     warranty_inputs = gen_fxns.read_input_files(path_inputs, input_files_dict['warranty_inputs']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
     usefullife_inputs = gen_fxns.read_input_files(path_inputs, input_files_dict['usefullife_inputs']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
-    moves = gen_fxns.read_input_files(path_inputs, input_files_dict['moves_cap']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
+    moves_cap = gen_fxns.read_input_files(path_inputs, input_files_dict['moves_cap']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
     moves_ghg = gen_fxns.read_input_files(path_inputs, input_files_dict['moves_ghg']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
-    moves_adjustments = gen_fxns.read_input_files(path_inputs, input_files_dict['moves_adjustments']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
-    options = gen_fxns.read_input_files(path_inputs, input_files_dict['options']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x, index_col=0)
-    options_dict = options.to_dict('index')
+    moves_adjustments_cap = gen_fxns.read_input_files(path_inputs, input_files_dict['moves_adjustments_cap']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
+    moves_adjustments_ghg = gen_fxns.read_input_files(path_inputs, input_files_dict['moves_adjustments_ghg']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
+    options_cap = gen_fxns.read_input_files(path_inputs, input_files_dict['options_cap']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x, index_col=0)
+    options_ghg = gen_fxns.read_input_files(path_inputs, input_files_dict['options_ghg']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x, index_col=0)
+    options_cap_dict = options_cap.to_dict('index')
+    options_ghg_dict = options_ghg.to_dict('index')
     def_doserate_inputs = gen_fxns.read_input_files(path_inputs, input_files_dict['def_doserate_inputs']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
     def_prices = gen_fxns.read_input_files(path_inputs, input_files_dict['def_prices']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
     orvr_fuelchanges = gen_fxns.read_input_files(path_inputs, input_files_dict['orvr_fuelchanges']['UserEntry.csv'], usecols=lambda x: 'Notes' not in x)
@@ -77,11 +80,11 @@ class SetInputs:
     elapsed_time_read = time.time() - start_time_read
 
     # set some year data
-    moves.insert(moves.columns.get_loc('modelYearID') + 1, 'ageID', moves['yearID'] - moves['modelYearID'])
+    moves_cap.insert(moves_cap.columns.get_loc('modelYearID') + 1, 'ageID', moves_cap['yearID'] - moves_cap['modelYearID'])
     moves_ghg.insert(moves_ghg.columns.get_loc('modelYearID') + 1, 'ageID', moves_ghg['yearID'] - moves_ghg['modelYearID'])
-    year_min = moves.loc[moves['ageID'] == 0, 'yearID'].min() # this will work for both calendar year and model year
-    year_max = moves['yearID'].max() # this is the last calendar year included
-    model_year_max = moves.loc[moves['ageID'] == 0, 'modelYearID'].max() # calendar years could extend beyond the last model year included
+    year_min = moves_cap.loc[moves_cap['ageID'] == 0, 'yearID'].min() # this will work for both calendar year and model year
+    year_max = moves_cap['yearID'].max() # this is the last calendar year included
+    model_year_max = moves_cap.loc[moves_cap['ageID'] == 0, 'modelYearID'].max() # calendar years could extend beyond the last model year included
     years = range(year_min, year_max + 1)
     model_years = range(year_min, model_year_max + 1)
 
@@ -118,11 +121,11 @@ class SetInputs:
     calc_ghg_pollution_effects = True if calc_ghg_pollution_effects_value == 'Y' else None
 
     # now adjust some things and get dollar values on a consistent valuation
-    if 'Alternative' in moves.columns.tolist():
-        moves.rename(columns={'Alternative': 'optionID'}, inplace=True)
+    if 'Alternative' in moves_cap.columns.tolist():
+        moves_cap.rename(columns={'Alternative': 'optionID'}, inplace=True)
     if 'Alternative' in moves_ghg.columns.tolist():
         moves_ghg.rename(columns={'Alternative': 'optionID'}, inplace=True)
-    number_alts = len(moves['optionID'].unique())
+    number_alts = len(moves_cap['optionID'].unique())
 
     # get the fuel price inputs and usd basis for the analysis
     fuel_prices_obj = GetFuelPrices(fuel_prices_file, aeo_case, 'full name', 'Motor Gasoline', 'Diesel')
@@ -141,7 +144,8 @@ class SetInputs:
     gen_fxns.convert_dollars_to_analysis_basis(repair_and_maintenance, gdp_deflators, dollar_basis_analysis, 'Value')
 
     # create any DataFrames and dictionaries and lists that are useful as part of settings (used throughout project)
-    moves_adjustments_dict = create_moves_adjustments_dict(moves_adjustments, 'regClassID', 'fuelTypeID', 'optionID')
+    moves_adjustments_cap_dict = create_moves_adjustments_dict(moves_adjustments_cap, 'regClassID', 'fuelTypeID', 'optionID')
+    moves_adjustments_ghg_dict = create_moves_adjustments_dict(moves_adjustments_ghg, 'sourceTypeID', 'regClassID', 'fuelTypeID', 'optionID')
     seedvol_factor_regclass_dict = create_seedvol_factor_dict(regclass_learningscalers, 'regClassID', 'fuelTypeID', 'optionID')
     seedvol_factor_sourcetype_dict = create_seedvol_factor_dict(sourcetype_learningscalers, 'sourceTypeID', 'regClassID', 'fuelTypeID', 'optionID')
     markup_inputs_regclass_dict = create_markup_inputs_dict(markups_regclass)

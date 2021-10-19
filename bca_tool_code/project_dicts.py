@@ -101,7 +101,9 @@ def create_moves_adjustments_dict(input_df, *args):
     """
     df = input_df.copy()
     cols = [arg for arg in args]
-    id = pd.Series(zip(zip(df[cols[0]], df[cols[1]]), df[cols[2]]))
+    if len(cols) == 3:
+        id = pd.Series(zip(zip(df[cols[0]], df[cols[1]]), df[cols[2]]))
+    else: id = pd.Series(zip(zip(df[cols[0]], df[cols[1]], df[cols[2]]), df[cols[3]]))
     df.insert(0, 'id', id)
     df.drop(columns=cols, inplace=True)
     df.set_index('id', inplace=True)

@@ -72,11 +72,12 @@ class Vehicle:
         return sourcetype_dict[self.id]
 
 
-def vehicle_name(settings, dict_of_vehicles):
+def vehicle_name(settings, options_dict, dict_of_vehicles):
     """
 
     Args:
         settings: The SetInputs class.
+        options_dict: A dictionary of option ID numbers and associated names.
         dict_of_vehicles: A dictionary containing a key of vehicle tuples.
 
     Returns: The passed dictionary with new attributes identifying the vehicle based on the vehicle tuples (keys).
@@ -86,15 +87,15 @@ def vehicle_name(settings, dict_of_vehicles):
          any keys that are deltas.
 
     """
-    no_action_name = settings.options_dict[settings.no_action_alt]['OptionName']
+    no_action_name = options_dict[settings.no_action_alt]['OptionName']
     for key in dict_of_vehicles.keys():
         vehicle, alt = key[0], key[1]
         st, rc, ft = vehicle
-        if alt > len(settings.options_dict):
+        if alt > len(options_dict):
             action_alt = alt / 10
-            action_name = settings.options_dict[action_alt]['OptionName']
+            action_name = options_dict[action_alt]['OptionName']
             option_name = f'{action_name}_minus_{no_action_name}'
-        else: option_name = settings.options_dict[alt]['OptionName']
+        else: option_name = options_dict[alt]['OptionName']
         sourcetype_name = Vehicle(st).sourcetype_name()
         regclass_name = Vehicle(rc).regclass_name()
         fueltype_name = Vehicle(ft).fueltype_name()
