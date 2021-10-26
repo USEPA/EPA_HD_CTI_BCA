@@ -106,6 +106,7 @@ def create_ghg_fleet_df(settings, input_df, *args_to_adjust):
             df_return.loc[(df_return['optionID'] == alt) & (df_return['sourceTypeID'] == st) & (df_return['regClassID'] == rc) & (df_return['fuelTypeID'] == ft), arg] \
                 = df_return.loc[(df_return['optionID'] == alt) & (df_return['sourceTypeID'] == st) & (df_return['regClassID'] == rc) & (df_return['fuelTypeID'] == ft), arg] \
                   * adjustment * (1 + growth)
+
     return df_return
 
 

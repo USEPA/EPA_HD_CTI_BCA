@@ -71,6 +71,39 @@ def calc_captured_gallons(settings, vehicle, alt, year, model_year, totals_dict)
     return captured_gallons
 
 
+def attribute_ghg_gallon_impact_to_remaining_vpop(settings, totals_dict):
+    """
+
+    Parameters:
+        settings: The SetInputs class.
+        totals_dict: A dictionary of fleet Gallons consumed by all vehicles.
+
+    Returns:
+        The passed totals_dict with gallons adjusted such that the full delta gallons reduced are attributable to the remaining VPOP following any
+        adjustments made according to the moves_adjustments input file.
+
+    """
+    # the equation below calculates new alt gallons as base gallons - (1/adjustment) * (base gallons - alt gallons)
+    # remember that all gallons have already had the moves adjustments applied.
+    for key in totals_dict.keys():
+        vehicle, alt, model_year, age_id, disc_rate = key
+        # st, rc, ft = vehicle
+
+        if (vehicle, alt) in settings.moves_adjustments_ghg_dict.keys():
+            adjustment = settings.moves_adjustments_ghg_dict[(vehicle, alt)]['percent']
+            growth = settings.moves_adjustments_ghg_dict[(vehicle, alt)]['growth']
+        else:
+            adjustment, growth = 0, 0
+
+        if alt != settings.no_action_alt and adjustment != 0:
+            base_gallons = totals_dict[(vehicle, settings.no_action_alt, model_year, age_id, disc_rate)]['Gallons']
+            alt_gallons = totals_dict[key]['Gallons']
+            new_alt_gallons = base_gallons - (1 / adjustment) * (base_gallons - alt_gallons)
+            totals_dict[key]['Gallons'] = new_alt_gallons
+
+    return totals_dict
+
+
 def calc_cap_fuel_costs(settings, totals_dict):
     """
 
@@ -146,8 +179,12 @@ def calc_average_fuel_costs(totals_dict, averages_dict):
         fuel_cost = totals_dict[key]['FuelCost_Retail']
         vmt = totals_dict[key]['VMT']
         vpop = totals_dict[key]['VPOP']
-        averages_dict[key].update({'FuelCost_Retail_AvgPerMile': fuel_cost / vmt})
-        averages_dict[key].update({'FuelCost_Retail_AvgPerVeh': fuel_cost / vpop})
+        try:
+            averages_dict[key].update({'FuelCost_Retail_AvgPerMile': fuel_cost / vmt})
+            averages_dict[key].update({'FuelCost_Retail_AvgPerVeh': fuel_cost / vpop})
+        except:
+            averages_dict[key].update({'FuelCost_Retail_AvgPerMile': 0})
+            averages_dict[key].update({'FuelCost_Retail_AvgPerVeh': 0})
     return averages_dict
 
 

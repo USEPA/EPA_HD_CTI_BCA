@@ -90,17 +90,20 @@ def tech_pkg_cost_withlearning(settings, unit, alt, model_year, cost_step, sales
     """
     sales_year1 = sales_dict[(unit, alt, int(cost_step))]['VPOP']
     cumulative_sales = calc_cumulative_sales_by_step(unit, alt, model_year, cost_step, sales_dict)
-    try:
-        rc, ft = unit
-        seedvolume_factor = settings.seedvol_factor_regclass_dict[(unit, alt)]['SeedVolumeFactor']
-        pkg_cost = tech_package_cost(settings.regclass_costs, unit, alt, cost_step)
-    except:
-        st, rc, ft = unit
-        seedvolume_factor = settings.seedvol_factor_sourcetype_dict[(unit, alt)]['SeedVolumeFactor']
-        pkg_cost = tech_package_cost(settings.sourcetype_costs, unit, alt, cost_step)
-    pkg_cost_learned = pkg_cost \
-                       * (((cumulative_sales + (sales_year1 * seedvolume_factor))
-                           / (sales_year1 + (sales_year1 * seedvolume_factor))) ** settings.learning_rate)
+    if sales_year1 == 0:
+        pkg_cost_learned = 0
+    else:
+        try:
+            rc, ft = unit
+            seedvolume_factor = settings.seedvol_factor_regclass_dict[(unit, alt)]['SeedVolumeFactor']
+            pkg_cost = tech_package_cost(settings.regclass_costs, unit, alt, cost_step)
+        except:
+            st, rc, ft = unit
+            seedvolume_factor = settings.seedvol_factor_sourcetype_dict[(unit, alt)]['SeedVolumeFactor']
+            pkg_cost = tech_package_cost(settings.sourcetype_costs, unit, alt, cost_step)
+        pkg_cost_learned = pkg_cost \
+                           * (((cumulative_sales + (sales_year1 * seedvolume_factor))
+                               / (sales_year1 + (sales_year1 * seedvolume_factor))) ** settings.learning_rate)
     return pkg_cost_learned, cumulative_sales
 
 
