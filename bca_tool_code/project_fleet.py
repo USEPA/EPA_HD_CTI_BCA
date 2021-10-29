@@ -55,7 +55,7 @@ def create_cap_fleet_df(settings, input_df, *args_to_adjust):
     return df_return
 
 
-def create_ghg_fleet_df(settings, input_df, *args_to_adjust):
+def create_ghg_fleet_df(settings, input_df):
     """
 
     Parameters:
@@ -94,6 +94,7 @@ def create_ghg_fleet_df(settings, input_df, *args_to_adjust):
 
     st_vehicles = sourcetype_vehicles(df_return)
     # make adjustments to MOVES values as needed for cost analysis
+    df_return.insert(df_return.columns.get_loc('VPOP') + 1, 'VPOP_AddingTech', 0)
     for (vehicle, alt) in st_vehicles:
         st, rc, ft = vehicle
         if (vehicle, alt) in settings.moves_adjustments_ghg_dict.keys():
@@ -101,11 +102,9 @@ def create_ghg_fleet_df(settings, input_df, *args_to_adjust):
             growth = settings.moves_adjustments_ghg_dict[(vehicle, alt)]['growth']
         else:
             adjustment, growth = 0, 0
-        # args_to_adjust = ['VPOP', 'VMT', 'Gallons']
-        for arg in args_to_adjust:
-            df_return.loc[(df_return['optionID'] == alt) & (df_return['sourceTypeID'] == st) & (df_return['regClassID'] == rc) & (df_return['fuelTypeID'] == ft), arg] \
-                = df_return.loc[(df_return['optionID'] == alt) & (df_return['sourceTypeID'] == st) & (df_return['regClassID'] == rc) & (df_return['fuelTypeID'] == ft), arg] \
-                  * adjustment * (1 + growth)
+        df_return.loc[(df_return['optionID'] == alt) & (df_return['sourceTypeID'] == st) & (df_return['regClassID'] == rc) & (df_return['fuelTypeID'] == ft), 'VPOP_AddingTech'] \
+            = df_return.loc[(df_return['optionID'] == alt) & (df_return['sourceTypeID'] == st) & (df_return['regClassID'] == rc) & (df_return['fuelTypeID'] == ft), 'VPOP'] \
+              * adjustment * (1 + growth)
 
     return df_return
 

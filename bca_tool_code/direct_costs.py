@@ -41,7 +41,7 @@ def tech_package_cost(costs_df, unit, alt, cost_step):
     return pkg_cost
 
 
-def calc_cumulative_sales_by_step(unit, alt, model_year, cost_step, sales_dict):
+def calc_cumulative_sales_by_step(unit, alt, model_year, cost_step, sales_dict, sales_arg):
     """
 
     Parameters:
@@ -51,6 +51,7 @@ def calc_cumulative_sales_by_step(unit, alt, model_year, cost_step, sales_dict):
         cost_step: If standards are implemented in stages (i.e., for MY2027 and then again for MY2030), then these would represent two cost steps. The cost_step
         here is a string representing a model year of implementation (i.e., '2027', not 2027).\n
         sales_dict: A dictionary containing sales (VPOP at age=0) of units by model year.
+        sales_arg: A String specifying the sales attribute to use (e.g., "VPOP" or "VPOP_AddingTech")
 
     Returns:
         A single float of cumulative sales for the given unit meeting the standards set in the given cost_step.
@@ -66,12 +67,12 @@ def calc_cumulative_sales_by_step(unit, alt, model_year, cost_step, sales_dict):
     else:
         cumulative_sales = 0
         for year in range(int(cost_step), model_year + 1):
-            cumulative_sales += sales_dict[(unit, alt, year)]['VPOP']
+            cumulative_sales += sales_dict[(unit, alt, year)][sales_arg]
         cumulative_sales_dict[cumulative_sales_dict_id] = cumulative_sales
     return cumulative_sales
 
 
-def tech_pkg_cost_withlearning(settings, unit, alt, model_year, cost_step, sales_dict):
+def tech_pkg_cost_withlearning(settings, unit, alt, model_year, cost_step, sales_dict, sales_arg):
     """
 
     Parameters:
@@ -82,14 +83,15 @@ def tech_pkg_cost_withlearning(settings, unit, alt, model_year, cost_step, sales
         cost_step: If standards are implemented in stages (i.e., for MY2027 and then again for MY2030), then these would represent two cost steps. The cost_step
         here is a string representing a model year of implementation (i.e., '2027', not 2027).\n
         sales_dict: A dictionary containing sales (VPOP at age=0) of units by model year.
+        sales_arg: A String specifying the sales attribute to use (e.g., "VPOP" or "VPOP_AddingTech")
 
     Returns:
         Two values - the package cost with learning applied for the passsed unit in the given model year and associated with the given cost_step;
         and, the cumulative sales of that vehicle used in calculating learning effects.
 
     """
-    sales_year1 = sales_dict[(unit, alt, int(cost_step))]['VPOP']
-    cumulative_sales = calc_cumulative_sales_by_step(unit, alt, model_year, cost_step, sales_dict)
+    sales_year1 = sales_dict[(unit, alt, int(cost_step))][sales_arg]
+    cumulative_sales = calc_cumulative_sales_by_step(unit, alt, model_year, cost_step, sales_dict, sales_arg)
     if sales_year1 == 0:
         pkg_cost_learned = 0
     else:
@@ -107,12 +109,13 @@ def tech_pkg_cost_withlearning(settings, unit, alt, model_year, cost_step, sales
     return pkg_cost_learned, cumulative_sales
 
 
-def calc_yoy_costs_per_step(settings, sales_dict):
+def calc_yoy_costs_per_step(settings, sales_dict, sales_arg):
     """
 
     Parameters:
         settings: The SetInputs class.\n
         sales_dict: A dictionary containing sales (VPOP at age=0) of units by model year.
+        sales_arg: A String specifying the sales attribute to use (e.g., "VPOP" or "VPOP_AddingTech")
 
     Returns:
         A dictionary containing the package cost and cumulative sales used to calculate that package cost (learning effects depend on cumulative
@@ -130,7 +133,7 @@ def calc_yoy_costs_per_step(settings, sales_dict):
             steps = settings.cost_steps_sourcetype
         for cost_step in steps:
             if model_year >= int(cost_step):
-                pkg_cost, cumulative_sales = tech_pkg_cost_withlearning(settings, unit, alt, model_year, cost_step, sales_dict)
+                pkg_cost, cumulative_sales = tech_pkg_cost_withlearning(settings, unit, alt, model_year, cost_step, sales_dict, sales_arg)
                 yoy_costs_per_step_dict[(unit, alt, model_year, cost_step)] = {'CumulativeSales': cumulative_sales, 'Cost_AvgPerVeh': pkg_cost}
     return yoy_costs_per_step_dict
 
@@ -171,7 +174,7 @@ def calc_per_veh_direct_costs(yoy_costs_per_step_dict, cost_steps, averages_dict
     return calcs_dict
 
 
-def calc_direct_costs(totals_dict, averages_dict, program):
+def calc_direct_costs(totals_dict, averages_dict, program, sales_arg):
     """
 
     Parameters:
@@ -190,7 +193,7 @@ def calc_direct_costs(totals_dict, averages_dict, program):
         vehicle, alt, model_year, age_id, disc_rate = key
         if age_id == 0:
             cost_per_veh = averages_dict[key][f'{arg}Cost_AvgPerVeh']
-            sales = totals_dict[key]['VPOP']
+            sales = totals_dict[key][sales_arg]
             totals_dict[key].update({f'{arg}Cost': cost_per_veh * sales})
     return totals_dict
 

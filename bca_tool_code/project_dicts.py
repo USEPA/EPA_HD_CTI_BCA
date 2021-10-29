@@ -80,7 +80,7 @@ def create_sourcetype_sales_dict(fleet_df):
 
     """
     df = fleet_df.copy()
-    df = pd.DataFrame(df.loc[df['ageID'] == 0, ['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'modelYearID', 'VPOP']]).reset_index(drop=True)
+    df = pd.DataFrame(df.loc[df['ageID'] == 0, ['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'modelYearID', 'VPOP', 'VPOP_AddingTech']]).reset_index(drop=True)
     df = df.groupby(by=['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'modelYearID'], as_index=False).sum()
     df.insert(0, 'id', pd.Series(zip(zip(df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['optionID'], df['modelYearID'])))
     df.drop(columns=['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'modelYearID'], inplace=True)

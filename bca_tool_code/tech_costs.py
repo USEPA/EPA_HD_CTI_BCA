@@ -25,12 +25,13 @@ def calc_per_veh_tech_costs(averages_dict):
     return averages_dict
 
 
-def calc_tech_costs(totals_dict, averages_dict):
+def calc_tech_costs(totals_dict, averages_dict, sales_arg):
     """
 
     Parameters::
         totals_dict: A dictionary containing vehicle population (VPOP).\n
         averages_dict: A dictionary containing average tech costs per vehicle.
+        sales_arg: A String specifying the sales attribute to use (e.g., "VPOP" or "VPOP_AddingTech")
 
     Returns:
         The totals_dict dictionary updated with annual technology costs for all vehicles.
@@ -41,7 +42,7 @@ def calc_tech_costs(totals_dict, averages_dict):
         vehicle, alt, model_year, age_id, disc_rate = key
         if age_id == 0:
             cost_per_veh = averages_dict[key]['TechCost_AvgPerVeh']
-            sales = totals_dict[key]['VPOP']
+            sales = totals_dict[key][sales_arg]
             totals_dict[key].update({'TechCost': cost_per_veh * sales})
     return totals_dict
 
