@@ -42,6 +42,11 @@ def create_fleet_averages_dict(fleet_df, rate=0):
     df.insert(0, 'id', id)
     df.drop(columns=['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'yearID', 'modelYearID', 'ageID', 'DiscountRate'], inplace=True)
     df.insert(len(df.columns), 'VMT_AvgPerVeh', fleet_df['VMT'] / fleet_df['VPOP'])
+    df.insert(df.columns.get_loc('VMT_AvgPerVeh') - 1, 'VPOP', fleet_df['VPOP'])
+    try:
+        df.insert(df.columns.get_loc('VPOP') + 1, 'VPOP_AddingTech', fleet_df['VPOP_AddingTech'])
+    except:
+        pass
     df.set_index('id', inplace=True)
     return_dict = df.to_dict('index')
     return_dict = calc_per_veh_cumulative_vmt(return_dict)

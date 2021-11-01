@@ -169,6 +169,8 @@ def calc_per_veh_direct_costs(yoy_costs_per_step_dict, cost_steps, averages_dict
                     if model_year >= int(step):
                         model_year_cost += yoy_costs_per_step_dict[(unit, alt, model_year, step)]['Cost_AvgPerVeh']
             if program == 'GHG':
+                # GHG program costs are to be averaged over all VPOP for the given unit
+                model_year_cost = model_year_cost * calcs_dict[key]['VPOP_AddingTech'] / calcs_dict[key]['VPOP']
                 calcs_dict[key].update({'TechCost_AvgPerVeh': model_year_cost})
             else: calcs_dict[key].update({'DirectCost_AvgPerVeh': model_year_cost})
     return calcs_dict

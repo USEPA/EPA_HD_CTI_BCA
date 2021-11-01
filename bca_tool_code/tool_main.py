@@ -127,7 +127,7 @@ def main(settings):
 
         # calculate total direct costs and then per vehicle costs (per sourcetype)
         ghg_averages_dict = calc_per_veh_direct_costs(sourcetype_yoy_costs_per_step, settings.cost_steps_sourcetype, ghg_averages_dict, 'GHG')
-        ghg_totals_dict = calc_direct_costs(ghg_totals_dict, ghg_averages_dict, 'GHG', 'VPOP_AddingTech')
+        ghg_totals_dict = calc_direct_costs(ghg_totals_dict, ghg_averages_dict, 'GHG', 'VPOP')
 
         # calculate indirect costs per vehicle and then total indirect costs (note that GHG program costs include indirect costs)
         # ghg_averages_dict = calc_per_veh_indirect_costs(settings, ghg_averages_dict)
