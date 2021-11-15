@@ -121,8 +121,8 @@ def calc_cap_fuel_costs(settings, totals_dict):
 
     """
     print('\nCalculating CAP-related fuel costs.\n')
-    captured_gallons = 0
     for key in totals_dict.keys():
+        captured_gallons = 0
         vehicle, alt, model_year, age_id, disc_rate = key
         st, rc, ft = vehicle
         year = model_year + age_id
