@@ -1,8 +1,4 @@
 
-# create some dictionaries for storing data
-scaled_markups_dict = dict()
-project_markups_dict = dict()
-
 
 def calc_project_markup_value(settings, unit, alt, markup_factor, model_year):
     """
@@ -31,28 +27,23 @@ def calc_project_markup_value(settings, unit, alt, markup_factor, model_year):
         markups_dict = settings.markup_inputs_regclass_dict
     except:
         markups_dict = settings.markup_inputs_sourcetype_dict
-    scaled_markups_dict_id = (unit, alt, markup_factor, model_year)
     scaling_metric = settings.indirect_cost_scaling_metric
-    if scaled_markups_dict_id in scaled_markups_dict:
-        project_markup_value = scaled_markups_dict[scaled_markups_dict_id]
-    else:
-        input_markup_value, scaler, scaled_by, num_years = markups_dict[((ft, markup_factor), alt)]['Value'], \
-                                                           markups_dict[((ft, markup_factor), alt)]['Scaler'], \
-                                                           markups_dict[((ft, markup_factor), alt)]['Scaled_by'], \
-                                                           markups_dict[((ft, markup_factor), alt)]['NumberOfYears']
-        if scaler == 'Absolute':
-            project_markup_value = \
-                (settings.required_miles_and_ages_dict[(unit, alt, scaled_by, scaling_metric)][f'{model_year}']
-                 / settings.required_miles_and_ages_dict[(unit, alt, scaled_by, scaling_metric)]['2024']) \
-                * input_markup_value
-        if scaler == 'Relative':
-            project_markup_value = \
-                (settings.required_miles_and_ages_dict[(unit, alt, scaled_by, scaling_metric)][f'{model_year}']
-                 / settings.required_miles_and_ages_dict[(unit, alt, scaled_by, scaling_metric)][str(int(model_year) - int(num_years))]) \
-                * input_markup_value
-        if scaler == 'None':
-            project_markup_value = input_markup_value
-        scaled_markups_dict[scaled_markups_dict_id] = project_markup_value
+    input_markup_value, scaler, scaled_by, num_years = markups_dict[((ft, markup_factor), alt)]['Value'], \
+                                                       markups_dict[((ft, markup_factor), alt)]['Scaler'], \
+                                                       markups_dict[((ft, markup_factor), alt)]['Scaled_by'], \
+                                                       markups_dict[((ft, markup_factor), alt)]['NumberOfYears']
+    if scaler == 'Absolute':
+        project_markup_value = \
+            (settings.required_miles_and_ages_dict[(unit, alt, scaled_by, scaling_metric)][f'{model_year}']
+             / settings.required_miles_and_ages_dict[(unit, alt, scaled_by, scaling_metric)]['2024']) \
+            * input_markup_value
+    if scaler == 'Relative':
+        project_markup_value = \
+            (settings.required_miles_and_ages_dict[(unit, alt, scaled_by, scaling_metric)][f'{model_year}']
+             / settings.required_miles_and_ages_dict[(unit, alt, scaled_by, scaling_metric)][str(int(model_year) - int(num_years))]) \
+            * input_markup_value
+    if scaler == 'None':
+        project_markup_value = input_markup_value
     return project_markup_value
 
 

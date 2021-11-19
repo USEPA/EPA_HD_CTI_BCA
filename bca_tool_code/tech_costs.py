@@ -1,6 +1,4 @@
 
-per_veh_tech_cost_dict = dict()
-
 
 def calc_per_veh_tech_costs(averages_dict):
     """

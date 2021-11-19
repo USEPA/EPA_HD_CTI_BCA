@@ -1,10 +1,5 @@
 
 
-# create some dictionaries for storing data
-cumulative_sales_dict = dict()
-pkg_cost_dict = dict()
-
-
 def tech_package_cost(costs_df, unit, alt, cost_step):
     """
 
@@ -19,25 +14,20 @@ def tech_package_cost(costs_df, unit, alt, cost_step):
         A single float representing the package direct cost (a summation of individual tech direct costs) for the passed vehicle at the given cost_step.
 
     """
-    pkg_cost_dict_key = (unit, alt, cost_step)
-    if pkg_cost_dict_key in pkg_cost_dict.keys():
-        pkg_cost = pkg_cost_dict[pkg_cost_dict_key]
-    else:
-        try:
-            rc, ft = unit
-            techs_on_veh = costs_df.loc[(costs_df['optionID'] == alt)
-                                        & (costs_df['regClassID'] == rc)
-                                        & (costs_df['fuelTypeID'] == ft),
-                                        ['TechPackageDescription', cost_step]]
-        except:
-            st, rc, ft = unit
-            techs_on_veh = costs_df.loc[(costs_df['optionID'] == alt)
-                                        & (costs_df['sourceTypeID'] == st)
-                                        & (costs_df['regClassID'] == rc)
-                                        & (costs_df['fuelTypeID'] == ft),
-                                        ['TechPackageDescription', cost_step]]
-        pkg_cost = techs_on_veh[cost_step].sum(axis=0)
-        pkg_cost_dict[pkg_cost_dict_key] = pkg_cost
+    try:
+        rc, ft = unit
+        techs_on_veh = costs_df.loc[(costs_df['optionID'] == alt)
+                                    & (costs_df['regClassID'] == rc)
+                                    & (costs_df['fuelTypeID'] == ft),
+                                    ['TechPackageDescription', cost_step]]
+    except:
+        st, rc, ft = unit
+        techs_on_veh = costs_df.loc[(costs_df['optionID'] == alt)
+                                    & (costs_df['sourceTypeID'] == st)
+                                    & (costs_df['regClassID'] == rc)
+                                    & (costs_df['fuelTypeID'] == ft),
+                                    ['TechPackageDescription', cost_step]]
+    pkg_cost = techs_on_veh[cost_step].sum(axis=0)
     return pkg_cost
 
 
@@ -50,7 +40,7 @@ def calc_cumulative_sales_by_step(unit, alt, model_year, cost_step, sales_dict, 
         model_year: The model year of the passed vehicle.\n
         cost_step: If standards are implemented in stages (i.e., for MY2027 and then again for MY2030), then these would represent two cost steps. The cost_step
         here is a string representing a model year of implementation (i.e., '2027', not 2027).\n
-        sales_dict: A dictionary containing sales (VPOP at age=0) of units by model year.
+        sales_dict: A dictionary containing sales (VPOP at age=0) of units by model year.\n
         sales_arg: A String specifying the sales attribute to use (e.g., "VPOP" or "VPOP_AddingTech")
 
     Returns:
@@ -61,28 +51,23 @@ def calc_cumulative_sales_by_step(unit, alt, model_year, cost_step, sales_dict, 
         cumulative sales beginning in MY2030 and continuing each model year thereafter. These sales "streams" are never combined.
 
     """
-    cumulative_sales_dict_id = (unit, alt, model_year, cost_step)
-    if cumulative_sales_dict_id in cumulative_sales_dict.keys():
-        cumulative_sales = cumulative_sales_dict[cumulative_sales_dict_id]
-    else:
-        cumulative_sales = 0
-        for year in range(int(cost_step), model_year + 1):
-            cumulative_sales += sales_dict[(unit, alt, year)][sales_arg]
-        cumulative_sales_dict[cumulative_sales_dict_id] = cumulative_sales
+    cumulative_sales = 0
+    for year in range(int(cost_step), model_year + 1):
+        cumulative_sales += sales_dict[(unit, alt, year)][sales_arg]
     return cumulative_sales
 
 
-def tech_pkg_cost_withlearning(settings, unit, alt, model_year, cost_step, sales_dict, sales_arg):
+def tech_pkg_cost_withlearning(settings, unit, alt, cumulative_sales, cost_step, sales_dict, sales_arg):
     """
 
     Parameters:
         settings: The SetInputs class.\n
         unit: A tuple representing a regclass_fueltype engine or a sourcetype_regclass_fueltype vehicle.\n
         alt: The alternative or option ID.\n
-        model_year: The model year of the passed vehicle.\n
+        cumulative_sales: The cumulative sales of the given unit since the start of the cost step.\n
         cost_step: If standards are implemented in stages (i.e., for MY2027 and then again for MY2030), then these would represent two cost steps. The cost_step
         here is a string representing a model year of implementation (i.e., '2027', not 2027).\n
-        sales_dict: A dictionary containing sales (VPOP at age=0) of units by model year.
+        sales_dict: A dictionary containing sales (VPOP at age=0) of units by model year.\n
         sales_arg: A String specifying the sales attribute to use (e.g., "VPOP" or "VPOP_AddingTech")
 
     Returns:
@@ -91,7 +76,6 @@ def tech_pkg_cost_withlearning(settings, unit, alt, model_year, cost_step, sales
 
     """
     sales_year1 = sales_dict[(unit, alt, int(cost_step))][sales_arg]
-    cumulative_sales = calc_cumulative_sales_by_step(unit, alt, model_year, cost_step, sales_dict, sales_arg)
     if sales_year1 == 0:
         pkg_cost_learned = 0
     else:
@@ -106,7 +90,7 @@ def tech_pkg_cost_withlearning(settings, unit, alt, model_year, cost_step, sales
         pkg_cost_learned = pkg_cost \
                            * (((cumulative_sales + (sales_year1 * seedvolume_factor))
                                / (sales_year1 + (sales_year1 * seedvolume_factor))) ** settings.learning_rate)
-    return pkg_cost_learned, cumulative_sales
+    return pkg_cost_learned
 
 
 def calc_yoy_costs_per_step(settings, sales_dict, sales_arg):
@@ -114,7 +98,7 @@ def calc_yoy_costs_per_step(settings, sales_dict, sales_arg):
 
     Parameters:
         settings: The SetInputs class.\n
-        sales_dict: A dictionary containing sales (VPOP at age=0) of units by model year.
+        sales_dict: A dictionary containing sales (VPOP at age=0) of units by model year.\n
         sales_arg: A String specifying the sales attribute to use (e.g., "VPOP" or "VPOP_AddingTech")
 
     Returns:
@@ -133,7 +117,8 @@ def calc_yoy_costs_per_step(settings, sales_dict, sales_arg):
             steps = settings.cost_steps_sourcetype
         for cost_step in steps:
             if model_year >= int(cost_step):
-                pkg_cost, cumulative_sales = tech_pkg_cost_withlearning(settings, unit, alt, model_year, cost_step, sales_dict, sales_arg)
+                cumulative_sales = calc_cumulative_sales_by_step(unit, alt, model_year, cost_step, sales_dict, sales_arg)
+                pkg_cost = tech_pkg_cost_withlearning(settings, unit, alt, cumulative_sales, cost_step, sales_dict, sales_arg)
                 yoy_costs_per_step_dict[(unit, alt, model_year, cost_step)] = {'CumulativeSales': cumulative_sales, 'Cost_AvgPerVeh': pkg_cost}
     return yoy_costs_per_step_dict
 
@@ -181,8 +166,9 @@ def calc_direct_costs(totals_dict, averages_dict, program, sales_arg):
 
     Parameters:
         totals_dict: A dictionary into which tech package direct costs will be updated.\n
-        averages_dict: A dictionary containing tech package direct costs/vehicle.
-        program: The program identifier string (i.e., 'CAP' or 'GHG').
+        averages_dict: A dictionary containing tech package direct costs/vehicle.\n
+        program: The program identifier string (i.e., 'CAP' or 'GHG').\n
+        sales_arg: A String specifying the sales attribute to use (e.g., "VPOP" or "VPOP_AddingTech")
 
     Returns:
         The totals_dict dictionary updated with tech package direct costs (package cost * sales).

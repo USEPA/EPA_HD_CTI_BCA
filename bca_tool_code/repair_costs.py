@@ -1,6 +1,6 @@
 # import pandas as pd
 
-
+# TODO eliminate these dictionaries?
 cumulative_vmt_dict = dict()
 typical_vmt_dict = dict()
 estimated_ages_dict = dict()
