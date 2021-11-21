@@ -16,9 +16,8 @@ from bca_tool_code.direct_costs import calc_yoy_costs_per_step, calc_per_veh_dir
 from bca_tool_code.indirect_costs import calc_per_veh_indirect_costs, calc_indirect_costs
 from bca_tool_code.tech_costs import calc_per_veh_tech_costs, calc_tech_costs
 from bca_tool_code.def_costs import calc_def_costs, calc_average_def_costs
-from bca_tool_code.fuel_costs import calc_cap_fuel_costs, calc_ghg_fuel_costs, calc_average_fuel_costs, attribute_ghg_gallon_impact_to_remaining_vpop
-from bca_tool_code.repair_costs import calc_emission_repair_costs_per_mile, calc_per_veh_emission_repair_costs, \
-    calc_emission_repair_costs, estimated_ages_dict, repair_cpm_dict
+from bca_tool_code.fuel_costs import calc_cap_fuel_costs, calc_ghg_fuel_costs, calc_average_fuel_costs
+from bca_tool_code.repair_costs import calc_emission_repair_costs_per_mile, calc_per_veh_emission_repair_costs, calc_emission_repair_costs
 from bca_tool_code.emission_costs import calc_criteria_emission_costs
 from bca_tool_code.sum_by_vehicle import calc_sum_of_costs
 from bca_tool_code.discounting import discount_values
@@ -76,7 +75,7 @@ def main(settings):
         cap_averages_dict = calc_average_fuel_costs(cap_totals_dict, cap_averages_dict)
 
         # calculate emission repair costs
-        cap_averages_dict = calc_emission_repair_costs_per_mile(settings, cap_averages_dict)
+        cap_averages_dict, repair_cpm_dict, estimated_ages_dict = calc_emission_repair_costs_per_mile(settings, cap_averages_dict)
         cap_averages_dict = calc_per_veh_emission_repair_costs(cap_averages_dict)
         cap_totals_dict = calc_emission_repair_costs(cap_totals_dict, cap_averages_dict)
 
@@ -129,24 +128,9 @@ def main(settings):
         ghg_averages_dict = calc_per_veh_direct_costs(sourcetype_yoy_costs_per_step, settings.cost_steps_sourcetype, ghg_averages_dict, 'GHG')
         ghg_totals_dict = calc_direct_costs(ghg_totals_dict, ghg_averages_dict, 'GHG', 'VPOP')
 
-        # calculate indirect costs per vehicle and then total indirect costs (note that GHG program costs include indirect costs)
-        # ghg_averages_dict = calc_per_veh_indirect_costs(settings, ghg_averages_dict)
-        # ghg_totals_dict = calc_indirect_costs(settings, ghg_totals_dict, ghg_averages_dict)
-
-        # calculate tech costs per vehicle and total tech costs
-        # ghg_averages_dict = calc_per_veh_tech_costs(ghg_averages_dict)
-        # ghg_totals_dict = calc_tech_costs(ghg_totals_dict, ghg_averages_dict)
-
-        # # calculate fuel costs, but first we need to adjust the gallons so that the full change in gallons is applicable to only the remaining VPOP
         # calculate fuel costs
-        # ghg_totals_dict = attribute_ghg_gallon_impact_to_remaining_vpop(settings, ghg_totals_dict)
         ghg_totals_dict = calc_ghg_fuel_costs(settings, ghg_totals_dict)
         ghg_averages_dict = calc_average_fuel_costs(ghg_totals_dict, ghg_averages_dict)
-
-        # calculate emission repair costs
-        # ghg_averages_dict = calc_emission_repair_costs_per_mile(settings, ghg_averages_dict)
-        # ghg_averages_dict = calc_per_veh_emission_repair_costs(ghg_averages_dict)
-        # ghg_totals_dict = calc_emission_repair_costs(ghg_totals_dict, ghg_averages_dict)
 
         # sum operating costs and operating-tech costs into a single key, value
         # the totals_dict here uses pre-tax fuel price since it serves as the basis for social costs

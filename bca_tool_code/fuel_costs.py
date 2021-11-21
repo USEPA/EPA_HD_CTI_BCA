@@ -1,4 +1,3 @@
-orvr_adjust_dict = dict()
 
 
 def get_orvr_adjustment(settings, vehicle, alt):
@@ -17,11 +16,7 @@ def get_orvr_adjustment(settings, vehicle, alt):
     st, rc, ft = vehicle
     engine = (rc, ft)
     orvr_adjust_dict_id = (engine, alt)
-    if orvr_adjust_dict_id in orvr_adjust_dict.keys():
-        adjustment = orvr_adjust_dict[orvr_adjust_dict_id]
-    else:
-        adjustment = settings.orvr_inputs_dict[orvr_adjust_dict_id]['ml/g']
-        orvr_adjust_dict[orvr_adjust_dict_id] = adjustment
+    adjustment = settings.orvr_inputs_dict[orvr_adjust_dict_id]['ml/g']
     return adjustment
 
 
@@ -61,47 +56,10 @@ def calc_captured_gallons(settings, vehicle, alt, year, model_year, totals_dict)
         The gallons captured by ORVR that would have otherwise evaporated during refueling.
 
     """
-    age = year - model_year
-    # totals_dict_key = (vehicle, alt, model_year, age, 0)
     adjustment = get_orvr_adjustment(settings, vehicle, alt)
     thc_reduction = calc_thc_reduction(settings, vehicle, alt, year, model_year, totals_dict)
-    # old_gallons = totals_dict[totals_dict_key]['Gallons']
-    # adjusted_gallons = old_gallons - thc_reduction * adjustment * settings.grams_per_short_ton * settings.gallons_per_ml
     captured_gallons = thc_reduction * adjustment * settings.grams_per_short_ton * settings.gallons_per_ml
     return captured_gallons
-
-
-def attribute_ghg_gallon_impact_to_remaining_vpop(settings, totals_dict):
-    """
-
-    Parameters:
-        settings: The SetInputs class.
-        totals_dict: A dictionary of fleet Gallons consumed by all vehicles.
-
-    Returns:
-        The passed totals_dict with gallons adjusted such that the full delta gallons reduced are attributable to the remaining VPOP following any
-        adjustments made according to the moves_adjustments input file.
-
-    """
-    # the equation below calculates new alt gallons as base gallons - (1/adjustment) * (base gallons - alt gallons)
-    # remember that all gallons have already had the moves adjustments applied.
-    for key in totals_dict.keys():
-        vehicle, alt, model_year, age_id, disc_rate = key
-        # st, rc, ft = vehicle
-
-        if (vehicle, alt) in settings.moves_adjustments_ghg_dict.keys():
-            adjustment = settings.moves_adjustments_ghg_dict[(vehicle, alt)]['percent']
-            growth = settings.moves_adjustments_ghg_dict[(vehicle, alt)]['growth']
-        else:
-            adjustment, growth = 0, 0
-
-        if alt != settings.no_action_alt and adjustment != 0:
-            base_gallons = totals_dict[(vehicle, settings.no_action_alt, model_year, age_id, disc_rate)]['Gallons']
-            alt_gallons = totals_dict[key]['Gallons']
-            new_alt_gallons = base_gallons - (1 / adjustment) * (base_gallons - alt_gallons)
-            totals_dict[key]['Gallons'] = new_alt_gallons
-
-    return totals_dict
 
 
 def calc_cap_fuel_costs(settings, totals_dict):
