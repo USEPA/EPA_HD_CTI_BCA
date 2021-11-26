@@ -9,6 +9,7 @@ import shutil
 from datetime import datetime
 import time
 import bca_tool_code
+from bca_tool_code.tool_setup import SetInputs
 from bca_tool_code.project_fleet import create_cap_fleet_df, create_ghg_fleet_df
 from bca_tool_code.project_dicts import create_regclass_sales_dict, create_sourcetype_sales_dict, \
     create_fleet_totals_dict, create_fleet_averages_dict
@@ -29,18 +30,16 @@ from bca_tool_code.tool_postproc import run_postproc, create_output_paths
 from bca_tool_code.general_functions import save_dict_to_csv, inputs_filenames, get_file_datetime
 
 
-def main(settings):
+def main():
     """
 
-    Parameters::
-        settings: The SetInputs class.
-
     Returns:
-        The results of the current run of the cti_bca_tool.
+        The results of the current run of the tool.
 
     """
     print("\nDoing the work....")
     start_time_calcs = time.time()
+    settings = SetInputs()
 
     if settings.calc_cap:
         # create project fleet DataFrame which will include adjustments to the MOVES input file that are unique to the project.
@@ -296,5 +295,4 @@ def main(settings):
 
 
 if __name__ == '__main__':
-    from bca_tool_code.tool_setup import SetInputs as settings
-    main(settings)
+    main()
