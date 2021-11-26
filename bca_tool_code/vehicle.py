@@ -1,7 +1,7 @@
-import attr
+# import attr
 
 
-@attr.s
+# @attr.s
 class Vehicle:
     """
 
@@ -14,7 +14,8 @@ class Vehicle:
         Source type name, Regclass name, Fuel type name.
 
     """
-    id = attr.ib()
+    def __init__(self, id):
+        self.id = id
 
     def fueltype_name(self):
         """
