@@ -59,14 +59,14 @@ def calc_per_veh_indirect_costs(settings, averages_dict):
         costs as "IndirectCost_AvgPerVeh."
 
     """
-    print('\nCalculating per vehicle indirect costs\n')
+    print('\nCalculating CAP per vehicle indirect costs...')
 
     for key in averages_dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
         st, rc, ft = vehicle
         engine = (rc, ft)
         if age_id == 0:
-            print(f'Calculating per vehicle direct costs for {vehicle}, MY {model_year}.')
+            # print(f'Calculating per vehicle indirect costs for {vehicle}, MY {model_year}.')
             ic_sum = 0
             for markup_factor_name in settings.markup_factors_unique_names:
                 markup_value = calc_project_markup_value(settings, engine, alt, markup_factor_name, model_year)
@@ -89,7 +89,7 @@ def calc_indirect_costs(settings, totals_dict, averages_dict):
         The totals_dict dictionary updated with total indirect costs for each individual indirect cost property and a summation of those.
 
     """
-    print('\nCalculating total indirect costs.\n')
+    print('\nCalculating CAP total indirect costs...')
     markup_factors = settings.markup_factors_unique_names.copy()
     markup_factors.append('Indirect')
     for key in totals_dict.keys():

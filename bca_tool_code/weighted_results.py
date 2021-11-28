@@ -20,6 +20,7 @@ def create_weighted_cost_dict(settings, fleet_averages_dict, arg_to_weight, arg_
         since year 1 is age 0) then the maximum model year included will be 2035.
 
     """
+    print(f'\nCalculating weighted {arg_to_weight}...')
     wtd_result_dict = dict()
     weighted_results_dict = dict()
     for key in fleet_averages_dict.keys():
@@ -29,7 +30,7 @@ def create_weighted_cost_dict(settings, fleet_averages_dict, arg_to_weight, arg_
             pass
         else:
             if model_year <= (settings.year_max - settings.max_age_included - 1):
-                print(f'Calculating weighted {arg_to_weight} for {vehicle}, optionID {alt}, MY {model_year}')
+                # print(f'Calculating weighted {arg_to_weight} for {vehicle}, optionID {alt}, MY {model_year}')
                 wtd_result_dict_id = (vehicle, alt, model_year)
                 numerator, denominator = 0, 0
                 if wtd_result_dict_id in wtd_result_dict:

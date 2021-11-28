@@ -78,7 +78,7 @@ def calc_cap_fuel_costs(settings, totals_dict):
         are included in the MOVES runs.
 
     """
-    print('\nCalculating CAP-related fuel costs.\n')
+    print('\nCalculating CAP-related fuel costs...')
     for key in totals_dict.keys():
         captured_gallons = 0
         vehicle, alt, model_year, age_id, disc_rate = key
@@ -107,7 +107,7 @@ def calc_ghg_fuel_costs(settings, totals_dict):
         The dictionary is also updated to include the fuel costs associated with the gallons consumed (Gallons * $/gallon fuel).
 
     """
-    print('\nCalculating GHG_related fuel costs.\n')
+    print('\nCalculating GHG-related fuel costs...')
     for key in totals_dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
         st, rc, ft = vehicle
@@ -131,9 +131,11 @@ def calc_average_fuel_costs(totals_dict, averages_dict):
         The passed averages_dict updated to include fuel costs/vehicle and costs/mile.
 
     """
+    print('\nCalculating average fuel costs...')
+
     for key in averages_dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
-        print(f'Calculating fuel average cost per mile and per vehicle for {vehicle}, option ID {alt}, MY {model_year}, age {age_id}')
+        # print(f'Calculating fuel average cost per mile and per vehicle for {vehicle}, option ID {alt}, MY {model_year}, age {age_id}')
         fuel_cost = totals_dict[key]['FuelCost_Retail']
         vmt = totals_dict[key]['VMT']
         vpop = totals_dict[key]['VPOP']

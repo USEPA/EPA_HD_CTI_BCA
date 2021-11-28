@@ -12,11 +12,13 @@ def calc_deltas(settings, dict_for_deltas):
         For example, deltas for optionID=1 relative to optionID=0 would have optionID=10. OptionNames will also show as 'OptionID=1_name minus OptionID=0_name'.
 
     """
+    print('\nCalculating deltas...')
+
     update_dict = dict()
     for key in dict_for_deltas.keys():
         vehicle, alt, model_year, age_id, discount_rate = key
         st, rc, ft = vehicle
-        print(f'Calculating deltas for {vehicle}, optionID {alt}, MY {model_year}, age {age_id}, DR {discount_rate}')
+        # print(f'Calculating deltas for {vehicle}, optionID {alt}, MY {model_year}, age {age_id}, DR {discount_rate}')
         args_to_delta = [k for k, v in dict_for_deltas[key].items()]
         if alt != settings.no_action_alt:
             delta_alt = f'{alt}{settings.no_action_alt}'
@@ -46,10 +48,12 @@ def calc_deltas_weighted(settings, dict_for_deltas, weighted_arg):
         There is no age_id or discount rate in the key for the passed weighted dictionaries.
 
     """
+    print('\nCalculating weighted deltas...')
+
     update_dict = dict()
     for key in dict_for_deltas.keys():
         vehicle, alt, model_year = key[0], key[1], key[2]
-        print(f'Calculating weighted {weighted_arg} deltas for {vehicle}, optionID {alt}, MY {model_year}')
+        # print(f'Calculating weighted {weighted_arg} deltas for {vehicle}, optionID {alt}, MY {model_year}')
         id_args = [k for k, v in dict_for_deltas[key].items() if 'ID' in k or 'Name' in k]
         args_to_delta = [k for k, v in dict_for_deltas[key].items() if k not in id_args]
         if alt != settings.no_action_alt:

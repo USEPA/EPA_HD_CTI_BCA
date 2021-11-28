@@ -37,7 +37,8 @@ def main():
         The results of the current run of the tool.
 
     """
-    print("\nDoing the work....")
+    print("\nDoing the work...\n")
+
     start_time_calcs = time.time()
     settings = SetInputs()
 
@@ -186,7 +187,8 @@ def main():
     start_time_outputs = time.time()
 
     # copy input files into results folder; also save fuel_prices and reshaped files to this folder
-    print('Copy input files and code to the outputs folder.')
+    print('\nCopying input files and code to the outputs folder...\n')
+
     if settings.run_folder_identifier == 'test':
         pass
     else:
@@ -200,7 +202,7 @@ def main():
             try:
                 shutil.copy2(file, path_of_code_folder / file.name)
             except:
-                print('Unable to copy Python code to run results folder when using the executable.')
+                print('\nUnable to copy Python code to run results folder when using the executable.\n')
         settings.fuel_prices.to_csv(path_of_modified_inputs_folder / f'fuel_prices_{settings.aeo_case}.csv', index=False)
         settings.regclass_costs.to_csv(path_of_modified_inputs_folder / 'regclass_costs.csv', index=False)
         settings.sourcetype_costs.to_csv(path_of_modified_inputs_folder / 'sourcetype_costs.csv', index=False)
@@ -211,7 +213,7 @@ def main():
 
 
     # save dictionaries to csv and also add some identifying info using the vehicle_name function
-    print("\nSaving the output files....")
+    print("\nSaving the output files...\n")
 
     if settings.calc_cap:
         if 'yearID' not in cap_totals_df.columns.tolist():
@@ -291,7 +293,7 @@ def main():
             summary_log.to_excel(document_ghg_tables_file, sheet_name='summary_log', index=False)
             document_ghg_tables_file.save()
     summary_log.to_csv(path_of_run_results_folder.joinpath('summary_log.csv'), index=False)
-    print(f'\nOutput files have been saved to {path_of_run_folder}')
+    print(f'\nOutput files have been saved to {path_of_run_folder}.\n')
 
 
 if __name__ == '__main__':

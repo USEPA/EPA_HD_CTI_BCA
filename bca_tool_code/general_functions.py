@@ -216,7 +216,8 @@ def convert_dict_to_df(dict_to_convert, *args):
         A DataFrame containing the passed dictionary of data.
 
     """
-    print('Converting dictionary to DataFrame.')
+    print('\nConverting dictionary to DataFrame...')
+
     df = pd.DataFrame(dict_to_convert).transpose()
     df.reset_index(inplace=True)
     for idx, arg in enumerate(args):

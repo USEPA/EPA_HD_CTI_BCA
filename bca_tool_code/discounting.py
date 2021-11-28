@@ -1,4 +1,4 @@
-import pandas as pd
+# import pandas as pd
 
 
 def discount_values(settings, dict_of_values):
@@ -18,6 +18,7 @@ def discount_values(settings, dict_of_values):
         costs are discounted).
 
     """
+    print('\nDiscounting values...')
     social_discrates = [settings.social_discount_rate_1, settings.social_discount_rate_2]
     cap_dr1 = settings.criteria_discount_rate_1
     cap_dr2 = settings.criteria_discount_rate_2
@@ -33,7 +34,7 @@ def discount_values(settings, dict_of_values):
     update_dict = dict()
     for key in dict_of_values.keys():
         vehicle, alt, model_year, age_id = key[0], key[1], key[2], key[3]
-        print(f'Discounting values for {vehicle}, optionID {alt}, MY {model_year}, age {age_id}')
+        # print(f'Discounting values for {vehicle}, optionID {alt}, MY {model_year}, age {age_id}')
         year = model_year + age_id
         # create list of non_emission_cost_args by key, this avoids DEF costs for gasolines
         non_emission_cost_args = [k for k, v in dict_of_values[key].items() if 'Cost' in k and '_0.0' not in k]
@@ -81,6 +82,8 @@ def annualize_values(settings, input_df):
         Offset = 1 for costs at the start of the year, 0 for cost at the end of the year
 
     """
+    print('\nAnnualizing values...')
+
     cap_dr1 = settings.criteria_discount_rate_1
     cap_dr2 = settings.criteria_discount_rate_2
 

@@ -12,9 +12,11 @@ def calc_sum_of_costs(dict_to_sum, name_of_sum, *args):
         The passed dictionary updated to include a new 'name_of_sum' parameter that sums the passed args for each dictionary key.
 
     """
+    print(f'\nCalculating {name_of_sum}...')
+
     for key in dict_to_sum.keys():
         vehicle, alt, model_year, age_id, discount_rate = key
-        print(f'Calculating sum of {name_of_sum} for {vehicle}, optionID {alt}, MY {model_year}, age {age_id}, DR {discount_rate}')
+        # print(f'Calculating sum of {name_of_sum} for {vehicle}, optionID {alt}, MY {model_year}, age {age_id}, DR {discount_rate}')
         sum_of_costs = 0
         # note that some key, value pairs lack some data (e.g., ft=1 has no DEF cost) so the try/except addresses that
         for arg in args:

@@ -36,8 +36,8 @@ class SetInputs:
         self.start_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')
         print(f'\nHD BCA tool version: {bca_tool_code.__version__}')
         print(f'\nStart date and time:  {self.start_time_readable}')
-    
-        print("\nReading input files....")
+        print("\nReading input files...")
+
         self.start_time_read = time.time()
         self.input_files_df = gen_fxns.read_input_files(self.path_inputs, 'Input_Files.csv', usecols=lambda x: 'Notes' not in x, index_col=0)
         self.input_files_dict = self.input_files_df.to_dict('index')
@@ -162,7 +162,7 @@ class SetInputs:
             self.criteria_cost_factors_dict = create_criteria_cost_factors_dict(self.criteria_cost_factors)
     
         if self.calc_ghg_pollution_effects:
-            print('WARNING: The tool is not configured to calculate GHG effects at this time.')
+            print('\nWARNING: The tool is not configured to calculate GHG effects at this time.')
     
         # create a row header list for the structure of the main output files
         self.row_header_for_fleet_files = ['vehicle', 'yearID', 'modelYearID', 'ageID', 'optionID', 'OptionName',

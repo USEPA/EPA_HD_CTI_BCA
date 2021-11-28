@@ -13,7 +13,8 @@ def calc_per_veh_tech_costs(averages_dict):
         Direct and indirect costs apply only for ageID=0 (i.e., new sales).
 
     """
-    print('\nCalculating per vehicle technology costs.\n')
+    print('\nCalculating per vehicle technology costs...')
+
     for key in averages_dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
         if age_id == 0:
@@ -35,7 +36,8 @@ def calc_tech_costs(totals_dict, averages_dict, sales_arg):
         The totals_dict dictionary updated with annual technology costs for all vehicles.
 
     """
-    print('\nCalculating total technology costs.\n')
+    print('\nCalculating total technology costs...')
+
     for key in totals_dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
         if age_id == 0:

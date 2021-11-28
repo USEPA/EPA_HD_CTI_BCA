@@ -104,11 +104,13 @@ def calc_emission_repair_costs_per_mile(settings, averages_dict):
         An estimated ages dictionary containing details behind the calculations and which is then written to an output file for the given run.
 
     """
+    print('\nCalculating emission repair costs per mile...')
+
     repair_cpm_dict = dict()
     estimated_ages_dict = dict()
     typical_vmt_dict = dict()
     for key in averages_dict.keys():
-        print(f'Calculating repair costs per mile for {key}')
+        # print(f'Calculating repair costs per mile for {key}')
         vehicle, alt, model_year, age_id, disc_rate = key
         reference_direct_cost = averages_dict[((61, 47, 2), 0, model_year, 0, 0)]['DirectCost_AvgPerVeh'] # sourcetype here is arbitrary provided it is of diesel regclass 47
         direct_cost_scaler = averages_dict[(vehicle, alt, model_year, 0, 0)]['DirectCost_AvgPerVeh'] / reference_direct_cost
@@ -164,9 +166,11 @@ def calc_per_veh_emission_repair_costs(averages_dict):
         The passed dictionary updated with annual emission repair costs/vehicle for each dictionary key.
 
     """
+    print('\nCalculating emission repair costs per vehicle...')
+
     for key in averages_dict.keys():
         vehicle, alt, model_year, age_id = key[0], key[1], key[2], key[3]
-        print(f'Calculating repair costs per vehicle for {vehicle}, optionID {alt}, MY {model_year}, age {age_id}')
+        # print(f'Calculating repair costs per vehicle for {vehicle}, optionID {alt}, MY {model_year}, age {age_id}')
         repair_cpm = averages_dict[key]['EmissionRepairCost_AvgPerMile']
         vmt_per_veh = averages_dict[key]['VMT_AvgPerVeh']
         averages_dict[key].update({'EmissionRepairCost_AvgPerVeh': repair_cpm * vmt_per_veh})
@@ -184,7 +188,8 @@ def calc_emission_repair_costs(totals_dict, averages_dict):
         The totals_dict dictionary updated with annual emission repair costs for all vehicles.
 
     """
-    print(f'\nCalculating total repair costs.\n')
+    print(f'\nCalculating total emission repair costs...')
+
     for key in totals_dict.keys():
         cost_per_veh = averages_dict[key]['EmissionRepairCost_AvgPerVeh']
         vpop = totals_dict[key]['VPOP']

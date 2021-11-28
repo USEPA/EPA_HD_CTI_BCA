@@ -82,7 +82,7 @@ def calc_def_costs(settings, totals_dict):
         The passed dictionary updated with costs associated with DEF consumption.
 
     """
-    print('\nCalculating total DEF costs.')
+    print('\nCalculating DEF total costs...')
     for key in totals_dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
         st, rc, ft = vehicle
@@ -105,11 +105,13 @@ def calc_average_def_costs(totals_dict, averages_dict):
         The passed dictionary updated with costs/mile and costs/vehicle associated with DEF consumption.
 
     """
+    print('\nCalculating DEF average costs...')
+
     for key in averages_dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
         st, rc, ft = vehicle
         if ft == 2:
-            print(f'Calculating DEF average cost per mile for {vehicle}, option ID {alt}, MY {model_year}, age {age_id}.')
+            # print(f'Calculating DEF average cost per mile for {vehicle}, option ID {alt}, MY {model_year}, age {age_id}.')
             def_cost = totals_dict[key]['DEFCost']
             vmt = totals_dict[key]['VMT']
             vpop = totals_dict[key]['VPOP']

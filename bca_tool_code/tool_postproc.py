@@ -47,7 +47,7 @@ def run_postproc(settings, path_save, totals_dict, program):
         for copy/paste into documents.
 
     """
-    print('\nDoing some post-processing....')
+    print('\nDoing some post-processing...')
     # Convert dictionary to DataFrame to generate summaries via pandas.
     totals_df = gen_fxns.convert_dict_to_df(totals_dict, 'vehicle', 'optionID', 'modelYearID', 'ageID', 'DiscountRate')
 
@@ -172,7 +172,8 @@ def preamble_ria_tables(input_df, index_list, function, divisor, sig_dig, *args)
 
     """
     args = [arg for arg in args]
-    print(f'Creating pivot table for {args}')
+    print(f'\nCreating pivot table for {args}...')
+
     table = pd.pivot_table(input_df, args, index_list, aggfunc=function)
     table = table.reindex(args, axis=1)
     table = table.reset_index(drop=False)
@@ -199,7 +200,8 @@ def bca_tables(input_df, index_list, cols, function, *args):
 
     """
     args = [arg for arg in args]
-    print(f'Creating pivot table for {args}')
+    print(f'\nCreating BCA pivot table for {args}...')
+
     table = pd.pivot_table(input_df, args, index_list, columns=cols, aggfunc=function)
     table = table.reset_index(drop=False)
     table.insert(len(table.columns), 'Units', 'USD')

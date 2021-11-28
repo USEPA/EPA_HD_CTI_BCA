@@ -137,6 +137,7 @@ def calc_per_veh_direct_costs(yoy_costs_per_step_dict, cost_steps, averages_dict
         The averages_dict dictionary updated with tech package costs/vehicle.
 
     """
+    print(f'\nCalculating {program} costs per vehicle...')
     calcs_dict = averages_dict.copy()
     for key in calcs_dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
@@ -174,9 +175,9 @@ def calc_direct_costs(totals_dict, averages_dict, program, sales_arg):
         The totals_dict dictionary updated with tech package direct costs (package cost * sales).
 
     """
-    print('\nCalculating total direct costs.\n')
     if program == 'CAP': arg = 'Direct'
     else: arg = 'Tech'
+    print(f'\nCalculating {program} {arg} total costs...')
     for key in totals_dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
         if age_id == 0:
