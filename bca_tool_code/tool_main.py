@@ -11,6 +11,8 @@ import time
 import bca_tool_code
 from bca_tool_code.tool_setup import SetInputs
 from bca_tool_code.project_fleet import create_cap_fleet_df, create_ghg_fleet_df
+from bca_tool_code.fleet_dicts_cap import FleetTotalsDict, FleetAveragesDict
+from bca_tool_code.regclass_sales_dict import RegclassSalesDict
 from bca_tool_code.project_dicts import create_regclass_sales_dict, create_sourcetype_sales_dict, \
     create_fleet_totals_dict, create_fleet_averages_dict
 from bca_tool_code.direct_costs import calc_yoy_costs_per_step, calc_per_veh_direct_costs, calc_direct_costs
@@ -45,11 +47,15 @@ def main():
     if settings.calc_cap:
         # create project fleet DataFrame which will include adjustments to the MOVES input file that are unique to the project.
         cap_fleet_df = create_cap_fleet_df(settings, settings.moves_cap, 'VPOP', 'VMT', 'Gallons')
+        cap_totals_dict, cap_averages_dict, regclass_sales_dict = dict(), dict(), dict()
+        cap_totals_dict = FleetTotalsDict(cap_totals_dict).create_fleet_totals_dict(settings, cap_fleet_df)
+        cap_averages_dict = FleetAveragesDict(cap_averages_dict).create_fleet_averages_dict(settings, cap_fleet_df)
+        regclass_sales_dict = RegclassSalesDict(regclass_sales_dict).create_regclass_sales_dict(cap_fleet_df)
 
         # create a sales (by regclass) and fleet dictionaries
-        regclass_sales_dict = create_regclass_sales_dict(cap_fleet_df)
-        cap_totals_dict = create_fleet_totals_dict(cap_fleet_df)
-        cap_averages_dict = create_fleet_averages_dict(cap_fleet_df)
+        # regclass_sales_dict = create_regclass_sales_dict(cap_fleet_df)
+        # cap_totals_dict = create_fleet_totals_dict(cap_fleet_df)
+        # cap_averages_dict = create_fleet_averages_dict(cap_fleet_df)
 
         # calculate direct costs per reg class based on cumulative regclass sales (learning is applied to cumulative sales)
         regclass_yoy_costs_per_step = calc_yoy_costs_per_step(settings, regclass_sales_dict, 'VPOP')

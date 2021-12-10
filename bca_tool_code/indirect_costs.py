@@ -1,3 +1,4 @@
+from bca_tool_code.fleet_dicts_cap import FleetTotalsDict, FleetAveragesDict
 
 
 def calc_project_markup_value(settings, unit, alt, markup_factor, model_year):
@@ -60,7 +61,7 @@ def calc_per_veh_indirect_costs(settings, averages_dict):
 
     """
     print('\nCalculating CAP per vehicle indirect costs...')
-
+    calcs_avg = FleetAveragesDict(averages_dict)
     for key in averages_dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
         st, rc, ft = vehicle
@@ -70,10 +71,15 @@ def calc_per_veh_indirect_costs(settings, averages_dict):
             ic_sum = 0
             for markup_factor_name in settings.markup_factors_unique_names:
                 markup_value = calc_project_markup_value(settings, engine, alt, markup_factor_name, model_year)
-                per_veh_direct_cost = averages_dict[key]['DirectCost_AvgPerVeh']
-                averages_dict[key].update({f'{markup_factor_name}Cost_AvgPerVeh': markup_value * per_veh_direct_cost})
-                ic_sum += markup_value * per_veh_direct_cost
-            averages_dict[key].update({'IndirectCost_AvgPerVeh': ic_sum})
+                per_veh_direct_cost = calcs_avg.get_attribute_value(key, 'DirectCost_AvgPerVeh')
+                cost = markup_value * per_veh_direct_cost
+                calcs_avg.update_dict(key, f'{markup_factor_name}Cost_AvgPerVeh', cost)
+                ic_sum += cost
+            calcs_avg.update_dict(key, 'IndirectCost_AvgPerVeh', ic_sum)
+                # per_veh_direct_cost = averages_dict[key]['DirectCost_AvgPerVeh']
+                # averages_dict[key].update({f'{markup_factor_name}Cost_AvgPerVeh': markup_value * per_veh_direct_cost})
+                # ic_sum += markup_value * per_veh_direct_cost
+            # averages_dict[key].update({'IndirectCost_AvgPerVeh': ic_sum})
     return averages_dict
 
 
@@ -92,13 +98,19 @@ def calc_indirect_costs(settings, totals_dict, averages_dict):
     print('\nCalculating CAP total indirect costs...')
     markup_factors = settings.markup_factors_unique_names.copy()
     markup_factors.append('Indirect')
+    calcs_avg = FleetAveragesDict(averages_dict)
+    calcs = FleetTotalsDict(totals_dict)
     for key in totals_dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
         if age_id == 0:
             for markup_factor in markup_factors:
-                cost_per_veh = averages_dict[key][f'{markup_factor}Cost_AvgPerVeh']
-                sales = totals_dict[key]['VPOP']
-                totals_dict[key].update({f'{markup_factor}Cost': cost_per_veh * sales})
+                cost_per_veh = calcs_avg.get_attribute_value(key, f'{markup_factor}Cost_AvgPerVeh')
+                sales = calcs.get_attribute_value(key, 'VPOP')
+                cost = cost_per_veh * sales
+                calcs.update_dict(key, f'{markup_factor}Cost', cost)
+                # cost_per_veh = averages_dict[key][f'{markup_factor}Cost_AvgPerVeh']
+                # sales = totals_dict[key]['VPOP']
+                # totals_dict[key].update({f'{markup_factor}Cost': cost_per_veh * sales})
     return totals_dict
 
 
