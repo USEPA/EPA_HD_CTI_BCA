@@ -14,7 +14,7 @@ class Vehicle:
         Source type name, Regclass name, Fuel type name.
 
     """
-    def __init__(self, id):
+    def __init__(self, id=None):
         self.id = id
 
     def fueltype_name(self):
@@ -72,41 +72,61 @@ class Vehicle:
                            }
         return sourcetype_dict[self.id]
 
+    @staticmethod
+    def vehicle_name(settings, options_dict, dict_of_vehicles):
+        """
 
-def vehicle_name(settings, options_dict, dict_of_vehicles):
-    """
+        Args:
+            settings: The SetInputs class.
+            options_dict: A dictionary of option ID numbers and associated names.
+            dict_of_vehicles: A dictionary containing a key of vehicle tuples.
 
-    Args:
-        settings: The SetInputs class.
-        options_dict: A dictionary of option ID numbers and associated names.
-        dict_of_vehicles: A dictionary containing a key of vehicle tuples.
+        Returns:
+            The passed dictionary with new attributes identifying the vehicle based on the vehicle tuples (keys).
 
-    Returns: The passed dictionary with new attributes identifying the vehicle based on the vehicle tuples (keys).
+        """
+        no_action_name = options_dict[settings.no_action_alt]['OptionName']
+        for key in dict_of_vehicles.keys():
+            vehicle, alt = key[0], key[1]
+            st, rc, ft = vehicle
+            if alt > len(options_dict):
+                action_alt = alt / 10
+                action_name = options_dict[action_alt]['OptionName']
+                option_name = f'{action_name}_minus_{no_action_name}'
+            else:
+                option_name = options_dict[alt]['OptionName']
+            sourcetype_name = Vehicle(st).sourcetype_name()
+            regclass_name = Vehicle(rc).regclass_name()
+            fueltype_name = Vehicle(ft).fueltype_name()
+            dict_of_vehicles[key].update({'OptionName': option_name,
+                                          'sourceTypeName': sourcetype_name,
+                                          'regClassName': regclass_name,
+                                          'fuelTypeName': fueltype_name,
+                                          }
+                                         )
+        return dict_of_vehicles
 
-    Note:
-         The calc_deltas function added option names for the deltas so this function maintains option names for
-         any keys that are deltas.
+    @staticmethod
+    def option_name(settings, options_dict, dict_of_vehicles):
+        """
 
-    """
-    no_action_name = options_dict[settings.no_action_alt]['OptionName']
-    for key in dict_of_vehicles.keys():
-        vehicle, alt = key[0], key[1]
-        st, rc, ft = vehicle
-        if alt > len(options_dict):
-            action_alt = alt / 10
-            action_name = options_dict[action_alt]['OptionName']
-            option_name = f'{action_name}_minus_{no_action_name}'
-        else: option_name = options_dict[alt]['OptionName']
-        sourcetype_name = Vehicle(st).sourcetype_name()
-        regclass_name = Vehicle(rc).regclass_name()
-        fueltype_name = Vehicle(ft).fueltype_name()
-        dict_of_vehicles[key].update({'optionID': alt,
-                                      'sourceTypeID': st,
-                                      'regClassID': rc,
-                                      'fuelTypeID': ft,
-                                      'OptionName': option_name,
-                                      'sourceTypeName': sourcetype_name,
-                                      'regClassName': regclass_name,
-                                      'fuelTypeName': fueltype_name,
-                                      })
-    return dict_of_vehicles
+        Args:
+            settings: The SetInputs class.
+            options_dict: A dictionary of option ID numbers and associated names.
+            dict_of_vehicles: A dictionary containing a key of vehicle tuples.
+
+        Returns:
+            The passed dictionary with new attributes identifying the option name.
+
+        """
+        no_action_name = options_dict[settings.no_action_alt]['OptionName']
+        for key in dict_of_vehicles.keys():
+            alt = key[0]
+            if alt > len(options_dict):
+                action_alt = alt / 10
+                action_name = options_dict[action_alt]['OptionName']
+                option_name = f'{action_name}_minus_{no_action_name}'
+            else:
+                option_name = options_dict[alt]['OptionName']
+            dict_of_vehicles[key].update({'OptionName': option_name})
+        return dict_of_vehicles

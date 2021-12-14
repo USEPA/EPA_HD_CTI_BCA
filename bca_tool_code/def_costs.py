@@ -1,6 +1,5 @@
-from bca_tool_code.fleet_dicts_cap import FleetTotalsDict, FleetAveragesDict
+from bca_tool_code.fleet_dicts_cap import FleetTotalsCAP, FleetAveragesCAP
 
-# base_doserate_dict = dict()
 
 def calc_def_doserate(settings, vehicle):
     """
@@ -14,16 +13,6 @@ def calc_def_doserate(settings, vehicle):
 
     """
     st, rc, ft = vehicle
-    # base_doserate_dict_id = (rc, ft)
-    # if base_doserate_dict_id in base_doserate_dict.keys():
-    #     base_doserate = base_doserate_dict[base_doserate_dict_id]
-    # else:
-    #     nox_std = settings.def_doserate_inputs_dict[(rc, ft)]['standard_NOx']
-    #     nox_engine_out = settings.def_doserate_inputs_dict[(rc, ft)]['engineout_NOx']
-    #     doserate_intercept = settings.def_doserate_inputs_dict[(rc, ft)]['intercept_DEFdoserate']
-    #     doserate_slope = settings.def_doserate_inputs_dict[(rc, ft)]['slope_DEFdoserate']
-    #     base_doserate = ((nox_std - nox_engine_out) - doserate_intercept) / doserate_slope
-    #     base_doserate_dict[base_doserate_dict_id] = base_doserate
     nox_std = settings.def_doserate_inputs_dict[(rc, ft)]['standard_NOx']
     nox_engine_out = settings.def_doserate_inputs_dict[(rc, ft)]['engineout_NOx']
     doserate_intercept = settings.def_doserate_inputs_dict[(rc, ft)]['intercept_DEFdoserate']
@@ -46,13 +35,11 @@ def calc_nox_reduction(settings, vehicle, alt, year, model_year, totals_dict):
         The NOx reduction for the passed model year vehicle in the given calendar year.
 
     """
-    calcs = FleetTotalsDict(totals_dict)
+    calcs = FleetTotalsCAP(totals_dict)
     age_id = year - model_year
     nox_no_action = calcs.get_attribute_value((vehicle, settings.no_action_alt, model_year, age_id, 0), 'NOx_UStons')
     nox_action = calcs.get_attribute_value((vehicle, alt, model_year, age_id, 0), 'NOx_UStons')
     nox_reduction = nox_no_action - nox_action
-    # nox_reduction = totals_dict[(vehicle, settings.no_action_alt, model_year, age_id, 0)]['NOx_UStons'] \
-    #                 - totals_dict[(vehicle, alt, model_year, age_id, 0)]['NOx_UStons']
     return nox_reduction
 
 
@@ -71,10 +58,9 @@ def calc_def_gallons(settings, vehicle, alt, year, model_year, totals_dict):
         The gallons of DEF consumption for the passed model year vehicle in the given calendar year.
 
     """
-    calcs = FleetTotalsDict(totals_dict)
+    calcs = FleetTotalsCAP(totals_dict)
     age_id = year - model_year
     gallons_fuel = calcs.get_attribute_value((vehicle, alt, model_year, age_id, 0), 'Gallons')
-    # gallons_fuel = totals_dict[(vehicle, alt, model_year, age_id, 0)]['Gallons']
     base_doserate = calc_def_doserate(settings, vehicle)
     nox_reduction = calc_nox_reduction(settings, vehicle, alt, year, model_year, totals_dict)
     gallons_def = gallons_fuel * base_doserate + nox_reduction * settings.def_gallons_per_ton_nox_reduction
@@ -93,7 +79,7 @@ def calc_def_costs(settings, totals_dict):
 
     """
     print('\nCalculating DEF total costs...')
-    calcs = FleetTotalsDict(totals_dict)
+    calcs = FleetTotalsCAP(totals_dict)
     for key in totals_dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
         st, rc, ft = vehicle
@@ -104,7 +90,6 @@ def calc_def_costs(settings, totals_dict):
             cost = def_price * gallons_def
             calcs.update_dict(key, 'DEF_Gallons', gallons_def)
             calcs.update_dict(key, 'DEFCost', cost)
-            # totals_dict[key].update({'DEF_Gallons': gallons_def, 'DEFCost': def_price * gallons_def})
     return totals_dict
 
 
@@ -121,8 +106,8 @@ def calc_average_def_costs(totals_dict, averages_dict):
     """
     print('\nCalculating DEF average costs...')
 
-    calcs_avg = FleetAveragesDict(averages_dict)
-    calcs = FleetTotalsDict(totals_dict)
+    calcs_avg = FleetAveragesCAP(averages_dict)
+    calcs = FleetTotalsCAP(totals_dict)
     for key in averages_dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
         st, rc, ft = vehicle
@@ -134,11 +119,6 @@ def calc_average_def_costs(totals_dict, averages_dict):
             cost_per_veh = def_cost / vpop
             calcs_avg.update_dict(key, 'DEFCost_AvgPerMile', cost_per_mile)
             calcs_avg.update_dict(key, 'DEFCost_AvgPerVeh', cost_per_veh)
-            # def_cost = totals_dict[key]['DEFCost']
-            # vmt = totals_dict[key]['VMT']
-            # vpop = totals_dict[key]['VPOP']
-            # averages_dict[key].update({'DEFCost_AvgPerMile': def_cost / vmt})
-            # averages_dict[key].update({'DEFCost_AvgPerVeh': def_cost / vpop})
     return averages_dict
 
 

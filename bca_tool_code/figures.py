@@ -20,10 +20,10 @@ class CreateFigures:
 
         """
         self.df = df
-        self.destination = destination
+        self.destination = destination / 'figures'
+        self.destination.mkdir(exist_ok=True)
         self.units = units
         self.program = program
-
 
     def line_chart_args_by_option(self, dr, alt_name, year_min, year_max, *args):
         """This method generates a chart showing passed arguments under the given alternative.
@@ -41,6 +41,7 @@ class CreateFigures:
         """
         data = self.df.loc[(self.df['DiscountRate'] == dr)
                            & (self.df['OptionName'] == alt_name)
+                           & (self.df['Series'] == 'AnnualValue')
                            & ((self.df['yearID'] >= year_min) & (self.df['yearID'] <= year_max)), :]
         for arg in args:
             plt.plot((data['yearID']), (data[arg]), label=arg)
@@ -70,6 +71,7 @@ class CreateFigures:
         for alt_name in alt_names:
             data = self.df.loc[(self.df['DiscountRate'] == dr)
                                & (self.df['OptionName'] == alt_name)
+                               & (self.df['Series'] == 'AnnualValue')
                                & ((self.df['yearID'] >= year_min) & (self.df['yearID'] <= year_max)), :]
             plt.plot((data.loc[data['OptionName'] == alt_name, 'yearID']), (data.loc[data['OptionName'] == alt_name, arg]),
                      label=alt_name)
@@ -82,34 +84,24 @@ class CreateFigures:
         plt.close()
         return
 
+    def create_figures(self, args):
+        """This function is called by tool_main and then controls the generation of charts by the ChartFigures class.
 
-def create_figures(input_df, units, path_for_save, program, args):
-    """This function is called by tool_main and then controls the generation of charts by the ChartFigures class.
+        Parameters:
+            args: A list of args to include in figures.
 
-    Parameters:
-        input_df: A DataFrame of data.\n
-        units: The units used in the passed input_df.\n
-        path_for_save: The path for saving figures.
-        program: The program identifier string (i.e., 'CAP' or 'GHG') to include in the saved filename.
-        args: A list of args to include in figures.
+        Returns:
+            Charts are saved to the path_for_save folder by the ChartFigures class and this method returns to tool_main.
 
-    Returns:
-        Charts are saved to the path_for_save folder by the ChartFigures class and this method returns to tool_main.
+        """
+        yearID_min = int(self.df['yearID'].min())
+        yearID_max = int(self.df['yearID'].max())
+        alt_names = [arg for arg in pd.Series(self.df['OptionName'].unique()) if '_minus_' in arg]
 
-    """
-    yearID_min = int(input_df['yearID'].min())
-    yearID_max = int(input_df['yearID'].max())
-    path_figures = path_for_save / 'figures'
-    path_figures.mkdir(exist_ok=True)
-    # alt_names = pd.Series(input_df.loc[input_df['optionID'] >= 10, 'OptionName']).unique()
-    alt_names = [arg for arg in pd.Series(input_df['OptionName'].unique()) if '_minus_' in arg]
-    # units = input_df['Units'].unique()[0]
-    # args = ['TechCost', 'EmissionRepairCost', 'DEFCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
-    for alt_name in alt_names:
-        CreateFigures(input_df, units, path_figures, program) \
-            .line_chart_args_by_option(0, alt_name, yearID_min, yearID_max, *args)
+        for alt_name in alt_names:
+            self.line_chart_args_by_option(0, alt_name, yearID_min, yearID_max, *args)
 
-    for arg in args:
-        CreateFigures(input_df, units, path_figures, program).line_chart_arg_by_options(0, alt_names, yearID_min, yearID_max, arg)
+        for arg in args:
+            self.line_chart_arg_by_options(0, alt_names, yearID_min, yearID_max, arg)
 
-    return
+        return

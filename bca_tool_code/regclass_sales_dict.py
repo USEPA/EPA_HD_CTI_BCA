@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-class RegclassSalesDict:
+class RegclassSales:
     def __init__(self, fleet_dict):
         self.fleet_dict = fleet_dict
 

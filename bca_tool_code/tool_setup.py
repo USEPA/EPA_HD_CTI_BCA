@@ -122,7 +122,8 @@ class SetInputs:
             self.moves_cap.rename(columns={'Alternative': 'optionID'}, inplace=True)
         if 'Alternative' in self.moves_ghg.columns.tolist():
             self.moves_ghg.rename(columns={'Alternative': 'optionID'}, inplace=True)
-        self.number_alts = len(self.moves_cap['optionID'].unique())
+        self.number_alts_cap = len(self.options_cap['OptionName'].unique())
+        self.number_alts_ghg = len(self.options_ghg['OptionName'].unique())
     
         # get the fuel price inputs and usd basis for the analysis
         self.fuel_prices_obj = GetFuelPrices(self.fuel_prices_file, self.aeo_case, 'full name', 'Motor Gasoline', 'Diesel')
@@ -141,20 +142,41 @@ class SetInputs:
         gen_fxns.convert_dollars_to_analysis_basis(self.repair_and_maintenance, self.gdp_deflators, self.dollar_basis_analysis, 'Value')
     
         # create any DataFrames and dictionaries and lists that are useful as part of settings (used throughout project)
-        self.moves_adjustments_cap_dict = create_moves_adjustments_dict(self.moves_adjustments_cap, 'regClassID', 'fuelTypeID', 'optionID')
-        self.moves_adjustments_ghg_dict = create_moves_adjustments_dict(self.moves_adjustments_ghg, 'sourceTypeID', 'regClassID', 'fuelTypeID', 'optionID')
-        self.seedvol_factor_regclass_dict = create_seedvol_factor_dict(self.regclass_learningscalers, 'regClassID', 'fuelTypeID', 'optionID')
-        self.seedvol_factor_sourcetype_dict = create_seedvol_factor_dict(self.sourcetype_learningscalers, 'sourceTypeID', 'regClassID', 'fuelTypeID', 'optionID')
-        self.markup_inputs_regclass_dict = create_markup_inputs_dict(self.markups_regclass)
-        self.markup_inputs_sourcetype_dict = create_markup_inputs_dict(self.markups_sourcetype)
+        self.moves_adjustments_cap_dict = create_project_dict(self.moves_adjustments_cap, 'regClassID', 'fuelTypeID', 'optionID')
+        self.moves_adjustments_ghg_dict = create_project_dict(self.moves_adjustments_ghg, 'sourceTypeID', 'regClassID', 'fuelTypeID', 'optionID')
+
+        self.seedvol_factor_regclass_dict = create_project_dict(self.regclass_learningscalers, 'regClassID', 'fuelTypeID', 'optionID')
+        self.seedvol_factor_sourcetype_dict = create_project_dict(self.sourcetype_learningscalers, 'sourceTypeID', 'regClassID', 'fuelTypeID', 'optionID')
+
+        self.markup_inputs_regclass_dict = create_project_dict(self.markups_regclass, 'fuelTypeID', 'Markup_Factor', 'optionID')
+        self.markup_inputs_sourcetype_dict = create_project_dict(self.markups_regclass, 'fuelTypeID', 'Markup_Factor', 'optionID')
+
+        self.orvr_inputs_dict = create_project_dict(self.orvr_fuelchanges, 'regClassID', 'fuelTypeID', 'optionID')
+        self.fuel_prices_dict = create_project_dict(self.fuel_prices, 'yearID', 'fuelTypeID')
+
+        self.def_doserate_inputs_dict = create_project_dict(self.def_doserate_inputs, 'regClassID', 'fuelTypeID')
+        self.def_prices_dict = create_def_prices_dict(self.def_prices)
+
         self.markup_factors_unique_names = [arg for arg in self.markups_regclass['Markup_Factor'].unique()]
         self.markup_factors_sourcetype = [arg for arg in self.markups_sourcetype['Markup_Factor'].unique()]
-        self.required_miles_and_ages_dict = create_required_miles_and_ages_dict(self.warranty_inputs, 'Warranty', self.usefullife_inputs, 'Usefullife')
-        self.def_doserate_inputs_dict = create_def_doserate_inputs_dict(self.def_doserate_inputs)
-        self.def_prices_dict = create_def_prices_dict(self.def_prices)
-        self.orvr_inputs_dict = create_orvr_inputs_dict(self.orvr_fuelchanges)
-        self.fuel_prices_dict = create_fuel_prices_dict(self.fuel_prices)
+
         self.repair_inputs_dict = self.repair_and_maintenance.to_dict('index')
+        self.required_miles_and_ages_dict = create_required_miles_and_ages_dict(self.warranty_inputs, 'Warranty', self.usefullife_inputs, 'Usefullife')
+
+        # self.moves_adjustments_cap_dict = create_moves_adjustments_dict(self.moves_adjustments_cap, 'regClassID', 'fuelTypeID', 'optionID')
+        # self.moves_adjustments_ghg_dict = create_moves_adjustments_dict(self.moves_adjustments_ghg, 'sourceTypeID', 'regClassID', 'fuelTypeID', 'optionID')
+        # self.seedvol_factor_regclass_dict = create_seedvol_factor_dict(self.regclass_learningscalers, 'regClassID', 'fuelTypeID', 'optionID')
+        # self.seedvol_factor_sourcetype_dict = create_seedvol_factor_dict(self.sourcetype_learningscalers, 'sourceTypeID', 'regClassID', 'fuelTypeID', 'optionID')
+        # self.markup_inputs_regclass_dict = create_markup_inputs_dict(self.markups_regclass)
+        # self.markup_inputs_sourcetype_dict = create_markup_inputs_dict(self.markups_sourcetype)
+        # self.markup_factors_unique_names = [arg for arg in self.markups_regclass['Markup_Factor'].unique()]
+        # self.markup_factors_sourcetype = [arg for arg in self.markups_sourcetype['Markup_Factor'].unique()]
+        # self.required_miles_and_ages_dict = create_required_miles_and_ages_dict(self.warranty_inputs, 'Warranty', self.usefullife_inputs, 'Usefullife')
+        # self.def_doserate_inputs_dict = create_def_doserate_inputs_dict(self.def_doserate_inputs)
+        # self.def_prices_dict = create_def_prices_dict(self.def_prices)
+        # self.orvr_inputs_dict = create_orvr_inputs_dict(self.orvr_fuelchanges)
+        # # self.fuel_prices_dict = create_fuel_prices_dict(self.fuel_prices)
+        # self.repair_inputs_dict = self.repair_and_maintenance.to_dict('index')
     
         # read criteria cost factors if needed
         if self.calc_cap_pollution_effects:
@@ -163,9 +185,9 @@ class SetInputs:
     
         if self.calc_ghg_pollution_effects:
             print('\nWARNING: The tool is not configured to calculate GHG effects at this time.')
-    
-        # create a row header list for the structure of the main output files
-        self.row_header_for_fleet_files = ['vehicle', 'yearID', 'modelYearID', 'ageID', 'optionID', 'OptionName',
+
+        self.row_header_for_fleet_files = ['yearID', 'modelYearID', 'ageID', 'optionID', 'OptionName',
                                            'sourceTypeID', 'sourceTypeName', 'regClassID', 'regClassName', 'fuelTypeID', 'fuelTypeName',
                                            'DiscountRate',
                                            ]
+        self.row_header_for_annual_summary_files = ['yearID', 'optionID', 'OptionName', 'DiscountRate']

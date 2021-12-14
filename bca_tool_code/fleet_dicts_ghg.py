@@ -14,26 +14,16 @@ def add_keys_for_discounting(input_dict, *rates):
     return return_dict
 
 
-class FleetTotalsCAP:
+class FleetTotalsGHG:
     def __init__(self, fleet_dict):
         # TODO: If emission costs are being calculated, those attributes have to be added to new_attributes
-        self.fleet_dict = fleet_dict
-        self.new_attributes = ['DirectCost',
-                               'WarrantyCost',
-                               'RnDCost',
-                               'OtherCost',
-                               'ProfitCost',
-                               'IndirectCost',
-                               'TechCost',
-                               'DEF_Gallons',
-                               'DEFCost',
-                               'GallonsCaptured_byORVR',
+        self.new_attributes = ['TechCost',
                                'FuelCost_Retail',
                                'FuelCost_Pretax',
-                               'EmissionRepairCost',
                                'OperatingCost',
                                'TechAndOperatingCost',
                                ]
+        self.fleet_dict = fleet_dict
 
     def create_fleet_totals_dict(self, settings, fleet_df):
         """This method creates a dictionary of fleet total values and adds a discount rate element to the key.
@@ -70,27 +60,16 @@ class FleetTotalsCAP:
         return value
 
 
-class FleetAveragesCAP:
+class FleetAveragesGHG:
     def __init__(self, fleet_dict):
-        self.fleet_dict = fleet_dict
         self.new_attributes = ['VMT_AvgPerVeh',
                                'VMT_AvgPerVeh_Cumulative',
-                               'DirectCost_AvgPerVeh',
-                               'WarrantyCost_AvgPerVeh',
-                               'RnDCost_AvgPerVeh',
-                               'OtherCost_AvgPerVeh',
-                               'ProfitCost_AvgPerVeh',
-                               'IndirectCost_AvgPerVeh',
                                'TechCost_AvgPerVeh',
-                               'DEFCost_AvgPerMile',
-                               'DEFCost_AvgPerVeh',
                                'FuelCost_Retail_AvgPerMile',
                                'FuelCost_Retail_AvgPerVeh',
-                               'EmissionRepairCost_AvgPerMile',
-                               'EmissionRepairCost_AvgPerVeh',
-                               'OperatingCost_Owner_AvgPerMile',
                                'OperatingCost_Owner_AvgPerVeh',
                                ]
+        self.fleet_dict = fleet_dict
 
     def create_fleet_averages_dict(self, settings, fleet_df):
         """This function creates a dictionary of fleet average values and adds a discount rate element to the key. It also calculates an average annual VMT/vehicle and
@@ -118,7 +97,6 @@ class FleetAveragesCAP:
         for attribute in self.new_attributes:
             df.insert(len(df.columns), f'{attribute}', 0)
 
-        # df.insert(df.columns.get_loc('VMT_AvgPerVeh'), 'VPOP', fleet_df['VPOP'])
         df['VMT_AvgPerVeh'] = fleet_df['VMT'] / fleet_df['VPOP']
 
         df.set_index('id', inplace=True)
@@ -157,12 +135,12 @@ class FleetAveragesCAP:
         for key in fleet_dict.keys():
             vehicle, alt, model_year, age_id, disc_rate = key
             if (vehicle, alt, model_year, age_id-1, 0) in cumulative_vmt_dict.keys():
-                cumulative_vmt = cumulative_vmt_dict[(vehicle, 0, model_year, age_id-1, 0)] + FleetAveragesCAP(fleet_dict).get_attribute_value(key, 'VMT_AvgPerVeh')
+                cumulative_vmt = cumulative_vmt_dict[(vehicle, 0, model_year, age_id-1, 0)] + FleetAveragesGHG(fleet_dict).get_attribute_value(key, 'VMT_AvgPerVeh')
             else:
-                cumulative_vmt = FleetAveragesCAP(fleet_dict).get_attribute_value(key, 'VMT_AvgPerVeh')
+                cumulative_vmt = FleetAveragesGHG(fleet_dict).get_attribute_value(key, 'VMT_AvgPerVeh')
             cumulative_vmt_dict[key] = cumulative_vmt
         # this loop updates the averages_dict with the contents of the cumulative_vmt_dict
         for key in fleet_dict.keys():
             cumulative_vmt = cumulative_vmt_dict[key]
-            FleetAveragesCAP(fleet_dict).update_dict(key, 'VMT_AvgPerVeh_Cumulative', cumulative_vmt)
+            FleetAveragesGHG(fleet_dict).update_dict(key, 'VMT_AvgPerVeh_Cumulative', cumulative_vmt)
         return fleet_dict

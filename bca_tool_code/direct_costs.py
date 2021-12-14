@@ -1,5 +1,6 @@
-from bca_tool_code.fleet_dicts_cap import FleetTotalsDict, FleetAveragesDict
-from bca_tool_code.regclass_sales_dict import RegclassSalesDict
+from bca_tool_code.fleet_dicts_cap import FleetTotalsCAP, FleetAveragesCAP
+from bca_tool_code.fleet_dicts_ghg import FleetTotalsGHG, FleetAveragesGHG
+# from bca_tool_code.regclass_sales_dict import RegclassSales
 
 
 def tech_package_cost(costs_df, unit, alt, cost_step):
@@ -53,11 +54,9 @@ def calc_cumulative_sales_by_step(unit, alt, model_year, cost_step, sales_dict, 
         cumulative sales beginning in MY2030 and continuing each model year thereafter. These sales "streams" are never combined.
 
     """
-    rc_sales = RegclassSalesDict(sales_dict)
     cumulative_sales = 0
     for year in range(int(cost_step), model_year + 1):
-        cumulative_sales += rc_sales.get_attribute_value((unit, alt, year), sales_arg)
-        # cumulative_sales += sales_dict[(unit, alt, year)][sales_arg]
+        cumulative_sales += sales_dict[(unit, alt, year)][sales_arg]
     return cumulative_sales
 
 
@@ -79,9 +78,7 @@ def tech_pkg_cost_withlearning(settings, unit, alt, cumulative_sales, cost_step,
         and, the cumulative sales of that vehicle used in calculating learning effects.
 
     """
-    rc_sales = RegclassSalesDict(sales_dict)
-    sales_year1 = rc_sales.get_attribute_value((unit, alt, int(cost_step)), sales_arg)
-    # sales_year1 = sales_dict[(unit, alt, int(cost_step))][sales_arg]
+    sales_year1 = sales_dict[(unit, alt, int(cost_step))][sales_arg]
     if sales_year1 == 0:
         pkg_cost_learned = 0
     else:
@@ -144,9 +141,12 @@ def calc_per_veh_direct_costs(yoy_costs_per_step_dict, cost_steps, averages_dict
 
     """
     print(f'\nCalculating {program} costs per vehicle...')
-    calcs_avg = FleetAveragesDict(averages_dict)
-    # calcs_dict = averages_dict.copy()
-    # for key in calcs_dict.keys():
+
+    if program == 'CAP':
+        calcs_avg = FleetAveragesCAP(averages_dict)
+    else:
+        calcs_avg = FleetAveragesGHG(averages_dict)
+
     for key in averages_dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
         st, rc, ft = vehicle
@@ -156,23 +156,20 @@ def calc_per_veh_direct_costs(yoy_costs_per_step_dict, cost_steps, averages_dict
         if age_id == 0:
             # print(f'Calculating per unit direct costs for {vehicle}, MY {model_year}.')
             if alt == 0:
-                model_year_cost = yoy_costs_per_step_dict[(unit, alt, model_year, cost_steps[0])]['Cost_AvgPerVeh']
+                cost = yoy_costs_per_step_dict[(unit, alt, model_year, cost_steps[0])]['Cost_AvgPerVeh']
             else:
-                model_year_cost = yoy_costs_per_step_dict[(unit, 0, model_year, cost_steps[0])]['Cost_AvgPerVeh']
+                cost = yoy_costs_per_step_dict[(unit, 0, model_year, cost_steps[0])]['Cost_AvgPerVeh']
                 for step in cost_steps:
                     if model_year >= int(step):
-                        model_year_cost += yoy_costs_per_step_dict[(unit, alt, model_year, step)]['Cost_AvgPerVeh']
+                        cost += yoy_costs_per_step_dict[(unit, alt, model_year, step)]['Cost_AvgPerVeh']
             if program == 'GHG':
                 # GHG program costs are to be averaged over all VPOP for the given unit
                 vpop_adding_tech = calcs_avg.get_attribute_value(key, 'VPOP_AddingTech')
                 vpop = calcs_avg.get_attribute_value(key, 'VPOP')
-                model_year_cost = model_year_cost * vpop_adding_tech / vpop
-                # model_year_cost = model_year_cost * averages_dict[key]['VPOP_AddingTech'] / averages_dict[key]['VPOP']
-                calcs_avg.update_dict(key, 'TechCost_AvgPerVeh', model_year_cost)
-            else: calcs_avg.update_dict(key, 'DirectCost_AvgPerVeh', model_year_cost)
-                # model_year_cost = model_year_cost * calcs_dict[key]['VPOP_AddingTech'] / calcs_dict[key]['VPOP']
-                # calcs_dict[key].update({'TechCost_AvgPerVeh': model_year_cost})
-            # else: calcs_dict[key].update({'DirectCost_AvgPerVeh': model_year_cost})
+                cost = cost * vpop_adding_tech / vpop
+                calcs_avg.update_dict(key, 'TechCost_AvgPerVeh', cost)
+            else:
+                calcs_avg.update_dict(key, 'DirectCost_AvgPerVeh', cost)
     return averages_dict
 
 
@@ -189,21 +186,23 @@ def calc_direct_costs(totals_dict, averages_dict, program, sales_arg):
         The totals_dict dictionary updated with tech package direct costs (package cost * sales).
 
     """
-    if program == 'CAP': arg = 'Direct'
-    else: arg = 'Tech'
+    if program == 'CAP':
+        arg = 'Direct'
+        calcs_avg = FleetAveragesCAP(averages_dict)
+        calcs = FleetTotalsCAP(totals_dict)
+    else:
+        arg = 'Tech'
+        calcs_avg = FleetAveragesGHG(averages_dict)
+        calcs = FleetTotalsGHG(totals_dict)
     print(f'\nCalculating {program} {arg} total costs...')
-    calcs_avg = FleetAveragesDict(averages_dict)
-    calcs = FleetTotalsDict(totals_dict)
+
     for key in totals_dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
         if age_id == 0:
             cost_per_veh = calcs_avg.get_attribute_value(key, f'{arg}Cost_AvgPerVeh')
             sales = calcs.get_attribute_value(key, sales_arg)
             cost = cost_per_veh * sales
-            # cost_per_veh = averages_dict[key][f'{arg}Cost_AvgPerVeh']
-            # sales = totals_dict[key][sales_arg]
             calcs.update_dict(key, f'{arg}Cost', cost)
-            # totals_dict[key].update({f'{arg}Cost': cost_per_veh * sales})
     return totals_dict
 
 

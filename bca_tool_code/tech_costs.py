@@ -1,4 +1,4 @@
-from bca_tool_code.fleet_dicts_cap import FleetTotalsDict, FleetAveragesDict
+from bca_tool_code.fleet_dicts_cap import FleetTotalsCAP, FleetAveragesCAP
 
 
 def calc_per_veh_tech_costs(averages_dict):
@@ -15,7 +15,7 @@ def calc_per_veh_tech_costs(averages_dict):
 
     """
     print('\nCalculating per vehicle technology costs...')
-    calcs_avg = FleetAveragesDict(averages_dict)
+    calcs_avg = FleetAveragesCAP(averages_dict)
     for key in averages_dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
         if age_id == 0:
@@ -23,9 +23,7 @@ def calc_per_veh_tech_costs(averages_dict):
             ic_per_veh = calcs_avg.get_attribute_value(key, 'IndirectCost_AvgPerVeh')
             cost = dc_per_veh + ic_per_veh
             calcs_avg.update_dict(key, 'TechCost_AvgPerVeh', cost)
-            # dc_per_veh = averages_dict[key]['DirectCost_AvgPerVeh']
-            # ic_per_veh = averages_dict[key]['IndirectCost_AvgPerVeh']
-            # averages_dict[key].update({'TechCost_AvgPerVeh': dc_per_veh + ic_per_veh})
+
     return averages_dict
 
 
@@ -43,8 +41,8 @@ def calc_tech_costs(totals_dict, averages_dict, sales_arg):
     """
     print('\nCalculating total technology costs...')
 
-    calcs_avg = FleetAveragesDict(averages_dict)
-    calcs = FleetTotalsDict(totals_dict)
+    calcs_avg = FleetAveragesCAP(averages_dict)
+    calcs = FleetTotalsCAP(totals_dict)
     for key in totals_dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
         if age_id == 0:
@@ -52,9 +50,7 @@ def calc_tech_costs(totals_dict, averages_dict, sales_arg):
             sales = calcs.get_attribute_value(key, sales_arg)
             cost = cost_per_veh * sales
             calcs.update_dict(key, 'TechCost', cost)
-            # cost_per_veh = averages_dict[key]['TechCost_AvgPerVeh']
-            # sales = totals_dict[key][sales_arg]
-            # totals_dict[key].update({'TechCost': cost_per_veh * sales})
+
     return totals_dict
 
 

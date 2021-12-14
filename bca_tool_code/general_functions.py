@@ -205,7 +205,31 @@ def save_dict_to_csv(dict_to_save, save_path, row_header=None, *args):
     return
 
 
-def convert_dict_to_df(dict_to_convert, *args):
+def convert_dict_to_df_with_args(dict_to_convert, *args):
+    """
+
+    Parameters:
+        dict_to_convert: A dictionary meant for conversion to a DataFrame.\n
+        args: The arguments to use as column names for the separated keys.
+
+    Returns:
+        A DataFrame containing the passed dictionary of data.
+
+    """
+    print('\nConverting dictionary to DataFrame...')
+
+    df = pd.DataFrame(dict_to_convert).transpose()
+    df.reset_index(inplace=True)
+    for idx, arg in enumerate(args):
+        if arg in df.columns:
+            df.drop(columns=f'level_{idx}', inplace=True)
+        else:
+            df.rename(columns={f'level_{idx}': arg}, inplace=True)
+    df.reset_index(drop=True, inplace=True)
+    return df
+
+
+def convert_dict_to_df_drop_args(dict_to_convert):
     """
 
     Parameters:

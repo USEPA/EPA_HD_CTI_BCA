@@ -15,24 +15,57 @@ def calc_deltas(settings, dict_for_deltas):
     print('\nCalculating deltas...')
 
     update_dict = dict()
-    for key in dict_for_deltas.keys():
-        vehicle, alt, model_year, age_id, discount_rate = key
-        st, rc, ft = vehicle
-        # print(f'Calculating deltas for {vehicle}, optionID {alt}, MY {model_year}, age {age_id}, DR {discount_rate}')
-        args_to_delta = [k for k, v in dict_for_deltas[key].items()]
+    for key, value in dict_for_deltas.items():
+        vehicle, model_year, age_id, calendar_year, series = 0, 0, 0, 0, ''
+        try:
+            vehicle, alt, model_year, age_id, discount_rate = key
+            st, rc, ft = vehicle
+        except:
+            alt, calendar_year, discount_rate, series = key
+
+        args_to_delta = [k for k, v in value.items() if 'ID' not in k and 'DiscountRate' not in k and 'Series' not in k]
         if alt != settings.no_action_alt:
             delta_alt = f'{alt}{settings.no_action_alt}'
             delta_alt = int(delta_alt)
-            delta_dict = dict()
+
+            if vehicle:
+                update_dict_key = (vehicle, delta_alt, model_year, age_id, discount_rate)
+                update_dict.update({update_dict_key: {'DiscountRate': discount_rate,
+                                                      'yearID': model_year + age_id,
+                                                      'sourceTypeID': st,
+                                                      'regClassID': rc,
+                                                      'fuelTypeID': ft,
+                                                      'modelYearID': model_year,
+                                                      'ageID': age_id,
+                                                      'optionID': delta_alt,
+                                                      }
+                                    }
+                                   )
+            else:
+                update_dict_key = (delta_alt, calendar_year, discount_rate, series)
+                update_dict.update({update_dict_key: {'optionID': delta_alt,
+                                                      'yearID': calendar_year,
+                                                      'DiscountRate': discount_rate,
+                                                      'Series': series,
+                                                      }
+                                    }
+                                   )
+
             for arg in args_to_delta:
-                arg_value = dict_for_deltas[key][arg] - dict_for_deltas[(vehicle, settings.no_action_alt, model_year, age_id, discount_rate)][arg]
-                delta_dict.update({arg: arg_value})
-            update_dict[(vehicle, delta_alt, model_year, age_id, discount_rate)] = delta_dict
+                try:
+                    no_action_arg_value = dict_for_deltas[(vehicle, settings.no_action_alt, model_year, age_id, discount_rate)][arg]
+                except:
+                    no_action_arg_value = dict_for_deltas[(settings.no_action_alt, calendar_year, discount_rate, series)][arg]
+                action_arg_value = dict_for_deltas[key][arg]
+                delta_arg_value = action_arg_value - no_action_arg_value
+                update_dict[update_dict_key][arg] = delta_arg_value
+
     dict_for_deltas.update(update_dict)
+
     return dict_for_deltas
 
 
-def calc_deltas_weighted(settings, dict_for_deltas, weighted_arg):
+def calc_deltas_weighted(settings, dict_for_deltas):
     """This function calculates deltas for action alternatives relative to the passed no action alternative specifically for the weighted cost per mile dictionaries.
 
     Parameters:
@@ -53,7 +86,6 @@ def calc_deltas_weighted(settings, dict_for_deltas, weighted_arg):
     update_dict = dict()
     for key in dict_for_deltas.keys():
         vehicle, alt, model_year = key[0], key[1], key[2]
-        # print(f'Calculating weighted {weighted_arg} deltas for {vehicle}, optionID {alt}, MY {model_year}')
         id_args = [k for k, v in dict_for_deltas[key].items() if 'ID' in k or 'Name' in k]
         args_to_delta = [k for k, v in dict_for_deltas[key].items() if k not in id_args]
         if alt != settings.no_action_alt:

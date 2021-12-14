@@ -1,3 +1,5 @@
+from bca_tool_code.fleet_dicts_cap import FleetTotalsCAP, FleetAveragesCAP
+from bca_tool_code.fleet_dicts_ghg import FleetTotalsGHG, FleetAveragesGHG
 
 
 def get_orvr_adjustment(settings, vehicle, alt):
@@ -35,9 +37,11 @@ def calc_thc_reduction(settings, vehicle, alt, year, model_year, totals_dict):
         A single THC reduction for the given model year vehicle in the given year.
 
     """
+    calcs = FleetTotalsCAP(totals_dict)
     age = year - model_year
-    thc_reduction = totals_dict[(vehicle, settings.no_action_alt, model_year, age, 0)]['THC_UStons'] \
-                    - totals_dict[(vehicle, alt, model_year, age, 0)]['THC_UStons']
+    thc_no_action = calcs.get_attribute_value((vehicle, settings.no_action_alt, model_year, age, 0), 'THC_UStons')
+    thc_action = calcs.get_attribute_value((vehicle, alt, model_year, age, 0), 'THC_UStons')
+    thc_reduction = thc_no_action - thc_action
     return thc_reduction
 
 
@@ -79,6 +83,9 @@ def calc_cap_fuel_costs(settings, totals_dict):
 
     """
     print('\nCalculating CAP-related fuel costs...')
+
+    calcs = FleetTotalsCAP(totals_dict)
+
     for key in totals_dict.keys():
         captured_gallons = 0
         vehicle, alt, model_year, age_id, disc_rate = key
@@ -88,10 +95,18 @@ def calc_cap_fuel_costs(settings, totals_dict):
         fuel_price_pretax = settings.fuel_prices_dict[(year, ft)]['pretax_fuel_price']
         if ft == 1:
             captured_gallons = calc_captured_gallons(settings, vehicle, alt, year, model_year, totals_dict)
-        totals_dict[key]['GallonsCaptured_byORVR'] = captured_gallons
-        gallons_paid_for = totals_dict[key]['Gallons'] - captured_gallons
-        totals_dict[key].update({'FuelCost_Retail': fuel_price_retail * gallons_paid_for})
-        totals_dict[key].update({'FuelCost_Pretax': fuel_price_pretax * gallons_paid_for})
+
+        calcs.update_dict(key, 'GallonsCaptured_byORVR', captured_gallons)
+
+        gallons = calcs.get_attribute_value(key, 'Gallons')
+        gallons_paid_for = gallons - captured_gallons
+
+        cost_retail = fuel_price_retail * gallons_paid_for
+        cost_pretax = fuel_price_pretax * gallons_paid_for
+
+        calcs.update_dict(key, 'FuelCost_Retail', cost_retail)
+        calcs.update_dict(key, 'FuelCost_Pretax', cost_pretax)
+
     return totals_dict
 
 
@@ -108,19 +123,28 @@ def calc_ghg_fuel_costs(settings, totals_dict):
 
     """
     print('\nCalculating GHG-related fuel costs...')
+
+    calcs = FleetTotalsGHG(totals_dict)
+
     for key in totals_dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
         st, rc, ft = vehicle
         year = model_year + age_id
         fuel_price_retail = settings.fuel_prices_dict[(year, ft)]['retail_fuel_price']
         fuel_price_pretax = settings.fuel_prices_dict[(year, ft)]['pretax_fuel_price']
-        gallons = totals_dict[key]['Gallons']
-        totals_dict[key].update({'FuelCost_Retail': fuel_price_retail * gallons})
-        totals_dict[key].update({'FuelCost_Pretax': fuel_price_pretax * gallons})
+
+        gallons = calcs.get_attribute_value(key, 'Gallons')
+
+        cost_retail = fuel_price_retail * gallons
+        cost_pretax = fuel_price_pretax * gallons
+
+        calcs.update_dict(key, 'FuelCost_Retail', cost_retail)
+        calcs.update_dict(key, 'FuelCost_Pretax', cost_pretax)
+
     return totals_dict
 
 
-def calc_average_fuel_costs(totals_dict, averages_dict):
+def calc_average_fuel_costs(totals_dict, averages_dict, program):
     """
 
     Parameters:
@@ -133,18 +157,30 @@ def calc_average_fuel_costs(totals_dict, averages_dict):
     """
     print('\nCalculating average fuel costs...')
 
+    if program == 'CAP':
+        calcs_avg = FleetAveragesCAP(averages_dict)
+        calcs = FleetTotalsCAP(totals_dict)
+    else:
+        calcs_avg = FleetAveragesGHG(averages_dict)
+        calcs = FleetTotalsGHG(totals_dict)
+
     for key in averages_dict.keys():
-        vehicle, alt, model_year, age_id, disc_rate = key
+        # vehicle, alt, model_year, age_id, disc_rate = key
         # print(f'Calculating fuel average cost per mile and per vehicle for {vehicle}, option ID {alt}, MY {model_year}, age {age_id}')
-        fuel_cost = totals_dict[key]['FuelCost_Retail']
-        vmt = totals_dict[key]['VMT']
-        vpop = totals_dict[key]['VPOP']
+        fuel_cost = calcs.get_attribute_value(key, 'FuelCost_Retail')
+        vmt = calcs.get_attribute_value(key, 'VMT')
+        vpop = calcs.get_attribute_value(key, 'VPOP')
+
+        # try/except block to protect against divide by 0 error
         try:
-            averages_dict[key].update({'FuelCost_Retail_AvgPerMile': fuel_cost / vmt})
-            averages_dict[key].update({'FuelCost_Retail_AvgPerVeh': fuel_cost / vpop})
+            cost_per_mile = fuel_cost / vmt
+            cost_per_veh = fuel_cost / vpop
         except:
-            averages_dict[key].update({'FuelCost_Retail_AvgPerMile': 0})
-            averages_dict[key].update({'FuelCost_Retail_AvgPerVeh': 0})
+            cost_per_mile = 0
+            cost_per_veh = 0
+        calcs_avg.update_dict(key, 'FuelCost_Retail_AvgPerMile', cost_per_mile)
+        calcs_avg.update_dict(key, 'FuelCost_Retail_AvgPerVeh', cost_per_veh)
+
     return averages_dict
 
 

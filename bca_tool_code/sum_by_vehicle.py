@@ -15,7 +15,7 @@ def calc_sum_of_costs(dict_to_sum, name_of_sum, *args):
     print(f'\nCalculating {name_of_sum}...')
 
     for key in dict_to_sum.keys():
-        vehicle, alt, model_year, age_id, discount_rate = key
+        # vehicle, alt, model_year, age_id, discount_rate = key
         # print(f'Calculating sum of {name_of_sum} for {vehicle}, optionID {alt}, MY {model_year}, age {age_id}, DR {discount_rate}')
         sum_of_costs = 0
         # note that some key, value pairs lack some data (e.g., ft=1 has no DEF cost) so the try/except addresses that
