@@ -13,10 +13,10 @@ class CreateFigures:
         """The CreateFigures class  is used to generate charts.
 
         Parameters:
-            df: A DataFrame of data to be charted.\n
-            units: Units for use on the y-axis of the created chart.\n
-            destination: The path in which to save the created chart.
-            program: The program identifier string (i.e., 'CAP' or 'GHG') to include in the saved filename.
+            df: DataFrame; contains data to be charted.\n
+            units: String; units for use on the y-axis of the created chart.\n
+            destination: Path object; provides the path to which to save the created chart. \n
+            program: String; th program identifier (i.e., 'CAP' or 'GHG') to include in the saved filename.
 
         """
         self.df = df
@@ -29,11 +29,11 @@ class CreateFigures:
         """This method generates a chart showing passed arguments under the given alternative.
 
         Parameters:
-            dr: The discount rate of the data to be charted.\n
-            alt_name: The OptionName of the data to be charted.\n
-            year_min: The minimum calendar year of data to be charted.\n
-            year_max: The maximum calendar year of data t be charted.\n
-            args: The data arguments to be charted.
+            dr: Numeric; the discount rate of the data to be charted.\n
+            alt_name: String; the OptionName of the data to be charted.\n
+            year_min: Numeric; the minimum calendar year of data to be charted.\n
+            year_max: Numeric; the maximum calendar year of data t be charted.\n
+            args: Strings; the data attributes to be charted.
 
         Returns:
             A single chart saved to the destination folder.
@@ -58,11 +58,11 @@ class CreateFigures:
         """This method generates a chart showing the passed argument under each of the passed alternatives.
 
         Parameters:
-            dr: The discount rate of the data to be charted.\n
-            alt_names: The OptionNames for which to chart data.\n
-            year_min: The minimum calendar year of data to be charted.\n
-            year_max: The maximum calendar year of data t be charted.\n
-            arg: The single data argument to be charted.
+            dr: Numeric; the discount rate of the data to be charted.\n
+            alt_names: List; contains the OptionNames for which to chart data.\n
+            year_min: Numeric; the minimum calendar year of data to be charted.\n
+            year_max: Numeric; the maximum calendar year of data t be charted.\n
+            arg: String; the single data attribute to be charted.
 
         Returns:
             A single chart saved to the destination folder.
@@ -88,7 +88,7 @@ class CreateFigures:
         """This function is called by tool_main and then controls the generation of charts by the ChartFigures class.
 
         Parameters:
-            args: A list of args to include in figures.
+            args: List; attributes to include in figures.
 
         Returns:
             Charts are saved to the path_for_save folder by the ChartFigures class and this method returns to tool_main.

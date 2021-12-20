@@ -1,15 +1,16 @@
 
 
 def calc_deltas(settings, dict_for_deltas):
-    """This function calculates deltas for action alternatives relative to the no action alternative set via the General Inputs.
+    """
+    This function calculates deltas for action alternatives relative to the no action alternative set via the General Inputs.
 
     Parameters:
-        settings: The SetInputs class \n
-        dict_for_deltas: The dictionary containing values for calculating deltas
+        settings: The SetInputs class. \n
+        dict_for_deltas: Dictionary; contains values for calculating deltas.
 
     Returns:
-        An updated dictionary containing deltas relative to the no_action_alt. OptionIDs for the deltas will be the alt_id followed by the no_action_alt. \n
-        For example, deltas for optionID=1 relative to optionID=0 would have optionID=10. OptionNames will also show as 'OptionID=1_name minus OptionID=0_name'.
+        An updated dictionary containing deltas relative to the no_action_alt. OptionIDs (numeric) for the deltas will be the alt_id followed by the no_action_alt. \n
+        For example, deltas for optionID=1 relative to optionID=0 will have optionID=10. OptionNames will also show as 'OptionID=1_name minus OptionID=0_name'.
 
     """
     print('\nCalculating deltas...')
@@ -18,9 +19,11 @@ def calc_deltas(settings, dict_for_deltas):
     for key, value in dict_for_deltas.items():
         vehicle, model_year, age_id, calendar_year, series = 0, 0, 0, 0, ''
         try:
+            # for totals and averages deltas
             vehicle, alt, model_year, age_id, discount_rate = key
             st, rc, ft = vehicle
         except:
+            # for pv_annualized deltas
             alt, calendar_year, discount_rate, series = key
 
         args_to_delta = [k for k, v in value.items() if 'ID' not in k and 'DiscountRate' not in k and 'Series' not in k]
@@ -66,15 +69,15 @@ def calc_deltas(settings, dict_for_deltas):
 
 
 def calc_deltas_weighted(settings, dict_for_deltas):
-    """This function calculates deltas for action alternatives relative to the passed no action alternative specifically for the weighted cost per mile dictionaries.
+    """
+    This function calculates deltas for action alternatives relative to the passed no action alternative specifically for the weighted cost per mile dictionaries.
 
     Parameters:
-        settings: The SetInputs class \n
-        dict_for_deltas: The dictionary containing values for calculating deltas \n
-        weighted_arg: The parameter for calculating deltas
+        settings: The SetInputs class. \n
+        dict_for_deltas: Dictionary; contains values for calculating deltas.
 
     Returns:
-        An updated dictionary containing deltas relative to the no_action_alt. OptionIDs for the deltas will be the alt_id followed by the no_action_alt. \n
+        An updated dictionary containing deltas relative to the no_action_alt. OptionIDs (numeric) for the deltas will be the alt_id followed by the no_action_alt. \n
         For example, deltas for optionID=1 relative to optionID=0 would have optionID=10.
 
     Note:
@@ -86,8 +89,10 @@ def calc_deltas_weighted(settings, dict_for_deltas):
     update_dict = dict()
     for key in dict_for_deltas.keys():
         vehicle, alt, model_year = key[0], key[1], key[2]
+
         id_args = [k for k, v in dict_for_deltas[key].items() if 'ID' in k or 'Name' in k]
         args_to_delta = [k for k, v in dict_for_deltas[key].items() if k not in id_args]
+
         if alt != settings.no_action_alt:
             delta_alt = f'{alt}{settings.no_action_alt}'
             delta_alt = int(delta_alt)
@@ -101,6 +106,7 @@ def calc_deltas_weighted(settings, dict_for_deltas):
             delta_dict.update({'optionID': delta_alt})
             update_dict[(vehicle, delta_alt, model_year)] = delta_dict
     dict_for_deltas.update(update_dict)
+
     return dict_for_deltas
 
 

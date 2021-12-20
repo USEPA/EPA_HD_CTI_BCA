@@ -1,10 +1,8 @@
-from bca_tool_code.fleet_dicts_cap import FleetTotalsCAP
-from bca_tool_code.fleet_dicts_ghg import FleetTotalsGHG
 
 
 def pv_annualized(settings, dict_of_values, program):
 
-    print(f'\nGetting annual totals, present and annualized values for {program}...')
+    print(f'\nGetting Annual Values, Present Values and Annualized Values for {program}...')
 
     if program == 'CAP':
         num_alts = settings.number_alts_cap

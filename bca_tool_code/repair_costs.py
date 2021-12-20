@@ -1,7 +1,9 @@
-from bca_tool_code.fleet_dicts_cap import FleetTotalsCAP, FleetAveragesCAP
+from bca_tool_code.fleet_totals_dict import FleetTotals
+from bca_tool_code.fleet_averages_dict import FleetAverages
+from bca_tool_code.project_dicts import InputFileDict
 
 
-def calc_typical_vmt_per_year(settings, vehicle, alt, model_year, averages_dict, typical_vmt_dict):
+def calc_typical_vmt_per_year(settings, vehicle, alt, model_year, averages_dict):
     """This function calculates a typical annual VMT/vehicle over a set number of years as set via the General Inputs workbook. This typical annual VMT/vehicle
     can then be used to estimate the ages at which warranty and useful life will be reached. When insufficient years are available -- e.g., if the typical_vmt_thru_ageID
     is set to >5 years and the given vehicle is a MY2041 vintage vehicle and the fleet input file contains data only thru CY2045, then insufficient data exist to
@@ -20,19 +22,26 @@ def calc_typical_vmt_per_year(settings, vehicle, alt, model_year, averages_dict,
         A dictionary tracking that value for all vehicles.
 
     """
-    calcs_avg = FleetAveragesCAP(averages_dict)
-    typical_vmt_dict_id = (vehicle, alt, model_year)
-    if typical_vmt_dict_id in typical_vmt_dict:
-        typical_vmt = typical_vmt_dict[typical_vmt_dict_id]
+    calcs_avg = FleetAverages(averages_dict)
+
+    # typical_vmt_dict_id = (vehicle, alt, model_year)
+    # if typical_vmt_dict_id in typical_vmt_dict:
+    #     typical_vmt = typical_vmt_dict[typical_vmt_dict_id]
+    # else:
+    vmt_thru_age_id = settings.repair_inputs_dict['typical_vmt_thru_ageID']['Value']
+    if model_year + vmt_thru_age_id <= settings.year_max:
+        year = model_year
     else:
-        vmt_thru_age_id = settings.repair_inputs_dict['typical_vmt_thru_ageID']['Value']
-        if model_year + vmt_thru_age_id <= settings.year_max:
-            cumulative_vmt = calcs_avg.get_attribute_value((vehicle, alt, model_year, vmt_thru_age_id, 0), 'VMT_AvgPerVeh_Cumulative')
-            typical_vmt = cumulative_vmt / (vmt_thru_age_id + 1)
-        else:
-            typical_vmt = typical_vmt_dict[(vehicle, alt, model_year-1)]
-        typical_vmt_dict[typical_vmt_dict_id] = typical_vmt
-    return typical_vmt, typical_vmt_dict
+        year = settings.year_max - vmt_thru_age_id # can't get cumulative VMT when model_year + vmt_thru_age_id exceeds data
+
+    cumulative_vmt = calcs_avg.get_attribute_value((vehicle, alt, year, vmt_thru_age_id, 0), 'VMT_AvgPerVeh_Cumulative')
+    typical_vmt = cumulative_vmt / (vmt_thru_age_id + 1)
+    # else:
+
+    #     typical_vmt = typical_vmt_dict[(vehicle, alt, model_year-1)]
+    # typical_vmt_dict[typical_vmt_dict_id] = typical_vmt
+
+    return typical_vmt #, typical_vmt_dict
 
 
 def calc_estimated_age(settings, vehicle, alt, model_year, identifier, typical_vmt, estimated_ages_dict):
@@ -52,12 +61,22 @@ def calc_estimated_age(settings, vehicle, alt, model_year, identifier, typical_v
         A dictionary that tracks those ages for all vehicles.
 
     """
+    miles_and_ages_dict = InputFileDict(settings.warranty_inputs_dict)
+    if identifier == 'Usefullife': miles_and_ages_dict = InputFileDict(settings.usefullife_inputs_dict)
+
     st, rc, ft = vehicle
-    engine = (rc, ft)
-    required_age = settings.required_miles_and_ages_dict[(engine, alt, identifier, 'Age')][str(model_year)]
-    calculated_age = round(settings.required_miles_and_ages_dict[(engine, alt, identifier, 'Miles')][str(model_year)] / typical_vmt)
+    # required_age = settings.required_miles_and_ages_dict[(engine, alt, identifier, 'Age')][str(model_year)]
+    required_age = miles_and_ages_dict.get_attribute_value(((rc, ft, 'Age'), alt), str(model_year))
+    required_miles = miles_and_ages_dict.get_attribute_value(((rc, ft, 'Miles'), alt), str(model_year))
+    calculated_age = round(required_miles / typical_vmt)
+    # calculated_age = round(settings.required_miles_and_ages_dict[(engine, alt, identifier, 'Miles')][str(model_year)] / typical_vmt)
     estimated_age = min(required_age, calculated_age)
-    estimated_ages_dict[(vehicle, alt, model_year, identifier)] = ({'required_age': required_age,
+    estimated_ages_dict[(vehicle, alt, model_year, identifier)] = ({'vehicle': vehicle,
+                                                                    'optionID': alt,
+                                                                    'modelYearID': model_year,
+                                                                    'identifier': identifier,
+                                                                    'typical_vmt': typical_vmt,
+                                                                    'required_age': required_age,
                                                                     'calculated_age': calculated_age,
                                                                     'estimated_age': estimated_age,
                                                                     })
@@ -78,19 +97,18 @@ def calc_emission_repair_costs_per_mile(settings, averages_dict):
 
     """
     print('\nCalculating emission repair costs per mile...')
-    calcs_avg = FleetAveragesCAP(averages_dict)
+    calcs_avg = FleetAverages(averages_dict)
+
     repair_cpm_dict = dict()
     estimated_ages_dict = dict()
-    typical_vmt_dict = dict()
     for key in averages_dict.keys():
-        # print(f'Calculating repair costs per mile for {key}')
         vehicle, alt, model_year, age_id, disc_rate = key
 
         reference_direct_cost = calcs_avg.get_attribute_value(((61, 47, 2), 0, model_year, 0, 0), 'DirectCost_AvgPerVeh') # sourcetype here is arbitrary provided it is of diesel regclass 47
         direct_cost = calcs_avg.get_attribute_value((vehicle, alt, model_year, 0, 0), 'DirectCost_AvgPerVeh')
         direct_cost_scaler = direct_cost / reference_direct_cost
 
-        typical_vmt, typical_vmt_dict = calc_typical_vmt_per_year(settings, vehicle, alt, model_year, averages_dict, typical_vmt_dict)
+        typical_vmt = calc_typical_vmt_per_year(settings, vehicle, alt, model_year, averages_dict)
         warranty_estimated_age, estimated_ages_dict = calc_estimated_age(settings, vehicle, alt, model_year, 'Warranty', typical_vmt, estimated_ages_dict)
         usefullife_estimated_age, estimated_ages_dict = calc_estimated_age(settings, vehicle, alt, model_year, 'Usefullife', typical_vmt, estimated_ages_dict)
 
@@ -144,7 +162,8 @@ def calc_per_veh_emission_repair_costs(averages_dict):
 
     """
     print('\nCalculating emission repair costs per vehicle...')
-    calcs_avg = FleetAveragesCAP(averages_dict)
+    calcs_avg = FleetAverages(averages_dict)
+
     for key in averages_dict.keys():
         # vehicle, alt, model_year, age_id = key[0], key[1], key[2], key[3]
         # print(f'Calculating repair costs per vehicle for {vehicle}, optionID {alt}, MY {model_year}, age {age_id}')
@@ -156,12 +175,13 @@ def calc_per_veh_emission_repair_costs(averages_dict):
     return averages_dict
 
 
-def calc_emission_repair_costs(totals_dict, averages_dict):
+def calc_emission_repair_costs(totals_dict, averages_dict, vpop_arg):
     """
 
     Parameters:
         totals_dict: A dictionary containing annual vehicle populations (VPOP).\n
-        averages_dict: A dictionary containing annual average emission repair costs/mile.
+        averages_dict: A dictionary containing annual average emission repair costs/mile.\n
+        vpop_arg: String; specifies the population attribute to use (e.g., "VPOP" or "VPOP_withTech")
 
     Returns:
         The totals_dict dictionary updated with annual emission repair costs for all vehicles.
@@ -169,11 +189,12 @@ def calc_emission_repair_costs(totals_dict, averages_dict):
     """
     print(f'\nCalculating total emission repair costs...')
 
-    calcs_avg = FleetAveragesCAP(averages_dict)
-    calcs = FleetTotalsCAP(totals_dict)
+    calcs_avg = FleetAverages(averages_dict)
+    calcs = FleetTotals(totals_dict)
+
     for key in totals_dict.keys():
         cost_per_veh = calcs_avg.get_attribute_value(key, 'EmissionRepairCost_AvgPerVeh')
-        vpop = calcs.get_attribute_value(key, 'VPOP')
+        vpop = calcs.get_attribute_value(key, vpop_arg)
         cost = cost_per_veh * vpop
         calcs.update_dict(key, 'EmissionRepairCost', cost)
 

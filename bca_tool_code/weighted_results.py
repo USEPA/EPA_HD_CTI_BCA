@@ -1,12 +1,13 @@
+from bca_tool_code.fleet_averages_dict import FleetAverages
 from bca_tool_code.vehicle import Vehicle
 
 
-def create_weighted_cost_dict(settings, fleet_averages_dict, arg_to_weight, arg_to_weight_by):
+def create_weighted_cost_dict(settings, averages_dict, arg_to_weight, arg_to_weight_by):
     """This function weights arguments by the passed weight_by argument.
 
     Parameters::
         settings: The SetInputs class.\n
-        fleet_averages_dict: A dictionary of fleet average data (e.g., miles/year, cost/year, cost/mile).\n
+        averages_dict: A dictionary of fleet average data (e.g., miles/year, cost/year, cost/mile).\n
         arg_to_weight: The argument to be weighted by the arg_to_weight_by argument.\n
         arg_to_weight_by: The argument to weight by.
 
@@ -21,9 +22,11 @@ def create_weighted_cost_dict(settings, fleet_averages_dict, arg_to_weight, arg_
 
     """
     print(f'\nCalculating weighted {arg_to_weight}...')
+    calcs_avg = FleetAverages(averages_dict)
+
     wtd_result_dict = dict()
     weighted_results_dict = dict()
-    for key in fleet_averages_dict.keys():
+    for key in averages_dict.keys():
         vehicle, alt, model_year, age_id = key[0], key[1], key[2], key[3]
         st, rc, ft = vehicle
         if arg_to_weight == 'DEFCost_AvgPerMile' and ft != 2:
@@ -34,15 +37,22 @@ def create_weighted_cost_dict(settings, fleet_averages_dict, arg_to_weight, arg_
                 wtd_result_dict_id = (vehicle, alt, model_year)
                 numerator, denominator = 0, 0
                 if wtd_result_dict_id in wtd_result_dict:
-                    numerator, denominator = wtd_result_dict[wtd_result_dict_id]['numerator'], wtd_result_dict[wtd_result_dict_id]['denominator']
+                    numerator = wtd_result_dict[wtd_result_dict_id]['numerator']
+                    denominator = wtd_result_dict[wtd_result_dict_id]['denominator']
                 else:
                     pass
                 if age_id <= settings.max_age_included:
-                    numerator += fleet_averages_dict[key][arg_to_weight] * fleet_averages_dict[key][arg_to_weight_by]
-                    denominator += fleet_averages_dict[key]['VMT_AvgPerVeh']
+                    arg_weight = calcs_avg.get_attribute_value(key, arg_to_weight)
+                    arg_weight_by = calcs_avg.get_attribute_value(key, arg_to_weight_by)
+                    numerator += arg_weight * arg_weight_by
+                    denominator += calcs_avg.get_attribute_value(key, 'VMT_AvgPerVeh')
+                    # numerator += fleet_averages_dict[key][arg_to_weight] * fleet_averages_dict[key][arg_to_weight_by]
+                    # denominator += fleet_averages_dict[key]['VMT_AvgPerVeh']
                     wtd_result_dict[wtd_result_dict_id] = {'numerator': numerator, 'denominator': denominator}
     for key in wtd_result_dict.keys():
-        numerator, denominator = wtd_result_dict[key]['numerator'], wtd_result_dict[key]['denominator']
+        numerator = wtd_result_dict[key]['numerator']
+        denominator = wtd_result_dict[key]['denominator']
+        # numerator, denominator = wtd_result_dict[key]['numerator'], wtd_result_dict[key]['denominator']
         vehicle, alt = key[0], key[1]
         st, rc, ft = vehicle
         source_type = Vehicle(st).sourcetype_name()

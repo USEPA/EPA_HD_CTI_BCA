@@ -1,7 +1,6 @@
-# import attr
+from bca_tool_code.tool_setup import SetInputs
 
 
-# @attr.s
 class Vehicle:
     """
 

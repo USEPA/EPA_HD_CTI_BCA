@@ -1,16 +1,17 @@
-from bca_tool_code.fleet_dicts_cap import FleetTotalsCAP, FleetAveragesCAP
-from bca_tool_code.fleet_dicts_ghg import FleetTotalsGHG, FleetAveragesGHG
+from bca_tool_code.fleet_totals_dict import FleetTotals
+from bca_tool_code.fleet_averages_dict import FleetAverages
 
 
 def discount_values(settings, dict_of_values, program, arg):
-    """The discount function determines metrics appropriate for discounting (those contained in dict_of_values) and does the discounting
+    """
+    The discount function determines metrics appropriate for discounting (those contained in dict_of_values) and does the discounting
     calculation to a given year and point within that year.
 
     Parameters:
         settings: The SetInputs class.\n
-        dict_of_values: A dictionary of values to be discounted with keys consisting of vehicle, model_year, age_id and discount rate.\n
-        program: A string indicating what program is being passed.
-        arg: A string indicating whether totals or averages are being discounted.
+        dict_of_values: Dictionary; provides values to be discounted with keys consisting of vehicle, model_year, age_id and discount rate.\n
+        program: String; indicates what program is being passed.
+        arg: String; indicates whether totals or averages are being discounted.
 
     Returns:
         The passed dictionary with new key, value pairs where keys stipulate the discount rate and monetized values are discounted at their internally consistent discount rate.
@@ -22,13 +23,8 @@ def discount_values(settings, dict_of_values, program, arg):
 
     """
     print(f'\nDiscounting values for {program} {arg}...')
-
-    if program == 'CAP':
-        if arg == 'totals': calcs = FleetTotalsCAP(dict_of_values)
-        else: calcs = FleetAveragesCAP(dict_of_values)
-    else:
-        if arg == 'totals': calcs = FleetTotalsGHG(dict_of_values)
-        else: calcs = FleetAveragesGHG(dict_of_values)
+    if arg == 'totals': calcs = FleetTotals(dict_of_values)
+    else: calcs = FleetAverages(dict_of_values)
 
     for key, value in dict_of_values.items():
         all_costs = [k for k, v in value.items() if 'Cost' in k]

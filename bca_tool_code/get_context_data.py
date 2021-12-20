@@ -115,6 +115,9 @@ class GetFuelPrices:
         fuel_prices_dict['CNG']['fuelTypeID'] = self.fuel_dict['CNG']
         fuel_prices_df = pd.concat([fuel_prices_df, fuel_prices_dict['CNG']], ignore_index=True, axis=0)
         fuel_prices_df = fuel_prices_df[['yearID', 'fuelTypeID', 'retail_fuel_price', 'pretax_fuel_price']]
+        fuel_prices_df.insert(fuel_prices_df.columns.get_loc('yearID') + 1, 'DollarBasis', self.aeo_dollars())
+        fuel_prices_df.insert(fuel_prices_df.columns.get_loc('yearID') + 1, 'AEO Case', self.aeo_case)
+
         return fuel_prices_df
 
 
