@@ -53,7 +53,6 @@ def calc_criteria_emission_costs(settings, totals_dict):
 
     for key in totals_dict.keys():
         vehicle, alt, model_year, age_id = key[0], key[1], key[2], key[3]
-        print(f'Calculating criteria emission costs for {vehicle}, optionID {alt}, MY {model_year}, age {age_id}')
         calendar_year = model_year + age_id
         pm_tailpipe_cap_dr1, pm_tailpipe_cap_dr2, nox_tailpipe_cap_dr1, nox_tailpipe_cap_dr2, so2_tailpipe_cap_dr1, so2_tailpipe_cap_dr2 \
             = get_criteria_cost_factors(settings, calendar_year)
@@ -66,8 +65,8 @@ def calc_criteria_emission_costs(settings, totals_dict):
         calcs.update_dict(key, f'PM25Cost_tailpipe_{str(cap_dr2)}', pm_tailpipe_cap_dr2 * pm_tons)
         calcs.update_dict(key, f'NOxCost_tailpipe_{str(cap_dr1)}', nox_tailpipe_cap_dr1 * nox_tons)
         calcs.update_dict(key, f'NOxCost_tailpipe_{str(cap_dr2)}', nox_tailpipe_cap_dr2 * nox_tons)
-        calcs.update_dict(key, f'CriteriaCost_{str(cap_dr1)}', pm_tailpipe_cap_dr1 * pm_tons + nox_tailpipe_cap_dr1 * nox_tons)
-        calcs.update_dict(key, f'CriteriaCost_{str(cap_dr2)}', pm_tailpipe_cap_dr2 * pm_tons + nox_tailpipe_cap_dr2 * nox_tons)
+        calcs.update_dict(key, f'CriteriaCost_tailpipe_{str(cap_dr1)}', pm_tailpipe_cap_dr1 * pm_tons + nox_tailpipe_cap_dr1 * nox_tons)
+        calcs.update_dict(key, f'CriteriaCost_tailpipe_{str(cap_dr2)}', pm_tailpipe_cap_dr2 * pm_tons + nox_tailpipe_cap_dr2 * nox_tons)
 
     return totals_dict
 
