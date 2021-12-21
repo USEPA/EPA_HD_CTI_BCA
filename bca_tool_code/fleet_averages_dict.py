@@ -3,6 +3,13 @@ from bca_tool_code.fleet_totals_dict import add_keys_for_discounting
 
 
 class FleetAverages:
+    """
+    A FleetAverages object contains annual averages for vehicles by model year and by calendar year.
+
+    Parameters:
+        fleet_dict: Dictionary; contains fleet data, averages by model year and calendar year.
+
+    """
     def __init__(self, fleet_dict):
         self.fleet_dict = fleet_dict
 

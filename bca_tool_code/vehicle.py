@@ -1,10 +1,9 @@
-from bca_tool_code.tool_setup import SetInputs
 
 
 class Vehicle:
     """
 
-    Define vehicle attribute names for, sourceTypeID, regClassID, fuelTypeID.
+    Define vehicle attribute names for sourceTypeID, regClassID, fuelTypeID.
 
     Parameters::
         id: The associated ID from the MOVES input file.
@@ -19,7 +18,8 @@ class Vehicle:
     def fueltype_name(self):
         """
 
-        Returns: The fuel type name for the passed ID.
+        Returns:
+            The fuel type name for the passed ID.
 
         """
         fueltype_dict = {1: 'Gasoline',
@@ -33,7 +33,8 @@ class Vehicle:
     def regclass_name(self):
         """
 
-        Returns: The regclass name for the passed ID.
+        Returns:
+            The regclass name for the passed ID.
 
         """
         regclass_dict = {10: 'MC',
@@ -51,7 +52,8 @@ class Vehicle:
     def sourcetype_name(self):
         """
 
-        Returns: The source type name for the passed ID.
+        Returns:
+            The source type name for the passed ID.
 
         """
         sourcetype_dict = {0: 'NotApplicable',
@@ -75,10 +77,10 @@ class Vehicle:
     def vehicle_name(settings, options_dict, dict_of_vehicles):
         """
 
-        Args:
-            settings: The SetInputs class.
-            options_dict: A dictionary of option ID numbers and associated names.
-            dict_of_vehicles: A dictionary containing a key of vehicle tuples.
+        Parameters:
+            settings: The SetInputs class.\n
+            options_dict: Dictionary; provides the option ID numbers and associated names.\n
+            dict_of_vehicles: Dictionary; contains keys of vehicle tuples.
 
         Returns:
             The passed dictionary with new attributes identifying the vehicle based on the vehicle tuples (keys).
@@ -109,10 +111,10 @@ class Vehicle:
     def option_name(settings, options_dict, dict_of_vehicles):
         """
 
-        Args:
+        Parameters:
             settings: The SetInputs class.
-            options_dict: A dictionary of option ID numbers and associated names.
-            dict_of_vehicles: A dictionary containing a key of vehicle tuples.
+            options_dict: Dictionary; provides the option ID numbers and associated names.\n
+            dict_of_vehicles: Dictionary; contains keys of vehicle tuples.
 
         Returns:
             The passed dictionary with new attributes identifying the option name.
@@ -128,4 +130,5 @@ class Vehicle:
             else:
                 option_name = options_dict[alt]['OptionName']
             dict_of_vehicles[key].update({'OptionName': option_name})
+
         return dict_of_vehicles

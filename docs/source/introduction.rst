@@ -27,13 +27,14 @@ The list of necessary input files contained in the "inputs" folder is:
     - A MOVES-based or fleet file which provides inventories and VMT, etc., to support the GHG analysis.
     - MOVES_Adjustments_CAP.csv which provides adjustments to data in the MOVES-based CAP data file that might be necessary within the BCA tool. Currently, this adjusts regclass 41 diesel data to reflect engine-certs only.
     - MOVES_Adjustments_GHG.csv which provides adjustments to data in the MOVES-based GHG data file that might be necessary within the BCA tool. Currently, this adjusts applicable sourcetype VPOP data.
-    - DirectCostInputs_byRegClass_byFuelType.csv which provides the direct technology costs by Regulatory Class.
-    - TechCostInputs_bySourceType_byFuelType.csv which provides the tech costs (direct plus indirect) by SourceType.
+    - DirectCostInputs_byRegClass_byFuelType.csv which provides the direct technology costs by Regulatory Class (used in the CAP analysis).
+    - TechCostInputs_bySourceType_byFuelType.csv which provides the tech costs (direct plus indirect) by SourceType (used in the GHG analysis).
     - LearningRateScalars_byRegClass.csv which provides scalars to be applied in estimating learning effects on direct costs. Currently, this is used in the CAP analysis.
     - LearningRateScalars_bySourceType.csv which provides scalars to be applied in estimating learning effects on direct costs. Currently, this is used in the GHG analysis.
     - IndirectCostInputs_RegClass.csv which provides indirect cost markup factors applied to reg class direct costs to estimate indirect costs; this is used in the CAP analysis.
     - IndirectCostInputs_SourceType.csv which provides indirect cost markup factors applied to sourcetype direct costs to estimate indirect costs. Currently, this is not used.
-    - ORVR_FuelChangeInputs.csv which provides the CAP fuel consumption impacts expected from adding onboard refueling vapor recovery systems to HD gasoline vehicles.
+    - ORVR_FuelChangeInputs_CAP.csv which provides the CAP fuel consumption impacts expected from adding onboard refueling vapor recovery systems to HD gasoline vehicles.
+    - ORVR_FuelChangeInputs_GHG.csv which provides the GHG fuel consumption impacts expected from adding onboard refueling vapor recovery systems to HD gasoline vehicles.
     - DEF_DoseRateInputs.csv which provides the CAP diesel exhaust fluid (DEF) dosing rates expected in the baseline scenario.
     - DEF_Prices.csv which provides DEF prices by calendar year.
     - CriteriaCostFactors.csv which provides the cost per ton of criteria emissions in the inventory (not used for the NPRM analysis).
@@ -52,6 +53,7 @@ The user can specify what to run and what AEO fuel prices to use. Runtime settin
     - calculate_cap_pollution_effects which can be set to 'Y' or 'N' (the default is 'N').
     - calculate_ghg_costs where 'ghg' refers to Greenhouse Gas and can be set ot 'Y' or 'N'.
     - calculate_ghg_pollution_effects which can be set to 'Y' or 'N' (this should not be set to 'Y' since necessary inputs are not included).
+    - dollar_basis which specifies the dollar basis to use throughout the analysis (input values will be converted to this basis).
     - no_action_alt which specifies the 'No action' alternative against which any delta calculation will be made (the default is 0).
     - aeo_fuel_price_case which specifies the AEO fuel price case to use and can be set to 'Reference', 'High oil price' or 'Low oil price' (the default is 'Reference').
 
@@ -60,19 +62,19 @@ What are the output files?
 The output files are pretty self-explanatory by their file names.
 
 Output files generated if calculating CAP costs are:
-    - CAP_bca_tool_preamble_ria_tables.xlsx which contains pivot tables that should correspond roughly to many of the tables presented in regulatory documents (tech and operating cost tables only, not pollution costs or benefits). This file also has annualized results.
+    - CAP_bca_tool_fleet_averages.csv which contains average results for all vehicles by calendar year/model year/age.
+    - CAP_bca_tool_fleet_totals.csv which contains total results for all vehicles by calendar year/model year/age.
+    - CAP_bca_tool_annual_summary.csv which contains annual sums, present values and annualized values using the fleet totals output file.
     - CAP_bca_tool_estimated_ages.csv which contains the required, calculated and estimated warranty and useful life ages.
+    - CAP_bca_tool_repair_cpm_details.csv which contains details of calculations used to estimate repair costs per mile.
     - CAP_bca_tool_vmt_weighted_emission_repair_cpm.csv which contains weighted cost per mile emission repair results by sourcetype/regclass/fueltype.
     - CAP_bca_tool_vmt_weighted_fuel_cpm.csv which contains weighted cost per mile fuel costs results by sourcetype/regclass/fueltype.
     - CAP_bca_tool_vmt_weighted_def_cpm.csv which contains weighted cost per mile diesel exhaust fluid costs results by sourcetype/regclass/fueltype.
-    - CAP_bca_tool_repair_cpm_details.csv which contains details of calculations used to estimate repair costs per mile.
-    - CAP_bca_tool_fleet_averages.csv which contains average results for all vehicles by calendar year/model year/age.
-    - CAP_bca_tool_fleet_totals.csv which contains total results for all vehicles by calendar year/model year/age.
 
 Output files generated if calculating GHG costs are:
-    - GHG_bca_tool_preamble_ria_tables.xlsx which contains pivot tables that should correspond roughly to many of the tables presented in regulatory documents (tech and operating cost tables only, not pollution costs or benefits). This file also has annualized results.
     - GHG_bca_tool_fleet_averages.csv which contains average results for all vehicles by calendar year/model year/age.
     - GHG_bca_tool_fleet_totals.csv which contains total results for all vehicles by calendar year/model year/age.
+    - GHG_bca_tool_annual_summary.csv which contains annual sums, present values and annualized values using the fleet totals output file.
 
 A summary_log.csv is also created which contains the version number of the tool, date and time statistics for the run and input file data specific to the run.
 

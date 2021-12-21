@@ -10,7 +10,7 @@ from datetime import datetime
 import time
 import bca_tool_code
 from bca_tool_code.tool_setup import SetInputs, SetPaths
-from bca_tool_code.project_fleet import create_fleet_df # create_cap_fleet_df, create_ghg_fleet_df
+from bca_tool_code.project_fleet import create_fleet_df
 from bca_tool_code.fleet_totals_dict import FleetTotals
 from bca_tool_code.fleet_averages_dict import FleetAverages
 from bca_tool_code.direct_costs import calc_yoy_costs_per_step, calc_per_veh_direct_costs, calc_direct_costs
@@ -27,7 +27,6 @@ from bca_tool_code.weighted_results import create_weighted_cost_dict
 from bca_tool_code.calc_deltas import calc_deltas, calc_deltas_weighted
 from bca_tool_code.vehicle import Vehicle
 from bca_tool_code.figures import CreateFigures
-# from bca_tool_code.tool_postproc import create_output_paths
 from bca_tool_code.general_functions import save_dict_to_csv, inputs_filenames, get_file_datetime
 
 
@@ -49,41 +48,37 @@ def main():
         # create project fleet DataFrame which will include adjustments to the MOVES input file that are unique to the project.
         cap_fleet_df = create_fleet_df(settings, settings.moves_cap, settings.options_cap_dict,
                                        settings.moves_adjustments_cap_dict, 'VPOP', 'VMT', 'Gallons')
-        # cap_fleet_df = create_cap_fleet_df(settings, settings.moves_cap, 'VPOP', 'VMT', 'Gallons')
 
-        # create a sales (by regclass) and fleet dictionaries
+        # create totals, averages and sales by regclass dictionaries
         cap_totals_dict, cap_averages_dict, regclass_sales_dict = dict(), dict(), dict()
         cap_totals_dict = FleetTotals(cap_totals_dict).create_fleet_totals_dict(settings, cap_fleet_df)
         cap_averages_dict = FleetAverages(cap_averages_dict).create_fleet_averages_dict(settings, cap_fleet_df)
-        # cap_totals_dict = FleetTotalsCAP(cap_totals_dict).create_fleet_totals_dict(settings, cap_fleet_df)
-        # cap_averages_dict = FleetAveragesCAP(cap_averages_dict).create_fleet_averages_dict(settings, cap_fleet_df)
         regclass_sales_dict = FleetTotals(regclass_sales_dict).create_regclass_sales_dict(cap_fleet_df)
 
         # calculate direct costs per reg class based on cumulative regclass sales (learning is applied to cumulative sales)
-        # regclass_yoy_costs_per_step = calc_yoy_costs_per_step(settings, cap_totals_dict, 'VPOP_withTech', 'CAP')
         regclass_yoy_costs_per_step = calc_yoy_costs_per_step(settings, regclass_sales_dict, 'VPOP_withTech', 'CAP')
 
-        # calculate total direct costs and then per vehicle costs (per sourcetype)
+        # calculate average (per vehicle) then total direct costs
         cap_averages_dict = calc_per_veh_direct_costs(regclass_yoy_costs_per_step, settings.cost_steps_regclass, cap_averages_dict, 'CAP')
         cap_totals_dict = calc_direct_costs(cap_totals_dict, cap_averages_dict, 'VPOP_withTech', 'CAP')
 
-        # calculate indirect costs per vehicle and then total indirect costs (note that GHG program costs include indirect costs)
+        # calculate average then total indirect costs
         cap_averages_dict = calc_per_veh_indirect_costs(settings, cap_averages_dict)
         cap_totals_dict = calc_indirect_costs(settings, cap_totals_dict, cap_averages_dict, 'VPOP_withTech')
 
-        # calculate tech costs per vehicle and total tech costs
+        # calculate average then total tech costs (direct + indirect)
         cap_averages_dict = calc_per_veh_tech_costs(cap_averages_dict)
         cap_totals_dict = calc_tech_costs(cap_totals_dict, cap_averages_dict, 'VPOP_withTech')
 
-        # calculate DEF costs
+        # calculate total then average DEF costs
         cap_totals_dict = calc_def_costs(settings, cap_totals_dict, 'Gallons_withTech')
         cap_averages_dict = calc_average_def_costs(cap_totals_dict, cap_averages_dict, 'VPOP_withTech')
 
-        # calculate fuel costs, including adjustments for fuel consumption associated with ORVR
+        # calculate total then average fuel costs, including adjustments for fuel consumption associated with ORVR
         cap_totals_dict = calc_fuel_costs(settings, cap_totals_dict, 'Gallons_withTech', 'CAP')
         cap_averages_dict = calc_average_fuel_costs(cap_totals_dict, cap_averages_dict, 'VPOP_withTech', 'VMT_withTech')
 
-        # calculate emission repair costs
+        # calculate average then total emission repair costs
         cap_averages_dict, repair_cpm_dict, estimated_ages_dict = calc_emission_repair_costs_per_mile(settings, cap_averages_dict)
         cap_averages_dict = calc_per_veh_emission_repair_costs(cap_averages_dict)
         cap_totals_dict = calc_emission_repair_costs(cap_totals_dict, cap_averages_dict, 'VPOP_withTech')
@@ -100,6 +95,7 @@ def main():
                                               'OperatingCost_Owner_AvgPerVeh',
                                               'DEFCost_AvgPerVeh', 'FuelCost_Retail_AvgPerVeh', 'EmissionRepairCost_AvgPerVeh')
 
+        # calc emission effects, if applicable
         if settings.calc_cap_pollution_effects:
             cap_totals_dict = calc_criteria_emission_costs(settings, cap_totals_dict)
 
@@ -108,11 +104,11 @@ def main():
         wtd_repair_cpm_dict = create_weighted_cost_dict(settings, cap_averages_dict, 'EmissionRepairCost_AvgPerMile', 'VMT_AvgPerVeh')
         wtd_cap_fuel_cpm_dict = create_weighted_cost_dict(settings, cap_averages_dict, 'FuelCost_Retail_AvgPerMile', 'VMT_AvgPerVeh')
 
-        # discount monetized values; if calculating emission costs, the discount rates entered in the BCA_General_Inputs workbook should be consistent with the
-        # criteria cost factors in that input workbook
+        # discount monetized values
         cap_totals_dict = discount_values(settings, cap_totals_dict, 'CAP', 'totals')
         cap_averages_dict = discount_values(settings, cap_averages_dict, 'CAP', 'averages')
 
+        # calc annual sums, present and annualized values
         cap_pv_annualized_dict = pv_annualized(settings, cap_totals_dict, 'CAP')
 
         # calculate deltas relative to the passed no action alternative ID
@@ -128,26 +124,21 @@ def main():
         # create project fleet DataFrame which will include adjustments to the MOVES input file that are unique to the project.
         ghg_fleet_df = create_fleet_df(settings, settings.moves_ghg, settings.options_ghg_dict,
                         settings.moves_adjustments_ghg_dict, 'VPOP')
-        # ghg_fleet_df = create_fleet_df(settings, settings.moves_ghg)
         
-        # create a sales (by sourcetype) and fleet dictionaries
+        # create totals, averages and sales by sourcetype dictionaries
         sourcetype_sales_dict, ghg_totals_dict, ghg_averages_dict = dict(), dict(), dict()
         ghg_totals_dict = FleetTotals(ghg_totals_dict).create_fleet_totals_dict(settings, ghg_fleet_df)
         ghg_averages_dict = FleetAverages(ghg_averages_dict).create_fleet_averages_dict(settings, ghg_fleet_df)
         sourcetype_sales_dict = FleetTotals(sourcetype_sales_dict).create_sourcetype_sales_dict(ghg_fleet_df)
-        # sourcetype_sales_dict = SourcetypeSales(sourcetype_sales_dict).create_sourcetype_sales_dict(ghg_fleet_df)
-        # ghg_totals_dict = FleetTotalsGHG(ghg_totals_dict).create_fleet_totals_dict(settings, ghg_fleet_df)
-        # ghg_averages_dict = FleetAveragesGHG(ghg_averages_dict).create_fleet_averages_dict(settings, ghg_fleet_df)
 
-        # calculate direct costs per sourcetype based on cumulative sourcetype sales (learning is applied to cumulative sales)
+        # calculate tech costs per sourcetype based on cumulative sourcetype sales (learning is applied to cumulative sales)
         sourcetype_yoy_costs_per_step = calc_yoy_costs_per_step(settings, sourcetype_sales_dict, 'VPOP_withTech', 'GHG')
-        # sourcetype_yoy_costs_per_step = calc_yoy_costs_per_step(settings, sourcetype_sales_dict, 'VPOP_AddingTech')
 
-        # calculate total direct costs and then per vehicle costs (per sourcetype)
+        # calculate average (per vehicle) then total tech costs
         ghg_averages_dict = calc_per_veh_direct_costs(sourcetype_yoy_costs_per_step, settings.cost_steps_sourcetype, ghg_averages_dict, 'GHG')
         ghg_totals_dict = calc_direct_costs(ghg_totals_dict, ghg_averages_dict, 'VPOP', 'GHG')
 
-        # calculate fuel costs
+        # calculate total then average fuel costs
         ghg_totals_dict = calc_fuel_costs(settings, ghg_totals_dict, 'Gallons', 'GHG')
         ghg_averages_dict = calc_average_fuel_costs(ghg_totals_dict, ghg_averages_dict, 'VPOP', 'VMT')
 
@@ -158,6 +149,7 @@ def main():
         ghg_totals_dict = calc_sum_of_costs(ghg_totals_dict, 'TechAndOperatingCost', 'TechCost', 'OperatingCost')
         ghg_averages_dict = calc_sum_of_costs(ghg_averages_dict, 'OperatingCost_Owner_AvgPerVeh', 'FuelCost_Retail_AvgPerVeh')
 
+        # calc emission effects, if applicable
         if settings.calc_ghg_pollution_effects:
             pass
             # ghg_totals_dict = calc_ghg_emission_costs(settings, ghg_totals_dict)
@@ -191,8 +183,7 @@ def main():
 
     start_time_postproc = time.time()
 
-    # pass dicts thru the vehicle_name function to add some identifiers and then
-    # do the post-processing to generate an annual summary and some figures
+    # pass dicts thru the vehicle_name and/or option_name function to add some identifiers and generate some figures
     if settings.calc_cap:
         # add identifier attributes
         cap_totals_dict = Vehicle().vehicle_name(settings, settings.options_cap_dict, cap_totals_dict)
@@ -320,16 +311,8 @@ def main():
                                                  elapsed_time_outputs, end_time_readable, elapsed_time],
                                      'Units': ['', '', '', '', '', '', 'YYYYmmdd-HHMMSS', 'seconds', 'seconds', 'seconds', 'seconds', 'YYYYmmdd-HHMMSS', 'seconds']})
     summary_log = pd.concat([summary_log, get_file_datetime(settings.input_files_pathlist)], axis=0, sort=False, ignore_index=True)
-
-    # add summary log to document_tables_file for tracking this file which is the most likely to be shared
-    # if settings.generate_post_processing_files:
-    #     if settings.calc_cap:
-    #         summary_log.to_excel(document_cap_tables_file, sheet_name='summary_log', index=False)
-    #         document_cap_tables_file.save()
-    #     if settings.calc_ghg:
-    #         summary_log.to_excel(document_ghg_tables_file, sheet_name='summary_log', index=False)
-    #         document_ghg_tables_file.save()
     summary_log.to_csv(path_of_run_results_folder.joinpath('summary_log.csv'), index=False)
+
     print(f'\nOutput files have been saved to {path_of_run_folder}\n')
 
 

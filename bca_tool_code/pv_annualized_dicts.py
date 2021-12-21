@@ -1,7 +1,17 @@
 
 
 def pv_annualized(settings, dict_of_values, program):
+    """
 
+    Parameters:
+        settings: The SetInputs class. \n
+        dict_of_values: Dictionary; provides the values to be summed and annualized. \n
+        program: String; the program represented ('CAP', 'GHG') in the dict_of_values.
+
+    Returns:
+        A dictionary of annual, present and annualized values based on the dict_of_values.
+
+    """
     print(f'\nGetting Annual Values, Present Values and Annualized Values for {program}...')
 
     if program == 'CAP':

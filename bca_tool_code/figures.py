@@ -33,7 +33,7 @@ class CreateFigures:
             alt_name: String; the OptionName of the data to be charted.\n
             year_min: Numeric; the minimum calendar year of data to be charted.\n
             year_max: Numeric; the maximum calendar year of data t be charted.\n
-            args: Strings; the data attributes to be charted.
+            args: String(s); the data attributes to be charted.
 
         Returns:
             A single chart saved to the destination folder.

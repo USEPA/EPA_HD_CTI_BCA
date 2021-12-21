@@ -6,7 +6,7 @@ import time
 import bca_tool_code
 import bca_tool_code.general_functions as gen_fxns
 from bca_tool_code.get_context_data import GetFuelPrices, GetDeflators
-from bca_tool_code.project_dicts import InputFileDict #, MilesAndAgesDict
+from bca_tool_code.project_dicts import InputFileDict
 
 
 class SetPaths:
@@ -32,13 +32,14 @@ class SetPaths:
 
         """
         files_in_path_code = (entry for entry in self.path_code.iterdir() if entry.is_file())
+
         return files_in_path_code
 
     def input_files_pathlist(self, df):
         """
 
         Parameters:
-            df: A DataFrame of input filenames based on the General_Inputs.csv file.
+            df: DataFrame; contains input filenames based on the General_Inputs.csv file.
 
         Returns:
             A list of full path details for each of the input files allowing for copy/paste of those files into a bundle of folders and files saved to the outputs folder.
@@ -46,6 +47,7 @@ class SetPaths:
         """
         input_files_pathlist = [self.path_inputs / item for item in pd.Series(df['UserEntry.csv'])]
         input_files_pathlist.append(self.path_inputs / 'Input_Files.csv')
+
         return input_files_pathlist
 
     @staticmethod
@@ -207,8 +209,6 @@ class SetInputs:
         gen_fxns.convert_dollars_to_analysis_basis(self.fuel_prices, self.gdp_deflators, self.dollar_basis_analysis, 'retail_fuel_price', 'pretax_fuel_price')
     
         # create any DataFrames and dictionaries and lists that are useful as part of settings (used throughout project)
-        # self.regclass_costs_dict,
-        # self.sourcetype_costs_dict = dict()
         self.moves_adjustments_cap_dict, self.moves_adjustments_ghg_dict = dict(), dict()
         self.seedvol_factor_regclass_dict, self.seedvol_factor_sourcetype_dict = dict(), dict()
         self.markup_inputs_regclass_dict, self.markup_inputs_sourcetype_dict = dict(), dict()
@@ -216,11 +216,6 @@ class SetInputs:
         self.def_doserate_inputs_dict, self.def_prices_dict = dict(), dict()
         self.required_miles_and_ages_dict, self.criteria_cost_factors_dict = dict(), dict()
         self.warranty_inputs_dict, self.usefullife_inputs_dict = dict(), dict()
-
-        # self.regclass_costs_dict = InputFileDict(self.regclass_costs_dict) \
-        #     .create_project_dict(self.regclass_costs, 'regClassID', 'fuelTypeID', 'TechPackageDescription', 'optionID') # TechPkg added here to make unique keys
-        # self.sourcetype_costs_dict = InputFileDict(self.sourcetype_costs_dict) \
-        #     .create_project_dict(self.sourcetype_costs, 'sourceTypeID', 'regClassID', 'fuelTypeID', 'optionID')
 
         self.moves_adjustments_cap_dict = InputFileDict(self.moves_adjustments_cap_dict)\
             .create_project_dict(self.moves_adjustments_cap, 'sourceTypeID', 'regClassID', 'fuelTypeID', 'optionID')
@@ -254,26 +249,9 @@ class SetInputs:
         self.usefullife_inputs_dict = InputFileDict(self.usefullife_inputs_dict) \
             .create_project_dict(self.usefullife_inputs, 'regClassID', 'fuelTypeID', 'period', 'optionID')
         self.repair_inputs_dict = self.repair_and_maintenance.to_dict('index')
-        # self.moves_adjustments_cap_dict = create_project_dict(self.moves_adjustments_cap, 'regClassID', 'fuelTypeID', 'optionID')
-        # self.moves_adjustments_ghg_dict = create_project_dict(self.moves_adjustments_ghg, 'sourceTypeID', 'regClassID', 'fuelTypeID', 'optionID')
-
-        # self.seedvol_factor_regclass_dict = create_project_dict(self.regclass_learningscalers, 'regClassID', 'fuelTypeID', 'optionID')
-        # self.seedvol_factor_sourcetype_dict = create_project_dict(self.sourcetype_learningscalers, 'sourceTypeID', 'regClassID', 'fuelTypeID', 'optionID')
-
-        # self.markup_inputs_regclass_dict = create_project_dict(self.markups_regclass, 'fuelTypeID', 'Markup_Factor', 'optionID')
-        # self.markup_inputs_sourcetype_dict = create_project_dict(self.markups_regclass, 'fuelTypeID', 'Markup_Factor', 'optionID')
-
-        # self.orvr_inputs_dict = create_project_dict(self.orvr_fuelchanges, 'regClassID', 'fuelTypeID', 'optionID')
-        # self.fuel_prices_dict = create_project_dict(self.fuel_prices, 'yearID', 'fuelTypeID')
-
-        # self.def_doserate_inputs_dict = create_project_dict(self.def_doserate_inputs, 'regClassID', 'fuelTypeID')
-        # self.def_prices_dict = create_def_prices_dict(self.def_prices)
 
         self.markup_factors_unique_names = [arg for arg in self.markups_regclass['Markup_Factor'].unique()]
         self.markup_factors_sourcetype = [arg for arg in self.markups_sourcetype['Markup_Factor'].unique()]
-
-        # self.required_miles_and_ages_dict = MilesAndAgesDict(self.required_miles_and_ages_dict)\
-        #     .create_required_miles_and_ages_dict(self.warranty_inputs, self.usefullife_inputs, 'Warranty', 'Usefullife')
 
         # read criteria cost factors if needed
         if self.calc_cap_pollution_effects:

@@ -2,20 +2,20 @@ import pandas as pd
 
 
 class GetFuelPrices:
+    """
+    The GetFuelPrices class grabs the appropriate fuel prices from the aeo folder, cleans up some naming and creates a fuel_prices DataFrame for use in operating costs.
 
+    Parameters:
+        input_file: String; the file containing fuel price data.\n
+        aeo_case: String; from the General Inputs sheet - the AEO fuel case to use (a CSV of fuel prices must exist in the aeo directory).\n
+        id_col: String; the column name where id data can be found.\n
+        fuels: String(s); the AEO descriptor for the fuel prices needed in the project (e.g., Motor Gasoline, Diesel).
+
+    Note:
+        This class assumes a file structured like those published by EIA in the Annual Energy Outlook.
+
+    """
     def __init__(self, input_file, aeo_case, id_col, *fuels):
-        """The GetFuelPrices class grabs the appropriate fuel prices from the aeo folder, cleans up some naming and creates a fuel_prices DataFrame for use in operating costs.
-
-        Parameters:
-            input_file: The file containing fuel price data.\n
-            aeo_case: From the BCA inputs sheet - the AEO fuel case to use (a CSV of fuel prices must exist in the aeo directory).\n
-            id_col: The column name where id data can be found.\n
-            *fuels: AEO descriptor for the fuel prices needed in the project (e.g., Motor Gasoline, Diesel).
-
-        Note:
-            This class assumes a file structured like those published by EIA in the Annual Energy Outlook.
-
-        """
         self.input_file = input_file
         self.aeo_case = aeo_case
         self.id_col = id_col
@@ -41,8 +41,8 @@ class GetFuelPrices:
         """
 
         Parameters:
-            df_source: The DataFrame of AEO fuel prices.\n
-            row: The specific row to select.
+            df_source: DataFrame; contains the AEO fuel prices.\n
+            row: String; the specific row to select.
 
         Returns:
             A DataFrame of the specific fuel price row.
@@ -50,13 +50,14 @@ class GetFuelPrices:
         """
         df_return = df_source.loc[df_source[self.id_col] == row[self.id_col], :]
         df_return = df_return.iloc[:, :-1]
+
         return df_return
 
     def row_dict(self, fuel):
         """
 
         Parameters:
-            fuel: The fuel (gasoline/diesel).
+            fuel: String; the fuel (gasoline/diesel).
 
         Returns:
             A dictionary of fuel prices.
@@ -67,14 +68,15 @@ class GetFuelPrices:
         return_dict['distribution_costs'] = {self.id_col: f'Price Components: {fuel}: End-User Price: Distribution Costs: {self.aeo_case}'}
         return_dict['wholesale_price'] = {self.id_col: f'Price Components: {fuel}: End-User Price: Wholesale Price: {self.aeo_case}'}
         # return_dict['tax_allowance'] = {self.id_col: f'Price Components: {fuel}: End-User Price: Tax/Allowance: {self.aeo_case}'}
+
         return return_dict
 
     def melt_df(self, df, value_name):
         """
 
         Parameters:
-            df: The DataFrame of fuel prices to melt.\n
-            value_name: The name of the melted values.
+            df: DataFrame; the fuel prices to melt.\n
+            value_name: String; the name of the melted values.
 
         Returns:
             A DataFrame of melted value_name data by year.
@@ -82,6 +84,7 @@ class GetFuelPrices:
         """
         df = pd.melt(df, id_vars=[self.id_col], value_vars=[col for col in df.columns if '20' in col], var_name='yearID', value_name=value_name)
         df['yearID'] = df['yearID'].astype(int)
+
         return df
 
     def get_prices(self):
@@ -122,17 +125,19 @@ class GetFuelPrices:
 
 
 class GetDeflators:
+    """
+    The GetDeflators class returns the GDP Implicit Price Deflators for use in adjusting monetized values to a consistent cost basis.
+
+    Parameters:
+        input_file: String; the file containing price deflator data.\n
+        id_col: String; the column name where id data can be found.\n
+        id_value: the value within id_col to return.
+
+    Note:
+         This class assumes a file structured like those published by the Bureau of Economic Analysis.
+
+    """
     def __init__(self, input_file, id_col, id_value):
-        """The GetDeflators class returns the GDP Implicit Price Deflators for use in adjusting monetized values to a consistent cost basis.
-
-        Parameters:
-            input_file: The file containing price deflator data.\n
-            id_col: The column name where id data can be found.\n
-            id_value: The value within id_col to return.
-
-        Note:
-             This class assumes a file structured like those published by the Bureau of Economic Analysis.
-        """
         self.input_file = input_file
         self.id_col = id_col
         self.id_value = id_value
@@ -150,14 +155,15 @@ class GetDeflators:
         df_return = pd.DataFrame(self.input_file)
         df_return = pd.DataFrame(df_return.loc[df_return[self.id_col].str.endswith(f'{self.id_value}'), :]).reset_index(drop=True)
         df_return.replace({self.id_col: f': {self.id_value}'}, {self.id_col: ''}, regex=True, inplace=True)
+
         return df_return
 
     def melt_df(self, value_name, drop_col=None):
         """
 
         Parameters:
-            value_name: The name for the resultant data column.\n
-            drop_col: The name of any columns to be dropped after melt.
+            value_name: String; the name for the resultant data column.\n
+            drop_col: String; the name of any columns to be dropped after melt.
 
         Returns:
             The melted DataFrame with a column of data named value_name.
@@ -168,13 +174,14 @@ class GetDeflators:
         melt_df['yearID'] = melt_df['yearID'].astype(int)
         if drop_col:
             melt_df.drop(columns=drop_col, inplace=True)
+
         return melt_df
 
     def calc_adjustment_factors(self, dollar_basis):
         """
 
         Parameters:
-            dollar_basis: The dollar basis for the analysis which is determined in-code using the AEO file.
+            dollar_basis: Numeric; the dollar basis for the analysis set via the General Inputs sheet.
 
         Returns:
             A dictionary of deflators and adjustment_factors to apply to monetized values to put them all on a consistent dollar basis.
@@ -189,6 +196,7 @@ class GetDeflators:
                          basis_factor / deflators['price_deflator'])
         deflators = deflators.set_index('yearID')
         deflators_dict = deflators.to_dict('index')
+
         return deflators_dict
 
 

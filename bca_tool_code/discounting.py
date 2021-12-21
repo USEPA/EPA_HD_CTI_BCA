@@ -14,7 +14,7 @@ def discount_values(settings, dict_of_values, program, arg):
         arg: String; indicates whether totals or averages are being discounted.
 
     Returns:
-        The passed dictionary with new key, value pairs where keys stipulate the discount rate and monetized values are discounted at their internally consistent discount rate.
+        The passed dictionary with new key, value pairs where keys stipulate the discount rate and monetized values are discounted at the same rate as the discount rate of the input stream of values.
 
     Note:
         The costs_start entry of the BCA_General_Inputs file should be set to 'start-year' or 'end-year', where start-year represents costs

@@ -32,8 +32,6 @@ def calc_project_markup_value(settings, unit, alt, markup_factor_name, model_yea
         st, rc, ft = unit
         markups_dict = InputFileDict(settings.markup_inputs_sourcetype_dict)
 
-    # miles_and_ages_dict = InputFileDict(settings.required_miles_and_ages_dict)
-
     markups_dict_key = (ft, markup_factor_name), alt
     scaling_metric = settings.indirect_cost_scaling_metric # scaling metric will be 'Miles' or 'Age'
     input_markup_value, scaler, scaled_by, num_years = markups_dict.get_attribute_value(markups_dict_key, 'Value'), \
@@ -56,10 +54,6 @@ def calc_project_markup_value(settings, unit, alt, markup_factor_name, model_yea
 
     if scaler == 'Absolute':
         denominator = scaling_dict.get_attribute_value(scaling_dict_key, '2024')
-        # project_markup_value = \
-        #     (settings.required_miles_and_ages_dict[(unit, alt, scaled_by, scaling_metric)][f'{model_year}']
-        #      / settings.required_miles_and_ages_dict[(unit, alt, scaled_by, scaling_metric)]['2024']) \
-        #     * input_markup_value
     elif scaler == 'Relative':
         denominator = scaling_dict.get_attribute_value(scaling_dict_key, str(int(model_year) - int(num_years)))
     else:
@@ -67,26 +61,6 @@ def calc_project_markup_value(settings, unit, alt, markup_factor_name, model_yea
 
     project_markup_value = input_markup_value * (numerator / denominator)
 
-        # project_markup_value = \
-        #     (settings.required_miles_and_ages_dict[(unit, alt, scaled_by, scaling_metric)][f'{model_year}']
-        #      / settings.required_miles_and_ages_dict[(unit, alt, scaled_by, scaling_metric)][str(int(model_year) - int(num_years))]) \
-        #     * input_markup_value
-    # input_markup_value, scaler, scaled_by, num_years = markups_dict[((ft, markup_factor), alt)]['Value'], \
-    #                                                    markups_dict[((ft, markup_factor), alt)]['Scaler'], \
-    #                                                    markups_dict[((ft, markup_factor), alt)]['Scaled_by'], \
-    #                                                    markups_dict[((ft, markup_factor), alt)]['NumberOfYears']
-    # if scaler == 'Absolute':
-    #     project_markup_value = \
-    #         (settings.required_miles_and_ages_dict[(unit, alt, scaled_by, scaling_metric)][f'{model_year}']
-    #          / settings.required_miles_and_ages_dict[(unit, alt, scaled_by, scaling_metric)]['2024']) \
-    #         * input_markup_value
-    # if scaler == 'Relative':
-    #     project_markup_value = \
-    #         (settings.required_miles_and_ages_dict[(unit, alt, scaled_by, scaling_metric)][f'{model_year}']
-    #          / settings.required_miles_and_ages_dict[(unit, alt, scaled_by, scaling_metric)][str(int(model_year) - int(num_years))]) \
-    #         * input_markup_value
-    # if scaler == 'None':
-    #     project_markup_value = input_markup_value
     return project_markup_value
 
 
@@ -108,12 +82,10 @@ def calc_per_veh_indirect_costs(settings, averages_dict):
     age0_keys = [k for k, v in averages_dict.items() if v['ageID'] == 0]
 
     for key in age0_keys:
-    # for key in averages_dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
         st, rc, ft = vehicle
         engine = (rc, ft)
-        # if age_id == 0:
-            # print(f'Calculating per vehicle indirect costs for {vehicle}, MY {model_year}.')
+
         ic_sum = 0
         for markup_factor_name in settings.markup_factors_unique_names:
             markup_value = calc_project_markup_value(settings, engine, alt, markup_factor_name, model_year)
@@ -150,9 +122,6 @@ def calc_indirect_costs(settings, totals_dict, averages_dict, sales_arg):
     age0_keys = [k for k, v in totals_dict.items() if v['ageID'] == 0]
 
     for key in age0_keys:
-    # for key in totals_dict.keys():
-    #     vehicle, alt, model_year, age_id, disc_rate = key
-    #     if age_id == 0:
         for markup_factor in markup_factors:
             cost_per_veh = calcs_avg.get_attribute_value(key, f'{markup_factor}Cost_AvgPerVeh')
             sales = calcs.get_attribute_value(key, sales_arg)

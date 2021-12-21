@@ -6,7 +6,7 @@ def calc_per_veh_tech_costs(averages_dict):
     """
     
     Parameters::
-        averages_dict: A dictionary containing average direct and indirect costs per vehicle.
+        averages_dict: Dictionary; contains average direct and indirect costs per vehicle.
 
     Returns:
         The averages_dict dictionary updated with average tech costs per vehicle (direct plus indirect).
@@ -21,9 +21,6 @@ def calc_per_veh_tech_costs(averages_dict):
     age0_keys = [k for k, v in averages_dict.items() if v['ageID'] == 0]
 
     for key in age0_keys:
-    # for key in averages_dict.keys():
-    #     vehicle, alt, model_year, age_id, disc_rate = key
-        # if age_id == 0:
         dc_per_veh = calcs_avg.get_attribute_value(key, 'DirectCost_AvgPerVeh')
         ic_per_veh = calcs_avg.get_attribute_value(key, 'IndirectCost_AvgPerVeh')
         cost = dc_per_veh + ic_per_veh
@@ -52,9 +49,6 @@ def calc_tech_costs(totals_dict, averages_dict, sales_arg):
     age0_keys = [k for k, v in totals_dict.items() if v['ageID'] == 0]
 
     for key in age0_keys:
-    # for key in totals_dict.keys():
-    #     vehicle, alt, model_year, age_id, disc_rate = key
-        # if age_id == 0:
         cost_per_veh = calcs_avg.get_attribute_value(key, 'TechCost_AvgPerVeh')
         sales = calcs.get_attribute_value(key, sales_arg)
         cost = cost_per_veh * sales

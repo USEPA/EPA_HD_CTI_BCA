@@ -6,7 +6,7 @@ def add_keys_for_discounting(input_dict, *rates):
 
     Parameters:
         input_dict: Dictionary; into which new keys will be added that provide room for discounting data. \n
-        *rates: Numeric; the discount rate keys to add.
+        rates: Numeric; the discount rate keys to add.
 
     Returns:
         The passed dictionary with new keys added.
@@ -25,6 +25,13 @@ def add_keys_for_discounting(input_dict, *rates):
 
 
 class FleetTotals:
+    """
+    A FleetTotals object contains annual totals for vehicles by model year and by calendar year.
+
+    Parameters:
+        fleet_dict: Dictionary; contains fleet data, totals by model year and calendar year.
+
+    """
     def __init__(self, fleet_dict):
         self.fleet_dict = fleet_dict
 

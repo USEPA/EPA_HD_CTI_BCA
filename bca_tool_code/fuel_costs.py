@@ -8,8 +8,8 @@ def get_orvr_adjustment(settings, vehicle, alt, program):
     
     Parameters:
         settings: The SetInputs class.\n
-        vehicle: A tuple representing a sourcetype_regclass_fueltype vehicle.\n
-        alt: The Alternative or option ID. \n
+        vehicle: Tuple; represents a sourcetype_regclass_fueltype vehicle.\n
+        alt: Numeric; the Alternative or option ID. \n
         program: String; represents which program is being run, CAP or GHG.
 
     Returns:
@@ -28,23 +28,23 @@ def get_orvr_adjustment(settings, vehicle, alt, program):
     return adjustment
 
 
-def calc_thc_reduction(settings, vehicle, alt, year, model_year, totals_dict):
+def calc_thc_reduction(settings, vehicle, alt, calendar_year, model_year, totals_dict):
     """
     
     Parameters:
         settings: The SetInputs class.\n
-        vehicle: A tuple representing a sourcetype_regclass_fueltype vehicle.\n
-        alt: The Alternative or option ID.\n
-        year: The calendar year.\n
-        model_year: The model year of the passed vehicle.\n
-        totals_dict: A dictionary of fleet total hydrocarbon (THC) tons by vehicle.
+        vehicle: Tuple; represents a sourcetype_regclass_fueltype vehicle.\n
+        alt: Numeric; the Alternative or option ID.\n
+        calendar_year: Numeric; the calendar year.\n
+        model_year: Numeric; the model year of the passed vehicle.\n
+        totals_dict: Dictionary; provides fleet total hydrocarbon (THC) tons by vehicle.
 
     Returns:
         A single THC reduction for the given model year vehicle in the given year.
 
     """
     calcs = FleetTotals(totals_dict)
-    age = year - model_year
+    age = calendar_year - model_year
     thc_no_action = calcs.get_attribute_value((vehicle, settings.no_action_alt, model_year, age, 0), 'THC_UStons')
     thc_action = calcs.get_attribute_value((vehicle, alt, model_year, age, 0), 'THC_UStons')
     thc_reduction = thc_no_action - thc_action
@@ -61,7 +61,7 @@ def calc_captured_gallons(settings, vehicle, alt, calendar_year, model_year, tot
         alt: Numeric; the Alternative or option ID.\n
         calendar_year: Numeric; the calendar year.\n
         model_year: Numeric; the model year of the passed vehicle.\n
-        totals_dict: Dictionary; provides the fleet Gallons consumed by all vehicles. \n
+        totals_dict: Dictionary; provides fleet total hydrocarbon (THC) tons by vehicle.
         program: String; represents which program is being run, CAP or GHG.
 
     Returns:
@@ -121,39 +121,6 @@ def calc_fuel_costs(settings, totals_dict, fuel_arg, program):
     return totals_dict
 
 
-# def calc_ghg_fuel_costs(settings, totals_dict):
-#     """
-#
-#     Parameters:
-#         settings: The SetInputs class.\n
-#         totals_dict: A dictionary of fleet Gallons consumed by all vehicles.
-#
-#     Returns:
-#         The passed dictionary updated to reflect fuel consumption (Gallons) adjusted to account for the fuel saved in association with ORVR.
-#         The dictionary is also updated to include the fuel costs associated with the gallons consumed (Gallons * $/gallon fuel).
-#
-#     """
-#     print('\nCalculating GHG-related fuel costs...')
-#
-#     calcs = FleetTotals(totals_dict)
-#
-#
-#     for key in totals_dict.keys():
-#         vehicle, alt, model_year, age_id, disc_rate = key
-#         st, rc, ft = vehicle
-#         year = model_year + age_id
-#         fuel_price_retail = settings.fuel_prices_dict[(year, ft)]['retail_fuel_price']
-#         fuel_price_pretax = settings.fuel_prices_dict[(year, ft)]['pretax_fuel_price']
-#
-#         gallons = calcs.get_attribute_value(key, 'Gallons')
-#
-#         cost_retail = fuel_price_retail * gallons
-#         cost_pretax = fuel_price_pretax * gallons
-#
-#         calcs.update_dict(key, 'FuelCost_Retail', cost_retail)
-#         calcs.update_dict(key, 'FuelCost_Pretax', cost_pretax)
-#
-#     return totals_dict
 def calc_average_fuel_costs(totals_dict, averages_dict, vpop_arg, vmt_arg):
     """
 
@@ -172,8 +139,6 @@ def calc_average_fuel_costs(totals_dict, averages_dict, vpop_arg, vmt_arg):
     calcs = FleetTotals(totals_dict)
 
     for key in averages_dict.keys():
-        # vehicle, alt, model_year, age_id, disc_rate = key
-        # print(f'Calculating fuel average cost per mile and per vehicle for {vehicle}, option ID {alt}, MY {model_year}, age {age_id}')
         fuel_cost = calcs.get_attribute_value(key, 'FuelCost_Retail')
         vmt = calcs.get_attribute_value(key, vmt_arg)
         vpop = calcs.get_attribute_value(key, vpop_arg)

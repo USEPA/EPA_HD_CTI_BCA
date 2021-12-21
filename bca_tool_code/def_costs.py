@@ -50,14 +50,14 @@ def calc_nox_reduction(settings, vehicle, alt, calendar_year, model_year, totals
     return nox_reduction
 
 
-def calc_def_gallons(settings, vehicle, alt, year, model_year, totals_dict, fuel_arg):
+def calc_def_gallons(settings, vehicle, alt, calendar_year, model_year, totals_dict, fuel_arg):
     """
 
     Parameters:
         settings: The SetInputs class. \n
         vehicle: Tuple; represents an alt_sourcetype_regclass_fueltype vehicle. \n
         alt: Numeric; represents the Alternative or optionID. \n
-        year: Numeric; represents the calendar year (yearID). \n
+        calendar_year: Numeric; represents the calendar year (yearID). \n
         model_year: Numeric; represents the model year of the passed vehicle. \n
         totals_dict: Dictionary; provides gallons (fuel consumption) by vehicle.\n
         fuel_arg: String; specifies the fuel attribute to use (e.g., "Gallons" or "Gallons_withTech")
@@ -67,10 +67,10 @@ def calc_def_gallons(settings, vehicle, alt, year, model_year, totals_dict, fuel
 
     """
     calcs = FleetTotals(totals_dict)
-    age_id = year - model_year
+    age_id = calendar_year - model_year
     gallons_fuel = calcs.get_attribute_value((vehicle, alt, model_year, age_id, 0), fuel_arg)
     base_doserate = calc_def_doserate(settings, vehicle)
-    nox_reduction = calc_nox_reduction(settings, vehicle, alt, year, model_year, totals_dict)
+    nox_reduction = calc_nox_reduction(settings, vehicle, alt, calendar_year, model_year, totals_dict)
     gallons_def = gallons_fuel * base_doserate + nox_reduction * settings.def_gallons_per_ton_nox_reduction
 
     return gallons_def
