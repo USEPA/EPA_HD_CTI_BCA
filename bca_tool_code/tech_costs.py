@@ -21,10 +21,11 @@ def calc_per_veh_tech_costs(averages_dict):
     age0_keys = [k for k, v in averages_dict.items() if v['ageID'] == 0]
 
     for key in age0_keys:
-        dc_per_veh = calcs_avg.get_attribute_value(key, 'DirectCost_AvgPerVeh')
-        ic_per_veh = calcs_avg.get_attribute_value(key, 'IndirectCost_AvgPerVeh')
-        cost = dc_per_veh + ic_per_veh
-        calcs_avg.update_dict(key, 'TechCost_AvgPerVeh', cost)
+        cost = calcs_avg.get_attribute_value(key, 'DirectCost_AvgPerVeh')
+        cost += calcs_avg.get_attribute_value(key, 'IndirectCost_AvgPerVeh')
+
+        temp_dict = {'TechCost_AvgPerVeh': cost}
+        calcs_avg.update_dict(key, temp_dict)
 
     return averages_dict
 
@@ -52,7 +53,9 @@ def calc_tech_costs(totals_dict, averages_dict, sales_arg):
         cost_per_veh = calcs_avg.get_attribute_value(key, 'TechCost_AvgPerVeh')
         sales = calcs.get_attribute_value(key, sales_arg)
         cost = cost_per_veh * sales
-        calcs.update_dict(key, 'TechCost', cost)
+
+        temp_dict = {'TechCost': cost}
+        calcs.update_dict(key, temp_dict)
 
     return totals_dict
 

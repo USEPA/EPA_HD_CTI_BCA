@@ -79,19 +79,19 @@ class FleetAverages:
 
         return fleet_dict
 
-    def update_dict(self, key, attribute, value):
+    def update_dict(self, key, input_dict):
         """
 
         Parameters:
             key: Tuple; the key of the dictionary instance. \n
-            attribute: String; represents the attribute to be updated.\n
-            value: Any; represents the value of the attribute to be updated.
+            input_dict: Dictionary; represents the attribute-value pairs to be updated.
 
         Returns:
             The dictionary instance with 'attribute' updated with 'value.'
 
         """
-        self.fleet_dict[key][attribute] = value
+        for attribute, value in input_dict.items():
+            self.fleet_dict[key][attribute] = value
 
         return self.fleet_dict
 
@@ -138,6 +138,6 @@ class FleetAverages:
         # this loop updates the averages_dict with the contents of the cumulative_vmt_dict
         for key in fleet_dict.keys():
             cumulative_vmt = cumulative_vmt_dict[key]
-            FleetAverages(fleet_dict).update_dict(key, 'VMT_AvgPerVeh_Cumulative', cumulative_vmt)
+            FleetAverages(fleet_dict).update_dict(key, {'VMT_AvgPerVeh_Cumulative': cumulative_vmt})
 
         return fleet_dict

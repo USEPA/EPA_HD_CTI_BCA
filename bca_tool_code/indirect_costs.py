@@ -78,6 +78,7 @@ def calc_per_veh_indirect_costs(settings, averages_dict):
     """
     print('\nCalculating CAP per vehicle indirect costs...')
     calcs_avg = FleetAverages(averages_dict)
+    markup_factors = settings.markup_factors_unique_names.copy()
 
     age0_keys = [k for k, v in averages_dict.items() if v['ageID'] == 0]
 
@@ -86,14 +87,17 @@ def calc_per_veh_indirect_costs(settings, averages_dict):
         st, rc, ft = vehicle
         engine = (rc, ft)
 
+        temp_dict = dict()
         ic_sum = 0
-        for markup_factor_name in settings.markup_factors_unique_names:
-            markup_value = calc_project_markup_value(settings, engine, alt, markup_factor_name, model_year)
+        for markup_factor in markup_factors:
+            markup_value = calc_project_markup_value(settings, engine, alt, markup_factor, model_year)
             per_veh_direct_cost = calcs_avg.get_attribute_value(key, 'DirectCost_AvgPerVeh')
             cost = markup_value * per_veh_direct_cost
-            calcs_avg.update_dict(key, f'{markup_factor_name}Cost_AvgPerVeh', cost)
+            temp_dict[f'{markup_factor}Cost_AvgPerVeh'] = cost
             ic_sum += cost
-        calcs_avg.update_dict(key, 'IndirectCost_AvgPerVeh', ic_sum)
+
+        temp_dict['IndirectCost_AvgPerVeh'] = ic_sum
+        calcs_avg.update_dict(key, temp_dict)
 
     return averages_dict
 
@@ -122,11 +126,14 @@ def calc_indirect_costs(settings, totals_dict, averages_dict, sales_arg):
     age0_keys = [k for k, v in totals_dict.items() if v['ageID'] == 0]
 
     for key in age0_keys:
+        temp_dict = dict()
         for markup_factor in markup_factors:
             cost_per_veh = calcs_avg.get_attribute_value(key, f'{markup_factor}Cost_AvgPerVeh')
             sales = calcs.get_attribute_value(key, sales_arg)
             cost = cost_per_veh * sales
-            calcs.update_dict(key, f'{markup_factor}Cost', cost)
+            temp_dict[f'{markup_factor}Cost'] = cost
+
+        calcs.update_dict(key, temp_dict)
 
     return totals_dict
 

@@ -27,8 +27,9 @@ def pv_annualized(settings, dict_of_values, program):
         annualized_offset = 0
     discount_to_year = settings.discount_to_yearID
 
-    for key, value in dict_of_values.items():
-        all_costs = [k for k, v in value.items() if 'Cost' in k]
+    # get cost attributes
+    d = [nested_dict for key, nested_dict in dict_of_values.items()][0]
+    all_costs = [k for k, v in d.items() if 'Cost' in k]
     emission_cost_args_25 = [item for item in all_costs if '_0.025' in item]
     emission_cost_args_3 = [item for item in all_costs if '_0.03' in item]
     emission_cost_args_5 = [item for item in all_costs if '_0.05' in item]
@@ -76,8 +77,6 @@ def pv_annualized(settings, dict_of_values, program):
                                   if v['yearID'] == calendar_year
                                   and v['DiscountRate'] == rate
                                   and v['optionID'] == alt)
-                                  # if v['modelYearID'] + v['ageID'] == calendar_year
-                                  # and v['DiscountRate'] == rate and v['optionID'] == alt)
                     calcs_dict[(alt, calendar_year, rate, series)][arg] = arg_sum
 
     # now do a cumulative sum year-over-year for each cost arg - these will be present values (note change to calcs_dict in arg_value calc and removal of rate=0)

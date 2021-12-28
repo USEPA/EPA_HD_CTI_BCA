@@ -156,9 +156,11 @@ def calc_per_veh_direct_costs(yoy_costs_per_step_dict, cost_steps, averages_dict
             vpop_with_tech = calcs_avg.get_attribute_value(key, 'VPOP_withTech')
             vpop = calcs_avg.get_attribute_value(key, 'VPOP')
             cost = cost * vpop_with_tech / vpop
-            calcs_avg.update_dict(key, 'TechCost_AvgPerVeh', cost)
+            temp_dict = {'TechCost_AvgPerVeh': cost}
+            calcs_avg.update_dict(key, temp_dict)
         else:
-            calcs_avg.update_dict(key, 'DirectCost_AvgPerVeh', cost)
+            temp_dict = {'DirectCost_AvgPerVeh': cost}
+            calcs_avg.update_dict(key, temp_dict)
 
     return averages_dict
 
@@ -190,7 +192,9 @@ def calc_direct_costs(totals_dict, averages_dict, sales_arg, program):
         cost_per_veh = calcs_avg.get_attribute_value(key, f'{arg}Cost_AvgPerVeh')
         sales = calcs.get_attribute_value(key, sales_arg)
         cost = cost_per_veh * sales
-        calcs.update_dict(key, f'{arg}Cost', cost)
+
+        temp_dict = {f'{arg}Cost': cost}
+        calcs.update_dict(key, temp_dict)
 
     return totals_dict
 

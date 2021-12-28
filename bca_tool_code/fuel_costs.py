@@ -107,7 +107,6 @@ def calc_fuel_costs(settings, totals_dict, fuel_arg, program):
         fuel_price_pretax = prices.get_attribute_value((calendar_year, ft), 'pretax_fuel_price')
         if ft == 1:
             captured_gallons = calc_captured_gallons(settings, vehicle, alt, calendar_year, model_year, totals_dict, program)
-            calcs.update_dict(key, 'GallonsCaptured_byORVR', captured_gallons)
 
         gallons = calcs.get_attribute_value(key, fuel_arg)
         gallons_paid_for = gallons - captured_gallons
@@ -115,8 +114,11 @@ def calc_fuel_costs(settings, totals_dict, fuel_arg, program):
         cost_retail = fuel_price_retail * gallons_paid_for
         cost_pretax = fuel_price_pretax * gallons_paid_for
 
-        calcs.update_dict(key, 'FuelCost_Retail', cost_retail)
-        calcs.update_dict(key, 'FuelCost_Pretax', cost_pretax)
+        temp_dict = {'GallonsCaptured_byORVR': captured_gallons,
+                     'FuelCost_Retail': cost_retail,
+                     'FuelCost_Pretax': cost_pretax,
+                     }
+        calcs.update_dict(key, temp_dict)
 
     return totals_dict
 
@@ -150,8 +152,11 @@ def calc_average_fuel_costs(totals_dict, averages_dict, vpop_arg, vmt_arg):
         except:
             cost_per_mile = 0
             cost_per_veh = 0
-        calcs_avg.update_dict(key, 'FuelCost_Retail_AvgPerMile', cost_per_mile)
-        calcs_avg.update_dict(key, 'FuelCost_Retail_AvgPerVeh', cost_per_veh)
+
+        temp_dict = {'FuelCost_Retail_AvgPerMile': cost_per_mile,
+                     'FuelCost_Retail_AvgPerVeh': cost_per_veh,
+                     }
+        calcs_avg.update_dict(key, temp_dict)
 
     return averages_dict
 
