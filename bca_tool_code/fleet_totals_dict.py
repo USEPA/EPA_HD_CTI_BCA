@@ -69,10 +69,10 @@ class FleetTotals:
                               ]
             new_attributes = new_attributes + cap_attributes
         if calc_ghg_pollution:
-            ghg_attributes = ['CO2Cost_0.05', 'CO2Cost_0.03', 'CO2Cost_0.025', 'CO2Cost_0.03_95',
-                              'CH4Cost_0.05', 'CH4Cost_0.03', 'CH4Cost_0.025', 'CH4Cost_0.03_95',
-                              'N2OCost_0.05', 'N2OCost_0.03', 'N2OCost_0.025', 'N2OCost_0.03_95',
-                              'GHGCost_0.05', 'GHGCost_0.03', 'GHGCost_0.025', 'GHGCost_0.03_95',
+            ghg_attributes = ['CO2Cost_tailpipe_0.05', 'CO2Cost_tailpipe_0.03', 'CO2Cost_tailpipe_0.025', 'CO2Cost_tailpipe_0.03_95',
+                              'CH4Cost_tailpipe_0.05', 'CH4Cost_tailpipe_0.03', 'CH4Cost_tailpipe_0.025', 'CH4Cost_tailpipe_0.03_95',
+                              'N2OCost_tailpipe_0.05', 'N2OCost_tailpipe_0.03', 'N2OCost_tailpipe_0.025', 'N2OCost_tailpipe_0.03_95',
+                              'GHGCost_tailpipe_0.05', 'GHGCost_tailpipe_0.03', 'GHGCost_tailpipe_0.025', 'GHGCost_tailpipe_0.03_95',
                               ]
             new_attributes = new_attributes + ghg_attributes
 
@@ -242,19 +242,19 @@ class FleetTotals:
                         and v['DiscountRate'] == 0)
         return sales
 
-    def update_dict(self, key, attribute, value):
+    def update_dict(self, key, input_dict):
         """
 
         Parameters:
             key: Tuple; the key of the dictionary instance. \n
-            attribute: String; represents the attribute to be updated.\n
-            value: Any; represents the value of the attribute to be updated.
+            input_dict: Dictionary; represents the attribute-value pairs to be updated.
 
         Returns:
-            The dictionary instance with 'attribute' updated with 'value.'
+            The dictionary instance with each attribute updated with the appropriate value.
 
         """
-        self.fleet_dict[key][attribute] = value
+        for attribute, value in input_dict.items():
+            self.fleet_dict[key][attribute] = value
 
         return self.fleet_dict
 

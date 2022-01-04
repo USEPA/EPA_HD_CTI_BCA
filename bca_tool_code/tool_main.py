@@ -161,6 +161,7 @@ def main():
         ghg_totals_dict = discount_values(settings, ghg_totals_dict, 'GHG', 'totals')
         ghg_averages_dict = discount_values(settings, ghg_averages_dict, 'GHG', 'averages')
 
+        # calc annual sums, present and annualized values
         ghg_pv_annualized_dict = pv_annualized(settings, ghg_totals_dict, 'GHG')
 
         # calculate deltas relative to the passed no action alternative ID
