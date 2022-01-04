@@ -26,8 +26,9 @@ def discount_values(settings, dict_of_values, program, arg):
     if arg == 'totals': calcs = FleetTotals(dict_of_values)
     else: calcs = FleetAverages(dict_of_values)
 
-    for key, value in dict_of_values.items():
-        all_costs = [k for k, v in value.items() if 'Cost' in k]
+    # get cost attributes
+    d = [nested_dict for key, nested_dict in dict_of_values.items()][0]
+    all_costs = [k for k, v in d.items() if 'Cost' in k]
     emission_cost_args_25 = [item for item in all_costs if '_0.025' in item]
     emission_cost_args_3 = [item for item in all_costs if '_0.03' in item]
     emission_cost_args_5 = [item for item in all_costs if '_0.05' in item]
@@ -45,33 +46,37 @@ def discount_values(settings, dict_of_values, program, arg):
         else:
             year = model_year + age_id
 
+            temp_dict = dict()
+
             for arg in non_emission_cost_args:
                 arg_value = calcs.get_attribute_value(key, arg)
                 arg_value_discounted = arg_value / ((1 + rate) ** (year - discount_to_year + discount_offset))
-                calcs.update_dict(key, arg, arg_value_discounted)
+                temp_dict[arg] = arg_value_discounted
 
             emission_rate = 0.025
             for arg in emission_cost_args_25:
                 arg_value = calcs.get_attribute_value(key, arg)
                 arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
-                calcs.update_dict(key, arg, arg_value_discounted)
+                temp_dict[arg] = arg_value_discounted
 
             emission_rate = 0.03
             for arg in emission_cost_args_3:
                 arg_value = calcs.get_attribute_value(key, arg)
                 arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
-                calcs.update_dict(key, arg, arg_value_discounted)
+                temp_dict[arg] = arg_value_discounted
 
             emission_rate = 0.05
             for arg in emission_cost_args_5:
                 arg_value = calcs.get_attribute_value(key, arg)
                 arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
-                calcs.update_dict(key, arg, arg_value_discounted)
+                temp_dict[arg] = arg_value_discounted
 
             emission_rate = 0.07
             for arg in emission_cost_args_7:
                 arg_value = calcs.get_attribute_value(key, arg)
                 arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
-                calcs.update_dict(key, arg, arg_value_discounted)
+                temp_dict[arg] = arg_value_discounted
+
+            calcs.update_dict(key, temp_dict)
 
     return dict_of_values

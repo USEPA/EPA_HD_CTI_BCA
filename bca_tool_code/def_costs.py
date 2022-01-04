@@ -101,8 +101,11 @@ def calc_def_costs(settings, totals_dict, fuel_arg):
         def_price = prices.get_attribute_value(calendar_year, 'DEF_USDperGal')
         gallons_def = calc_def_gallons(settings, vehicle, alt, calendar_year, model_year, totals_dict, fuel_arg)
         cost = def_price * gallons_def
-        calcs.update_dict(key, 'DEF_Gallons', gallons_def)
-        calcs.update_dict(key, 'DEFCost', cost)
+
+        temp_dict = {'DEF_Gallons': gallons_def,
+                     'DEFCost': cost,
+                     }
+        calcs.update_dict(key, temp_dict)
 
     return totals_dict
 
@@ -133,8 +136,11 @@ def calc_average_def_costs(totals_dict, averages_dict, vpop_arg):
         vpop = calcs.get_attribute_value(key, vpop_arg)
         cost_per_mile = def_cost / vmt
         cost_per_veh = def_cost / vpop
-        calcs_avg.update_dict(key, 'DEFCost_AvgPerMile', cost_per_mile)
-        calcs_avg.update_dict(key, 'DEFCost_AvgPerVeh', cost_per_veh)
+
+        temp_dict = {'DEFCost_AvgPerMile': cost_per_mile,
+                     'DEFCost_AvgPerVeh': cost_per_veh,
+                     }
+        calcs_avg.update_dict(key, temp_dict)
 
     return averages_dict
 

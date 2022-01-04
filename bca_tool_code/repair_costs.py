@@ -126,7 +126,10 @@ def calc_emission_repair_costs_per_mile(settings, averages_dict):
             cpm = at_usefullife_cpm
         else:
             cpm = max_cpm
-        calcs_avg.update_dict(key, 'EmissionRepairCost_AvgPerMile', cpm)
+
+        temp_dict = {'EmissionRepairCost_AvgPerMile': cpm}
+        calcs_avg.update_dict(key, temp_dict)
+
         repair_cpm_dict[key] = {'reference_direct_cost': reference_direct_cost,
                                 'direct_cost_scaler': direct_cost_scaler,
                                 'warranty_estimated_age': warranty_estimated_age,
@@ -157,7 +160,9 @@ def calc_per_veh_emission_repair_costs(averages_dict):
         repair_cpm = calcs_avg.get_attribute_value(key, 'EmissionRepairCost_AvgPerMile')
         vmt_per_veh = calcs_avg.get_attribute_value(key, 'VMT_AvgPerVeh')
         cost_per_veh = repair_cpm * vmt_per_veh
-        calcs_avg.update_dict(key, 'EmissionRepairCost_AvgPerVeh', cost_per_veh)
+
+        temp_dict = {'EmissionRepairCost_AvgPerVeh': cost_per_veh}
+        calcs_avg.update_dict(key, temp_dict)
 
     return averages_dict
 
@@ -183,7 +188,9 @@ def calc_emission_repair_costs(totals_dict, averages_dict, vpop_arg):
         cost_per_veh = calcs_avg.get_attribute_value(key, 'EmissionRepairCost_AvgPerVeh')
         vpop = calcs.get_attribute_value(key, vpop_arg)
         cost = cost_per_veh * vpop
-        calcs.update_dict(key, 'EmissionRepairCost', cost)
+
+        temp_dict = {'EmissionRepairCost': cost}
+        calcs.update_dict(key, temp_dict)
 
     return totals_dict
 

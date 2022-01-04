@@ -26,7 +26,7 @@ def calc_deltas(settings, dict_for_deltas):
             # for pv_annualized deltas
             alt, calendar_year, discount_rate, series = key
 
-        args_to_delta = [k for k, v in value.items() if 'ID' not in k and 'DiscountRate' not in k and 'Series' not in k]
+        args_to_delta = [k for k, v in value.items() if 'ID' not in k and 'DiscountRate' not in k and 'Series' not in k and 'Periods' not in k]
         if alt != settings.no_action_alt:
             delta_alt = f'{alt}{settings.no_action_alt}'
             delta_alt = int(delta_alt)
@@ -50,6 +50,7 @@ def calc_deltas(settings, dict_for_deltas):
                                                       'yearID': calendar_year,
                                                       'DiscountRate': discount_rate,
                                                       'Series': series,
+                                                      'Periods': 1,
                                                       }
                                     }
                                    )
@@ -59,6 +60,8 @@ def calc_deltas(settings, dict_for_deltas):
                     no_action_arg_value = dict_for_deltas[(vehicle, settings.no_action_alt, model_year, age_id, discount_rate)][arg]
                 except:
                     no_action_arg_value = dict_for_deltas[(settings.no_action_alt, calendar_year, discount_rate, series)][arg]
+                    delta_periods = dict_for_deltas[(settings.no_action_alt, calendar_year, discount_rate, series)]['Periods']
+                    update_dict[update_dict_key]['Periods'] = delta_periods
                 action_arg_value = dict_for_deltas[key][arg]
                 delta_arg_value = action_arg_value - no_action_arg_value
                 update_dict[update_dict_key][arg] = delta_arg_value
