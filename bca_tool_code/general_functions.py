@@ -141,12 +141,12 @@ def read_input_files(path, input_file, usecols=None, index_col=None, skiprows=No
 
     """
     try:
-        pd.read_csv(path / f'{input_file}', usecols=usecols, index_col=index_col, skiprows=skiprows, error_bad_lines=False)
+        pd.read_csv(path / f'{input_file}', usecols=usecols, index_col=index_col, skiprows=skiprows, on_bad_lines='skip')
         print(f'File {input_file}.......FOUND.')
         if reset_index:
-            return pd.read_csv(path / f'{input_file}', usecols=usecols, index_col=index_col, skiprows=skiprows, error_bad_lines=False).dropna().reset_index(drop=True)
+            return pd.read_csv(path / f'{input_file}', usecols=usecols, index_col=index_col, skiprows=skiprows, on_bad_lines='skip').dropna().reset_index(drop=True)
         else:
-            return pd.read_csv(path / f'{input_file}', usecols=usecols, index_col=index_col, skiprows=skiprows, error_bad_lines=False)
+            return pd.read_csv(path / f'{input_file}', usecols=usecols, index_col=index_col, skiprows=skiprows, on_bad_lines='skip')
     except FileNotFoundError:
         print(f'File {input_file}......NOT FOUND in {path} folder.')
         sys.exit()
