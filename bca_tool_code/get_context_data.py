@@ -154,7 +154,9 @@ class GetDeflators:
         """
         df_return = pd.DataFrame(self.input_file)
         df_return = pd.DataFrame(df_return.loc[df_return[self.id_col].str.endswith(f'{self.id_value}'), :]).reset_index(drop=True)
-        df_return.replace({self.id_col: f': {self.id_value}'}, {self.id_col: ''}, regex=True, inplace=True)
+        # df_return.replace({self.id_col: f': {self.id_value}'}, {self.id_col: ''}, regex=True, inplace=True)
+        # above line changed to below due to new general_functions.read_input_files() which skips on_bad_lines while prior to that they were allowed without raising an error
+        df_return.replace({self.id_col: f': {self.id_value}'}, regex=True, inplace=True)
 
         return df_return
 
