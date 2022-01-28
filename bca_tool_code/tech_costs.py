@@ -58,7 +58,3 @@ def calc_tech_costs(totals_dict, averages_dict, sales_arg):
         calcs.update_dict(key, temp_dict)
 
     return totals_dict
-
-
-if __name__ == '__main__':
-    print('\nModule not meant to run as a script.')

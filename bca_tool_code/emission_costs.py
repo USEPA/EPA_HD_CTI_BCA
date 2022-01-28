@@ -69,7 +69,3 @@ def calc_criteria_emission_costs(settings, totals_dict):
         calcs.update_dict(key, f'CriteriaCost_tailpipe_{str(cap_dr2)}', pm_tailpipe_cap_dr2 * pm_tons + nox_tailpipe_cap_dr2 * nox_tons)
 
     return totals_dict
-
-
-if __name__ == '__main__':
-    print('\nModule not meant to run as a script.')

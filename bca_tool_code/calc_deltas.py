@@ -114,16 +114,25 @@ def calc_deltas_weighted(settings, dict_for_deltas):
 
 
 if __name__ == '__main__':
-    from bca_tool_code.tool_setup import SetInputs as settings
-    from bca_tool_code.general_functions import convert_dict_to_df
+    import pandas as pd
+    from bca_tool_code.tool_setup import SetInputs
+    from bca_tool_code.calc_deltas import calc_deltas
 
-    data = {((1, 1, 1), 0, 2027, 0, 0): {'A': 100, 'B': 200},
-            ((1, 1, 1), 0, 2027, 1, 0): {'A': 150, 'B': 250},
-            ((1, 1, 1), 1, 2027, 0, 0): {'A': 50, 'B': 150},
-            ((1, 1, 1), 1, 2027, 1, 0): {'A': 100, 'B': 200}}
+    settings = SetInputs()
+    data = {((1, 1, 1), 0, 2027, 0, 0): {'sourceTypeID': 1, 'regClassID': 1, 'fuelTypeID': 1,
+                                         'optionID': 0, 'modelYearID': 2027, 'ageID': 0, 'DiscountRate': 0,
+                                         'A': 100, 'B': 200},
+            ((1, 1, 1), 0, 2027, 1, 0): {'sourceTypeID': 1, 'regClassID': 1, 'fuelTypeID': 1,
+                                         'optionID': 0, 'modelYearID': 2027, 'ageID': 1, 'DiscountRate': 0,
+                                         'A': 150, 'B': 250},
+            ((1, 1, 1), 1, 2027, 0, 0): {'sourceTypeID': 1, 'regClassID': 1, 'fuelTypeID': 1,
+                                         'optionID': 1, 'modelYearID': 2027, 'ageID': 0, 'DiscountRate': 0,
+                                         'A': 50, 'B': 150},
+            ((1, 1, 1), 1, 2027, 1, 0): {'sourceTypeID': 1, 'regClassID': 1, 'fuelTypeID': 1,
+                                         'optionID': 1, 'modelYearID': 2027, 'ageID': 1, 'DiscountRate': 0,
+                                         'A': 100, 'B': 200}}
 
     data = calc_deltas(settings, data)
+    data_df = pd.DataFrame(data).transpose()
 
-    data_df = convert_dict_to_df(data, 'vehicle', 'model_year', 'age', 'discount_rate')
-
-    print(data_df) # delta values should all be -50
+    print(data_df) # delta values (optionID=10) should all be -50

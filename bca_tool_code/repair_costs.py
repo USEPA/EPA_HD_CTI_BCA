@@ -193,7 +193,3 @@ def calc_emission_repair_costs(totals_dict, averages_dict, vpop_arg):
         calcs.update_dict(key, temp_dict)
 
     return totals_dict
-
-
-if __name__ == '__main__':
-    print('\nModule not meant to run as a script.')

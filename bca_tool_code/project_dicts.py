@@ -48,7 +48,3 @@ class InputFileDict:
         value = self.input_dict[key][attribute]
 
         return value
-
-
-if __name__ == '__main__':
-    print('\nModule not meant to run as a script.')

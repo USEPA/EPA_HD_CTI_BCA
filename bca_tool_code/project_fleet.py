@@ -87,15 +87,3 @@ def sourcetype_vehicles(fleet_df):
 
     """
     return pd.Series(zip(zip(fleet_df['sourceTypeID'], fleet_df['regClassID'], fleet_df['fuelTypeID']), fleet_df['optionID'])).unique()
-
-
-if __name__ == '__main__':
-    from bca_tool_code.tool_setup import SetInputs as settings
-    from bca_tool_code.project_fleet import create_fleet_df, regclass_vehicles, sourcetype_vehicles
-
-    project_fleet_df = create_fleet_df(settings)
-    vehicles_rc = regclass_vehicles(project_fleet_df)
-    print(f'\n{vehicles_rc}\n')
-
-    vehicles_st = sourcetype_vehicles(project_fleet_df)
-    print(f'\n{vehicles_st}\n')

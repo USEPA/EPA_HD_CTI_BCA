@@ -204,12 +204,12 @@ class GetDeflators:
 
 if __name__ == '__main__':
     """
-    This tests the context data creation if run as a script (python -m cti_bca_tool.get_context_data).
+    This tests the context data creation if run as a script (python -m bca_tool_code.get_context_data).
     """
     from pathlib import Path
     import bca_tool_code.general_functions as gen_fxns
 
-    path_project = Path.cwd()
+    path_project = Path(__file__).parent.parent
     path_dev = path_project / 'dev'
     path_dev.mkdir(exist_ok=True)
     path_inputs = path_project / 'inputs'
@@ -223,22 +223,22 @@ if __name__ == '__main__':
     aeo_case_1 = 'Reference case'
     fuel_prices_obj = GetFuelPrices(fuel_prices_file, aeo_case_1, 'full name', 'Motor Gasoline', 'Diesel')
     fuel_prices = fuel_prices_obj.get_prices()
-    fuel_prices.to_csv(path_project / f'dev/fuel_prices_{aeo_case_1}.csv', index=False)
+    fuel_prices.to_csv(path_dev / f'fuel_prices_{aeo_case_1}.csv', index=False)
 
     aeo_case_2 = 'High oil price'
     fuel_prices_obj = GetFuelPrices(fuel_prices_file, aeo_case_2, 'full name', 'Motor Gasoline', 'Diesel')
     fuel_prices = fuel_prices_obj.get_prices()
-    fuel_prices.to_csv(path_project / f'dev/fuel_prices_{aeo_case_2}.csv', index=False)
+    fuel_prices.to_csv(path_dev / f'fuel_prices_{aeo_case_2}.csv', index=False)
 
     aeo_case_3 = 'Low oil price'
     fuel_prices_obj = GetFuelPrices(fuel_prices_file, aeo_case_3, 'full name', 'Motor Gasoline', 'Diesel')
     fuel_prices = fuel_prices_obj.get_prices()
-    fuel_prices.to_csv(path_project / f'dev/fuel_prices_{aeo_case_3}.csv', index=False)
+    fuel_prices.to_csv(path_dev / f'fuel_prices_{aeo_case_3}.csv', index=False)
 
     deflators_obj = GetDeflators(deflators_file, 'Unnamed: 1', 'Gross domestic product')
     dollar_basis_analysis = fuel_prices_obj.aeo_dollars()
     deflators = deflators_obj.calc_adjustment_factors(dollar_basis_analysis)
     deflators = pd.DataFrame(deflators)
-    deflators.to_csv(path_project / f'dev/gdp_deflators.csv', index=True)
+    deflators.to_csv(path_dev / f'gdp_deflators.csv', index=True)
 
     print(f'\nFuel prices in {dollar_basis_analysis} dollars have been saved to the {path_dev} folder.')

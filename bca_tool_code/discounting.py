@@ -80,3 +80,51 @@ def discount_values(settings, dict_of_values, program, arg):
             calcs.update_dict(key, temp_dict)
 
     return dict_of_values
+
+
+if __name__ == '__main__':
+    import pandas as pd
+    from bca_tool_code.tool_setup import SetInputs
+    from bca_tool_code.discounting import discount_values
+
+    settings = SetInputs()
+    vehicle = (0)
+    alt = 0
+    my = 2027
+    cost = 100
+    growth = 0.5
+
+    def create_data_df(dr):
+        _data_df = pd.DataFrame({'vehicle': [(vehicle, alt, my, 0, dr), (vehicle, alt, my, 1, dr), (vehicle, alt, my, 2, dr),
+                                            (vehicle, alt, my, 3, dr), (vehicle, alt, my, 4, dr), (vehicle, alt, my, 5, dr),
+                                            (vehicle, alt, my, 6, dr), (vehicle, alt, my, 7, dr), (vehicle, alt, my, 8, dr),
+                                            (vehicle, alt, my, 9, dr), (vehicle, alt, my, 10, dr)],
+                                'Cost': [cost * (1 + growth) ** 0, cost * (1 + growth) ** 1, cost * (1 + growth) ** 2,
+                                         cost * (1 + growth) ** 3,
+                                         cost * (1 + growth) ** 4, cost * (1 + growth) ** 5, cost * (1 + growth) ** 6,
+                                         cost * (1 + growth) ** 7,
+                                         cost * (1 + growth) ** 8, cost * (1 + growth) ** 9, cost * (1 + growth) ** 10]})
+        return _data_df
+
+    dr = 0
+    data_df = create_data_df(dr)
+    data_df.set_index('vehicle', inplace=True)
+    print('\n\nData\n', data_df)
+
+    settings.costs_start = 'start-year'
+    dr = 0.03
+    settings.social_discount_rate_1, settings.social_discount_rate_2 = dr, dr
+    data_df = create_data_df(dr)
+    data_df.set_index('vehicle', inplace=True)
+    data_dict = data_df.to_dict('index')
+    discounted_dict = discount_values(settings, data_dict, 'CAP', 'totals')
+    discounted_df = pd.DataFrame(discounted_dict).transpose()
+
+    print(f'\n\nDiscounted Data, {settings.costs_start}\n', discounted_df)
+
+    settings.costs_start = 'end-year'
+    data_dict = data_df.to_dict('index')
+    discounted_dict = discount_values(settings, data_dict, 'CAP', 'totals')
+    discounted_df = pd.DataFrame(discounted_dict).transpose()
+
+    print(f'\n\nDiscounted Data, {settings.costs_start}\n', discounted_df)
