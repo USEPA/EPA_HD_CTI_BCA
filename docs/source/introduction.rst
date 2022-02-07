@@ -12,7 +12,7 @@ What is the BCA tool?
 ---------------------
 
 The heavy-duty BCA tool was developed by EPA to estimate costs and benefits (only those based on a dollar-per-ton accounting) of proposed rulemaking options.
-The tool is written in Python (version 3.8) and makes use of several input files that specify, for example, costs for technology expected to be added to vehicles to facilitate compliance,
+The tool is written in Python (tested in version 3.10) and makes use of several input files that specify, for example, costs for technology expected to be added to vehicles to facilitate compliance,
 vehicle populations and sales, fuel consumption, vehicle miles traveled, etc.
 
 What are the input files?

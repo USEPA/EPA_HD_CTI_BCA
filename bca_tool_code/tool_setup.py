@@ -159,8 +159,6 @@ class SetInputs:
         self.dollar_basis_analysis = pd.to_numeric(self.bca_inputs.at['dollar_basis_analysis', 'UserEntry'])
         self.no_action_alt = pd.to_numeric(self.bca_inputs.at['no_action_alt', 'UserEntry'])
         self.aeo_case = self.bca_inputs.at['aeo_fuel_price_case', 'UserEntry']
-        self.discrate_social_low = pd.to_numeric(self.bca_inputs.at['discrate_social_low', 'UserEntry'])
-        self.discrate_social_high = pd.to_numeric(self.bca_inputs.at['discrate_social_high', 'UserEntry'])
         self.discount_to_yearID = pd.to_numeric(self.bca_inputs.at['discount_to_yearID', 'UserEntry'])
         self.costs_start = self.bca_inputs.at['costs_start', 'UserEntry']
         self.learning_rate = pd.to_numeric(self.bca_inputs.at['learning_rate', 'UserEntry'])
