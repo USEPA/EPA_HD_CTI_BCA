@@ -9,8 +9,14 @@ import shutil
 from datetime import datetime
 import time
 import bca_tool_code
+# from bca_tool_code.input_data import InputData
+# from bca_tool_code.general_inputs import GeneralInputs
 from bca_tool_code.tool_setup import SetInputs, SetPaths
-from bca_tool_code.project_fleet import create_fleet_df
+# from bca_tool_code.deflators import Deflators
+# from bca_tool_code.fuel_prices import FuelPrices
+# from bca_tool_code.regclass_costs import RegclassCosts
+# from bca_tool_code.regclass_learningscalers import RegclassLearningScalers
+# from bca_tool_code.project_fleet import create_fleet_df
 from bca_tool_code.fleet_totals_dict import FleetTotals
 from bca_tool_code.fleet_averages_dict import FleetAverages
 from bca_tool_code.direct_costs import calc_yoy_costs_per_step, calc_per_veh_direct_costs, calc_direct_costs
@@ -40,14 +46,15 @@ def main():
     start_time_calcs = time.time()
     set_paths = SetPaths()
     run_id = set_paths.run_id()
+
     settings = SetInputs()
 
     print("\nDoing the work...\n")
 
-    if settings.calc_cap:
+    if settings.general_inputs.get_attribute('calculate_cap_costs') == 'Y':
         # create project fleet DataFrame which will include adjustments to the MOVES input file that are unique to the project.
-        cap_fleet_df = create_fleet_df(settings, settings.moves_cap, settings.options_cap_dict,
-                                       settings.moves_adjustments_cap_dict, 'VPOP', 'VMT', 'Gallons')
+        # cap_fleet_df = create_fleet_df(settings, settings.moves_cap, settings.options_cap_dict,
+        #                                settings.moves_adjustments_cap_dict, 'VPOP', 'VMT', 'Gallons')
 
         # create totals, averages and sales by regclass dictionaries
         cap_totals_dict, cap_averages_dict, regclass_sales_dict = dict(), dict(), dict()

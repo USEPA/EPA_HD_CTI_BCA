@@ -125,12 +125,11 @@ def get_file_datetime(list_of_files):
     return file_datetime
 
 
-def read_input_files(path, input_file, usecols=None, index_col=None, skiprows=None, reset_index=False):
+def read_input_file(path, usecols=None, index_col=None, skiprows=None, reset_index=False):
     """
 
     Parameters:
         path: String; the path to input files.\n
-        input_file: String; the file (filename) to read.\n
         usecols: List; the columns to used in the returned DataFrame.\n
         index_col: Numeric; the column to use as the index column of the returned DataFrame.\n
         skiprows: Numeric; the number of rows to skip when reading the file.\n
@@ -141,14 +140,14 @@ def read_input_files(path, input_file, usecols=None, index_col=None, skiprows=No
 
     """
     try:
-        pd.read_csv(path / f'{input_file}', usecols=usecols, index_col=index_col, skiprows=skiprows, on_bad_lines='skip')
-        print(f'File {input_file}.......FOUND.')
+        pd.read_csv(path, usecols=usecols, index_col=index_col, skiprows=skiprows, on_bad_lines='skip')
+        print(f'File {path}.......FOUND.')
         if reset_index:
-            return pd.read_csv(path / f'{input_file}', usecols=usecols, index_col=index_col, skiprows=skiprows, on_bad_lines='skip').dropna().reset_index(drop=True)
+            return pd.read_csv(path, usecols=usecols, index_col=index_col, skiprows=skiprows, on_bad_lines='skip').dropna().reset_index(drop=True)
         else:
-            return pd.read_csv(path / f'{input_file}', usecols=usecols, index_col=index_col, skiprows=skiprows, on_bad_lines='skip')
+            return pd.read_csv(path, usecols=usecols, index_col=index_col, skiprows=skiprows, on_bad_lines='skip')
     except FileNotFoundError:
-        print(f'File {input_file}......NOT FOUND in {path} folder.')
+        print(f'File {path}......NOT FOUND.')
         sys.exit()
 
 

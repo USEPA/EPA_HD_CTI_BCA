@@ -1,41 +1,44 @@
+import sys
+
 from bca_tool_code.fleet_totals_dict import FleetTotals
 from bca_tool_code.fleet_averages_dict import FleetAverages
-from bca_tool_code.project_dicts import InputFileDict
+from bca_tool_code.regclass_costs import RegclassCosts
+from bca_tool_code.regclass_learningscalers import RegclassLearningScalers
 
 
-def tech_package_cost(settings, unit, alt, cost_step):
-    """
-
-    Parameters:
-        settings: The SetInputs class. \n
-        unit: Tuple; represents a regclass_fueltype engine or a sourcetype_regclass_fueltype vehicle.\n
-        alt: Numeric; represents the Alternative or optionID.\n
-        cost_step: String; represents the model year of implementation of the tech; if standards are implemented in stages (i.e., for MY2027
-        and then again for MY2031), then these would represent two cost steps, one in '2027' and the other in '2031'.
-
-    Returns:
-        A single value representing the package direct cost (a summation of individual tech direct costs) for the passed vehicle at the given cost_step.
-
-    """
-    try:
-        rc, ft = unit
-        cost_inputs = settings.regclass_costs
-        techs_on_veh = cost_inputs.loc[(cost_inputs['optionID'] == alt)
-                                       & (cost_inputs['regClassID'] == rc)
-                                       & (cost_inputs['fuelTypeID'] == ft),
-                                       ['TechPackageDescription', cost_step]]
-    except:
-        st, rc, ft = unit
-        cost_inputs = settings.sourcetype_costs
-        techs_on_veh = cost_inputs.loc[(cost_inputs['optionID'] == alt)
-                                       & (cost_inputs['sourceTypeID'] == st)
-                                       & (cost_inputs['regClassID'] == rc)
-                                       & (cost_inputs['fuelTypeID'] == ft),
-                                       ['TechPackageDescription', cost_step]]
-
-    pkg_cost = techs_on_veh[cost_step].sum(axis=0)
-
-    return pkg_cost
+# def tech_package_cost(settings, unit, alt, cost_step):
+#     """
+#
+#     Parameters:
+#         settings: The SetInputs class. \n
+#         unit: Tuple; represents a regclass_fueltype engine or a sourcetype_regclass_fueltype vehicle.\n
+#         alt: Numeric; represents the Alternative or optionID.\n
+#         cost_step: String; represents the model year of implementation of the tech; if standards are implemented in stages (i.e., for MY2027
+#         and then again for MY2031), then these would represent two cost steps, one in '2027' and the other in '2031'.
+#
+#     Returns:
+#         A single value representing the package direct cost (a summation of individual tech direct costs) for the passed vehicle at the given cost_step.
+#
+#     """
+#     try:
+#         rc, ft = unit
+#         cost_inputs = settings.regclass_costs
+#         techs_on_veh = cost_inputs.loc[(cost_inputs['optionID'] == alt)
+#                                        & (cost_inputs['regClassID'] == rc)
+#                                        & (cost_inputs['fuelTypeID'] == ft),
+#                                        ['TechPackageDescription', cost_step]]
+#     except:
+#         st, rc, ft = unit
+#         cost_inputs = settings.sourcetype_costs
+#         techs_on_veh = cost_inputs.loc[(cost_inputs['optionID'] == alt)
+#                                        & (cost_inputs['sourceTypeID'] == st)
+#                                        & (cost_inputs['regClassID'] == rc)
+#                                        & (cost_inputs['fuelTypeID'] == ft),
+#                                        ['TechPackageDescription', cost_step]]
+#
+#     pkg_cost = techs_on_veh[cost_step].sum(axis=0)
+#
+#     return pkg_cost
 
 
 def tech_pkg_cost_withlearning(settings, unit, alt, cost_step, sales_arg, cumulative_sales, totals_dict):
@@ -73,6 +76,56 @@ def tech_pkg_cost_withlearning(settings, unit, alt, cost_step, sales_arg, cumula
                            * (((cumulative_sales + (sales_year1 * seedvolume_factor))
                                / (sales_year1 + (sales_year1 * seedvolume_factor))) ** settings.learning_rate)
     return pkg_cost_learned
+
+
+def calc_avg_regclass_cost_per_step(settings, totals_dict, sales_arg):
+    """
+
+        Parameters:
+            settings: The SetInputs class.\n
+            totals_dict: Dictionary; provides sales of units by model year; this will be faster if age_id > 0 is scrubbed out first.\n
+            sales_arg: String; specifies the sales attribute to use (e.g., "VPOP" or "VPOP_withTech").
+
+        Returns:
+            A dictionary containing the package cost and cumulative sales used to calculate that package cost (learning effects depend on cumulative
+            sales) for the passed unit in the given model year and complying with the standards set in the given cost step.
+
+        """
+    cumulative_sales_dict = dict()
+    yoy_costs_per_step_dict = dict()
+
+    for key in totals_dict.keys():
+        engine, alt, model_year, age_id, discount_rate = key
+        if age_id != 0:
+            pass
+        else:
+            cost_steps = RegclassCosts.cost_steps
+
+            for cost_step in cost_steps:
+                cumulative_sales = 0
+                sales_year1 = FleetTotals(totals_dict).calc_unit_sales(engine, alt, int(cost_step), sales_arg)
+
+                if sales_year1 == 0:
+                    pkg_cost_learned = 0
+
+                if (engine, alt, model_year, cost_step) in cumulative_sales_dict.keys():
+                    cumulative_sales = cumulative_sales_dict[(engine, alt, model_year, cost_step)]
+                else:
+                    if model_year >= int(cost_step):
+                        cumulative_sales = FleetTotals(totals_dict).calc_unit_cumulative_sales(engine, alt,
+                                                                                               int(cost_step),
+                                                                                               model_year, sales_arg)
+                        pkg_cost = RegclassCosts.get_cost(engine, alt, cost_step)
+                        seedvolume_factor = RegclassLearningScalers.get_seedvolume_factor(engine, alt)
+                        pkg_cost_learned = pkg_cost \
+                                           * (((cumulative_sales + (sales_year1 * seedvolume_factor))
+                                               / (sales_year1 + (sales_year1 * seedvolume_factor))) ** settings.learning_rate)
+
+                        yoy_costs_per_step_dict[(engine, alt, model_year, cost_step)] = {'CumulativeSales': cumulative_sales,
+                                                                                         'Cost_AvgPerVeh': pkg_cost_learned}
+                    cumulative_sales_dict[(engine, alt, model_year, cost_step)] = cumulative_sales
+
+    return yoy_costs_per_step_dict
 
 
 def calc_yoy_costs_per_step(settings, totals_dict, sales_arg, program):
