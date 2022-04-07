@@ -1,6 +1,6 @@
 import pandas as pd
 
-from bca_tool_code.deflators import Deflators
+from bca_tool_code.input_modules.deflators import Deflators
 
 
 class FuelPrices:
@@ -212,7 +212,7 @@ if __name__ == '__main__':
     This tests the context data creation if run as a script (python -m bca_tool_code.get_context_data).
     """
     from pathlib import Path
-    import bca_tool_code.general_functions as gen_fxns
+    import bca_tool_code.input_modules.general_functions as gen_fxns
 
     path_project = Path(__file__).parent.parent
     path_dev = path_project / 'dev'

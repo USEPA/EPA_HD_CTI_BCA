@@ -1,6 +1,7 @@
 import pandas as pd
 
-from bca_tool_code.deflators import Deflators
+from bca_tool_code.input_modules.general_functions import read_input_file
+from bca_tool_code.input_modules.deflators import Deflators
 
 
 class RegclassCosts:
@@ -20,7 +21,7 @@ class RegclassCosts:
         RegclassCosts._data.clear()
         RegclassCosts.cost_steps.clear()
 
-        df = pd.read_csv(filepath, usecols=lambda x: 'Notes' not in x)
+        df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
 
         RegclassCosts.cost_steps = [col for col in df.columns if '20' in col]
 
@@ -34,6 +35,8 @@ class RegclassCosts:
         RegclassCosts._data = df.to_dict('index')
 
     @staticmethod
-    def get_cost(engine, alt, cost_step):
-
-        return RegclassCosts._data[engine, alt][cost_step]
+    def get_cost(key, cost_step):
+        step = cost_step
+        if type(step) is not str:
+            step = f'{step}'
+        return RegclassCosts._data[key][step]

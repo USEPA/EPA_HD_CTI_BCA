@@ -1,25 +1,26 @@
 import pandas as pd
 from pathlib import Path
-from datetime import datetime
-import time
 
-import bca_tool_code
-import bca_tool_code.general_functions as gen_fxns
-# from bca_tool_code.get_context_data import FuelPrices #, GetDeflators
-from bca_tool_code.project_dicts import InputFileDict
-from bca_tool_code.input_data import InputData
+from bca_tool_code.input_modules.input_files import InputFiles
+from bca_tool_code.input_modules.general_inputs import GeneralInputs
+from bca_tool_code.input_modules.deflators import Deflators
+from bca_tool_code.input_modules.fuel_prices import FuelPrices
+from bca_tool_code.input_modules.options_cap import OptionsCAP
+from bca_tool_code.input_modules.options_ghg import OptionsGHG
+from bca_tool_code.input_modules.regclass_costs import RegclassCosts
+from bca_tool_code.input_modules.regclass_learning_scalers import RegclassLearningScalers
+from bca_tool_code.input_modules.markups import Markups
+from bca_tool_code.input_modules.warranty import Warranty
+from bca_tool_code.input_modules.useful_life import UsefulLife
+from bca_tool_code.input_modules.moves_adjustments_cap import MovesAdjCAP
+from bca_tool_code.input_modules.dollar_per_ton_cap import DollarPerTonCAP
+from bca_tool_code.input_modules.def_prices import DefPrices
+from bca_tool_code.input_modules.def_doserates import DefDoseRates
+from bca_tool_code.input_modules.orvr_fuelchanges_cap import OrvrFuelChangesCAP
+from bca_tool_code.input_modules.repair_and_maintenance import RepairAndMaintenance
 
-from bca_tool_code.general_inputs import GeneralInputs
-from bca_tool_code.deflators import Deflators
-from bca_tool_code.fuel_prices import FuelPrices
-from bca_tool_code.options_cap import OptionsCAP
-from bca_tool_code.options_ghg import OptionsGHG
-from bca_tool_code.regclass_costs import RegclassCosts
-from bca_tool_code.regclass_learningscalers import RegclassLearningScalers
-from bca_tool_code.moves_cap import MovesCAP
-from bca_tool_code.moves_adjustments_cap import MovesAdjCAP
-from bca_tool_code.dollar_per_ton_cap import DollarPerTonCAP
-
+from bca_tool_code.fleet_cap import FleetCAP
+from bca_tool_code.regclass_sales import RegClassSales
 
 
 class SetPaths:
@@ -32,6 +33,7 @@ class SetPaths:
         self.path_code = Path(__file__).parent
         self.path_project = self.path_code.parent
         self.path_inputs = self.path_project / 'inputs'
+        self.path_input_modules = self.path_project / 'input_modules'
         self.path_outputs = self.path_project / 'outputs'
         self.path_test = self.path_project / 'test'
 
@@ -113,46 +115,87 @@ class SetInputs:
         """
         set_paths = SetPaths()
 
-        InputData.init_from_file(set_paths.path_inputs / 'Input_Files.csv')
-        GeneralInputs.init_from_file(set_paths.path_inputs / InputData.get_filename('bca_inputs'))
+        InputFiles.init_from_file(set_paths.path_inputs / 'Input_Files.csv')
+        GeneralInputs.init_from_file(set_paths.path_inputs / InputFiles.get_filename('bca_inputs'))
         settings = GeneralInputs()
 
-        Deflators.init_from_file(set_paths.path_inputs / InputData.get_filename('deflators'), settings)
-        FuelPrices.init_from_file(set_paths.path_inputs / InputData.get_filename('fuel_prices'), settings)
-        OptionsCAP.init_from_file(set_paths.path_inputs / InputData.get_filename('options_cap'))
-        OptionsGHG.init_from_file(set_paths.path_inputs / InputData.get_filename('options_ghg'))
-        MovesAdjCAP.init_from_file(set_paths.path_inputs / InputData.get_filename('moves_adjustments_cap'))
-        MovesCAP.init_from_file(set_paths.path_inputs / InputData.get_filename('moves_cap'))
-        # MovesGHG
-        # MovesAdjustmentsGHG
-        RegclassCosts.init_from_file(set_paths.path_inputs / InputData.get_filename('regclass_costs'), settings)
-        # SourcetypeCosts
-        RegclassLearningScalers.init_from_file(
-            set_paths.path_inputs / InputData.get_filename('regclass_learning_scalers'))
-        # SourcetypeLearningScalers
-        # DefDoseRate
-        # DefPrices
-        # OrvrFuelChangesCAP
-        # OrvrFuelChangesGHG
-        # RepairAndMaintenance
-        # Warranty
-        # UsefulLife
-        # UnitConversions
+        # determine what's being run
+        calc_cap_costs_value = settings.get_attribute('calculate_cap_costs')
+        calc_cap_pollution_effects_value = settings.get_attribute('calculate_cap_pollution_effects')
+        calc_ghg_costs_value = settings.get_attribute('calculate_ghg_costs')
+        calc_ghg_pollution_effects_value = settings.get_attribute('calculate_ghg_pollution_effects')
+
+        self.calc_cap_costs = True if calc_cap_costs_value == 'Y' else None
+        self.calc_cap_pollution = True if calc_cap_pollution_effects_value == 'Y' else None
+        self.calc_ghg_costs = True if calc_ghg_costs_value == 'Y' else None
+        self.calc_ghg_pollution = True if calc_ghg_pollution_effects_value == 'Y' else None
+
+        Deflators.init_from_file(set_paths.path_inputs / InputFiles.get_filename('deflators'), settings)
+        FuelPrices.init_from_file(set_paths.path_inputs / InputFiles.get_filename('fuel_prices'), settings)
 
         self.general_inputs = GeneralInputs()
         self.deflators = Deflators()
         self.fuel_prices = FuelPrices()
-        self.options_cap = OptionsCAP()
-        self.options_ghg = OptionsGHG()
-        self.regclass_costs = RegclassCosts()
-        self.regclass_learning_scalers = RegclassLearningScalers()
-        self.cap_totals = MovesCAP()
 
+        if self.calc_cap_costs:
 
-        calc_cap_pollution_effects = self.general_inputs.get_attribute('calculate_cap_pollution_effects')
-        if calc_cap_pollution_effects == 'Y':
-            DollarPerTonCAP.init_from_file(set_paths.path_inputs / InputData.get_filename('dollar_per_ton_cap'))
+            OptionsCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('options_cap'))
+            MovesAdjCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('moves_adjustments_cap'))
+            FleetCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('fleet_cap'), settings)
+            RegclassCosts.init_from_file(set_paths.path_inputs / InputFiles.get_filename('regclass_costs'), settings)
+            RegclassLearningScalers.init_from_file(
+                set_paths.path_inputs / InputFiles.get_filename('regclass_learning_scalers'))
+
+            Markups.init_from_file(set_paths.path_inputs / InputFiles.get_filename('markups'))
+            Warranty.init_from_file(set_paths.path_inputs / InputFiles.get_filename('warranty'))
+            UsefulLife.init_from_file(set_paths.path_inputs / InputFiles.get_filename('useful_life'))
+            DefDoseRates.init_from_file(set_paths.path_inputs / InputFiles.get_filename('def_doserates'))
+            DefPrices.init_from_file(set_paths.path_inputs / InputFiles.get_filename('def_prices'), settings)
+            OrvrFuelChangesCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('orvr_fuelchanges_cap'))
+            RepairAndMaintenance.init_from_file(
+                set_paths.path_inputs / InputFiles.get_filename('repair_and_maintenance'), settings)
+
+            self.fleet_cap = FleetCAP()
+            self.options_cap = OptionsCAP()
+            self.regclass_costs = RegclassCosts()
+            self.regclass_learning_scalers = RegclassLearningScalers()
+            self.markups = Markups()
+            self.warranty = Warranty()
+            self.useful_life = UsefulLife()
+            self.def_prices = DefPrices()
+            self.def_doserates = DefDoseRates()
+            self.orvr_fuelchanges_cap = OrvrFuelChangesCAP()
+            self.repair_and_maintenance = RepairAndMaintenance()
+
+            RegClassSales.create_regclass_sales_dict(FleetCAP.fleet_df, self.regclass_costs.cost_steps)
+            self.regclass_sales = RegClassSales()
+
+        if self.calc_cap_pollution:
+            DollarPerTonCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('dollar_per_ton_cap'))
             self.dollar_per_ton_cap = DollarPerTonCAP()
+
+        if self.calc_ghg_costs:
+
+            OptionsGHG.init_from_file(set_paths.path_inputs / InputFiles.get_filename('options_ghg'))
+            # MovesAdjustmentsGHG
+            # MovesGHG
+            # SourcetypeCosts
+            # SourcetypeLearningScalers
+
+            self.options_ghg = OptionsGHG()
+
+            if self.calc_cap_costs:
+                pass
+            else:
+                Markups.init_from_file(set_paths.path_inputs / InputFiles.get_filename('markups'))
+                Warranty.init_from_file(set_paths.path_inputs / InputFiles.get_filename('warranty'))
+                UsefulLife.init_from_file(set_paths.path_inputs / InputFiles.get_filename('useful_life'))
+                self.markups = Markups()
+                self.warranty = Warranty()
+                self.useful_life = UsefulLife()
+
+
+            # OrvrFuelChangesGHG
         #
         # self.start_time = time.time()
         # self.start_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')

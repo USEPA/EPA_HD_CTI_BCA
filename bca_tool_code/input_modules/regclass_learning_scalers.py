@@ -29,6 +29,4 @@ class RegclassLearningScalers:
     @staticmethod
     def get_seedvolume_factor(engine, alt):
 
-        seedvolume_factor = RegclassLearningScalers[engine, alt]['SeedVolumeFactor']
-
-        return seedvolume_factor
+        return RegclassLearningScalers._data[engine, alt]['SeedVolumeFactor']

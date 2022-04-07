@@ -1,12 +1,10 @@
-from bca_tool_code.fleet_totals_dict import FleetTotals
-from bca_tool_code.fleet_averages_dict import FleetAverages
 
 
-def calc_per_veh_tech_costs(averages_dict):
+def calc_tech_costs_per_veh(settings):
     """
     
-    Parameters::
-        averages_dict: Dictionary; contains average direct and indirect costs per vehicle.
+    Parameters:
+        settings: The SetInputs class.
 
     Returns:
         The averages_dict dictionary updated with average tech costs per vehicle (direct plus indirect).
@@ -15,46 +13,36 @@ def calc_per_veh_tech_costs(averages_dict):
         Direct and indirect costs apply only for ageID=0 (i.e., new sales).
 
     """
-    print('\nCalculating per vehicle technology costs...')
-    calcs_avg = FleetAverages(averages_dict)
+    print('\nCalculating technology costs per vehicle...')
 
-    age0_keys = [k for k, v in averages_dict.items() if v['ageID'] == 0]
+    age0_keys = [k for k, v in settings.fleet_cap._data.items() if v['ageID'] == 0]
 
     for key in age0_keys:
-        cost = calcs_avg.get_attribute_value(key, 'DirectCost_AvgPerVeh')
-        cost += calcs_avg.get_attribute_value(key, 'IndirectCost_AvgPerVeh')
+        cost = settings.fleet_cap.get_attribute_value(key, 'DirectCost_PerVeh')
+        cost += settings.fleet_cap.get_attribute_value(key, 'IndirectCost_PerVeh')
 
-        temp_dict = {'TechCost_AvgPerVeh': cost}
-        calcs_avg.update_dict(key, temp_dict)
-
-    return averages_dict
+        update_dict = {'TechCost_PerVeh': cost}
+        settings.fleet_cap.update_dict(key, update_dict)
 
 
-def calc_tech_costs(totals_dict, averages_dict, sales_arg):
+def calc_tech_costs(settings):
     """
 
-    Parameters::
-        totals_dict: Dictionary; contains vehicle population (VPOP) data.\n
-        averages_dict: Dictionary; contains average tech costs per vehicle.
-        sales_arg: String; specifies the sales attribute to use (e.g., "VPOP" or "VPOP_withTech")
+    Parameters:
+        settings: The SetInputs class.
 
     Returns:
         The totals_dict dictionary updated with annual technology costs for all vehicles.
 
     """
-    print('\nCalculating total technology costs...')
+    print('\nCalculating technology costs...')
 
-    calcs_avg = FleetAverages(averages_dict)
-    calcs = FleetTotals(totals_dict)
-
-    age0_keys = [k for k, v in totals_dict.items() if v['ageID'] == 0]
+    age0_keys = [k for k, v in settings.fleet_cap._data.items() if v['ageID'] == 0]
 
     for key in age0_keys:
-        cost_per_veh = calcs_avg.get_attribute_value(key, 'TechCost_AvgPerVeh')
-        sales = calcs.get_attribute_value(key, sales_arg)
+        cost_per_veh = settings.fleet_cap.get_attribute_value(key, 'TechCost_PerVeh')
+        sales = settings.fleet_cap.get_attribute_value(key, 'VPOP')
         cost = cost_per_veh * sales
 
-        temp_dict = {'TechCost': cost}
-        calcs.update_dict(key, temp_dict)
-
-    return totals_dict
+        update_dict = {'TechCost': cost}
+        settings.fleet_cap.update_dict(key, update_dict)
