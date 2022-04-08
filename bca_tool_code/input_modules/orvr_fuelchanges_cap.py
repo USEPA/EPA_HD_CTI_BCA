@@ -25,6 +25,6 @@ class OrvrFuelChangesCAP:
         OrvrFuelChangesCAP._data = df.to_dict('index')
 
     @staticmethod
-    def get_attribute_value(engine, alt):
+    def get_ml_per_gram(engine, alt):
 
         return OrvrFuelChangesCAP._data[engine, alt]['ml/g']

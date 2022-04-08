@@ -22,9 +22,9 @@ from bca_tool_code.tool_setup import SetInputs, SetPaths
 from bca_tool_code.direct_costs import calc_avg_regclass_cost_per_step, calc_direct_costs_per_veh, calc_direct_costs
 from bca_tool_code.indirect_costs import calc_indirect_costs_per_veh, calc_indirect_costs
 from bca_tool_code.tech_costs import calc_tech_costs_per_veh, calc_tech_costs
-from bca_tool_code.def_costs import calc_def_costs, calc_average_def_costs
-from bca_tool_code.fuel_costs import calc_fuel_costs, calc_average_fuel_costs
-from bca_tool_code.repair_costs import calc_emission_repair_costs_per_mile, calc_per_veh_emission_repair_costs, calc_emission_repair_costs
+from bca_tool_code.def_costs import calc_def_costs_per_veh, calc_def_costs
+from bca_tool_code.fuel_costs import calc_fuel_costs_per_veh, calc_fuel_costs
+from bca_tool_code.repair_costs import calc_emission_repair_costs_per_mile, calc_emission_repair_costs_per_veh, calc_emission_repair_costs
 from bca_tool_code.emission_costs import calc_criteria_emission_costs
 from bca_tool_code.sum_by_vehicle import calc_sum_of_costs
 from bca_tool_code.discounting import discount_values
@@ -66,46 +66,47 @@ def main():
         calc_tech_costs_per_veh(settings)
         calc_tech_costs(settings)
 
+        # calculate DEF costs
+        calc_def_costs(settings)
+        calc_def_costs_per_veh(settings)
+
+        # calculate fuel costs, including adjustments for fuel consumption associated with ORVR
+        calc_fuel_costs(settings)
+        calc_fuel_costs_per_veh(settings)
+
+        # calculate emission repair costs
+        calc_emission_repair_costs_per_mile(settings)
+        calc_emission_repair_costs_per_veh(settings)
+        calc_emission_repair_costs(settings)
+
+        # sum operating costs and operating+tech costs into a single key, value
+        # use pre-tax fuel price for totals since it serves as the basis for social costs and retail for averages
+        calc_sum_of_costs(settings,
+                          'OperatingCost',
+                          'DEFCost', 'FuelCost_Pretax', 'EmissionRepairCost')
+        calc_sum_of_costs(settings,
+                          'TechAndOperatingCost',
+                          'TechCost', 'OperatingCost')
+        calc_sum_of_costs(settings,
+                          'OperatingCost_Owner_PerMile',
+                          'DEFCost_PerMile', 'FuelCost_Retail_PerMile', 'EmissionRepairCost_PerMile')
+        calc_sum_of_costs(settings,
+                          'OperatingCost_Owner_PerVeh',
+                          'DEFCost_PerVeh', 'FuelCost_Retail_PerVeh', 'EmissionRepairCost_PerVeh')
+
+        # calc CAP pollution effects, if applicable
+        if settings.calc_cap_pollution:
+            calc_criteria_emission_costs(settings)
+
+        create_weighted_cost_dict(settings, settings.wtd_def_cpm_dict, 'DEFCost_PerMile', 'VMT_PerVeh')
+        create_weighted_cost_dict(settings, settings.wtd_repair_cpm_dict, 'EmissionRepairCost_PerMile', 'VMT_PerVeh')
+        create_weighted_cost_dict(settings, settings.wtd_cap_fuel_cpm_dict, 'FuelCost_Retail_PerMile', 'VMT_PerVeh')
+
+        discount_values(settings)
+        pv_annualized(settings) # TODO limit this to total costs by excluding per vehicle costs
+
         t = 0
 
-    #
-    #     # calculate total then average DEF costs
-    #     cap_totals_dict = calc_def_costs(settings, cap_totals_dict, 'Gallons_withTech')
-    #     cap_averages_dict = calc_average_def_costs(cap_totals_dict, cap_averages_dict, 'VPOP_withTech')
-    #
-    #     # calculate total then average fuel costs, including adjustments for fuel consumption associated with ORVR
-    #     cap_totals_dict = calc_fuel_costs(settings, cap_totals_dict, 'Gallons_withTech', 'CAP')
-    #     cap_averages_dict = calc_average_fuel_costs(cap_totals_dict, cap_averages_dict, 'VPOP_withTech', 'VMT_withTech')
-    #
-    #     # calculate average then total emission repair costs
-    #     cap_averages_dict, repair_cpm_dict, estimated_ages_dict = calc_emission_repair_costs_per_mile(settings, cap_averages_dict)
-    #     cap_averages_dict = calc_per_veh_emission_repair_costs(cap_averages_dict)
-    #     cap_totals_dict = calc_emission_repair_costs(cap_totals_dict, cap_averages_dict, 'VPOP_withTech')
-    #
-    #     # sum operating costs and operating-tech costs into a single key, value
-    #     # the totals_dict here uses pre-tax fuel price since it serves as the basis for social costs
-    #     # the averages_dict uses retail fuel prices since it serves as the basis for average operating costs which are relevant to owners
-    #     cap_totals_dict = calc_sum_of_costs(cap_totals_dict, 'OperatingCost', 'DEFCost', 'FuelCost_Pretax', 'EmissionRepairCost')
-    #     cap_totals_dict = calc_sum_of_costs(cap_totals_dict, 'TechAndOperatingCost', 'TechCost', 'OperatingCost')
-    #     cap_averages_dict = calc_sum_of_costs(cap_averages_dict,
-    #                                           'OperatingCost_Owner_AvgPerMile',
-    #                                           'DEFCost_AvgPerMile', 'FuelCost_Retail_AvgPerMile', 'EmissionRepairCost_AvgPerMile')
-    #     cap_averages_dict = calc_sum_of_costs(cap_averages_dict,
-    #                                           'OperatingCost_Owner_AvgPerVeh',
-    #                                           'DEFCost_AvgPerVeh', 'FuelCost_Retail_AvgPerVeh', 'EmissionRepairCost_AvgPerVeh')
-    #
-    #     # calc emission effects, if applicable
-    #     if settings.calc_cap_pollution_effects:
-    #         cap_totals_dict = calc_criteria_emission_costs(settings, cap_totals_dict)
-    #
-    #     # calculate some weighted (wtd) cost per mile (cpm) operating costs
-    #     wtd_def_cpm_dict = create_weighted_cost_dict(settings, cap_averages_dict, 'DEFCost_AvgPerMile', 'VMT_AvgPerVeh')
-    #     wtd_repair_cpm_dict = create_weighted_cost_dict(settings, cap_averages_dict, 'EmissionRepairCost_AvgPerMile', 'VMT_AvgPerVeh')
-    #     wtd_cap_fuel_cpm_dict = create_weighted_cost_dict(settings, cap_averages_dict, 'FuelCost_Retail_AvgPerMile', 'VMT_AvgPerVeh')
-    #
-    #     # discount monetized values
-    #     cap_totals_dict = discount_values(settings, cap_totals_dict, 'CAP', 'totals')
-    #     cap_averages_dict = discount_values(settings, cap_averages_dict, 'CAP', 'averages')
     #
     #     # calc annual sums, present and annualized values
     #     cap_pv_annualized_dict = pv_annualized(settings, cap_totals_dict, 'CAP')
@@ -170,18 +171,18 @@ def main():
     #
     #     # wtd_ghg_fuel_cpm_dict = calc_deltas_weighted(settings, wtd_ghg_fuel_cpm_dict, 'FuelCost_Retail_AvgPerMile')
     #
-    # elapsed_time_calcs = time.time() - start_time_calcs
-    #
-    # # determine run output paths
-    # if run_id == 'test':
-    #     path_of_run_results_folder = set_paths.path_test
-    #     path_of_run_results_folder.mkdir(exist_ok=True)
-    #     path_of_run_folder = path_of_run_results_folder
-    # else:
-    #     path_of_run_folder, path_of_run_inputs_folder, path_of_run_results_folder, path_of_modified_inputs_folder, path_of_code_folder \
-    #         = set_paths.create_output_paths(settings.start_time_readable, run_id)
-    #
-    # start_time_postproc = time.time()
+    elapsed_time_calcs = time.time() - start_time_calcs
+
+    # determine run output paths
+    if run_id == 'test':
+        path_of_run_results_folder = set_paths.path_test
+        path_of_run_results_folder.mkdir(exist_ok=True)
+        path_of_run_folder = path_of_run_results_folder
+    else:
+        path_of_run_folder, path_of_run_inputs_folder, path_of_run_results_folder, path_of_modified_inputs_folder, path_of_code_folder \
+            = set_paths.create_output_paths(settings.start_time_readable, run_id)
+
+    start_time_postproc = time.time()
     #
     # # pass dicts thru the vehicle_name and/or option_name function to add some identifiers and generate some figures
     # if settings.calc_cap:
@@ -294,24 +295,24 @@ def main():
     #     arg_list = ['TechCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
     #     CreateFigures(ghg_pv_annualized_df, 'US Dollars', path_of_run_results_folder, 'GHG').create_figures(arg_list)
     #
-    # elapsed_time_outputs = time.time() - start_time_outputs
-    # end_time = time.time()
-    # end_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')
-    # elapsed_time = end_time - settings.start_time
-    #
-    # summary_log = pd.DataFrame(data={'Item': ['Version', 'Run folder',
-    #                                           'Calc CAP costs', 'Calc CAP pollution',
-    #                                           'Calc GHG costs', 'Calc GHG pollution',
-    #                                           'Start of run', 'Elapsed time read inputs', 'Elapsed time calculations', 'Elapsed time post-processing',
-    #                                           'Elapsed time save outputs', 'End of run', 'Elapsed runtime'],
-    #                                  'Results': [bca_tool_code.__version__, path_of_run_folder,
-    #                                              settings.calc_cap_value, settings.calc_cap_pollution_effects_value,
-    #                                              settings.calc_ghg_value, settings.calc_ghg_pollution_effects_value,
-    #                                              settings.start_time_readable, settings.elapsed_time_read, elapsed_time_calcs, elapsed_time_postproc,
-    #                                              elapsed_time_outputs, end_time_readable, elapsed_time],
-    #                                  'Units': ['', '', '', '', '', '', 'YYYYmmdd-HHMMSS', 'seconds', 'seconds', 'seconds', 'seconds', 'YYYYmmdd-HHMMSS', 'seconds']})
-    # summary_log = pd.concat([summary_log, get_file_datetime(settings.input_files_pathlist)], axis=0, sort=False, ignore_index=True)
-    # summary_log.to_csv(path_of_run_results_folder.joinpath('summary_log.csv'), index=False)
+    elapsed_time_outputs = time.time() - start_time_outputs
+    end_time = time.time()
+    end_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')
+    elapsed_time = end_time - settings.start_time
+
+    summary_log = pd.DataFrame(data={'Item': ['Version', 'Run folder',
+                                              'Calc CAP costs', 'Calc CAP pollution',
+                                              'Calc GHG costs', 'Calc GHG pollution',
+                                              'Start of run', 'Elapsed time read inputs', 'Elapsed time calculations', 'Elapsed time post-processing',
+                                              'Elapsed time save outputs', 'End of run', 'Elapsed runtime'],
+                                     'Results': [bca_tool_code.__version__, path_of_run_folder,
+                                                 settings.calc_cap_value, settings.calc_cap_pollution_effects_value,
+                                                 settings.calc_ghg_value, settings.calc_ghg_pollution_effects_value,
+                                                 settings.start_time_readable, settings.elapsed_time_read, elapsed_time_calcs, elapsed_time_postproc,
+                                                 elapsed_time_outputs, end_time_readable, elapsed_time],
+                                     'Units': ['', '', '', '', '', '', 'YYYYmmdd-HHMMSS', 'seconds', 'seconds', 'seconds', 'seconds', 'YYYYmmdd-HHMMSS', 'seconds']})
+    summary_log = pd.concat([summary_log, get_file_datetime(settings.input_files_pathlist)], axis=0, sort=False, ignore_index=True)
+    summary_log.to_csv(path_of_run_results_folder.joinpath('summary_log.csv'), index=False)
 
     print(f'\nOutput files have been saved to {path_of_run_folder}\n')
 

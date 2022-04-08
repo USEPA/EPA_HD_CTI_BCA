@@ -17,7 +17,7 @@ class Deflators:
     _data = dict()
 
     @staticmethod
-    def init_from_file(filepath, settings):
+    def init_from_file(filepath, general_inputs):
 
         Deflators._data.clear()
 
@@ -25,7 +25,7 @@ class Deflators:
 
         df = Deflators.deflator_df(df, 'Unnamed: 1', 'Gross domestic product')
 
-        df = Deflators.calc_adjustment_factors(settings, df)
+        df = Deflators.calc_adjustment_factors(general_inputs, df)
 
         key = df['yearID']
         df.set_index(key, inplace=True)
@@ -61,7 +61,7 @@ class Deflators:
         return df_return
 
     @staticmethod
-    def calc_adjustment_factors(settings, df):
+    def calc_adjustment_factors(general_inputs, df):
         """
 
         Parameters:
@@ -71,7 +71,7 @@ class Deflators:
             A dictionary of deflators and adjustment_factors to apply to monetized values to put them all on a consistent dollar basis.
 
         """
-        dollar_basis_analysis = int(settings.get_attribute('dollar_basis_analysis'))
+        dollar_basis_analysis = int(general_inputs.get_attribute_value('dollar_basis_analysis'))
         basis_factor_df = pd.DataFrame(df.loc[df['yearID'] == dollar_basis_analysis, 'price_deflator']).reset_index(drop=True)
         basis_factor = basis_factor_df.at[0, 'price_deflator']
 
@@ -83,7 +83,7 @@ class Deflators:
         return df_return
 
     @staticmethod
-    def convert_dollars_to_analysis_basis(settings, df, *args):
+    def convert_dollars_to_analysis_basis(general_inputs, df, *args):
         """
         This function converts dollars into a consistent dollar basis as set via the General Inputs file.
 
@@ -95,7 +95,7 @@ class Deflators:
             The passed DataFrame will all args adjusted into dollar_basis dollars.
 
         """
-        dollar_basis_analysis = int(settings.get_attribute('dollar_basis_analysis'))
+        dollar_basis_analysis = int(general_inputs.get_attribute_value('dollar_basis_analysis'))
         dollar_years = pd.Series(pd.DataFrame(df.loc[df['DollarBasis'] > 1])['DollarBasis'].unique())
         for year in dollar_years:
             for arg in args:

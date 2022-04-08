@@ -16,7 +16,7 @@ class RegclassCosts:
     cost_steps = list()
 
     @staticmethod
-    def init_from_file(filepath, settings):
+    def init_from_file(filepath, general_inputs):
 
         RegclassCosts._data.clear()
         RegclassCosts.cost_steps.clear()
@@ -25,7 +25,7 @@ class RegclassCosts:
 
         RegclassCosts.cost_steps = [col for col in df.columns if '20' in col]
 
-        df = Deflators.convert_dollars_to_analysis_basis(settings, df, *RegclassCosts.cost_steps)
+        df = Deflators.convert_dollars_to_analysis_basis(general_inputs, df, *RegclassCosts.cost_steps)
 
         df = df.groupby(by=['optionID', 'regClassID', 'fuelTypeID', 'DollarBasis'], axis=0, as_index=False).sum()
 

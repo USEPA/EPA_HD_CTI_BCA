@@ -31,3 +31,8 @@ class DefDoseRates:
                            DefDoseRates._data[engine]['intercept_DEFdoserate']
 
         return slope, intercept
+
+    @staticmethod
+    def get_attribute_value(engine, attribute_name):
+
+        return DefDoseRates._data[engine][attribute_name]

@@ -28,20 +28,20 @@ class DollarPerTonCAP:
         """
 
         Parameters:
-            settings: The GeneralInputs class.\n
+            settings: The SetInputs class.\n
             year_id: Numeric; the calendar year for which emission cost factors are needed.
+            factors: String(s); the CAP dollar per ton factors of interest.
 
         Returns:
-            Six values - the PM25, NOx and SO2 emission cost factors (dollars/ton) for each of two different mortality estimates and each of two
-            different discount rates.
+            A list of dollar per ton factors.
 
         Note:
             Note that the BCA_General_Inputs file contains a toggle to stipulate whether to estimate emission (pollution)
             costs or not. This function is called only if that toggle is set to 'Y' (yes). The default setting is 'N' (no).
 
         """
-        cap_dr1 = settings.get_attribute('criteria_discount_rate_1')
-        cap_dr2 = settings.get_attribute('criteria_discount_rate_2')
+        cap_dr1 = settings.general_inputs.get_attribute_value('criteria_discount_rate_1')
+        cap_dr2 = settings.general_inputs.get_attribute_value('criteria_discount_rate_2')
         factor_list = list()
 
         for factor in factors:

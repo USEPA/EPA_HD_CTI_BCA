@@ -117,21 +117,22 @@ class SetInputs:
 
         InputFiles.init_from_file(set_paths.path_inputs / 'Input_Files.csv')
         GeneralInputs.init_from_file(set_paths.path_inputs / InputFiles.get_filename('bca_inputs'))
-        settings = GeneralInputs()
+        general_inputs = GeneralInputs()
 
         # determine what's being run
-        calc_cap_costs_value = settings.get_attribute('calculate_cap_costs')
-        calc_cap_pollution_effects_value = settings.get_attribute('calculate_cap_pollution_effects')
-        calc_ghg_costs_value = settings.get_attribute('calculate_ghg_costs')
-        calc_ghg_pollution_effects_value = settings.get_attribute('calculate_ghg_pollution_effects')
+        self.no_action_alt = pd.to_numeric(general_inputs.get_attribute_value('no_action_alt'))
+        calc_cap_costs_value = general_inputs.get_attribute_value('calculate_cap_costs')
+        calc_cap_pollution_effects_value = general_inputs.get_attribute_value('calculate_cap_pollution_effects')
+        calc_ghg_costs_value = general_inputs.get_attribute_value('calculate_ghg_costs')
+        calc_ghg_pollution_effects_value = general_inputs.get_attribute_value('calculate_ghg_pollution_effects')
 
         self.calc_cap_costs = True if calc_cap_costs_value == 'Y' else None
         self.calc_cap_pollution = True if calc_cap_pollution_effects_value == 'Y' else None
         self.calc_ghg_costs = True if calc_ghg_costs_value == 'Y' else None
         self.calc_ghg_pollution = True if calc_ghg_pollution_effects_value == 'Y' else None
 
-        Deflators.init_from_file(set_paths.path_inputs / InputFiles.get_filename('deflators'), settings)
-        FuelPrices.init_from_file(set_paths.path_inputs / InputFiles.get_filename('fuel_prices'), settings)
+        Deflators.init_from_file(set_paths.path_inputs / InputFiles.get_filename('deflators'), general_inputs)
+        FuelPrices.init_from_file(set_paths.path_inputs / InputFiles.get_filename('fuel_prices'), general_inputs)
 
         self.general_inputs = GeneralInputs()
         self.deflators = Deflators()
@@ -141,8 +142,8 @@ class SetInputs:
 
             OptionsCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('options_cap'))
             MovesAdjCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('moves_adjustments_cap'))
-            FleetCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('fleet_cap'), settings)
-            RegclassCosts.init_from_file(set_paths.path_inputs / InputFiles.get_filename('regclass_costs'), settings)
+            FleetCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('fleet_cap'), general_inputs)
+            RegclassCosts.init_from_file(set_paths.path_inputs / InputFiles.get_filename('regclass_costs'), general_inputs)
             RegclassLearningScalers.init_from_file(
                 set_paths.path_inputs / InputFiles.get_filename('regclass_learning_scalers'))
 
@@ -150,10 +151,10 @@ class SetInputs:
             Warranty.init_from_file(set_paths.path_inputs / InputFiles.get_filename('warranty'))
             UsefulLife.init_from_file(set_paths.path_inputs / InputFiles.get_filename('useful_life'))
             DefDoseRates.init_from_file(set_paths.path_inputs / InputFiles.get_filename('def_doserates'))
-            DefPrices.init_from_file(set_paths.path_inputs / InputFiles.get_filename('def_prices'), settings)
+            DefPrices.init_from_file(set_paths.path_inputs / InputFiles.get_filename('def_prices'), general_inputs)
             OrvrFuelChangesCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('orvr_fuelchanges_cap'))
             RepairAndMaintenance.init_from_file(
-                set_paths.path_inputs / InputFiles.get_filename('repair_and_maintenance'), settings)
+                set_paths.path_inputs / InputFiles.get_filename('repair_and_maintenance'), general_inputs)
 
             self.fleet_cap = FleetCAP()
             self.options_cap = OptionsCAP()
@@ -167,8 +168,15 @@ class SetInputs:
             self.orvr_fuelchanges_cap = OrvrFuelChangesCAP()
             self.repair_and_maintenance = RepairAndMaintenance()
 
+            # create additional and useful dicts
             RegClassSales.create_regclass_sales_dict(FleetCAP.fleet_df, self.regclass_costs.cost_steps)
             self.regclass_sales = RegClassSales()
+            self.repair_cpm_dict = dict()
+            self.estimated_ages_dict = dict()
+            self.wtd_def_cpm_dict = dict()
+            self.wtd_repair_cpm_dict = dict()
+            self.wtd_cap_fuel_cpm_dict = dict()
+            self.pv_annualized_cap = dict()
 
         if self.calc_cap_pollution:
             DollarPerTonCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('dollar_per_ton_cap'))

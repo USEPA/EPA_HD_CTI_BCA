@@ -28,7 +28,7 @@ def calc_project_markup_value(settings, engine, alt, markup_factor_name, model_y
     rc, ft = engine
 
     markups_key = ft, alt, markup_factor_name
-    scaling_metric = settings.general_inputs.get_attribute('indirect_cost_scaling_metric')  # scaling metric will be 'Miles' or 'Age'
+    scaling_metric = settings.general_inputs.get_attribute_value('indirect_cost_scaling_metric')  # scaling metric will be 'Miles' or 'Age'
     input_markup_value, scaler, scaled_by, num_years = settings.markups.get_attribute_value(markups_key, 'Value'), \
                                                        settings.markups.get_attribute_value(markups_key, 'Scaler'), \
                                                        settings.markups.get_attribute_value(markups_key, 'Scaled_by'), \

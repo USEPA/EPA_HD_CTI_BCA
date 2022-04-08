@@ -22,13 +22,13 @@ class FuelPrices:
                  }
 
     @staticmethod
-    def init_from_file(filepath, settings):
+    def init_from_file(filepath, general_inputs):
 
         FuelPrices._data.clear()
 
         df = read_input_file(filepath, skiprows=4, reset_index=True)
 
-        df = FuelPrices.get_prices(settings, df, 'full name', 'Motor Gasoline', 'Diesel')
+        df = FuelPrices.get_prices_from_file(general_inputs, df, 'full name', 'Motor Gasoline', 'Diesel')
 
         key = pd.Series(zip(df['yearID'], df['fuelTypeID']))
         df.set_index(key, inplace=True)
@@ -36,7 +36,7 @@ class FuelPrices:
         FuelPrices._data = df.to_dict('index')
 
     @staticmethod
-    def get_price_list(yearID, fuelTypeID, *series):
+    def get_price(yearID, fuelTypeID, *series):
         """
 
         Parameters:
@@ -82,7 +82,7 @@ class FuelPrices:
         return df_return
 
     @staticmethod
-    def row_dict(settings, id_col, fuel):
+    def row_dict(general_inputs, id_col, fuel):
         """
 
         Parameters:
@@ -93,7 +93,7 @@ class FuelPrices:
 
         """
         return_dict = dict()
-        price_case = settings.get_attribute('aeo_fuel_price_case')
+        price_case = general_inputs.get_attribute_value('aeo_fuel_price_case')
         return_dict['retail_prices'] = {id_col: f'Price Components: {fuel}: End-User Price: {price_case}'}
         return_dict['distribution_costs'] = {id_col: f'Price Components: {fuel}: End-User Price: Distribution Costs: {price_case}'}
         return_dict['wholesale_price'] = {id_col: f'Price Components: {fuel}: End-User Price: Wholesale Price: {price_case}'}
@@ -123,7 +123,7 @@ class FuelPrices:
         return df
 
     @staticmethod
-    def get_prices(settings, df, id_col, *fuels):
+    def get_prices_from_file(general_inputs, df, id_col, *fuels):
         """
 
         Parameters:
@@ -137,7 +137,7 @@ class FuelPrices:
         fuel_prices_df = pd.DataFrame()
 
         for fuel in fuels:
-            rows = FuelPrices.row_dict(settings, id_col, fuel)
+            rows = FuelPrices.row_dict(general_inputs, id_col, fuel)
 
             retail_prices = FuelPrices.select_aeo_table_rows(df, rows['retail_prices'], id_col)
             fuel_prices_dict[fuel] = FuelPrices.melt_df(retail_prices, id_col, 'retail_fuel_price')
@@ -152,17 +152,24 @@ class FuelPrices:
 
             fuel_prices_dict[fuel].insert(len(fuel_prices_dict[fuel].columns),
                                           'pretax_fuel_price',
-                                          fuel_prices_dict[fuel]['distribution_costs'] + fuel_prices_dict[fuel]['wholesale_price'])
+                                          fuel_prices_dict[fuel]['distribution_costs']
+                                          + fuel_prices_dict[fuel]['wholesale_price'])
             fuel_prices_dict[fuel].insert(0, 'fuelTypeID', FuelPrices.fuel_dict[fuel])
             fuel_prices_df = pd.concat([fuel_prices_df, fuel_prices_dict[fuel]], ignore_index=True, axis=0)
+
         fuel_prices_dict['CNG'] = fuel_prices_dict['Motor Gasoline'].copy()
         fuel_prices_dict['CNG']['fuelTypeID'] = FuelPrices.fuel_dict['CNG']
         fuel_prices_df = pd.concat([fuel_prices_df, fuel_prices_dict['CNG']], ignore_index=True, axis=0)
         fuel_prices_df = fuel_prices_df[['yearID', 'fuelTypeID', 'retail_fuel_price', 'pretax_fuel_price']]
-        fuel_prices_df.insert(fuel_prices_df.columns.get_loc('yearID') + 1, 'DollarBasis', FuelPrices.aeo_dollars(df))
-        fuel_prices_df.insert(fuel_prices_df.columns.get_loc('yearID') + 1, 'AEO Case', settings.get_attribute('aeo_fuel_price_case'))
 
-        fuel_prices_df = Deflators.convert_dollars_to_analysis_basis(settings, fuel_prices_df,
+        fuel_prices_df.insert(fuel_prices_df.columns.get_loc('yearID') + 1,
+                              'DollarBasis',
+                              FuelPrices.aeo_dollars(df))
+        fuel_prices_df.insert(fuel_prices_df.columns.get_loc('yearID') + 1,
+                              'AEO Case',
+                              general_inputs.get_attribute_value('aeo_fuel_price_case'))
+
+        fuel_prices_df = Deflators.convert_dollars_to_analysis_basis(general_inputs, fuel_prices_df,
                                                                      'retail_fuel_price', 'pretax_fuel_price')
 
         return fuel_prices_df

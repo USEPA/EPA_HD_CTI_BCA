@@ -1,17 +1,13 @@
-from bca_tool_code.fleet_totals_dict import FleetTotals
-from bca_tool_code.fleet_averages_dict import FleetAverages
+import pandas as pd
 
 
-def discount_values(settings, dict_of_values, program, arg):
+def discount_values(settings):
     """
     The discount function determines metrics appropriate for discounting (those contained in dict_of_values) and does the discounting
     calculation to a given year and point within that year.
 
     Parameters:
-        settings: The SetInputs class.\n
-        dict_of_values: Dictionary; provides values to be discounted with keys consisting of vehicle, model_year, age_id and discount rate.\n
-        program: String; indicates what program is being passed.
-        arg: String; indicates whether totals or averages are being discounted.
+        settings: The SetInputs class.
 
     Returns:
         The passed dictionary with new key, value pairs where keys stipulate the discount rate and monetized values are discounted at the same rate as the discount rate of the input stream of values.
@@ -22,64 +18,66 @@ def discount_values(settings, dict_of_values, program, arg):
         costs are discounted).
 
     """
-    print(f'\nDiscounting values for {program} {arg}...')
-    if arg == 'totals': calcs = FleetTotals(dict_of_values)
-    else: calcs = FleetAverages(dict_of_values)
+    print(f'\nDiscounting values...')
 
     # get cost attributes
-    d = [nested_dict for key, nested_dict in dict_of_values.items()][0]
-    all_costs = [k for k, v in d.items() if 'Cost' in k]
+    nested_dict = [n_dict for key, n_dict in settings.fleet_cap._data.items()][0]
+    all_costs = [k for k, v in nested_dict.items() if 'Cost' in k]
     emission_cost_args_25 = [item for item in all_costs if '_0.025' in item]
     emission_cost_args_3 = [item for item in all_costs if '_0.03' in item]
     emission_cost_args_5 = [item for item in all_costs if '_0.05' in item]
     emission_cost_args_7 = [item for item in all_costs if '_0.07' in item]
     non_emission_cost_args = [item for item in all_costs if '_0.0' not in item]
 
-    if settings.costs_start == 'start-year': discount_offset = 0
-    elif settings.costs_start == 'end-year': discount_offset = 1
-    discount_to_year = settings.discount_to_yearID
+    costs_start = settings.general_inputs.get_attribute_value('costs_start')
+    discount_to_year = pd.to_numeric(settings.general_inputs.get_attribute_value('discount_to_yearID'))
 
-    for key in dict_of_values.keys():
+    if costs_start == 'start-year':
+        discount_offset = 0
+    elif costs_start == 'end-year':
+        discount_offset = 1
+    else:
+        print('costs_start entry in General Inputs file not set properly.')
+
+    # no need to discount undiscounted values with 0 percent discount rate
+    non0_dr_keys = [k for k, v in settings.fleet_cap._data.items() if v['DiscountRate'] != 0]
+
+    for key in non0_dr_keys:
         vehicle, alt, model_year, age_id, rate = key
-        if rate == 0:
-            pass # no need to discount undiscounted values with 0 percent discount rate
-        else:
-            year = model_year + age_id
+        year = model_year + age_id
 
-            temp_dict = dict()
+        update_dict = dict()
 
-            for arg in non_emission_cost_args:
-                arg_value = calcs.get_attribute_value(key, arg)
-                arg_value_discounted = arg_value / ((1 + rate) ** (year - discount_to_year + discount_offset))
-                temp_dict[arg] = arg_value_discounted
+        for arg in non_emission_cost_args:
+            arg_value = settings.fleet_cap.get_attribute_value(key, arg)
+            arg_value_discounted = arg_value / ((1 + rate) ** (year - discount_to_year + discount_offset))
+            update_dict[arg] = arg_value_discounted
 
-            emission_rate = 0.025
-            for arg in emission_cost_args_25:
-                arg_value = calcs.get_attribute_value(key, arg)
-                arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
-                temp_dict[arg] = arg_value_discounted
+        emission_rate = 0.025
+        for arg in emission_cost_args_25:
+            arg_value = settings.fleet_cap.get_attribute_value(key, arg)
+            arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
+            update_dict[arg] = arg_value_discounted
 
-            emission_rate = 0.03
-            for arg in emission_cost_args_3:
-                arg_value = calcs.get_attribute_value(key, arg)
-                arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
-                temp_dict[arg] = arg_value_discounted
+        emission_rate = 0.03
+        for arg in emission_cost_args_3:
+            arg_value = settings.fleet_cap.get_attribute_value(key, arg)
+            arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
+            update_dict[arg] = arg_value_discounted
 
-            emission_rate = 0.05
-            for arg in emission_cost_args_5:
-                arg_value = calcs.get_attribute_value(key, arg)
-                arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
-                temp_dict[arg] = arg_value_discounted
+        emission_rate = 0.05
+        for arg in emission_cost_args_5:
+            arg_value = settings.fleet_cap.get_attribute_value(key, arg)
+            arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
+            update_dict[arg] = arg_value_discounted
 
-            emission_rate = 0.07
-            for arg in emission_cost_args_7:
-                arg_value = calcs.get_attribute_value(key, arg)
-                arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
-                temp_dict[arg] = arg_value_discounted
+        emission_rate = 0.07
+        for arg in emission_cost_args_7:
+            arg_value = settings.fleet_cap.get_attribute_value(key, arg)
+            arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
+            update_dict[arg] = arg_value_discounted
 
-            calcs.update_dict(key, temp_dict)
-
-    return dict_of_values
+        settings.fleet_cap.update_dict(key, update_dict)
 
 
 if __name__ == '__main__':

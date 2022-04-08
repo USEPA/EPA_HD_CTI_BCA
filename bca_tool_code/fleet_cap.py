@@ -14,10 +14,13 @@ class FleetCAP:
 
     _data = dict()
     args_with_tech = ['VPOP', 'VMT', 'Gallons']
+    year_min = 0
+    year_max = 0
+    years = 0
     fleet_df = pd.DataFrame()
 
     @staticmethod
-    def init_from_file(filepath, settings):
+    def init_from_file(filepath, general_inputs):
 
         FleetCAP._data.clear()
 
@@ -25,12 +28,20 @@ class FleetCAP:
 
         df.insert(0, 'DiscountRate', 0)
         df.insert(df.columns.get_loc('modelYearID') + 1, 'ageID', df['yearID'] - df['modelYearID'])
+
         year_min = FleetCAP.get_age0_min_year(df, 'yearID')
+        FleetCAP.year_min = year_min
+
+        year_max = df['yearID'].max()
+        FleetCAP.year_max = year_max
+
+        years = range(year_min, year_max + 1)
+        FleetCAP.years = years
 
         df = FleetCAP.create_fleet_df(df, year_min)
         FleetCAP.fleet_df = df.copy()
 
-        new_attributes = FleetCAP.create_new_attributes(settings)
+        new_attributes = FleetCAP.create_new_attributes(general_inputs)
 
         for attribute in new_attributes:
             df.insert(len(df.columns), f'{attribute}', 0)
@@ -45,7 +56,7 @@ class FleetCAP:
 
         FleetCAP.calc_per_veh_cumulative_vmt()
 
-        FleetCAP.add_keys_for_discounting(settings)
+        FleetCAP.add_keys_for_discounting(general_inputs)
 
     @staticmethod
     def get_attribute_values(key, *attribute_names):
@@ -62,7 +73,7 @@ class FleetCAP:
         return FleetCAP._data[key][attribute_name]
 
     @staticmethod
-    def create_new_attributes(settings):
+    def create_new_attributes(general_inputs):
         """
 
         Parameters:
@@ -107,14 +118,14 @@ class FleetCAP:
                           'OperatingCost_Owner_PerVeh',
                           ]
 
-        if settings.get_attribute('calculate_cap_pollution_effects') == 'Y':
-            cap_attributes = ['PM25Cost_tailpipe_0.03', 'NOxCost_tailpipe_0.03', 'SO2Cost_tailpipe_0.03',
-                              'PM25Cost_tailpipe_0.07', 'NOxCost_tailpipe_0.07', 'SO2Cost_tailpipe_0.07',
+        if general_inputs.get_attribute_value('calculate_cap_pollution_effects') == 'Y':
+            cap_attributes = ['PM25Cost_tailpipe_0.03', 'NOxCost_tailpipe_0.03',
+                              'PM25Cost_tailpipe_0.07', 'NOxCost_tailpipe_0.07',
                               'CriteriaCost_tailpipe_0.03', 'CriteriaCost_tailpipe_0.07',
                               ]
             new_attributes = new_attributes + cap_attributes
 
-        if settings.get_attribute('calculate_ghg_pollution_effects') == 'Y':
+        if general_inputs.get_attribute_value('calculate_ghg_pollution_effects') == 'Y':
             ghg_attributes = ['CO2Cost_tailpipe_0.05', 'CO2Cost_tailpipe_0.03', 'CO2Cost_tailpipe_0.025', 'CO2Cost_tailpipe_0.03_95',
                               'CH4Cost_tailpipe_0.05', 'CH4Cost_tailpipe_0.03', 'CH4Cost_tailpipe_0.025', 'CH4Cost_tailpipe_0.03_95',
                               'N2OCost_tailpipe_0.05', 'N2OCost_tailpipe_0.03', 'N2OCost_tailpipe_0.025', 'N2OCost_tailpipe_0.03_95',
@@ -125,7 +136,7 @@ class FleetCAP:
         return new_attributes
 
     @staticmethod
-    def add_keys_for_discounting(settings):
+    def add_keys_for_discounting(general_inputs):
         """
 
         Parameters:
@@ -136,7 +147,7 @@ class FleetCAP:
             The passed dictionary with new keys added.
 
         """
-        rates = [settings.get_attribute('social_discount_rate_1'), settings.get_attribute('social_discount_rate_2')]
+        rates = [general_inputs.get_attribute_value('social_discount_rate_1'), general_inputs.get_attribute_value('social_discount_rate_2')]
         rates = [pd.to_numeric(rate) for rate in rates]
         for rate in rates:
             update_dict = dict()
@@ -151,7 +162,7 @@ class FleetCAP:
         """
 
         Parameters:
-            settings: The SetInputs class.\n
+            general_inputs: The SetInputs class.\n
             input_df: DataFrame; the raw fleet input data (e.g., from MOVES). \n
             options_dict: Dictionary; provides the option IDs and names of options being run.\n
             adj_dict: Dictionary; provides any adjustments to be made to the data contained in input_df. \n
@@ -197,8 +208,8 @@ class FleetCAP:
 
         for (vehicle, alt) in st_vehicles:
             st, rc, ft = vehicle
-            adjustment = MovesAdjCAP.get_attribute(vehicle, alt, 'percent')
-            growth = MovesAdjCAP.get_attribute(vehicle, alt, 'growth')
+            adjustment = MovesAdjCAP.get_attribute_value(vehicle, alt, 'percent')
+            growth = MovesAdjCAP.get_attribute_value(vehicle, alt, 'growth')
 
             for arg in FleetCAP.args_with_tech:
                 arg_with_tech = df_return.loc[(df_return['optionID'] == alt)
@@ -257,5 +268,5 @@ class FleetCAP:
             The dictionary instance with each attribute updated with the appropriate value.
 
         """
-        for attribute, value in input_dict.items():
-            FleetCAP._data[key][attribute] = value
+        for attribute_name, attribute_value in input_dict.items():
+            FleetCAP._data[key][attribute_name] = attribute_value

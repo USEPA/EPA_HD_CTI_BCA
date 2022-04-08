@@ -25,6 +25,6 @@ class Warranty:
         Warranty._data = df.to_dict('index')
 
     @staticmethod
-    def get_attribute_value(key, attribute_name):
+    def get_attribute_value(key, year_id):
 
-        return Warranty._data[key][attribute_name]
+        return Warranty._data[key][year_id]

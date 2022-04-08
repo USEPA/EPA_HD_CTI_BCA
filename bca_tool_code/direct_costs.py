@@ -11,7 +11,7 @@ def calc_avg_regclass_cost_per_step(settings):
         Updates to the regclass sales dictionary to include the package costs at each cost step.
 
     """
-    learning_rate = pd.to_numeric(settings.general_inputs.get_attribute('learning_rate'))
+    learning_rate = pd.to_numeric(settings.general_inputs.get_attribute_value('learning_rate'))
 
     age0_keys = [k for k, v in settings.fleet_cap._data.items() if v['ageID'] == 0]
 

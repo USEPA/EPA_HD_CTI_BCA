@@ -20,6 +20,6 @@ class GeneralInputs:
         GeneralInputs._data = df.to_dict('index')
 
     @staticmethod
-    def get_attribute(attribute_name):
+    def get_attribute_value(attribute_name):
 
         return GeneralInputs._data[attribute_name]['UserEntry']

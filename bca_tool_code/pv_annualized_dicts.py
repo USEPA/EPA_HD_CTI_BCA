@@ -1,49 +1,55 @@
+import pandas as pd
 
 
-def pv_annualized(settings, dict_of_values, program):
+def pv_annualized(settings):
     """
 
     Parameters:
-        settings: The SetInputs class. \n
-        dict_of_values: Dictionary; provides the values to be summed and annualized. \n
-        program: String; the program represented ('CAP', 'GHG') in the dict_of_values.
+        settings: The SetInputs class.
 
     Returns:
-        A dictionary of annual, present and annualized values based on the dict_of_values.
+        Updates the pv_annualized dictionary with annual, present and annualized values based on the fleet dictionary.
 
     """
-    print(f'\nGetting Annual Values, Present Values and Annualized Values for {program}...')
+    print(f'\nGetting Annual Values, Present Values and Annualized Values...')
 
-    if program == 'CAP':
-        num_alts = settings.number_alts_cap
-    else:
-        num_alts = settings.number_alts_ghg
+    num_alts = len(settings.options_cap._data)
+    # if program == 'CAP':
+    #     num_alts = settings.number_alts_cap
+    # else:
+    #     num_alts = settings.number_alts_ghg
 
-    if settings.costs_start == 'start-year':
+    costs_start = settings.general_inputs.get_attribute_value('costs_start')
+    discount_to_year = pd.to_numeric(settings.general_inputs.get_attribute_value('discount_to_yearID'))
+    if costs_start == 'start-year':
         discount_offset = 0
         annualized_offset = 1
-    elif settings.costs_start == 'end-year':
+    elif costs_start == 'end-year':
         discount_offset = 1
         annualized_offset = 0
-    discount_to_year = settings.discount_to_yearID
 
     # get cost attributes
-    d = [nested_dict for key, nested_dict in dict_of_values.items()][0]
-    all_costs = [k for k, v in d.items() if 'Cost' in k]
+    nested_dict = [n_dict for key, n_dict in settings.fleet_cap._data.items()][0]
+    all_costs = [k for k, v in nested_dict.items() if 'Cost' in k]
     emission_cost_args_25 = [item for item in all_costs if '_0.025' in item]
     emission_cost_args_3 = [item for item in all_costs if '_0.03' in item]
     emission_cost_args_5 = [item for item in all_costs if '_0.05' in item]
     emission_cost_args_7 = [item for item in all_costs if '_0.07' in item]
     non_emission_cost_args = [item for item in all_costs if '_0.0' not in item]
 
+    rates = [settings.general_inputs.get_attribute_value('social_discount_rate_1'),
+             settings.general_inputs.get_attribute_value('social_discount_rate_2')]
+    rates = [pd.to_numeric(rate) for rate in rates]
+    years = settings.fleet_cap.years
+
     # first create a dictionary to house data
-    calcs_dict = dict()
+    calcs_dict = settings.pv_annualized_cap
 
     # first undiscounted annual values
     for alt in range(0, num_alts):
         rate = 0
         series = 'AnnualValue'
-        for calendar_year in settings.years:
+        for calendar_year in years:
             calcs_dict.update({(alt, calendar_year, rate, series): {'optionID': alt,
                                                                     'yearID': calendar_year,
                                                                     'DiscountRate': rate,
@@ -56,8 +62,8 @@ def pv_annualized(settings, dict_of_values, program):
     # then for discounted values
     for series in ['AnnualValue', 'PresentValue', 'AnnualizedValue']:
         for alt in range(0, num_alts):
-            for rate in [settings.social_discount_rate_1, settings.social_discount_rate_2]:
-                for calendar_year in settings.years:
+            for rate in rates:
+                for calendar_year in years:
                     calcs_dict.update({(alt, calendar_year, rate, series): {'optionID': alt,
                                                                             'yearID': calendar_year,
                                                                             'DiscountRate': rate,
@@ -70,10 +76,10 @@ def pv_annualized(settings, dict_of_values, program):
     # first sum by year for each cost arg
     series = 'AnnualValue'
     for alt in range(0, num_alts):
-        for rate in [0, settings.social_discount_rate_1, settings.social_discount_rate_2]:
-            for calendar_year in settings.years:
+        for rate in [0, *rates]:
+            for calendar_year in years:
                 for arg in all_costs:
-                    arg_sum = sum(v[arg] for k, v in dict_of_values.items()
+                    arg_sum = sum(v[arg] for k, v in settings.fleet_cap._data.items()
                                   if v['yearID'] == calendar_year
                                   and v['DiscountRate'] == rate
                                   and v['optionID'] == alt)
@@ -82,9 +88,9 @@ def pv_annualized(settings, dict_of_values, program):
     # now do a cumulative sum year-over-year for each cost arg - these will be present values (note change to calcs_dict in arg_value calc and removal of rate=0)
     series = 'PresentValue'
     for alt in range(0, num_alts):
-        for rate in [settings.social_discount_rate_1, settings.social_discount_rate_2]:
+        for rate in rates:
             for arg in all_costs:
-                for calendar_year in settings.years:
+                for calendar_year in years:
                     periods = calendar_year - discount_to_year + discount_offset
                     arg_value = sum(v[arg] for k, v in calcs_dict.items()
                                     if v['yearID'] <= calendar_year
@@ -97,10 +103,10 @@ def pv_annualized(settings, dict_of_values, program):
     # now annualize those present values
     series = 'AnnualizedValue'
     for alt in range(0, num_alts):
-        for social_discount_rate in [settings.social_discount_rate_1, settings.social_discount_rate_2]:
+        for social_discount_rate in rates:
             rate = social_discount_rate
             for arg in non_emission_cost_args:
-                for calendar_year in settings.years:
+                for calendar_year in years:
                     periods = calendar_year - discount_to_year + discount_offset
                     present_value = calcs_dict[alt, calendar_year, rate, 'PresentValue'][arg]
                     arg_annualized = present_value * rate * (1 + rate) ** periods \
@@ -110,7 +116,7 @@ def pv_annualized(settings, dict_of_values, program):
 
             rate = 0.025
             for arg in emission_cost_args_25:
-                for calendar_year in settings.years:
+                for calendar_year in years:
                     periods = calendar_year - discount_to_year + discount_offset
                     present_value = calcs_dict[alt, calendar_year, rate, 'PresentValue'][arg]
                     arg_annualized = present_value * rate * (1 + rate) ** periods \
@@ -119,7 +125,7 @@ def pv_annualized(settings, dict_of_values, program):
 
             rate = 0.03
             for arg in emission_cost_args_3:
-                for calendar_year in settings.years:
+                for calendar_year in years:
                     periods = calendar_year - discount_to_year + discount_offset
                     present_value = calcs_dict[alt, calendar_year, rate, 'PresentValue'][arg]
                     arg_annualized = present_value * rate * (1 + rate) ** periods \
@@ -143,5 +149,3 @@ def pv_annualized(settings, dict_of_values, program):
                     arg_annualized = present_value * rate * (1 + rate) ** periods \
                                      / ((1 + rate) ** (periods + annualized_offset) - 1)
                     calcs_dict[(alt, calendar_year, social_discount_rate, series)][arg] = arg_annualized
-
-    return calcs_dict

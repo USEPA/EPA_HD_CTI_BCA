@@ -25,6 +25,6 @@ class MovesAdjCAP:
         MovesAdjCAP._data = df.to_dict('index')
 
     @staticmethod
-    def get_attribute(vehicle, alt, attribute_name):
+    def get_attribute_value(vehicle, alt, attribute_name):
 
         return MovesAdjCAP._data[vehicle, alt][attribute_name]

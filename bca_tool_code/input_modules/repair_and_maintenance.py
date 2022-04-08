@@ -12,17 +12,17 @@ class RepairAndMaintenance:
     _data = dict()
 
     @staticmethod
-    def init_from_file(filepath, settings):
+    def init_from_file(filepath, general_inputs):
 
         RepairAndMaintenance._data.clear()
 
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x, index_col=0)
 
-        df = Deflators.convert_dollars_to_analysis_basis(settings, df, 'Value')
+        df = Deflators.convert_dollars_to_analysis_basis(general_inputs, df, 'Value')
 
         RepairAndMaintenance._data = df.to_dict('index')
 
     @staticmethod
     def get_attribute_value(attribute_name):
 
-        return RepairAndMaintenance._data[attribute_name]
+        return RepairAndMaintenance._data[attribute_name]['Value']
