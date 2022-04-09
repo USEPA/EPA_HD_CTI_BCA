@@ -25,11 +25,12 @@ def calc_tech_costs_per_veh(settings):
         settings.fleet_cap.update_dict(key, update_dict)
 
 
-def calc_tech_costs(settings):
+def calc_tech_costs(settings, sales_arg):
     """
 
     Parameters:
-        settings: The SetInputs class.
+        settings: The SetInputs class.\n
+        sales_arg: String; the sales to use when calculating sales * cost/veh.
 
     Returns:
         The totals_dict dictionary updated with annual technology costs for all vehicles.
@@ -41,7 +42,7 @@ def calc_tech_costs(settings):
 
     for key in age0_keys:
         cost_per_veh = settings.fleet_cap.get_attribute_value(key, 'TechCost_PerVeh')
-        sales = settings.fleet_cap.get_attribute_value(key, 'VPOP')
+        sales = settings.fleet_cap.get_attribute_value(key, sales_arg)
         cost = cost_per_veh * sales
 
         update_dict = {'TechCost': cost}

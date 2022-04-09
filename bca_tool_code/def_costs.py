@@ -107,11 +107,12 @@ def calc_def_costs(settings):
         settings.fleet_cap.update_dict(key, update_dict)
 
 
-def calc_def_costs_per_veh(settings):
+def calc_def_costs_per_veh(settings, sales_arg):
     """
 
     Parameters:
-        settings: The SetInputs class.
+        settings: The SetInputs class.\n
+        sales_arg: String; the sales to use when calculating sales * cost/veh.
 
     Returns:
         Updates the fleet dictionary with costs/mile and costs/vehicle associated with DEF consumption.
@@ -125,7 +126,7 @@ def calc_def_costs_per_veh(settings):
     for key in ft2_keys:
         def_cost = settings.fleet_cap.get_attribute_value(key, 'DEFCost')
         vmt = settings.fleet_cap.get_attribute_value(key, 'VMT_withTech')
-        vpop = settings.fleet_cap.get_attribute_value(key, 'VPOP')
+        vpop = settings.fleet_cap.get_attribute_value(key, sales_arg)
         cost_per_mile = def_cost / vmt
         cost_per_veh = def_cost / vpop
 

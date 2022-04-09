@@ -270,3 +270,8 @@ class FleetCAP:
         """
         for attribute_name, attribute_value in input_dict.items():
             FleetCAP._data[key][attribute_name] = attribute_value
+
+    @staticmethod
+    def add_key_value_pairs(key, input_dict):
+
+        FleetCAP._data[key] = input_dict

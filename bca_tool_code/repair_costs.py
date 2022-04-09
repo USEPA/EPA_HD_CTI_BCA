@@ -174,13 +174,12 @@ def calc_emission_repair_costs_per_veh(settings):
         settings.fleet_cap.update_dict(key, update_dict)
 
 
-def calc_emission_repair_costs(settings):
+def calc_emission_repair_costs(settings, sales_arg):
     """
 
     Parameters:
-        totals_dict: Dictionary; contains annual vehicle populations (VPOP).\n
-        averages_dict: Dictionary; contains annual average emission repair costs/mile.\n
-        vpop_arg: String; specifies the population attribute to use (e.g., "VPOP" or "VPOP_withTech")
+        settings: The SetInputs class.\n
+        sales_arg: String; the sales to use when calculating sales * cost/veh.
 
     Returns:
         The totals_dict dictionary updated with annual emission repair costs for all vehicles.
@@ -190,9 +189,8 @@ def calc_emission_repair_costs(settings):
 
     for key in settings.fleet_cap._data.keys():
         cost_per_veh = settings.fleet_cap.get_attribute_value(key, 'EmissionRepairCost_PerVeh')
-        vpop = settings.fleet_cap.get_attribute_value(key, 'VPOP')
+        vpop = settings.fleet_cap.get_attribute_value(key, sales_arg)
         cost = cost_per_veh * vpop
 
         update_dict = {'EmissionRepairCost': cost}
         settings.fleet_cap.update_dict(key, update_dict)
-

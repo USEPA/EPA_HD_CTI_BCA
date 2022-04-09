@@ -74,11 +74,12 @@ def calc_fuel_costs(settings):
         settings.fleet_cap.update_dict(key, update_dict)
 
 
-def calc_fuel_costs_per_veh(settings):
+def calc_fuel_costs_per_veh(settings, sales_arg):
     """
 
     Parameters:
-        settings: The SetInputs class.
+        settings: The SetInputs class.\n
+        sales_arg: String; the sales to use when calculating sales * cost/veh.
 
     Returns:
         Updates the fleet dictionary to include fuel costs/vehicle and costs/mile.
@@ -89,7 +90,7 @@ def calc_fuel_costs_per_veh(settings):
     for key in settings.fleet_cap._data.keys():
         fuel_cost = settings.fleet_cap.get_attribute_value(key, 'FuelCost_Retail')
         vmt = settings.fleet_cap.get_attribute_value(key, 'VMT_withTech')
-        vpop = settings.fleet_cap.get_attribute_value(key, 'VPOP')
+        vpop = settings.fleet_cap.get_attribute_value(key, sales_arg)
 
         # try/except block to protect against divide by 0 error
         try:

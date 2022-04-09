@@ -93,11 +93,12 @@ def calc_indirect_costs_per_veh(settings):
         settings.fleet_cap.update_dict(key, update_dict)
 
 
-def calc_indirect_costs(settings):
+def calc_indirect_costs(settings, sales_arg):
     """
 
     Parameters:
-        settings: The SetInputs class.
+        settings: The SetInputs class.\n
+        sales_arg: String; the sales to use when calculating sales * cost/veh.
 
     Returns:
         The totals_dict dictionary updated with total indirect costs for each individual indirect cost property and a summation of those.
@@ -114,7 +115,7 @@ def calc_indirect_costs(settings):
         update_dict = dict()
         for markup_factor in markup_factors:
             cost_per_veh = settings.fleet_cap.get_attribute_value(key, f'{markup_factor}Cost_PerVeh')
-            sales = settings.fleet_cap.get_attribute_value(key, 'VPOP')
+            sales = settings.fleet_cap.get_attribute_value(key, sales_arg)
             cost = cost_per_veh * sales
             update_dict[f'{markup_factor}Cost'] = cost
 

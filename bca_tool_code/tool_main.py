@@ -28,7 +28,7 @@ from bca_tool_code.repair_costs import calc_emission_repair_costs_per_mile, calc
 from bca_tool_code.emission_costs import calc_criteria_emission_costs
 from bca_tool_code.sum_by_vehicle import calc_sum_of_costs
 from bca_tool_code.discounting import discount_values
-from bca_tool_code.pv_annualized_dicts import pv_annualized
+from bca_tool_code.annual_summary import AnnualSummary
 from bca_tool_code.weighted_results import create_weighted_cost_dict
 from bca_tool_code.calc_deltas import calc_deltas, calc_deltas_weighted
 from bca_tool_code.vehicle import Vehicle
@@ -56,28 +56,28 @@ def main():
         # calculate direct costs based on cumulative regclass sales (learning is applied to cumulative sales)
         calc_avg_regclass_cost_per_step(settings)
         calc_direct_costs_per_veh(settings)
-        calc_direct_costs(settings)
+        calc_direct_costs(settings, 'VPOP_withTech')
 
         # calculate indirect costs
         calc_indirect_costs_per_veh(settings)
-        calc_indirect_costs(settings)
+        calc_indirect_costs(settings, 'VPOP_withTech')
 
         # calculate total tech costs as direct plus indirect
         calc_tech_costs_per_veh(settings)
-        calc_tech_costs(settings)
+        calc_tech_costs(settings, 'VPOP_withTech')
 
         # calculate DEF costs
         calc_def_costs(settings)
-        calc_def_costs_per_veh(settings)
+        calc_def_costs_per_veh(settings, 'VPOP_withTech')
 
         # calculate fuel costs, including adjustments for fuel consumption associated with ORVR
         calc_fuel_costs(settings)
-        calc_fuel_costs_per_veh(settings)
+        calc_fuel_costs_per_veh(settings, 'VPOP_withTech')
 
         # calculate emission repair costs
         calc_emission_repair_costs_per_mile(settings)
         calc_emission_repair_costs_per_veh(settings)
-        calc_emission_repair_costs(settings)
+        calc_emission_repair_costs(settings, 'VPOP_withTech')
 
         # sum operating costs and operating+tech costs into a single key, value
         # use pre-tax fuel price for totals since it serves as the basis for social costs and retail for averages
@@ -103,7 +103,18 @@ def main():
         create_weighted_cost_dict(settings, settings.wtd_cap_fuel_cpm_dict, 'FuelCost_Retail_PerMile', 'VMT_PerVeh')
 
         discount_values(settings)
-        pv_annualized(settings) # TODO limit this to total costs by excluding per vehicle costs
+
+        # calc the annual summary, present values and annualized values (excluding cost/veh and cost/mile results)
+        AnnualSummary.annual_summary(settings, settings.fleet_cap, settings.annual_summary_cap)
+
+        # calc deltas relative to the no-action scenario
+        calc_deltas(settings, settings.fleet_cap)
+        settings.annual_summary_cap = calc_deltas(settings, settings.annual_summary_cap._data)
+
+        settings.wtd_def_cpm_dict = calc_deltas(settings, settings.wtd_def_cpm_dict)
+        settings.wtd_repair_cpm_dict = calc_deltas(settings, settings.wtd_repair_cpm_dict)
+        settings.wtd_cap_fuel_cpm_dict = calc_deltas(settings, settings.wtd_cap_fuel_cpm_dict)
+
 
         t = 0
 

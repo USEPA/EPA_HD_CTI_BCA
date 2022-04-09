@@ -15,7 +15,7 @@ class FuelPrices:
     """
 
     _data = dict()
-
+    fuel_prices_in_analysis_dollars = pd.DataFrame()
     fuel_dict = {'Motor Gasoline': 1,
                  'Diesel': 2,
                  'CNG': 3,
@@ -29,6 +29,10 @@ class FuelPrices:
         df = read_input_file(filepath, skiprows=4, reset_index=True)
 
         df = FuelPrices.get_prices_from_file(general_inputs, df, 'full name', 'Motor Gasoline', 'Diesel')
+
+        df = Deflators.convert_dollars_to_analysis_basis(general_inputs, df, 'retail_fuel_price', 'pretax_fuel_price')
+
+        FuelPrices.fuel_prices_in_analysis_dollars = df.copy()
 
         key = pd.Series(zip(df['yearID'], df['fuelTypeID']))
         df.set_index(key, inplace=True)
@@ -168,8 +172,5 @@ class FuelPrices:
         fuel_prices_df.insert(fuel_prices_df.columns.get_loc('yearID') + 1,
                               'AEO Case',
                               general_inputs.get_attribute_value('aeo_fuel_price_case'))
-
-        fuel_prices_df = Deflators.convert_dollars_to_analysis_basis(general_inputs, fuel_prices_df,
-                                                                     'retail_fuel_price', 'pretax_fuel_price')
 
         return fuel_prices_df

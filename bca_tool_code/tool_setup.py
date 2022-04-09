@@ -18,6 +18,7 @@ from bca_tool_code.input_modules.def_prices import DefPrices
 from bca_tool_code.input_modules.def_doserates import DefDoseRates
 from bca_tool_code.input_modules.orvr_fuelchanges_cap import OrvrFuelChangesCAP
 from bca_tool_code.input_modules.repair_and_maintenance import RepairAndMaintenance
+from bca_tool_code.annual_summary import AnnualSummary
 
 from bca_tool_code.fleet_cap import FleetCAP
 from bca_tool_code.regclass_sales import RegClassSales
@@ -168,7 +169,7 @@ class SetInputs:
             self.orvr_fuelchanges_cap = OrvrFuelChangesCAP()
             self.repair_and_maintenance = RepairAndMaintenance()
 
-            # create additional and useful dicts
+            # create additional and useful dicts and DataFrames
             RegClassSales.create_regclass_sales_dict(FleetCAP.fleet_df, self.regclass_costs.cost_steps)
             self.regclass_sales = RegClassSales()
             self.repair_cpm_dict = dict()
@@ -176,7 +177,8 @@ class SetInputs:
             self.wtd_def_cpm_dict = dict()
             self.wtd_repair_cpm_dict = dict()
             self.wtd_cap_fuel_cpm_dict = dict()
-            self.pv_annualized_cap = dict()
+            AnnualSummary.create_annual_summary_dict()
+            self.annual_summary_cap = AnnualSummary()
 
         if self.calc_cap_pollution:
             DollarPerTonCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('dollar_per_ton_cap'))

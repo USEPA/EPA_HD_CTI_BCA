@@ -15,6 +15,7 @@ class Deflators:
     """
 
     _data = dict()
+    deflators_and_adj_factors = pd.DataFrame()
 
     @staticmethod
     def init_from_file(filepath, general_inputs):
@@ -26,6 +27,8 @@ class Deflators:
         df = Deflators.deflator_df(df, 'Unnamed: 1', 'Gross domestic product')
 
         df = Deflators.calc_adjustment_factors(general_inputs, df)
+
+        Deflators.deflators_and_adj_factors = df.copy()
 
         key = df['yearID']
         df.set_index(key, inplace=True)
