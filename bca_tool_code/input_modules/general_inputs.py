@@ -8,18 +8,18 @@ class GeneralInputs:
 
     """
 
-    _data = dict()
+    _dict = dict()
 
     @staticmethod
     def init_from_file(filepath):
 
-        GeneralInputs._data.clear()
+        GeneralInputs._dict.clear()
 
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x, index_col=0)
 
-        GeneralInputs._data = df.to_dict('index')
+        GeneralInputs._dict = df.to_dict('index')
 
     @staticmethod
     def get_attribute_value(attribute_name):
 
-        return GeneralInputs._data[attribute_name]['UserEntry']
+        return GeneralInputs._dict[attribute_name]['UserEntry']

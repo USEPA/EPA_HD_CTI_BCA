@@ -1,6 +1,3 @@
-from bca_tool_code.fleet_totals_dict import FleetTotals
-from bca_tool_code.fleet_averages_dict import FleetAverages
-from bca_tool_code.project_dicts import InputFileDict
 
 
 def calc_project_markup_value(settings, engine, alt, markup_factor_name, model_year):
@@ -59,21 +56,22 @@ def calc_project_markup_value(settings, engine, alt, markup_factor_name, model_y
     return project_markup_value
 
 
-def calc_indirect_costs_per_veh(settings):
+def calc_indirect_costs_per_veh(settings, data_object, attribute_name):
     """
 
     Parameters:
-        settings: The SetInputs class.
+        settings: The SetInputs class.\n
+        data_object: Object; the fleet data object.\n
+        attribute_name: String; the name of the package cost attribute, e.g., 'Direct' or 'Tech.'
 
     Returns:
-        The averages_dict dictionary updated with indirect costs associated with each markup value along with the summation of those individual indirect
-        costs as "IndirectCost_AvgPerVeh."
+        Updates to the fleet dictionary to include indirect costs per vehicle in sum and for each contribution factor.
 
     """
     print('\nCalculating indirect costs per vehicle...')
     markup_factors = settings.markups.markup_factor_names
 
-    age0_keys = [k for k, v in settings.fleet_cap._data.items() if v['ageID'] == 0]
+    age0_keys = [k for k, v in data_object._dict.items() if v['ageID'] == 0]
 
     for key in age0_keys:
         vehicle, alt, model_year, age_id, disc_rate = key
@@ -84,24 +82,25 @@ def calc_indirect_costs_per_veh(settings):
         ic_sum = 0
         for markup_factor in markup_factors:
             markup_value = calc_project_markup_value(settings, engine, alt, markup_factor, model_year)
-            direct_cost_per_veh = settings.fleet_cap.get_attribute_value(key, 'DirectCost_PerVeh')
-            cost = markup_value * direct_cost_per_veh
+            package_cost_per_veh = data_object.get_attribute_value(key, f'{attribute_name}Cost_PerVeh')
+            cost = markup_value * package_cost_per_veh
             update_dict[f'{markup_factor}Cost_PerVeh'] = cost
             ic_sum += cost
 
         update_dict['IndirectCost_PerVeh'] = ic_sum
-        settings.fleet_cap.update_dict(key, update_dict)
+        data_object.update_dict(key, update_dict)
 
 
-def calc_indirect_costs(settings, sales_arg):
+def calc_indirect_costs(settings, data_object, sales_arg):
     """
 
     Parameters:
         settings: The SetInputs class.\n
+        data_object: Object; the fleet data object.\n
         sales_arg: String; the sales to use when calculating sales * cost/veh.
 
     Returns:
-        The totals_dict dictionary updated with total indirect costs for each individual indirect cost property and a summation of those.
+        Updates to the fleet dictionary to include total indirect costs in sum and for each contribution factor.
 
     """
     print('\nCalculating indirect costs...')
@@ -109,17 +108,17 @@ def calc_indirect_costs(settings, sales_arg):
     markup_factors = settings.markups.markup_factor_names
     markup_factors.append('Indirect')
 
-    age0_keys = [k for k, v in settings.fleet_cap._data.items() if v['ageID'] == 0]
+    age0_keys = [k for k, v in data_object._dict.items() if v['ageID'] == 0]
 
     for key in age0_keys:
         update_dict = dict()
         for markup_factor in markup_factors:
-            cost_per_veh = settings.fleet_cap.get_attribute_value(key, f'{markup_factor}Cost_PerVeh')
-            sales = settings.fleet_cap.get_attribute_value(key, sales_arg)
+            cost_per_veh = data_object.get_attribute_value(key, f'{markup_factor}Cost_PerVeh')
+            sales = data_object.get_attribute_value(key, sales_arg)
             cost = cost_per_veh * sales
             update_dict[f'{markup_factor}Cost'] = cost
 
-        settings.fleet_cap.update_dict(key, update_dict)
+        data_object.update_dict(key, update_dict)
 
 # def calc_project_markup_value(settings, unit, alt, markup_factor_name, model_year):
 #     """

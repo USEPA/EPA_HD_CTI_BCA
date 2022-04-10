@@ -11,13 +11,13 @@ class RepairAndMaintenance:
 
     """
 
-    _data = dict()
+    _dict = dict()
     repair_and_maintenance_in_analysis_dollars = pd.DataFrame()
 
     @staticmethod
     def init_from_file(filepath, general_inputs):
 
-        RepairAndMaintenance._data.clear()
+        RepairAndMaintenance._dict.clear()
 
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x, index_col=0)
 
@@ -25,9 +25,9 @@ class RepairAndMaintenance:
 
         RepairAndMaintenance.repair_and_maintenance_in_analysis_dollars = df.copy()
 
-        RepairAndMaintenance._data = df.to_dict('index')
+        RepairAndMaintenance._dict = df.to_dict('index')
 
     @staticmethod
     def get_attribute_value(attribute_name):
 
-        return RepairAndMaintenance._data[attribute_name]['Value']
+        return RepairAndMaintenance._dict[attribute_name]['Value']

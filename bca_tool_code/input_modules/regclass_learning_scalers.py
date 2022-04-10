@@ -1,32 +1,26 @@
 import pandas as pd
-import sys
+
+from bca_tool_code.input_modules.general_functions import read_input_file
 
 
 class RegclassLearningScalers:
 
-    _data = dict()
+    _dict = dict()
 
     @staticmethod
     def init_from_file(filepath):
 
-        RegclassLearningScalers._data.clear()
+        RegclassLearningScalers._dict.clear()
 
-        try:
-            pd.read_csv(filepath)
-            print(f'File {filepath}.......FOUND.')
-            df = pd.read_csv(filepath, usecols=lambda x: 'Notes' not in x)
+        df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
 
-            key = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID']))
+        key = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID']))
 
-            df.set_index(key, inplace=True)
+        df.set_index(key, inplace=True)
 
-            RegclassLearningScalers._data = df.to_dict('index')
-
-        except FileNotFoundError:
-            print(f'File {filepath}......NOT FOUND.')
-            sys.exit()
+        RegclassLearningScalers._dict = df.to_dict('index')
 
     @staticmethod
     def get_seedvolume_factor(engine, alt):
 
-        return RegclassLearningScalers._data[engine, alt]['SeedVolumeFactor']
+        return RegclassLearningScalers._dict[engine, alt]['SeedVolumeFactor']

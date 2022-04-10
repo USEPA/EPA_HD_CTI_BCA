@@ -1,13 +1,14 @@
 import pandas as pd
 
 
-def discount_values(settings):
+def discount_values(settings, data_object):
     """
     The discount function determines metrics appropriate for discounting (those contained in dict_of_values) and does the discounting
     calculation to a given year and point within that year.
 
     Parameters:
-        settings: The SetInputs class.
+        settings: The SetInputs class.\n
+        data_object: Object; the fleet data object.
 
     Returns:
         The passed dictionary with new key, value pairs where keys stipulate the discount rate and monetized values are discounted at the same rate as the discount rate of the input stream of values.
@@ -21,7 +22,7 @@ def discount_values(settings):
     print(f'\nDiscounting values...')
 
     # get cost attributes
-    nested_dict = [n_dict for key, n_dict in settings.fleet_cap._data.items()][0]
+    nested_dict = [n_dict for key, n_dict in data_object._dict.items()][0]
     all_costs = [k for k, v in nested_dict.items() if 'Cost' in k]
     emission_cost_args_25 = [item for item in all_costs if '_0.025' in item]
     emission_cost_args_3 = [item for item in all_costs if '_0.03' in item]
@@ -40,7 +41,7 @@ def discount_values(settings):
         print('costs_start entry in General Inputs file not set properly.')
 
     # no need to discount undiscounted values with 0 percent discount rate
-    non0_dr_keys = [k for k, v in settings.fleet_cap._data.items() if v['DiscountRate'] != 0]
+    non0_dr_keys = [k for k, v in data_object._dict.items() if v['DiscountRate'] != 0]
 
     for key in non0_dr_keys:
         vehicle, alt, model_year, age_id, rate = key
@@ -49,35 +50,35 @@ def discount_values(settings):
         update_dict = dict()
 
         for arg in non_emission_cost_args:
-            arg_value = settings.fleet_cap.get_attribute_value(key, arg)
+            arg_value = data_object.get_attribute_value(key, arg)
             arg_value_discounted = arg_value / ((1 + rate) ** (year - discount_to_year + discount_offset))
             update_dict[arg] = arg_value_discounted
 
         emission_rate = 0.025
         for arg in emission_cost_args_25:
-            arg_value = settings.fleet_cap.get_attribute_value(key, arg)
+            arg_value = data_object.get_attribute_value(key, arg)
             arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
             update_dict[arg] = arg_value_discounted
 
         emission_rate = 0.03
         for arg in emission_cost_args_3:
-            arg_value = settings.fleet_cap.get_attribute_value(key, arg)
+            arg_value = data_object.get_attribute_value(key, arg)
             arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
             update_dict[arg] = arg_value_discounted
 
         emission_rate = 0.05
         for arg in emission_cost_args_5:
-            arg_value = settings.fleet_cap.get_attribute_value(key, arg)
+            arg_value = data_object.get_attribute_value(key, arg)
             arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
             update_dict[arg] = arg_value_discounted
 
         emission_rate = 0.07
         for arg in emission_cost_args_7:
-            arg_value = settings.fleet_cap.get_attribute_value(key, arg)
+            arg_value = data_object.get_attribute_value(key, arg)
             arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
             update_dict[arg] = arg_value_discounted
 
-        settings.fleet_cap.update_dict(key, update_dict)
+        data_object.update_dict(key, update_dict)
 
 
 if __name__ == '__main__':
@@ -92,8 +93,8 @@ if __name__ == '__main__':
     cost = 100
     growth = 0.5
 
-    def create_data_df(dr):
-        _data_df = pd.DataFrame({'vehicle': [(vehicle, alt, my, 0, dr), (vehicle, alt, my, 1, dr), (vehicle, alt, my, 2, dr),
+    def create_dict_df(dr):
+        _dict_df = pd.DataFrame({'vehicle': [(vehicle, alt, my, 0, dr), (vehicle, alt, my, 1, dr), (vehicle, alt, my, 2, dr),
                                             (vehicle, alt, my, 3, dr), (vehicle, alt, my, 4, dr), (vehicle, alt, my, 5, dr),
                                             (vehicle, alt, my, 6, dr), (vehicle, alt, my, 7, dr), (vehicle, alt, my, 8, dr),
                                             (vehicle, alt, my, 9, dr), (vehicle, alt, my, 10, dr)],
@@ -102,17 +103,17 @@ if __name__ == '__main__':
                                          cost * (1 + growth) ** 4, cost * (1 + growth) ** 5, cost * (1 + growth) ** 6,
                                          cost * (1 + growth) ** 7,
                                          cost * (1 + growth) ** 8, cost * (1 + growth) ** 9, cost * (1 + growth) ** 10]})
-        return _data_df
+        return _dict_df
 
     dr = 0
-    data_df = create_data_df(dr)
+    data_df = create_dict_df(dr)
     data_df.set_index('vehicle', inplace=True)
     print('\n\nData\n', data_df)
 
     settings.costs_start = 'start-year'
     dr = 0.03
     settings.social_discount_rate_1, settings.social_discount_rate_2 = dr, dr
-    data_df = create_data_df(dr)
+    data_df = create_dict_df(dr)
     data_df.set_index('vehicle', inplace=True)
     data_dict = data_df.to_dict('index')
     discounted_dict = discount_values(settings, data_dict, 'CAP', 'totals')

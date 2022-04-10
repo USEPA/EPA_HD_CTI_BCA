@@ -1,4 +1,4 @@
-
+# TODO make use of data_object rather than hardcoding the object dict
 
 def calc_typical_vmt_per_year(settings, key):
     """
@@ -97,7 +97,7 @@ def calc_emission_repair_costs_per_mile(settings):
     max_cpm_input_value = settings.repair_and_maintenance.get_attribute_value('max_R&M_CPM')
     emission_repair_share_input_value = settings.repair_and_maintenance.get_attribute_value('emission_repair_share')
 
-    for key in settings.fleet_cap._data.keys():
+    for key in settings.fleet_cap._dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
 
         # Note: keys with non-zero discount rates won't have any cost data yet.
@@ -165,7 +165,7 @@ def calc_emission_repair_costs_per_veh(settings):
     """
     print('\nCalculating emission repair costs per vehicle...')
 
-    for key in settings.fleet_cap._data.keys():
+    for key in settings.fleet_cap._dict.keys():
         repair_cpm = settings.fleet_cap.get_attribute_value(key, 'EmissionRepairCost_PerMile')
         vmt_per_veh = settings.fleet_cap.get_attribute_value(key, 'VMT_PerVeh')
         cost_per_veh = repair_cpm * vmt_per_veh
@@ -187,7 +187,7 @@ def calc_emission_repair_costs(settings, sales_arg):
     """
     print(f'\nCalculating total emission repair costs...')
 
-    for key in settings.fleet_cap._data.keys():
+    for key in settings.fleet_cap._dict.keys():
         cost_per_veh = settings.fleet_cap.get_attribute_value(key, 'EmissionRepairCost_PerVeh')
         vpop = settings.fleet_cap.get_attribute_value(key, sales_arg)
         cost = cost_per_veh * vpop

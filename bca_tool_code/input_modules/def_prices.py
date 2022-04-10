@@ -11,13 +11,13 @@ class DefPrices:
 
     """
 
-    _data = dict()
+    _dict = dict()
     def_prices_in_analysis_dollars = pd.DataFrame()
 
     @staticmethod
     def init_from_file(filepath, general_inputs):
 
-        DefPrices._data.clear()
+        DefPrices._dict.clear()
 
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x, index_col=0)
 
@@ -25,9 +25,9 @@ class DefPrices:
 
         DefPrices.def_prices_in_analysis_dollars = df.copy()
 
-        DefPrices._data = df.to_dict('index')
+        DefPrices._dict = df.to_dict('index')
 
     @staticmethod
     def get_price(year_id):
 
-        return DefPrices._data[year_id]['DEF_USDperGal']
+        return DefPrices._dict[year_id]['DEF_USDperGal']

@@ -2,13 +2,14 @@ import pandas as pd
 
 from bca_tool_code.vehicle import Vehicle
 
-
-def create_weighted_cost_dict(settings, input_dict, arg_to_weight, arg_to_weight_by):
+# TODO make use of data_object rather than hardcoded object dict
+def create_weighted_cost_dict(settings, data_object, input_dict, arg_to_weight, arg_to_weight_by):
     """
     This function weights 'arg_to_weight' attributes by the 'arg_to_weight_by' attribute.
 
     Parameters::
         settings: The SetInputs class.\n
+        data_object: Object; the fleet data object.\n
         input_dict: Dictionary into which to place results.
         arg_to_weight: String; the attribute to be weighted by the arg_to_weight_by argument.\n
         arg_to_weight_by: String; the argument to weight by.
@@ -30,7 +31,7 @@ def create_weighted_cost_dict(settings, input_dict, arg_to_weight, arg_to_weight
 
     max_age_included = pd.to_numeric(settings.general_inputs.get_attribute_value('weighted_operating_cost_thru_ageID'))
 
-    for key in settings.fleet_cap._data.keys():
+    for key in data_object._dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
         st, rc, ft = vehicle
         if arg_to_weight == 'DEFCost_PerMile' and ft != 2:

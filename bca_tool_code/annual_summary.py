@@ -3,12 +3,12 @@ import pandas as pd
 
 class AnnualSummary:
 
-    _data = dict()
+    _dict = dict()
 
     @staticmethod
     def create_annual_summary_dict():
 
-        AnnualSummary._data.clear()
+        AnnualSummary._dict.clear()
 
     @staticmethod
     def annual_summary(settings, source_object, destination_object):
@@ -23,10 +23,10 @@ class AnnualSummary:
         """
         print(f'\nGetting Annual Values, Present Values and Annualized Values...')
 
-        source_dict = source_object._data
-        destination_dict = destination_object._data
+        source_dict = source_object._dict
+        destination_dict = destination_object._dict
 
-        num_alts = len(settings.options_cap._data)
+        num_alts = len(settings.options_cap._dict)
         # if program == 'CAP':
         #     num_alts = settings.number_alts_cap
         # else:
@@ -166,4 +166,4 @@ class AnnualSummary:
     @staticmethod
     def get_attribute_value(key, attribute_name):
 
-        return AnnualSummary._data[key][attribute_name]
+        return AnnualSummary._dict[key][attribute_name]

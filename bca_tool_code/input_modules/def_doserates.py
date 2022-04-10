@@ -10,29 +10,29 @@ class DefDoseRates:
 
     """
 
-    _data = dict()
+    _dict = dict()
 
     @staticmethod
     def init_from_file(filepath):
 
-        DefDoseRates._data.clear()
+        DefDoseRates._dict.clear()
 
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
 
         key = pd.Series(zip(df['regClassID'], df['fuelTypeID']))
         df.set_index(key, inplace=True)
 
-        DefDoseRates._data = df.to_dict('index')
+        DefDoseRates._dict = df.to_dict('index')
 
     @staticmethod
     def get_curve_coefficients(engine):
 
-        slope, intercept = DefDoseRates._data[engine]['slope_DEFdoserate'], \
-                           DefDoseRates._data[engine]['intercept_DEFdoserate']
+        slope, intercept = DefDoseRates._dict[engine]['slope_DEFdoserate'], \
+                           DefDoseRates._dict[engine]['intercept_DEFdoserate']
 
         return slope, intercept
 
     @staticmethod
     def get_attribute_value(engine, attribute_name):
 
-        return DefDoseRates._data[engine][attribute_name]
+        return DefDoseRates._dict[engine][attribute_name]

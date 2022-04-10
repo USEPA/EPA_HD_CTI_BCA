@@ -10,21 +10,21 @@ class OrvrFuelChangesCAP:
 
     """
 
-    _data = dict()
+    _dict = dict()
 
     @staticmethod
     def init_from_file(filepath):
 
-        OrvrFuelChangesCAP._data.clear()
+        OrvrFuelChangesCAP._dict.clear()
 
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
 
         key = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID']))
         df.set_index(key, inplace=True)
 
-        OrvrFuelChangesCAP._data = df.to_dict('index')
+        OrvrFuelChangesCAP._dict = df.to_dict('index')
 
     @staticmethod
     def get_ml_per_gram(engine, alt):
 
-        return OrvrFuelChangesCAP._data[engine, alt]['ml/g']
+        return OrvrFuelChangesCAP._dict[engine, alt]['ml/g']

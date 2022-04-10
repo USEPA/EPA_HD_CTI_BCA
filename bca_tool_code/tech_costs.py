@@ -1,13 +1,14 @@
 
 
-def calc_tech_costs_per_veh(settings):
+def calc_tech_costs_per_veh(data_object, attribute_name):
     """
     
     Parameters:
-        settings: The SetInputs class.
+        data_object: Object; the fleet data object.\n
+        attribute_name: String; the name of the package cost attribute, e.g., 'Direct' or 'Tech.'\n
 
     Returns:
-        The averages_dict dictionary updated with average tech costs per vehicle (direct plus indirect).
+        Updates to the fleet dictionary to include average tech costs per vehicle (direct plus indirect).
 
     Note:
         Direct and indirect costs apply only for ageID=0 (i.e., new sales).
@@ -15,35 +16,35 @@ def calc_tech_costs_per_veh(settings):
     """
     print('\nCalculating technology costs per vehicle...')
 
-    age0_keys = [k for k, v in settings.fleet_cap._data.items() if v['ageID'] == 0]
+    age0_keys = [k for k, v in data_object._dict.items() if v['ageID'] == 0]
 
     for key in age0_keys:
-        cost = settings.fleet_cap.get_attribute_value(key, 'DirectCost_PerVeh')
-        cost += settings.fleet_cap.get_attribute_value(key, 'IndirectCost_PerVeh')
+        cost = data_object.get_attribute_value(key, f'{attribute_name}Cost_PerVeh')
+        cost += data_object.get_attribute_value(key, 'IndirectCost_PerVeh')
 
         update_dict = {'TechCost_PerVeh': cost}
-        settings.fleet_cap.update_dict(key, update_dict)
+        data_object.update_dict(key, update_dict)
 
 
-def calc_tech_costs(settings, sales_arg):
+def calc_tech_costs(data_object, sales_arg):
     """
 
     Parameters:
-        settings: The SetInputs class.\n
+        data_object: Object; the fleet data object.\n
         sales_arg: String; the sales to use when calculating sales * cost/veh.
 
     Returns:
-        The totals_dict dictionary updated with annual technology costs for all vehicles.
+        Updates to the fleet dictionary to include annual technology costs for all vehicles.
 
     """
     print('\nCalculating technology costs...')
 
-    age0_keys = [k for k, v in settings.fleet_cap._data.items() if v['ageID'] == 0]
+    age0_keys = [k for k, v in data_object._dict.items() if v['ageID'] == 0]
 
     for key in age0_keys:
-        cost_per_veh = settings.fleet_cap.get_attribute_value(key, 'TechCost_PerVeh')
-        sales = settings.fleet_cap.get_attribute_value(key, sales_arg)
+        cost_per_veh = data_object.get_attribute_value(key, 'TechCost_PerVeh')
+        sales = data_object.get_attribute_value(key, sales_arg)
         cost = cost_per_veh * sales
 
         update_dict = {'TechCost': cost}
-        settings.fleet_cap.update_dict(key, update_dict)
+        data_object.update_dict(key, update_dict)

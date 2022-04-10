@@ -14,7 +14,7 @@ class FuelPrices:
 
     """
 
-    _data = dict()
+    _dict = dict()
     fuel_prices_in_analysis_dollars = pd.DataFrame()
     fuel_dict = {'Motor Gasoline': 1,
                  'Diesel': 2,
@@ -24,7 +24,7 @@ class FuelPrices:
     @staticmethod
     def init_from_file(filepath, general_inputs):
 
-        FuelPrices._data.clear()
+        FuelPrices._dict.clear()
 
         df = read_input_file(filepath, skiprows=4, reset_index=True)
 
@@ -37,7 +37,7 @@ class FuelPrices:
         key = pd.Series(zip(df['yearID'], df['fuelTypeID']))
         df.set_index(key, inplace=True)
 
-        FuelPrices._data = df.to_dict('index')
+        FuelPrices._dict = df.to_dict('index')
 
     @staticmethod
     def get_price(yearID, fuelTypeID, *series):
@@ -55,7 +55,7 @@ class FuelPrices:
         prices = [item for item in series]
         price_list = list()
         for price in prices:
-            price_list.append(FuelPrices._data[yearID, fuelTypeID][price])
+            price_list.append(FuelPrices._dict[yearID, fuelTypeID][price])
         return price_list
 
     @staticmethod

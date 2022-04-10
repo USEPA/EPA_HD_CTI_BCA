@@ -24,11 +24,12 @@ def calc_thc_reduction(settings, key):
     return thc_reduction
 
 
-def calc_fuel_costs(settings):
+def calc_fuel_costs_cap(settings, data_object):
     """
 
     Parameters:
-        settings: The SetInputs class.
+        settings: The SetInputs class.\n
+        data_object: Object; the fleet data object.
 
     Returns:
         Updates the fleet dictionary to reflect fuel consumption (Gallons) adjusted to account for the fuel saved in
@@ -40,12 +41,12 @@ def calc_fuel_costs(settings):
         tool although the inventory impacts are included in the MOVES runs.
 
     """
-    print('\nCalculating CAP-related fuel costs...')
+    print('\nCalculating CAP fuel costs...')
 
     gallons_per_ml = pd.to_numeric(settings.general_inputs.get_attribute_value('gallons_per_ml'))
     grams_per_short_ton = pd.to_numeric(settings.general_inputs.get_attribute_value('grams_per_short_ton'))
 
-    for key in settings.fleet_cap._data.keys():
+    for key in data_object._dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
         st, rc, ft = vehicle
         engine = rc, ft
@@ -61,7 +62,7 @@ def calc_fuel_costs(settings):
             thc_reduction = calc_thc_reduction(settings, key)
             captured_gallons = thc_reduction * orvr_adjustment * grams_per_short_ton * gallons_per_ml
 
-        gallons = settings.fleet_cap.get_attribute_value(key, 'Gallons_withTech')
+        gallons = data_object.get_attribute_value(key, 'Gallons_withTech')
         gallons_paid_for = gallons - captured_gallons
 
         cost_retail = price_retail * gallons_paid_for
@@ -71,15 +72,49 @@ def calc_fuel_costs(settings):
                        'FuelCost_Retail': cost_retail,
                        'FuelCost_Pretax': cost_pretax,
                        }
-        settings.fleet_cap.update_dict(key, update_dict)
+        data_object.update_dict(key, update_dict)
 
 
-def calc_fuel_costs_per_veh(settings, sales_arg):
+def calc_fuel_costs_ghg(settings, data_object):
     """
 
     Parameters:
         settings: The SetInputs class.\n
-        sales_arg: String; the sales to use when calculating sales * cost/veh.
+        data_object: Object; the fleet data object.
+
+    Returns:
+        Updates the fleet dictionary to reflect fuel costs.
+
+    """
+    print('\nCalculating GHG fuel costs...')
+
+    for key in data_object._dict.keys():
+        vehicle, alt, model_year, age_id, disc_rate = key
+        st, rc, ft = vehicle
+        calendar_year = model_year + age_id
+
+        prices = ['retail_fuel_price', 'pretax_fuel_price']
+        price_retail, price_pretax = settings.fuel_prices.get_price(calendar_year, ft, *prices)
+
+        gallons_paid_for = data_object.get_attribute_value(key, 'Gallons')
+
+        cost_retail = price_retail * gallons_paid_for
+        cost_pretax = price_pretax * gallons_paid_for
+
+        update_dict = {'FuelCost_Retail': cost_retail,
+                       'FuelCost_Pretax': cost_pretax,
+                       }
+        data_object.update_dict(key, update_dict)
+
+
+def calc_fuel_costs_per_veh(settings, data_object, sales_arg, vmt_arg):
+    """
+
+    Parameters:
+        settings: The SetInputs class.\n
+        data_object: Object; the fleet data object.\n
+        sales_arg: String; the sales to use when calculating cost/veh.\n
+        vmt_arg: String; the vmt to use when calculating cost/mile.
 
     Returns:
         Updates the fleet dictionary to include fuel costs/vehicle and costs/mile.
@@ -87,10 +122,10 @@ def calc_fuel_costs_per_veh(settings, sales_arg):
     """
     print('\nCalculating average fuel costs...')
 
-    for key in settings.fleet_cap._data.keys():
-        fuel_cost = settings.fleet_cap.get_attribute_value(key, 'FuelCost_Retail')
-        vmt = settings.fleet_cap.get_attribute_value(key, 'VMT_withTech')
-        vpop = settings.fleet_cap.get_attribute_value(key, sales_arg)
+    for key in data_object._dict.keys():
+        fuel_cost = data_object.get_attribute_value(key, 'FuelCost_Retail')
+        vmt = data_object.get_attribute_value(key, vmt_arg)
+        vpop = data_object.get_attribute_value(key, sales_arg)
 
         # try/except block to protect against divide by 0 error
         try:

@@ -1,58 +1,57 @@
 import pandas as pd
 
 from bca_tool_code.input_modules.general_functions import read_input_file
-from bca_tool_code.input_modules.options_cap import OptionsCAP
-from bca_tool_code.input_modules.moves_adjustments_cap import MovesAdjCAP
+from bca_tool_code.input_modules.options_ghg import OptionsGHG
+from bca_tool_code.input_modules.moves_adjustments_ghg import MovesAdjGHG
 
 
-class FleetCAP:
+class FleetGHG:
     """
 
-    The FleetCAP class reads the MOVES input data file and provides methods to query its contents.
+    The FleetGHG class reads the MOVES input data file and provides methods to query its contents.
 
     """
 
     _dict = dict()
-    args_with_tech = ['VPOP', 'VMT', 'Gallons'] # these are MOVES attributes that need adjustment
+    args_with_tech = ['VPOP']
     year_min = 0
     year_max = 0
     years = 0
-    fleet_df = pd.DataFrame() # used in RegClassSales
+    fleet_df = pd.DataFrame()
 
     # create a dictionary of attributes to be summed (dict keys) and what attributes to include in the sum (dict values)
-    # use pre-tax fuel price for total costs since it serves as the basis for social costs; use retail for averages
     attributes_to_sum = {'OperatingCost':
-                             ['DEFCost', 'FuelCost_Pretax', 'EmissionRepairCost'],
+                             ['FuelCost_Pretax'],
                          'TechAndOperatingCost':
                              ['TechCost', 'OperatingCost'],
                          'OperatingCost_Owner_PerMile':
-                             ['DEFCost_PerMile', 'FuelCost_Retail_PerMile', 'EmissionRepairCost_PerMile'],
+                             ['FuelCost_Retail_PerMile'],
                          'OperatingCost_Owner_PerVeh':
-                             ['DEFCost_PerVeh', 'FuelCost_Retail_PerVeh', 'EmissionRepairCost_PerVeh']}
+                             ['FuelCost_Retail_PerVeh']}
 
     @staticmethod
     def init_from_file(filepath, general_inputs):
 
-        FleetCAP._dict.clear()
+        FleetGHG._dict.clear()
 
         df = read_input_file(filepath)
 
         df.insert(0, 'DiscountRate', 0)
         df.insert(df.columns.get_loc('modelYearID') + 1, 'ageID', df['yearID'] - df['modelYearID'])
 
-        year_min_cap = FleetCAP.get_age0_min_year(df, 'yearID')
-        FleetCAP.year_min_cap = year_min_cap
+        year_min_ghg = FleetGHG.get_age0_min_year(df, 'yearID')
+        FleetGHG.year_min_ghg = year_min_ghg
 
-        year_max_cap = df['yearID'].max()
-        FleetCAP.year_max_cap = year_max_cap
+        year_max_ghg = df['yearID'].max()
+        FleetGHG.year_max = year_max_ghg
 
-        years_cap = range(year_min_cap, year_max_cap + 1)
-        FleetCAP.years_cap = years_cap
+        years_ghg = range(year_min_ghg, year_max_ghg + 1)
+        FleetGHG.years = years_ghg
 
-        df = FleetCAP.create_fleet_df(df, year_min_cap)
-        FleetCAP.fleet_df = df.copy()
-        
-        new_attributes = FleetCAP.create_new_attributes(general_inputs)
+        df = FleetGHG.create_fleet_df(df, year_min_ghg)
+        FleetGHG.fleet_df = df.copy()
+
+        new_attributes = FleetGHG.create_new_attributes(general_inputs)
 
         df['VMT_PerVeh'] = df['VMT'] / df['VPOP']
 
@@ -63,25 +62,25 @@ class FleetCAP:
                             df['optionID'], df['modelYearID'], df['ageID'], df['DiscountRate']))
         df.set_index(key, inplace=True)
 
-        FleetCAP._dict = df.to_dict('index')
+        FleetGHG._dict = df.to_dict('index')
 
-        FleetCAP.calc_per_veh_cumulative_vmt()
+        FleetGHG.calc_per_veh_cumulative_vmt()
 
-        FleetCAP.add_keys_for_discounting(general_inputs)
+        FleetGHG.add_keys_for_discounting(general_inputs)
 
     @staticmethod
     def get_attribute_values(key, *attribute_names):
 
         attribute_values = list()
         for attribute_name in attribute_names:
-            attribute_values.append(FleetCAP._dict[key][attribute_name])
+            attribute_values.append(FleetGHG._dict[key][attribute_name])
 
         return attribute_values
 
     @staticmethod
     def get_attribute_value(key, attribute_name):
 
-        return FleetCAP._dict[key][attribute_name]
+        return FleetGHG._dict[key][attribute_name]
 
     @staticmethod
     def create_new_attributes(general_inputs):
@@ -95,36 +94,16 @@ class FleetCAP:
             A list of new attributes to be calculated and provided in output files.
 
         """
-        new_attributes = ['DirectCost',
-                          'WarrantyCost',
-                          'RnDCost',
-                          'OtherCost',
-                          'ProfitCost',
-                          'IndirectCost',
-                          'TechCost',
-                          'DEF_Gallons',
-                          'DEFCost',
-                          'GallonsCaptured_byORVR',
+        new_attributes = ['TechCost',
                           'FuelCost_Retail',
                           'FuelCost_Pretax',
-                          'EmissionRepairCost',
                           'OperatingCost',
                           'TechAndOperatingCost'
                           'VMT_PerVeh',
                           'VMT_PerVeh_Cumulative',
-                          'DirectCost_PerVeh',
-                          'WarrantyCost_PerVeh',
-                          'RnDCost_PerVeh',
-                          'OtherCost_PerVeh',
-                          'ProfitCost_PerVeh',
-                          'IndirectCost_PerVeh',
                           'TechCost_PerVeh',
-                          'DEFCost_PerMile',
-                          'DEFCost_PerVeh',
                           'FuelCost_Retail_PerMile',
                           'FuelCost_Retail_PerVeh',
-                          'EmissionRepairCost_PerMile',
-                          'EmissionRepairCost_PerVeh',
                           'OperatingCost_Owner_PerMile',
                           'OperatingCost_Owner_PerVeh',
                           ]
@@ -162,19 +141,22 @@ class FleetCAP:
         rates = [pd.to_numeric(rate) for rate in rates]
         for rate in rates:
             update_dict = dict()
-            for key in FleetCAP._dict.keys():
+            for key in FleetGHG._dict.keys():
                 vehicle, alt, model_year, age, discount_rate = key
-                update_dict[vehicle, alt, model_year, age, rate] = FleetCAP._dict[key].copy()
+                update_dict[vehicle, alt, model_year, age, rate] = FleetGHG._dict[key].copy()
                 update_dict[vehicle, alt, model_year, age, rate]['DiscountRate'] = rate
-            FleetCAP._dict.update(update_dict)
+            FleetGHG._dict.update(update_dict)
 
     @staticmethod
-    def create_fleet_df(df, year_min_cap):
+    def create_fleet_df(df, year_min):
         """
 
         Parameters:
-            df: DataFrame; the raw fleet input data (e.g., from MOVES). \n
-            year_min_cap: Int; the first model year for the DataFrame.
+            general_inputs: The SetInputs class.\n
+            input_df: DataFrame; the raw fleet input data (e.g., from MOVES). \n
+            options_dict: Dictionary; provides the option IDs and names of options being run.\n
+            adj_dict: Dictionary; provides any adjustments to be made to the data contained in input_df. \n
+            args_with_tech: String(s); the attributes to be adjusted.
 
         Returns:
             A DataFrame of the MOVES inputs with necessary MOVES adjustments made according to the MOVES adjustments input file. The DataFrame will also add
@@ -191,10 +173,10 @@ class FleetCAP:
         _df = _df.loc[_df['fuelTypeID'] != 5, :]  # eliminate E85
         _df = _df.loc[_df['regClassID'] >= 41, :]  # eliminate non-project regclasses
 
-        _df = pd.DataFrame(_df.loc[_df['modelYearID'] >= year_min_cap, :]).reset_index(drop=True)
+        _df = pd.DataFrame(_df.loc[_df['modelYearID'] >= year_min, :]).reset_index(drop=True)
 
         # select only the options included in the options.csv input file
-        option_id_list = [key for key in OptionsCAP._dict.keys()]
+        option_id_list = [key for key in OptionsGHG._dict.keys()]
         df_alts = dict()
         df_return = pd.DataFrame()
         for alt in option_id_list:
@@ -211,15 +193,15 @@ class FleetCAP:
         st_vehicles = pd.Series(
             zip(zip(df_return['sourceTypeID'], df_return['regClassID'], df_return['fuelTypeID']), df_return['optionID'])).unique()
 
-        for arg in FleetCAP.args_with_tech:
+        for arg in FleetGHG.args_with_tech:
             df_return.insert(df_return.columns.get_loc(arg) + 1, f'{arg}_withTech', 0)
 
         for (vehicle, alt) in st_vehicles:
             st, rc, ft = vehicle
-            adjustment = MovesAdjCAP.get_attribute_value(vehicle, alt, 'percent')
-            growth = MovesAdjCAP.get_attribute_value(vehicle, alt, 'growth')
+            adjustment = MovesAdjGHG.get_attribute_value(vehicle, alt, 'percent')
+            growth = MovesAdjGHG.get_attribute_value(vehicle, alt, 'growth')
 
-            for arg in FleetCAP.args_with_tech:
+            for arg in FleetGHG.args_with_tech:
                 arg_with_tech = df_return.loc[(df_return['optionID'] == alt)
                                               & (df_return['sourceTypeID'] == st)
                                               & (df_return['regClassID'] == rc)
@@ -250,19 +232,19 @@ class FleetCAP:
         """
         # this loop calculates the cumulative vmt for each key with the averages_dict and saves it in the cumulative_vmt_dict
         cumulative_vmt_dict = dict()
-        for key in FleetCAP._dict.keys():
+        for key in FleetGHG._dict.keys():
             vehicle, alt, model_year, age_id, disc_rate = key
             if (vehicle, alt, model_year, age_id-1, 0) in cumulative_vmt_dict.keys():
                 cumulative_vmt = cumulative_vmt_dict[(vehicle, 0, model_year, age_id-1, 0)] \
-                                 + FleetCAP.get_attribute_value(key, 'VMT_PerVeh')
+                                 + FleetGHG.get_attribute_value(key, 'VMT_PerVeh')
             else:
-                cumulative_vmt = FleetCAP.get_attribute_value(key, 'VMT_PerVeh')
+                cumulative_vmt = FleetGHG.get_attribute_value(key, 'VMT_PerVeh')
             cumulative_vmt_dict[key] = cumulative_vmt
 
         # this loop updates the averages_dict with the contents of the cumulative_vmt_dict
-        for key in FleetCAP._dict.keys():
+        for key in FleetGHG._dict.keys():
             cumulative_vmt = cumulative_vmt_dict[key]
-            FleetCAP.update_dict(key, {'VMT_PerVeh_Cumulative': cumulative_vmt})
+            FleetGHG.update_dict(key, {'VMT_PerVeh_Cumulative': cumulative_vmt})
 
     @staticmethod
     def update_dict(key, input_dict):
@@ -277,9 +259,9 @@ class FleetCAP:
 
         """
         for attribute_name, attribute_value in input_dict.items():
-            FleetCAP._dict[key][attribute_name] = attribute_value
+            FleetGHG._dict[key][attribute_name] = attribute_value
 
     @staticmethod
     def add_key_value_pairs(key, input_dict):
 
-        FleetCAP._dict[key] = input_dict
+        FleetGHG._dict[key] = input_dict

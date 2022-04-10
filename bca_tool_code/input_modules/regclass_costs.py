@@ -12,14 +12,14 @@ class RegclassCosts:
 
     """
 
-    _data = dict()
+    _dict = dict()
     cost_steps = list()
     regclass_costs_in_analysis_dollars = pd.DataFrame()
 
     @staticmethod
     def init_from_file(filepath, general_inputs):
 
-        RegclassCosts._data.clear()
+        RegclassCosts._dict.clear()
         RegclassCosts.cost_steps.clear()
 
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
@@ -35,11 +35,11 @@ class RegclassCosts:
         key = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID']))
         df.set_index(key, inplace=True)
 
-        RegclassCosts._data = df.to_dict('index')
+        RegclassCosts._dict = df.to_dict('index')
 
     @staticmethod
     def get_cost(key, cost_step):
         step = cost_step
         if type(step) is not str:
             step = f'{step}'
-        return RegclassCosts._data[key][step]
+        return RegclassCosts._dict[key][step]

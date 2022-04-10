@@ -14,13 +14,13 @@ class Deflators:
 
     """
 
-    _data = dict()
+    _dict = dict()
     deflators_and_adj_factors = pd.DataFrame()
 
     @staticmethod
     def init_from_file(filepath, general_inputs):
 
-        Deflators._data.clear()
+        Deflators._dict.clear()
 
         df = read_input_file(filepath, skiprows=4, reset_index=True)
 
@@ -33,7 +33,7 @@ class Deflators:
         key = df['yearID']
         df.set_index(key, inplace=True)
 
-        Deflators._data = df.to_dict('index')
+        Deflators._dict = df.to_dict('index')
 
     @staticmethod
     def deflator_df(df, id_col, id_value):
@@ -102,7 +102,7 @@ class Deflators:
         dollar_years = pd.Series(pd.DataFrame(df.loc[df['DollarBasis'] > 1])['DollarBasis'].unique())
         for year in dollar_years:
             for arg in args:
-                df.loc[df['DollarBasis'] == year, arg] = df[arg] * Deflators._data[year]['adjustment_factor']
+                df.loc[df['DollarBasis'] == year, arg] = df[arg] * Deflators._dict[year]['adjustment_factor']
             df.loc[df['DollarBasis'] == year, 'DollarBasis'] = dollar_basis_analysis
 
         return df

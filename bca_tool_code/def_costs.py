@@ -22,11 +22,12 @@ def calc_def_doserate(settings, vehicle):
     return base_doserate
 
 
-def calc_nox_reduction(settings, key):
+def calc_nox_reduction(settings, data_object, key):
     """
 
     Parameters:
         settings: The SetInputs class. \n
+        data_object: Object; the fleet data object.\n
         key: Tuple; represents the vehicle, alt, model year, age and discount rate.
 
     Returns:
@@ -38,8 +39,8 @@ def calc_nox_reduction(settings, key):
     """
     vehicle, alt, model_year, age_id, disc_rate = key
     no_action_key = vehicle, settings.no_action_alt, model_year, age_id, disc_rate
-    nox_no_action = settings.fleet_cap.get_attribute_value(no_action_key, 'NOx_UStons')
-    nox_action = settings.fleet_cap.get_attribute_value(key, 'NOx_UStons')
+    nox_no_action = data_object.get_attribute_value(no_action_key, 'NOx_UStons')
+    nox_action = data_object.get_attribute_value(key, 'NOx_UStons')
     nox_reduction = nox_no_action - nox_action
 
     return nox_reduction
@@ -71,11 +72,12 @@ def calc_nox_reduction(settings, key):
 #     return gallons_def
 
 
-def calc_def_costs(settings):
+def calc_def_costs(settings, data_object):
     """
 
     Parameters:
-        settings: The SetInputs class.
+        settings: The SetInputs class.\n
+        data_object: Object; the fleet data object.
 
     Returns:
         The passed dictionary updated with costs associated with DEF consumption.
@@ -84,7 +86,7 @@ def calc_def_costs(settings):
     print('\nCalculating DEF costs...')
 
     # get keys where fueltype=2 (Diesel since they are the only vehicles that use DEF)
-    ft2_keys = [k for k, v in settings.fleet_cap._data.items() if v['fuelTypeID'] == 2]
+    ft2_keys = [k for k, v in data_object._dict.items() if v['fuelTypeID'] == 2]
 
     def_gallons_per_ton_nox_reduction \
         = pd.to_numeric(settings.general_inputs.get_attribute_value('def_gallons_per_ton_nox_reduction'))
@@ -94,9 +96,9 @@ def calc_def_costs(settings):
         calendar_year = model_year + age_id
 
         def_price = settings.def_prices.get_price(calendar_year)
-        gallons_fuel = settings.fleet_cap.get_attribute_value(key, 'Gallons_withTech')
+        gallons_fuel = data_object.get_attribute_value(key, 'Gallons_withTech')
         base_doserate = calc_def_doserate(settings, vehicle)
-        nox_reduction = calc_nox_reduction(settings, key)
+        nox_reduction = calc_nox_reduction(settings, data_object, key)
 
         gallons_def = gallons_fuel * base_doserate + nox_reduction * def_gallons_per_ton_nox_reduction
         cost = def_price * gallons_def
@@ -104,14 +106,15 @@ def calc_def_costs(settings):
         update_dict = {'DEF_Gallons': gallons_def,
                        'DEFCost': cost,
                        }
-        settings.fleet_cap.update_dict(key, update_dict)
+        data_object.update_dict(key, update_dict)
 
 
-def calc_def_costs_per_veh(settings, sales_arg):
+def calc_def_costs_per_veh(data_object, sales_arg):
     """
 
     Parameters:
         settings: The SetInputs class.\n
+        data_object: Object; the fleet data object.\n
         sales_arg: String; the sales to use when calculating sales * cost/veh.
 
     Returns:
@@ -121,19 +124,19 @@ def calc_def_costs_per_veh(settings, sales_arg):
     print('\nCalculating DEF average costs...')
 
     # get keys where fueltype=2 (Diesel since they are the only vehicles that use DEF)
-    ft2_keys = [k for k, v in settings.fleet_cap._data.items() if v['fuelTypeID'] == 2]
+    ft2_keys = [k for k, v in data_object._dict.items() if v['fuelTypeID'] == 2]
 
     for key in ft2_keys:
-        def_cost = settings.fleet_cap.get_attribute_value(key, 'DEFCost')
-        vmt = settings.fleet_cap.get_attribute_value(key, 'VMT_withTech')
-        vpop = settings.fleet_cap.get_attribute_value(key, sales_arg)
+        def_cost = data_object.get_attribute_value(key, 'DEFCost')
+        vmt = data_object.get_attribute_value(key, 'VMT_withTech')
+        vpop = data_object.get_attribute_value(key, sales_arg)
         cost_per_mile = def_cost / vmt
         cost_per_veh = def_cost / vpop
 
         update_dict = {'DEFCost_PerMile': cost_per_mile,
                        'DEFCost_PerVeh': cost_per_veh,
                        }
-        settings.fleet_cap.update_dict(key, update_dict)
+        data_object.update_dict(key, update_dict)
 
 #
 # def calc_def_doserate(settings, vehicle):

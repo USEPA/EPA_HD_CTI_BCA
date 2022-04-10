@@ -9,19 +9,19 @@ class DollarPerTonCAP:
 
     """
 
-    _data = dict()
+    _dict = dict()
 
     @staticmethod
     def init_from_file(filepath):
 
-        DollarPerTonCAP._data.clear()
+        DollarPerTonCAP._dict.clear()
 
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
 
         key = df['yearID']
         df.set_index(key, inplace=True)
 
-        DollarPerTonCAP._data = df.to_dict('index')
+        DollarPerTonCAP._dict = df.to_dict('index')
 
     @staticmethod
     def get_factors(settings, year_id, *factors):
@@ -46,6 +46,6 @@ class DollarPerTonCAP:
 
         for factor in factors:
             for dr in [cap_dr1, cap_dr2]:
-                factor_list.append(DollarPerTonCAP._data[year_id][f'{factor}_{str(dr)}_USD_per_uston'])
+                factor_list.append(DollarPerTonCAP._dict[year_id][f'{factor}_{str(dr)}_USD_per_uston'])
 
         return factor_list

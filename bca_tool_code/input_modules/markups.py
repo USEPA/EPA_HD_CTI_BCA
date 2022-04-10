@@ -10,13 +10,13 @@ class Markups:
 
     """
 
-    _data = dict()
+    _dict = dict()
     markup_factor_names = list()
 
     @staticmethod
     def init_from_file(filepath):
 
-        Markups._data.clear()
+        Markups._dict.clear()
 
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
 
@@ -25,9 +25,9 @@ class Markups:
 
         Markups.markup_factor_names = [arg for arg in df['Markup_Factor'].unique()]
 
-        Markups._data = df.to_dict('index')
+        Markups._dict = df.to_dict('index')
 
     @staticmethod
     def get_attribute_value(key, attribute_name):
 
-        return Markups._data[key][attribute_name]
+        return Markups._dict[key][attribute_name]

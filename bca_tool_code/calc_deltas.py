@@ -15,9 +15,9 @@ def calc_deltas(settings, data_object):
     """
     print('\nCalculating deltas...')
 
-    dict_for_deltas = data_object._data.copy()
+    dict_for_deltas = data_object._dict
 
-    update_dict = dict()
+    # update_dict = dict()
     for key, value in dict_for_deltas.items():
         vehicle, model_year, age_id, calendar_year, series = 0, 0, 0, 0, ''
         try:

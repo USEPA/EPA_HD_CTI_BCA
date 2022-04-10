@@ -1,27 +1,35 @@
 import pandas as pd
 from pathlib import Path
+from time import time
+from datetime import datetime
 
 from bca_tool_code.input_modules.input_files import InputFiles
 from bca_tool_code.input_modules.general_inputs import GeneralInputs
 from bca_tool_code.input_modules.deflators import Deflators
 from bca_tool_code.input_modules.fuel_prices import FuelPrices
-from bca_tool_code.input_modules.options_cap import OptionsCAP
-from bca_tool_code.input_modules.options_ghg import OptionsGHG
-from bca_tool_code.input_modules.regclass_costs import RegclassCosts
-from bca_tool_code.input_modules.regclass_learning_scalers import RegclassLearningScalers
 from bca_tool_code.input_modules.markups import Markups
 from bca_tool_code.input_modules.warranty import Warranty
 from bca_tool_code.input_modules.useful_life import UsefulLife
-from bca_tool_code.input_modules.moves_adjustments_cap import MovesAdjCAP
 from bca_tool_code.input_modules.dollar_per_ton_cap import DollarPerTonCAP
+from bca_tool_code.annual_summary import AnnualSummary
+
+from bca_tool_code.input_modules.options_cap import OptionsCAP
+from bca_tool_code.input_modules.moves_adjustments_cap import MovesAdjCAP
+from bca_tool_code.fleet_cap import FleetCAP
+from bca_tool_code.input_modules.regclass_costs import RegclassCosts
+from bca_tool_code.input_modules.regclass_learning_scalers import RegclassLearningScalers
+from bca_tool_code.regclass_sales import RegClassSales
 from bca_tool_code.input_modules.def_prices import DefPrices
 from bca_tool_code.input_modules.def_doserates import DefDoseRates
 from bca_tool_code.input_modules.orvr_fuelchanges_cap import OrvrFuelChangesCAP
 from bca_tool_code.input_modules.repair_and_maintenance import RepairAndMaintenance
-from bca_tool_code.annual_summary import AnnualSummary
 
-from bca_tool_code.fleet_cap import FleetCAP
-from bca_tool_code.regclass_sales import RegClassSales
+from bca_tool_code.input_modules.options_ghg import OptionsGHG
+from bca_tool_code.input_modules.moves_adjustments_ghg import MovesAdjGHG
+from bca_tool_code.fleet_ghg import FleetGHG
+from bca_tool_code.input_modules.sourcetype_costs import SourceTypeCosts
+from bca_tool_code.input_modules.sourcetype_learning_scalers import SourceTypeLearningScalers
+from bca_tool_code.sourcetype_sales import SourceTypeSales
 
 
 class SetPaths:
@@ -115,6 +123,8 @@ class SetInputs:
 
         """
         set_paths = SetPaths()
+        self.start_time = time()
+        self.start_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')
 
         InputFiles.init_from_file(set_paths.path_inputs / 'Input_Files.csv')
         GeneralInputs.init_from_file(set_paths.path_inputs / InputFiles.get_filename('bca_inputs'))
@@ -187,12 +197,22 @@ class SetInputs:
         if self.calc_ghg_costs:
 
             OptionsGHG.init_from_file(set_paths.path_inputs / InputFiles.get_filename('options_ghg'))
-            # MovesAdjustmentsGHG
-            # MovesGHG
-            # SourcetypeCosts
-            # SourcetypeLearningScalers
+            MovesAdjGHG.init_from_file(set_paths.path_inputs / InputFiles.get_filename('moves_adjustments_ghg'))
+            FleetGHG.init_from_file(set_paths.path_inputs / InputFiles.get_filename('fleet_ghg'), general_inputs)
+            SourceTypeCosts.init_from_file(set_paths.path_inputs / InputFiles.get_filename('sourcetype_costs'), general_inputs)
+            SourceTypeLearningScalers.init_from_file(set_paths.path_inputs / InputFiles.get_filename('sourcetype_learning_scalers'))
 
+            self.fleet_ghg = FleetGHG()
             self.options_ghg = OptionsGHG()
+            self.sourcetype_costs = SourceTypeCosts()
+            self.sourcetype_learning_scalers = SourceTypeLearningScalers()
+
+            # create additional and useful dicts and DataFrames
+            SourceTypeSales.create_sourcetype_sales_dict(FleetGHG.fleet_df, self.sourcetype_costs.cost_steps)
+            self.sourcetype_sales = SourceTypeSales()
+            self.wtd_ghg_fuel_cpm_dict = dict()
+            AnnualSummary.create_annual_summary_dict()
+            self.annual_summary_ghg = AnnualSummary()
 
             if self.calc_cap_costs:
                 pass
@@ -204,7 +224,7 @@ class SetInputs:
                 self.warranty = Warranty()
                 self.useful_life = UsefulLife()
 
-
+        self.elapsed_time_inputs = time() - self.start_time
             # OrvrFuelChangesGHG
         #
         # self.start_time = time.time()

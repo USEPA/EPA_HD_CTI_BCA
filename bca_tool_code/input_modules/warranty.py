@@ -10,21 +10,21 @@ class Warranty:
 
     """
 
-    _data = dict()
+    _dict = dict()
 
     @staticmethod
     def init_from_file(filepath):
 
-        Warranty._data.clear()
+        Warranty._dict.clear()
 
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
 
         key = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID'], df['period']))
         df.set_index(key, inplace=True)
 
-        Warranty._data = df.to_dict('index')
+        Warranty._dict = df.to_dict('index')
 
     @staticmethod
     def get_attribute_value(key, year_id):
 
-        return Warranty._data[key][year_id]
+        return Warranty._dict[key][year_id]

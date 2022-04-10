@@ -13,7 +13,7 @@ def calc_criteria_emission_costs(settings):
     cap_dr1 = settings.general_inputs.get_attribute_value('criteria_discount_rate_1')
     cap_dr2 = settings.general_inputs.get_attribute_value('criteria_discount_rate_2')
 
-    for key in settings.fleet_cap._data.keys():
+    for key in settings.fleet_cap._dict.keys():
         vehicle, alt, model_year, age_id, disc_rate = key
         calendar_year = model_year + age_id
         

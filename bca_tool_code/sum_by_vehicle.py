@@ -1,10 +1,11 @@
 
 
-def calc_sum_of_costs(settings, name_of_sum, *args):
+def calc_sum_of_costs(settings, data_object, name_of_sum, *args):
     """
 
     Parameters:
-        settings: The SetInputs class.
+        settings: The SetInputs class.\n
+        data_object: Object; the fleet data object.\n
         name_of_sum: String; used to identify the sum being done.\n
         args: String(s); the attributes to be summed.
 
@@ -14,10 +15,10 @@ def calc_sum_of_costs(settings, name_of_sum, *args):
     """
     print(f'\nCalculating {name_of_sum}...')
 
-    for key in settings.fleet_cap._data.keys():
+    for key in data_object._dict.keys():
         sum_of_costs = 0
         for arg in args:
-            sum_of_costs += settings.fleet_cap.get_attribute_value(key, arg)
+            sum_of_costs += data_object.get_attribute_value(key, arg)
         update_dict = {f'{name_of_sum}': sum_of_costs}
 
-        settings.fleet_cap.update_dict(key, update_dict)
+        data_object.update_dict(key, update_dict)
