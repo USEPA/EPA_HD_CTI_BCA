@@ -2,15 +2,15 @@ import pandas as pd
 
 from bca_tool_code.vehicle import Vehicle
 
-# TODO make use of data_object rather than hardcoded object dict
-def create_weighted_cost_dict(settings, data_object, input_dict, arg_to_weight, arg_to_weight_by):
+
+def create_weighted_cost_dict(settings, data_object, destination_dict, arg_to_weight, arg_to_weight_by):
     """
     This function weights 'arg_to_weight' attributes by the 'arg_to_weight_by' attribute.
 
     Parameters::
         settings: The SetInputs class.\n
         data_object: Object; the fleet data object.\n
-        input_dict: Dictionary into which to place results.
+        destination_dict: Dictionary into which to place results.
         arg_to_weight: String; the attribute to be weighted by the arg_to_weight_by argument.\n
         arg_to_weight_by: String; the argument to weight by.
 
@@ -38,11 +38,11 @@ def create_weighted_cost_dict(settings, data_object, input_dict, arg_to_weight, 
             pass
         else:
             if model_year <= (settings.fleet_cap.year_max - max_age_included - 1):
-                wtd_result_dict_id = (vehicle, alt, model_year)
+                wtd_result_dict_key = (vehicle, alt, model_year)
                 numerator, denominator = 0, 0
-                if wtd_result_dict_id in wtd_result_dict:
-                    numerator = wtd_result_dict[wtd_result_dict_id]['numerator']
-                    denominator = wtd_result_dict[wtd_result_dict_id]['denominator']
+                if wtd_result_dict_key in wtd_result_dict:
+                    numerator = wtd_result_dict[wtd_result_dict_key]['numerator']
+                    denominator = wtd_result_dict[wtd_result_dict_key]['denominator']
                 else:
                     pass
                 if age_id <= max_age_included:
@@ -50,13 +50,13 @@ def create_weighted_cost_dict(settings, data_object, input_dict, arg_to_weight, 
                     arg_weight_by = settings.fleet_cap.get_attribute_value(key, arg_to_weight_by)
                     numerator += arg_weight * arg_weight_by
                     denominator += settings.fleet_cap.get_attribute_value(key, arg_to_weight_by)
-                    wtd_result_dict[wtd_result_dict_id] = {'numerator': numerator, 'denominator': denominator}
+                    wtd_result_dict[wtd_result_dict_key] = {'numerator': numerator, 'denominator': denominator}
     for key in wtd_result_dict.keys():
         numerator = wtd_result_dict[key]['numerator']
         denominator = wtd_result_dict[key]['denominator']
-        vehicle, alt = key[0], key[1]
-        st, rc, ft = vehicle
-        source_type = Vehicle(st).sourcetype_name()
-        input_dict[key] = {'optionID': alt,
-                           'sourceTypeName': source_type,
-                           'cents_per_mile': 100 * numerator / denominator}
+        alt = key[1]
+        # st, rc, ft = vehicle
+        # source_type = Vehicle(st).sourcetype_name()
+        destination_dict[key] = {'optionID': alt,
+                                 # 'sourceTypeName': source_type,
+                                 'cents_per_mile': 100 * numerator / denominator}

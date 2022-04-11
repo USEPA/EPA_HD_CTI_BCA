@@ -1,10 +1,9 @@
 
 
-def calc_sum_of_costs(settings, data_object, name_of_sum, *args):
+def calc_sum_of_costs(data_object, name_of_sum, *args):
     """
 
     Parameters:
-        settings: The SetInputs class.\n
         data_object: Object; the fleet data object.\n
         name_of_sum: String; used to identify the sum being done.\n
         args: String(s); the attributes to be summed.

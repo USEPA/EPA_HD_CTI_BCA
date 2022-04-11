@@ -74,61 +74,76 @@ class Vehicle:
         return sourcetype_dict[self.id]
 
     @staticmethod
-    def vehicle_name(settings, options_dict, dict_of_vehicles):
+    def vehicle_name(data_object=None, data_dict=None):
         """
 
         Parameters:
-            settings: The SetInputs class.\n
-            options_dict: Dictionary; provides the option ID numbers and associated names.\n
-            dict_of_vehicles: Dictionary; contains keys of vehicle tuples.
+            data_object: Object; the data object to be updated.\n
+            data_dict: Dictionary, the dictionary to be updated.
 
         Returns:
-            The passed dictionary with new attributes identifying the vehicle based on the vehicle tuples (keys).
+            Upates the data object dictionary or dictionary with new attributes identifying the option name.
 
         """
-        no_action_name = options_dict[settings.no_action_alt]['OptionName']
-        for key in dict_of_vehicles.keys():
-            vehicle, alt = key[0], key[1]
-            st, rc, ft = vehicle
-            if alt > len(options_dict):
-                action_alt = alt / 10
-                action_name = options_dict[action_alt]['OptionName']
-                option_name = f'{action_name}_minus_{no_action_name}'
+        if data_object:
+            _dict = data_object._dict.copy()
+        else:
+            _dict = data_dict.copy()
+
+        for key in _dict.keys():
+            vehicle = key[0]
+            if len(vehicle) == 3:
+                st, rc, ft = vehicle
+                sourcetype_name = Vehicle(st).sourcetype_name()
+                regclass_name = Vehicle(rc).regclass_name()
+                fueltype_name = Vehicle(ft).fueltype_name()
+                update_dict = {'sourceTypeName': sourcetype_name,
+                               'regClassName': regclass_name,
+                               'fuelTypeName': fueltype_name,
+                               }
             else:
-                option_name = options_dict[alt]['OptionName']
-            sourcetype_name = Vehicle(st).sourcetype_name()
-            regclass_name = Vehicle(rc).regclass_name()
-            fueltype_name = Vehicle(ft).fueltype_name()
-            dict_of_vehicles[key].update({'OptionName': option_name,
-                                          'sourceTypeName': sourcetype_name,
-                                          'regClassName': regclass_name,
-                                          'fuelTypeName': fueltype_name,
-                                          }
-                                         )
-        return dict_of_vehicles
+                rc, ft = vehicle
+                regclass_name = Vehicle(rc).regclass_name()
+                fueltype_name = Vehicle(ft).fueltype_name()
+                update_dict = {'regClassName': regclass_name,
+                               'fuelTypeName': fueltype_name,
+                               }
+            if data_object:
+                data_object.update_dict(key, update_dict)
+            else:
+                data_dict[key].update(update_dict)
 
     @staticmethod
-    def option_name(settings, options_dict, dict_of_vehicles):
+    def option_name(settings, options_object, data_object=None, data_dict=None):
         """
 
         Parameters:
             settings: The SetInputs class.
-            options_dict: Dictionary; provides the option ID numbers and associated names.\n
-            dict_of_vehicles: Dictionary; contains keys of vehicle tuples.
+            options_object: Object; the options object.\n
+            data_object: Object; the data object to be updated.\n
+            data_dict: Dictionary, the dictionary to be updated.
 
         Returns:
-            The passed dictionary with new attributes identifying the option name.
+            Upates the data object dictionary with new attributes identifying the option name.
 
         """
-        no_action_name = options_dict[settings.no_action_alt]['OptionName']
-        for key in dict_of_vehicles.keys():
-            alt = key[0]
-            if alt > len(options_dict):
+        if data_object:
+            _dict = data_object._dict.copy()
+        else:
+            _dict = data_dict.copy()
+
+        no_action_name = options_object.get_option_name(settings.no_action_alt)
+        for key in _dict.keys():
+            alt = key[1]
+            if alt > len(options_object._dict):
                 action_alt = alt / 10
-                action_name = options_dict[action_alt]['OptionName']
+                action_name = options_object.get_option_name(action_alt)
                 option_name = f'{action_name}_minus_{no_action_name}'
             else:
-                option_name = options_dict[alt]['OptionName']
-            dict_of_vehicles[key].update({'OptionName': option_name})
+                option_name = options_object.get_option_name(alt)
 
-        return dict_of_vehicles
+            update_dict = {'OptionName': option_name}
+            if data_object:
+                data_object.update_dict(key, update_dict)
+            else:
+                data_dict[key].update(update_dict)

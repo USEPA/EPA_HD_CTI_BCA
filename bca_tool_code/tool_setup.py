@@ -3,33 +3,34 @@ from pathlib import Path
 from time import time
 from datetime import datetime
 
-from bca_tool_code.input_modules.input_files import InputFiles
-from bca_tool_code.input_modules.general_inputs import GeneralInputs
-from bca_tool_code.input_modules.deflators import Deflators
-from bca_tool_code.input_modules.fuel_prices import FuelPrices
-from bca_tool_code.input_modules.markups import Markups
-from bca_tool_code.input_modules.warranty import Warranty
-from bca_tool_code.input_modules.useful_life import UsefulLife
-from bca_tool_code.input_modules.dollar_per_ton_cap import DollarPerTonCAP
-from bca_tool_code.annual_summary import AnnualSummary
+from bca_tool_code.general_input_modules.input_files import InputFiles
+from bca_tool_code.general_input_modules.general_inputs import GeneralInputs
+from bca_tool_code.general_input_modules.deflators import Deflators
+from bca_tool_code.general_input_modules.fuel_prices import FuelPrices
+from bca_tool_code.general_input_modules.def_prices import DefPrices
+from bca_tool_code.general_input_modules.markups import Markups
+from bca_tool_code.general_input_modules.warranty import Warranty
+from bca_tool_code.general_input_modules.useful_life import UsefulLife
+from bca_tool_code.general_input_modules.dollar_per_ton_cap import DollarPerTonCAP
 
-from bca_tool_code.input_modules.options_cap import OptionsCAP
-from bca_tool_code.input_modules.moves_adjustments_cap import MovesAdjCAP
-from bca_tool_code.fleet_cap import FleetCAP
-from bca_tool_code.input_modules.regclass_costs import RegclassCosts
-from bca_tool_code.input_modules.regclass_learning_scalers import RegclassLearningScalers
-from bca_tool_code.regclass_sales import RegClassSales
-from bca_tool_code.input_modules.def_prices import DefPrices
-from bca_tool_code.input_modules.def_doserates import DefDoseRates
-from bca_tool_code.input_modules.orvr_fuelchanges_cap import OrvrFuelChangesCAP
-from bca_tool_code.input_modules.repair_and_maintenance import RepairAndMaintenance
+from bca_tool_code.cap_input_modules.options_cap import OptionsCAP
+from bca_tool_code.cap_input_modules.moves_adjustments_cap import MovesAdjCAP
+from bca_tool_code.cap_input_modules.regclass_costs import RegclassCosts
+from bca_tool_code.cap_input_modules.regclass_learning_scalers import RegclassLearningScalers
+from bca_tool_code.cap_input_modules.def_doserates import DefDoseRates
+from bca_tool_code.cap_input_modules.orvr_fuelchanges_cap import OrvrFuelChangesCAP
+from bca_tool_code.cap_input_modules.repair_and_maintenance import RepairAndMaintenance
+from bca_tool_code.cap_modules.fleet_cap import FleetCAP
+from bca_tool_code.cap_modules.regclass_sales import RegClassSales
+from bca_tool_code.cap_modules.annual_summary import AnnualSummaryCAP
 
-from bca_tool_code.input_modules.options_ghg import OptionsGHG
-from bca_tool_code.input_modules.moves_adjustments_ghg import MovesAdjGHG
-from bca_tool_code.fleet_ghg import FleetGHG
-from bca_tool_code.input_modules.sourcetype_costs import SourceTypeCosts
-from bca_tool_code.input_modules.sourcetype_learning_scalers import SourceTypeLearningScalers
-from bca_tool_code.sourcetype_sales import SourceTypeSales
+from bca_tool_code.ghg_input_modules.options_ghg import OptionsGHG
+from bca_tool_code.ghg_input_modules.moves_adjustments_ghg import MovesAdjGHG
+from bca_tool_code.ghg_input_modules.sourcetype_costs import SourceTypeCosts
+from bca_tool_code.ghg_input_modules.sourcetype_learning_scalers import SourceTypeLearningScalers
+from bca_tool_code.ghg_modules.fleet_ghg import FleetGHG
+from bca_tool_code.ghg_modules.sourcetype_sales import SourceTypeSales
+from bca_tool_code.ghg_modules.annual_summary import AnnualSummaryGHG
 
 
 class SetPaths:
@@ -42,7 +43,11 @@ class SetPaths:
         self.path_code = Path(__file__).parent
         self.path_project = self.path_code.parent
         self.path_inputs = self.path_project / 'inputs'
-        self.path_input_modules = self.path_project / 'input_modules'
+        # self.path_general_inputs = self.path_project / 'general_input_modules'
+        # self.path_cap_input_modules = self.path_project / 'cap_input_modules'
+        # self.path_ghg_input_modules = self.path_project / 'ghg_input_modules'
+        # self.path_cap_modules = self.path_project / 'cap_modules'
+        # self.path_ghg_modules = self. path_project / 'ghg_modules'
         self.path_outputs = self.path_project / 'outputs'
         self.path_test = self.path_project / 'test'
 
@@ -144,10 +149,12 @@ class SetInputs:
 
         Deflators.init_from_file(set_paths.path_inputs / InputFiles.get_filename('deflators'), general_inputs)
         FuelPrices.init_from_file(set_paths.path_inputs / InputFiles.get_filename('fuel_prices'), general_inputs)
+        DefPrices.init_from_file(set_paths.path_inputs / InputFiles.get_filename('def_prices'), general_inputs)
 
         self.general_inputs = GeneralInputs()
         self.deflators = Deflators()
         self.fuel_prices = FuelPrices()
+        self.def_prices = DefPrices()
 
         if self.calc_cap_costs:
 
@@ -162,7 +169,6 @@ class SetInputs:
             Warranty.init_from_file(set_paths.path_inputs / InputFiles.get_filename('warranty'))
             UsefulLife.init_from_file(set_paths.path_inputs / InputFiles.get_filename('useful_life'))
             DefDoseRates.init_from_file(set_paths.path_inputs / InputFiles.get_filename('def_doserates'))
-            DefPrices.init_from_file(set_paths.path_inputs / InputFiles.get_filename('def_prices'), general_inputs)
             OrvrFuelChangesCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('orvr_fuelchanges_cap'))
             RepairAndMaintenance.init_from_file(
                 set_paths.path_inputs / InputFiles.get_filename('repair_and_maintenance'), general_inputs)
@@ -174,7 +180,6 @@ class SetInputs:
             self.markups = Markups()
             self.warranty = Warranty()
             self.useful_life = UsefulLife()
-            self.def_prices = DefPrices()
             self.def_doserates = DefDoseRates()
             self.orvr_fuelchanges_cap = OrvrFuelChangesCAP()
             self.repair_and_maintenance = RepairAndMaintenance()
@@ -187,8 +192,8 @@ class SetInputs:
             self.wtd_def_cpm_dict = dict()
             self.wtd_repair_cpm_dict = dict()
             self.wtd_cap_fuel_cpm_dict = dict()
-            AnnualSummary.create_annual_summary_dict()
-            self.annual_summary_cap = AnnualSummary()
+            AnnualSummaryCAP.create_annual_summary_dict()
+            self.annual_summary_cap = AnnualSummaryCAP()
 
         if self.calc_cap_pollution:
             DollarPerTonCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('dollar_per_ton_cap'))
@@ -211,8 +216,8 @@ class SetInputs:
             SourceTypeSales.create_sourcetype_sales_dict(FleetGHG.fleet_df, self.sourcetype_costs.cost_steps)
             self.sourcetype_sales = SourceTypeSales()
             self.wtd_ghg_fuel_cpm_dict = dict()
-            AnnualSummary.create_annual_summary_dict()
-            self.annual_summary_ghg = AnnualSummary()
+            AnnualSummaryGHG.create_annual_summary_dict()
+            self.annual_summary_ghg = AnnualSummaryGHG()
 
             if self.calc_cap_costs:
                 pass
@@ -395,8 +400,8 @@ class SetInputs:
         # if self.calc_ghg_pollution_effects:
         #     print('\nWARNING: The tool is not configured to calculate GHG effects at this time.')
         #
-        # self.row_header_for_fleet_files = ['yearID', 'modelYearID', 'ageID', 'optionID', 'OptionName',
-        #                                    'sourceTypeID', 'sourceTypeName', 'regClassID', 'regClassName', 'fuelTypeID', 'fuelTypeName',
-        #                                    'DiscountRate',
-        #                                    ]
-        # self.row_header_for_annual_summary_files = ['yearID', 'optionID', 'OptionName', 'DiscountRate']
+        self.row_header_for_fleet_files = ['yearID', 'modelYearID', 'ageID', 'optionID', 'OptionName',
+                                           'sourceTypeID', 'sourceTypeName', 'regClassID', 'regClassName', 'fuelTypeID', 'fuelTypeName',
+                                           'DiscountRate',
+                                           ]
+        self.row_header_for_annual_summary_files = ['yearID', 'optionID', 'OptionName', 'DiscountRate']
