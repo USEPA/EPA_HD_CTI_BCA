@@ -63,7 +63,7 @@ def calc_fuel_costs(settings, data_object):
             thc_reduction = calc_thc_reduction(settings, data_object, key)
             captured_gallons = thc_reduction * orvr_adjustment * grams_per_short_ton * gallons_per_ml
 
-        gallons = data_object.get_attribute_value(key, 'Gallons_withTech')
+        gallons = data_object.get_attribute_value(key, 'Gallons')
         gallons_paid_for = gallons - captured_gallons
 
         cost_retail = price_retail * gallons_paid_for
@@ -76,13 +76,11 @@ def calc_fuel_costs(settings, data_object):
         data_object.update_dict(key, update_dict)
 
 
-def calc_fuel_costs_per_veh(data_object, sales_arg, vmt_arg):
+def calc_fuel_costs_per_veh(data_object):
     """
 
     Parameters:
-        data_object: Object; the fleet data object.\n
-        sales_arg: String; the sales to use when calculating cost/veh.\n
-        vmt_arg: String; the vmt to use when calculating cost/mile.
+        data_object: Object; the fleet data object.
 
     Returns:
         Updates the fleet dictionary to include fuel costs/vehicle and costs/mile.
@@ -92,8 +90,8 @@ def calc_fuel_costs_per_veh(data_object, sales_arg, vmt_arg):
 
     for key in data_object._dict.keys():
         fuel_cost = data_object.get_attribute_value(key, 'FuelCost_Retail')
-        vmt = data_object.get_attribute_value(key, vmt_arg)
-        vpop = data_object.get_attribute_value(key, sales_arg)
+        vmt = data_object.get_attribute_value(key, 'VMT')
+        vpop = data_object.get_attribute_value(key, 'VPOP')
 
         # try/except block to protect against divide by 0 error
         try:

@@ -1,6 +1,7 @@
 import pandas as pd
 
 from bca_tool_code.general_input_modules.general_functions import read_input_file
+from bca_tool_code.general_input_modules.input_files import InputFiles
 from bca_tool_code.general_input_modules.deflators import Deflators
 
 
@@ -26,6 +27,9 @@ class RepairAndMaintenance:
         RepairAndMaintenance.repair_and_maintenance_in_analysis_dollars = df.copy()
 
         RepairAndMaintenance._dict = df.to_dict('index')
+
+        # update input_files_pathlist if this class is used
+        InputFiles.input_files_pathlist.append(filepath)
 
     @staticmethod
     def get_attribute_value(attribute_name):

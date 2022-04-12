@@ -169,12 +169,11 @@ def calc_emission_repair_costs_per_veh(data_object):
         data_object.update_dict(key, update_dict)
 
 
-def calc_emission_repair_costs(data_object, sales_arg):
+def calc_emission_repair_costs(data_object):
     """
 
     Parameters:
-        data_object: Object; the fleet data object.\n
-        sales_arg: String; the sales to use when calculating sales * cost/veh.
+        data_object: Object; the fleet data object.
 
     Returns:
         The totals_dict dictionary updated with annual emission repair costs for all vehicles.
@@ -184,7 +183,7 @@ def calc_emission_repair_costs(data_object, sales_arg):
 
     for key in data_object._dict.keys():
         cost_per_veh = data_object.get_attribute_value(key, 'EmissionRepairCost_PerVeh')
-        vpop = data_object.get_attribute_value(key, sales_arg)
+        vpop = data_object.get_attribute_value(key, 'VPOP')
         cost = cost_per_veh * vpop
 
         update_dict = {'EmissionRepairCost': cost}

@@ -24,7 +24,7 @@ class RegClassSales:
         _df = df.copy()
         _df = pd.DataFrame(_df.loc[(_df['ageID'] == 0) & (_df['DiscountRate'] == 0),
                                    ['optionID', 'regClassID', 'fuelTypeID', 'modelYearID',
-                                    'ageID', 'VPOP', 'VPOP_withTech']]).reset_index(drop=True)
+                                    'ageID', 'VPOP']]).reset_index(drop=True)
 
         _df = _df.groupby(by=['optionID', 'regClassID', 'fuelTypeID', 'modelYearID', 'ageID'], as_index=False).sum()
 
@@ -35,9 +35,9 @@ class RegClassSales:
         # calc cumulative sales by step
         for cost_step in cost_steps:
             cost_step = pd.to_numeric(cost_step)
-            temp = _df.loc[_df['modelYearID'] >= cost_step, ['optionID', 'regClassID', 'fuelTypeID', 'VPOP_withTech']]
+            temp = _df.loc[_df['modelYearID'] >= cost_step, ['optionID', 'regClassID', 'fuelTypeID', 'VPOP']]
             temp = temp.groupby(by=['optionID', 'regClassID', 'fuelTypeID'], as_index=False).cumsum()
-            temp.rename(columns={'VPOP_withTech': f'VPOP_withTech_Cumulative_{cost_step}'}, inplace=True)
+            temp.rename(columns={'VPOP': f'VPOP_Cumulative_{cost_step}'}, inplace=True)
             temp.insert(len(temp.columns), f'Cost_PerVeh_{cost_step}', 0)
             _df = _df.merge(temp, left_index=True, right_index=True, how='outer')
 

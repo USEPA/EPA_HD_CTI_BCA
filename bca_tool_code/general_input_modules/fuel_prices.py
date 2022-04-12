@@ -1,25 +1,28 @@
 import pandas as pd
 
-from bca_tool_code.general_input_modules.deflators import Deflators
 from bca_tool_code.general_input_modules.general_functions import read_input_file
+from bca_tool_code.general_input_modules.input_files import InputFiles
+from bca_tool_code.general_input_modules.deflators import Deflators
 
 
 class FuelPrices:
     """
-    The FuelPrices class grabs the appropriate fuel prices from the aeo folder, cleans up some naming and creates a fuel_prices DataFrame for use in operating costs.
-    The class also converts AEO fuel prices to dollar_basis_analysis dollars.
+    The FuelPrices class grabs the appropriate fuel prices from the aeo folder, cleans up some naming and creates a
+    fuel_prices DataFrame for use in operating costs. The class also converts AEO fuel prices to dollar_basis_analysis
+    dollars.
 
     Note:
-         This class assumes a file structured like those published by the Bureau of Economic Analysis.
+         This class assumes a file structured like those published by the Energy Information Administration in the
+         Annual Energy Outlook (AEO).
 
     """
 
     _dict = dict()
     fuel_prices_in_analysis_dollars = pd.DataFrame()
-    fuel_dict = {'Motor Gasoline': 1,
-                 'Diesel': 2,
-                 'CNG': 3,
-                 }
+    fuel_id_dict = {'Motor Gasoline': 1,
+                    'Diesel': 2,
+                    'CNG': 3,
+                    }
 
     @staticmethod
     def init_from_file(filepath, general_inputs):
@@ -32,12 +35,15 @@ class FuelPrices:
 
         df = Deflators.convert_dollars_to_analysis_basis(general_inputs, df, 'retail_fuel_price', 'pretax_fuel_price')
 
-        FuelPrices.fuel_prices_in_analysis_dollars = df.copy()
-
         key = pd.Series(zip(df['yearID'], df['fuelTypeID']))
         df.set_index(key, inplace=True)
 
+        FuelPrices.fuel_prices_in_analysis_dollars = df.copy()
+
         FuelPrices._dict = df.to_dict('index')
+
+        # update input_files_pathlist if this class is used
+        InputFiles.input_files_pathlist.append(filepath)
 
     @staticmethod
     def get_price(yearID, fuelTypeID, *series):
@@ -158,11 +164,11 @@ class FuelPrices:
                                           'pretax_fuel_price',
                                           fuel_prices_dict[fuel]['distribution_costs']
                                           + fuel_prices_dict[fuel]['wholesale_price'])
-            fuel_prices_dict[fuel].insert(0, 'fuelTypeID', FuelPrices.fuel_dict[fuel])
+            fuel_prices_dict[fuel].insert(0, 'fuelTypeID', FuelPrices.fuel_id_dict[fuel])
             fuel_prices_df = pd.concat([fuel_prices_df, fuel_prices_dict[fuel]], ignore_index=True, axis=0)
 
         fuel_prices_dict['CNG'] = fuel_prices_dict['Motor Gasoline'].copy()
-        fuel_prices_dict['CNG']['fuelTypeID'] = FuelPrices.fuel_dict['CNG']
+        fuel_prices_dict['CNG']['fuelTypeID'] = FuelPrices.fuel_id_dict['CNG']
         fuel_prices_df = pd.concat([fuel_prices_df, fuel_prices_dict['CNG']], ignore_index=True, axis=0)
         fuel_prices_df = fuel_prices_df[['yearID', 'fuelTypeID', 'retail_fuel_price', 'pretax_fuel_price']]
 

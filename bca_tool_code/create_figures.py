@@ -1,5 +1,5 @@
 """
-figures.py
+create_figures.py
 
 Contains the CreateFigures class.
 
@@ -44,7 +44,8 @@ class CreateFigures:
                            & (self.df['Series'] == 'AnnualValue')
                            & ((self.df['yearID'] >= year_min) & (self.df['yearID'] <= year_max)), :]
         for arg in args:
-            plt.plot((data['yearID']), (data[arg]), label=arg)
+            x, y = data['yearID'].astype(int), round(data[arg].astype(float))
+            plt.plot(x, y, label=f'{arg}')
         plt.title(f'{self.program}, Annual Costs, {alt_name}, {dr}DR')
         plt.xlabel('calendar year')
         plt.ylabel(f'{self.units}')

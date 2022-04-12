@@ -56,13 +56,12 @@ def calc_project_markup_value(settings, engine, alt, markup_factor_name, model_y
     return project_markup_value
 
 
-def calc_indirect_costs_per_veh(settings, data_object, attribute_name):
+def calc_indirect_costs_per_veh(settings, data_object):
     """
 
     Parameters:
         settings: The SetInputs class.\n
-        data_object: Object; the fleet data object.\n
-        attribute_name: String; the name of the package cost attribute, e.g., 'Direct' or 'Tech.'
+        data_object: Object; the fleet data object.
 
     Returns:
         Updates to the fleet dictionary to include indirect costs per vehicle in sum and for each contribution factor.
@@ -82,7 +81,7 @@ def calc_indirect_costs_per_veh(settings, data_object, attribute_name):
         ic_sum = 0
         for markup_factor in markup_factors:
             markup_value = calc_project_markup_value(settings, engine, alt, markup_factor, model_year)
-            package_cost_per_veh = data_object.get_attribute_value(key, f'{attribute_name}Cost_PerVeh')
+            package_cost_per_veh = data_object.get_attribute_value(key, 'DirectCost_PerVeh')
             cost = markup_value * package_cost_per_veh
             update_dict[f'{markup_factor}Cost_PerVeh'] = cost
             ic_sum += cost
@@ -91,13 +90,12 @@ def calc_indirect_costs_per_veh(settings, data_object, attribute_name):
         data_object.update_dict(key, update_dict)
 
 
-def calc_indirect_costs(settings, data_object, sales_arg):
+def calc_indirect_costs(settings, data_object):
     """
 
     Parameters:
         settings: The SetInputs class.\n
-        data_object: Object; the fleet data object.\n
-        sales_arg: String; the sales to use when calculating sales * cost/veh.
+        data_object: Object; the fleet data object.
 
     Returns:
         Updates to the fleet dictionary to include total indirect costs in sum and for each contribution factor.
@@ -114,7 +112,7 @@ def calc_indirect_costs(settings, data_object, sales_arg):
         update_dict = dict()
         for markup_factor in markup_factors:
             cost_per_veh = data_object.get_attribute_value(key, f'{markup_factor}Cost_PerVeh')
-            sales = data_object.get_attribute_value(key, sales_arg)
+            sales = data_object.get_attribute_value(key, 'VPOP')
             cost = cost_per_veh * sales
             update_dict[f'{markup_factor}Cost'] = cost
 

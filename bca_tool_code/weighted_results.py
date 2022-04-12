@@ -1,7 +1,5 @@
 import pandas as pd
 
-from bca_tool_code.vehicle import Vehicle
-
 
 def create_weighted_cost_dict(settings, data_object, destination_dict, arg_to_weight, arg_to_weight_by):
     """
@@ -37,7 +35,7 @@ def create_weighted_cost_dict(settings, data_object, destination_dict, arg_to_we
         if arg_to_weight == 'DEFCost_PerMile' and ft != 2:
             pass
         else:
-            if model_year <= (settings.fleet_cap.year_max - max_age_included - 1):
+            if model_year <= (data_object.year_max - max_age_included - 1):
                 wtd_result_dict_key = (vehicle, alt, model_year)
                 numerator, denominator = 0, 0
                 if wtd_result_dict_key in wtd_result_dict:
@@ -46,10 +44,10 @@ def create_weighted_cost_dict(settings, data_object, destination_dict, arg_to_we
                 else:
                     pass
                 if age_id <= max_age_included:
-                    arg_weight = settings.fleet_cap.get_attribute_value(key, arg_to_weight)
-                    arg_weight_by = settings.fleet_cap.get_attribute_value(key, arg_to_weight_by)
+                    arg_weight = data_object.get_attribute_value(key, arg_to_weight)
+                    arg_weight_by = data_object.get_attribute_value(key, arg_to_weight_by)
                     numerator += arg_weight * arg_weight_by
-                    denominator += settings.fleet_cap.get_attribute_value(key, arg_to_weight_by)
+                    denominator += data_object.get_attribute_value(key, arg_to_weight_by)
                     wtd_result_dict[wtd_result_dict_key] = {'numerator': numerator, 'denominator': denominator}
     for key in wtd_result_dict.keys():
         numerator = wtd_result_dict[key]['numerator']

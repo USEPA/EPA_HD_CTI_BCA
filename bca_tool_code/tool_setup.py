@@ -1,7 +1,8 @@
 import pandas as pd
-from pathlib import Path
+from pathlib import Path, PurePath
 from time import time
 from datetime import datetime
+import shutil
 
 from bca_tool_code.general_input_modules.input_files import InputFiles
 from bca_tool_code.general_input_modules.general_inputs import GeneralInputs
@@ -43,11 +44,6 @@ class SetPaths:
         self.path_code = Path(__file__).parent
         self.path_project = self.path_code.parent
         self.path_inputs = self.path_project / 'inputs'
-        # self.path_general_inputs = self.path_project / 'general_input_modules'
-        # self.path_cap_input_modules = self.path_project / 'cap_input_modules'
-        # self.path_ghg_input_modules = self.path_project / 'ghg_input_modules'
-        # self.path_cap_modules = self.path_project / 'cap_modules'
-        # self.path_ghg_modules = self. path_project / 'ghg_modules'
         self.path_outputs = self.path_project / 'outputs'
         self.path_test = self.path_project / 'test'
 
@@ -63,6 +59,35 @@ class SetPaths:
         files_in_path_code = (entry for entry in self.path_code.iterdir() if entry.is_file())
 
         return files_in_path_code
+
+    def copy_code_to_destination(self, destination):
+        """
+
+        This is just a generator that allows for copy/paste of tool code into a bundle of folders and files saved to the outputs folder.
+
+        Parameters:
+            destination: Path; the destination folder; destination folder must exist prior to method call.
+
+        Returns:
+            Nothing, but copies contents of code folder to the destination.
+
+        """
+        # first copy files in the path_code folder
+        files_in_path_code = (entry for entry in self.path_code.iterdir() if entry.is_file())
+        for file in files_in_path_code:
+            shutil.copy2(file, destination / file.name)
+
+        # now make subfolders in destination and copy files from path_code subfolders
+        dirs_in_path_code = (entry for entry in self.path_code.iterdir() if entry.is_dir())
+        for d in dirs_in_path_code:
+            source_dir_name = Path(d).name
+            destination_subdir = destination / source_dir_name
+            destination_subdir.mkdir(exist_ok=False)
+            files_in_source_dir = (entry for entry in d.iterdir() if entry.is_file())
+            for file in files_in_source_dir:
+                shutil.copy2(file, destination_subdir / file.name)
+
+        return
 
     def input_files_pathlist(self, df):
         """
@@ -151,13 +176,17 @@ class SetInputs:
         FuelPrices.init_from_file(set_paths.path_inputs / InputFiles.get_filename('fuel_prices'), general_inputs)
         DefPrices.init_from_file(set_paths.path_inputs / InputFiles.get_filename('def_prices'), general_inputs)
 
+        self.input_files_pathlist = InputFiles.input_files_pathlist
         self.general_inputs = GeneralInputs()
         self.deflators = Deflators()
         self.fuel_prices = FuelPrices()
         self.def_prices = DefPrices()
+        # self.input_files_pathlist.append([set_paths.path_inputs / InputFiles.get_filename('bca_inputs'),
+        #                                  set_paths.path_inputs / InputFiles.get_filename('deflators'),
+        #                                  set_paths.path_inputs / InputFiles.get_filename('fuel_prices'),
+        #                                  set_paths.path_inputs / InputFiles.get_filename('def_prices')])
 
         if self.calc_cap_costs:
-
             OptionsCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('options_cap'))
             MovesAdjCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('moves_adjustments_cap'))
             FleetCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('fleet_cap'), general_inputs)
@@ -195,9 +224,24 @@ class SetInputs:
             AnnualSummaryCAP.create_annual_summary_dict()
             self.annual_summary_cap = AnnualSummaryCAP()
 
+            # add input files being used to the pathlist
+            # self.input_files_pathlist.append([set_paths.path_inputs / InputFiles.get_filename('options_cap'),
+            #                                   set_paths.path_inputs / InputFiles.get_filename('moves_adjustments_cap'),
+            #                                   set_paths.path_inputs / InputFiles.get_filename('fleet_cap'),
+            #                                   set_paths.path_inputs / InputFiles.get_filename('regclass_costs'),
+            #                                   set_paths.path_inputs / InputFiles.get_filename('regclass_learning_scalers'),
+            #                                   set_paths.path_inputs / InputFiles.get_filename('markups'),
+            #                                   set_paths.path_inputs / InputFiles.get_filename('warranty'),
+            #                                   set_paths.path_inputs / InputFiles.get_filename('useful_life'),
+            #                                   set_paths.path_inputs / InputFiles.get_filename('def_doserates'),
+            #                                   set_paths.path_inputs / InputFiles.get_filename('orvr_fuelchanges_cap'),
+            #                                   set_paths.path_inputs / InputFiles.get_filename('repair_and_maintenance'),
+            #                                   ])
+
         if self.calc_cap_pollution:
             DollarPerTonCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('dollar_per_ton_cap'))
             self.dollar_per_ton_cap = DollarPerTonCAP()
+            # self.input_files_pathlist.append(set_paths.path_inputs / InputFiles.get_filename('dollar_per_ton_cap'))
 
         if self.calc_ghg_costs:
 
@@ -219,6 +263,14 @@ class SetInputs:
             AnnualSummaryGHG.create_annual_summary_dict()
             self.annual_summary_ghg = AnnualSummaryGHG()
 
+            # add input files being used to the pathlist
+            # self.input_files_pathlist.append([set_paths.path_inputs / InputFiles.get_filename('options_ghg'),
+            #                                   set_paths.path_inputs / InputFiles.get_filename('moves_adjustments_ghg'),
+            #                                   set_paths.path_inputs / InputFiles.get_filename('fleet_ghg'),
+            #                                   set_paths.path_inputs / InputFiles.get_filename('sourcetype_costs'),
+            #                                   set_paths.path_inputs / InputFiles.get_filename('sourcetype_learning_scalers'),
+            #                                   ])
+
             if self.calc_cap_costs:
                 pass
             else:
@@ -228,6 +280,19 @@ class SetInputs:
                 self.markups = Markups()
                 self.warranty = Warranty()
                 self.useful_life = UsefulLife()
+
+                # add input files being used to the pathlist
+                # self.input_files_pathlist.append([set_paths.path_inputs / InputFiles.get_filename('markups'),
+                #                                   set_paths.path_inputs / InputFiles.get_filename('warranty'),
+                #                                   set_paths.path_inputs / InputFiles.get_filename('useful_life'),
+                #                                   ])
+
+        self.row_header_for_fleet_files = ['yearID', 'modelYearID', 'ageID', 'optionID', 'OptionName',
+                                           'sourceTypeID', 'sourceTypeName', 'regClassID', 'regClassName', 'fuelTypeID',
+                                           'fuelTypeName',
+                                           'DiscountRate',
+                                           ]
+        self.row_header_for_annual_summary_files = ['yearID', 'optionID', 'OptionName', 'DiscountRate']
 
         self.elapsed_time_inputs = time() - self.start_time
             # OrvrFuelChangesGHG
@@ -275,7 +340,6 @@ class SetInputs:
         # self.deflators_file = gen_fxns.read_input_files(set_paths.path_inputs, self.input_files_dict['deflators_file']['UserEntry.csv'], skiprows=4, reset_index=True)
         # self.deflators_dict = Deflators().init_from_file(set_paths.path_inputs / self.input_files_dict['deflators_file']['UserEntry.csv'])
         #
-        # self.input_files_pathlist = SetPaths().input_files_pathlist(self.input_files_df)
         #
         # self.elapsed_time_read = time.time() - self.start_time_read
         #
@@ -400,8 +464,3 @@ class SetInputs:
         # if self.calc_ghg_pollution_effects:
         #     print('\nWARNING: The tool is not configured to calculate GHG effects at this time.')
         #
-        self.row_header_for_fleet_files = ['yearID', 'modelYearID', 'ageID', 'optionID', 'OptionName',
-                                           'sourceTypeID', 'sourceTypeName', 'regClassID', 'regClassName', 'fuelTypeID', 'fuelTypeName',
-                                           'DiscountRate',
-                                           ]
-        self.row_header_for_annual_summary_files = ['yearID', 'optionID', 'OptionName', 'DiscountRate']

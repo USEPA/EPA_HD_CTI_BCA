@@ -1,6 +1,7 @@
 import pandas as pd
 
 from bca_tool_code.general_input_modules.general_functions import read_input_file
+from bca_tool_code.general_input_modules.input_files import InputFiles
 from bca_tool_code.ghg_input_modules.options_ghg import OptionsGHG
 from bca_tool_code.ghg_input_modules.moves_adjustments_ghg import MovesAdjGHG
 
@@ -67,6 +68,8 @@ class FleetGHG:
         FleetGHG.calc_per_veh_cumulative_vmt()
 
         FleetGHG.add_keys_for_discounting(general_inputs)
+
+        InputFiles.input_files_pathlist.append(filepath)
 
     @staticmethod
     def get_attribute_values(key, *attribute_names):
@@ -156,8 +159,8 @@ class FleetGHG:
             year_min: Int; the first model year for the DataFrame.
 
         Returns:
-            A DataFrame of the MOVES inputs with necessary MOVES adjustments made according to the MOVES adjustments input file. The DataFrame will also add
-            optionID/sourceTypeID/regClassID/fuelTypeID names and will use only those options included in the options.csv input file.
+            A DataFrame of the MOVES inputs with necessary MOVES adjustments made according to the MOVES adjustments
+            input file.
 
         """
         _df = df.copy()

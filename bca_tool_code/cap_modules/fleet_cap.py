@@ -1,6 +1,7 @@
 import pandas as pd
 
 from bca_tool_code.general_input_modules.general_functions import read_input_file
+from bca_tool_code.general_input_modules.input_files import InputFiles
 from bca_tool_code.cap_input_modules.options_cap import OptionsCAP
 from bca_tool_code.cap_input_modules.moves_adjustments_cap import MovesAdjCAP
 
@@ -68,6 +69,8 @@ class FleetCAP:
         FleetCAP.calc_per_veh_cumulative_vmt()
 
         FleetCAP.add_keys_for_discounting(general_inputs)
+
+        InputFiles.input_files_pathlist.append(filepath)
 
     @staticmethod
     def get_attribute_values(key, *attribute_names):
@@ -177,8 +180,8 @@ class FleetCAP:
             year_min: Int; the first model year for the DataFrame.
 
         Returns:
-            A DataFrame of the MOVES inputs with necessary MOVES adjustments made according to the MOVES adjustments input file. The DataFrame will also add
-            optionID/sourceTypeID/regClassID/fuelTypeID names and will use only those options included in the options.csv input file.
+            A DataFrame of the MOVES inputs with necessary MOVES adjustments made according to the MOVES adjustments
+            input file.
 
         """
         _df = df.copy()
@@ -211,8 +214,8 @@ class FleetCAP:
         st_vehicles = pd.Series(
             zip(zip(df_return['sourceTypeID'], df_return['regClassID'], df_return['fuelTypeID']), df_return['optionID'])).unique()
 
-        for arg in FleetCAP.args_with_tech:
-            df_return.insert(df_return.columns.get_loc(arg) + 1, f'{arg}_withTech', 0)
+        # for arg in FleetCAP.args_with_tech:
+        #     df_return.insert(df_return.columns.get_loc(arg) + 1, f'{arg}_withTech', 0)
 
         for (vehicle, alt) in st_vehicles:
             st, rc, ft = vehicle
@@ -227,7 +230,11 @@ class FleetCAP:
                 df_return.loc[(df_return['optionID'] == alt)
                               & (df_return['sourceTypeID'] == st)
                               & (df_return['regClassID'] == rc)
-                              & (df_return['fuelTypeID'] == ft), f'{arg}_withTech'] = arg_with_tech
+                              & (df_return['fuelTypeID'] == ft), f'{arg}'] = arg_with_tech
+                # df_return.loc[(df_return['optionID'] == alt)
+                #               & (df_return['sourceTypeID'] == st)
+                #               & (df_return['regClassID'] == rc)
+                #               & (df_return['fuelTypeID'] == ft), f'{arg}_withTech'] = arg_with_tech
 
         return df_return
 
