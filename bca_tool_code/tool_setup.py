@@ -89,21 +89,6 @@ class SetPaths:
 
         return
 
-    # def input_files_pathlist(self, df):
-    #     """
-    #
-    #     Parameters:
-    #         df: DataFrame; contains input filenames based on the General_Inputs.csv file.
-    #
-    #     Returns:
-    #         A list of full path details for each of the input files allowing for copy/paste of those files into a bundle of folders and files saved to the outputs folder.
-    #
-    #     """
-    #     input_files_pathlist = [self.path_inputs / item for item in pd.Series(df['UserEntry.csv'])]
-    #     input_files_pathlist.append(self.path_inputs / 'Input_Files.csv')
-    #
-    #     return input_files_pathlist
-
     @staticmethod
     def run_id():
         """
@@ -177,7 +162,6 @@ class SetInputs:
         DefPrices.init_from_file(set_paths.path_inputs / InputFiles.get_filename('def_prices'), self.general_inputs)
 
         self.input_files_pathlist = InputFiles.input_files_pathlist
-        # self.general_inputs = GeneralInputs()
         self.deflators = Deflators()
         self.fuel_prices = FuelPrices()
         self.def_prices = DefPrices()
@@ -223,7 +207,6 @@ class SetInputs:
         if self.calc_cap_pollution:
             DollarPerTonCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('dollar_per_ton_cap'))
             self.dollar_per_ton_cap = DollarPerTonCAP()
-            # self.input_files_pathlist.append(set_paths.path_inputs / InputFiles.get_filename('dollar_per_ton_cap'))
 
         if self.calc_ghg_costs:
 
@@ -262,4 +245,5 @@ class SetInputs:
                                            ]
         self.row_header_for_annual_summary_files = ['yearID', 'optionID', 'OptionName', 'DiscountRate']
 
-        self.elapsed_time_inputs = time() - self.start_time
+        self.end_time_inputs = time()
+        self.elapsed_time_inputs = self.end_time_inputs - self.start_time

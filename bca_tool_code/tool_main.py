@@ -43,11 +43,13 @@ def main():
         The results of the current run of the tool.
 
     """
-    start_time_calcs = time()
+    # start_time_calcs = time()
     set_paths = SetPaths()
     run_id = set_paths.run_id()
 
     settings = SetInputs()
+
+    start_time_calcs = settings.end_time_inputs
 
     print("\nDoing the work...\n")
 
@@ -168,7 +170,8 @@ def main():
             Vehicle().option_name(settings, settings.options_ghg, data_object=None, data_dict=obj)
             Vehicle().vehicle_name(data_object=None, data_dict=obj)
 
-    elapsed_time_calcs = time() - start_time_calcs
+    end_time_calcs = start_time_outputs = time()
+    elapsed_time_calcs = end_time_calcs - start_time_calcs
 
     # determine run output paths
     if run_id == 'test':
@@ -179,7 +182,6 @@ def main():
         path_of_run_folder, path_of_run_inputs_folder, path_of_run_results_folder, path_of_modified_inputs_folder, path_of_code_folder \
             = set_paths.create_output_paths(settings.start_time_readable, run_id)
 
-    start_time_outputs = time()
 
     # copy input files into results folder; also save fuel_prices and reshaped files to this folder
     print('\nCopying input files and code to the outputs folder...\n')
@@ -255,8 +257,8 @@ def main():
     save_dict(settings.deflators.deflators_and_adj_factors, path_of_modified_inputs_folder / 'deflators',
               row_header=None, stamp=stamp, index=False)
 
-    elapsed_time_outputs = time() - start_time_outputs
-    end_time = time()
+    end_time_outputs = end_time = time()
+    elapsed_time_outputs = end_time_outputs - start_time_outputs
     end_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')
     elapsed_time = end_time - settings.start_time
 
@@ -264,18 +266,25 @@ def main():
         data={'Item': ['Version', 'Run folder',
                        'Calc CAP costs', 'Calc CAP pollution',
                        'Calc GHG costs', 'Calc GHG pollution',
-                       'Start of run', 'Elapsed time read inputs', 'Elapsed time calculations',
-                       'Elapsed time save outputs', 'End of run', 'Elapsed runtime'],
+                       'Start of run', 'End of run',
+                       'Elapsed time read inputs', 'Elapsed time calculations',
+                       'Elapsed time save outputs', 'Elapsed runtime',
+                       ],
               'Results': [bca_tool_code.__version__, path_of_run_folder,
                           settings.calc_cap_costs, settings.calc_cap_pollution,
                           settings.calc_ghg_costs, settings.calc_ghg_pollution,
-                          settings.start_time_readable, settings.elapsed_time_inputs, elapsed_time_calcs,
-                          elapsed_time_outputs, end_time_readable, elapsed_time],
+                          settings.start_time_readable, end_time_readable,
+                          settings.elapsed_time_inputs, elapsed_time_calcs,
+                          elapsed_time_outputs, elapsed_time,
+                          ],
               'Units': ['', '',
                         '', '',
                         '', '',
-                        'YYYYmmdd-HHMMSS', 'seconds', 'seconds',
-                        'seconds', 'YYYYmmdd-HHMMSS', 'seconds']})
+                        'YYYYmmdd-HHMMSS', 'YYYYmmdd-HHMMSS',
+                        'seconds', 'seconds',
+                        'seconds', 'seconds',
+                        ]
+              })
     summary_log = pd.concat([summary_log, get_file_datetime(settings.input_files_pathlist)],
                             axis=0, sort=False, ignore_index=True)
     summary_log.to_csv(path_of_run_results_folder / f'summary_log_{stamp}.csv', index=False)
