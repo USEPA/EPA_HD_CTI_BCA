@@ -47,7 +47,7 @@ def calc_fuel_costs(settings, data_object):
     gallons_per_ml = pd.to_numeric(settings.general_inputs.get_attribute_value('gallons_per_ml'))
     grams_per_short_ton = pd.to_numeric(settings.general_inputs.get_attribute_value('grams_per_short_ton'))
 
-    for key in data_object._dict.keys():
+    for key in data_object.keys:
         vehicle, alt, model_year, age_id, disc_rate = key
         st, rc, ft = vehicle
         engine = rc, ft
@@ -88,7 +88,7 @@ def calc_fuel_costs_per_veh(data_object):
     """
     print('\nCalculating average fuel costs...')
 
-    for key in data_object._dict.keys():
+    for key in data_object.keys:
         fuel_cost = data_object.get_attribute_value(key, 'FuelCost_Retail')
         vmt = data_object.get_attribute_value(key, 'VMT')
         vpop = data_object.get_attribute_value(key, 'VPOP')

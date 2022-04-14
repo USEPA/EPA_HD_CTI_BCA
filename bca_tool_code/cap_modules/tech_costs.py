@@ -15,9 +15,7 @@ def calc_tech_costs_per_veh(data_object):
     """
     print('\nCalculating Technology costs per vehicle...')
 
-    age0_keys = [k for k, v in data_object._dict.items() if v['ageID'] == 0]
-
-    for key in age0_keys:
+    for key in data_object.age0_keys:
         cost = data_object.get_attribute_value(key, 'DirectCost_PerVeh')
         cost += data_object.get_attribute_value(key, 'IndirectCost_PerVeh')
 
@@ -37,9 +35,7 @@ def calc_tech_costs(data_object):
     """
     print('\nCalculating Technology costs...')
 
-    age0_keys = [k for k, v in data_object._dict.items() if v['ageID'] == 0]
-
-    for key in age0_keys:
+    for key in data_object.age0_keys:
         cost_per_veh = data_object.get_attribute_value(key, 'TechCost_PerVeh')
         sales = data_object.get_attribute_value(key, 'VPOP')
         cost = cost_per_veh * sales

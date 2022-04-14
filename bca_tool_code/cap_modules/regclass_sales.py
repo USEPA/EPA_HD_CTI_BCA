@@ -4,6 +4,7 @@ import pandas as pd
 class RegClassSales:
 
     _dict = dict()
+    age0_keys = None
 
     @staticmethod
     def create_regclass_sales_dict(df, cost_steps):
@@ -44,6 +45,9 @@ class RegClassSales:
         _df.fillna(0, inplace=True)
 
         RegClassSales._dict = _df.to_dict('index')
+
+        # set keys
+        RegClassSales.age0_keys = tuple([k for k, v in RegClassSales._dict.items() if v['ageID'] == 0])
 
     @staticmethod
     def get_attribute_value(key, attribute_name):

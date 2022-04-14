@@ -14,7 +14,7 @@ def calc_sum_of_costs(data_object, name_of_sum, *args):
     """
     print(f'\nCalculating {name_of_sum}...')
 
-    for key in data_object._dict.keys():
+    for key in data_object.keys:
         sum_of_costs = 0
         for arg in args:
             sum_of_costs += data_object.get_attribute_value(key, arg)

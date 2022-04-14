@@ -29,7 +29,7 @@ def create_weighted_cost_dict(settings, data_object, destination_dict, arg_to_we
 
     max_age_included = pd.to_numeric(settings.general_inputs.get_attribute_value('weighted_operating_cost_thru_ageID'))
 
-    for key in data_object._dict.keys():
+    for key in data_object.keys:
         vehicle, alt, model_year, age_id, disc_rate = key
         st, rc, ft = vehicle
         if arg_to_weight == 'DEFCost_PerMile' and ft != 2:
@@ -53,8 +53,5 @@ def create_weighted_cost_dict(settings, data_object, destination_dict, arg_to_we
         numerator = wtd_result_dict[key]['numerator']
         denominator = wtd_result_dict[key]['denominator']
         alt = key[1]
-        # st, rc, ft = vehicle
-        # source_type = Vehicle(st).sourcetype_name()
         destination_dict[key] = {'optionID': alt,
-                                 # 'sourceTypeName': source_type,
                                  'cents_per_mile': 100 * numerator / denominator}

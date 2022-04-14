@@ -70,9 +70,7 @@ def calc_indirect_costs_per_veh(settings, data_object):
     print('\nCalculating Indirect costs per vehicle...')
     markup_factors = settings.markups.markup_factor_names
 
-    age0_keys = [k for k, v in data_object._dict.items() if v['ageID'] == 0]
-
-    for key in age0_keys:
+    for key in data_object.age0_keys:
         vehicle, alt, model_year, age_id, disc_rate = key
         st, rc, ft = vehicle
         engine = rc, ft
@@ -106,9 +104,7 @@ def calc_indirect_costs(settings, data_object):
     markup_factors = settings.markups.markup_factor_names
     markup_factors.append('Indirect')
 
-    age0_keys = [k for k, v in data_object._dict.items() if v['ageID'] == 0]
-
-    for key in age0_keys:
+    for key in data_object.age0_keys:
         update_dict = dict()
         for markup_factor in markup_factors:
             cost_per_veh = data_object.get_attribute_value(key, f'{markup_factor}Cost_PerVeh')

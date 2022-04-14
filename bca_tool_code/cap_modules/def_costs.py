@@ -59,13 +59,12 @@ def calc_def_costs(settings, data_object):
     """
     print('\nCalculating DEF costs...')
 
-    # get keys where fueltype=2 (Diesel since they are the only vehicles that use DEF)
-    ft2_keys = [k for k, v in data_object._dict.items() if v['fuelTypeID'] == 2]
+    # Note: use keys where fueltype_id=2 (Diesel since they are the only vehicles that use DEF)
 
     def_gallons_per_ton_nox_reduction \
         = pd.to_numeric(settings.general_inputs.get_attribute_value('def_gallons_per_ton_nox_reduction'))
 
-    for key in ft2_keys:
+    for key in data_object.ft2_keys:
         vehicle, alt, model_year, age_id, disc_rate = key
         calendar_year = model_year + age_id
 
@@ -96,10 +95,7 @@ def calc_def_costs_per_veh(data_object):
     """
     print('\nCalculating DEF average costs...')
 
-    # get keys where fueltype=2 (Diesel since they are the only vehicles that use DEF)
-    ft2_keys = [k for k, v in data_object._dict.items() if v['fuelTypeID'] == 2]
-
-    for key in ft2_keys:
+    for key in data_object.ft2_keys:
         def_cost = data_object.get_attribute_value(key, 'DEFCost')
         vmt = data_object.get_attribute_value(key, 'VMT')
         vpop = data_object.get_attribute_value(key, 'VPOP')

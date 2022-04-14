@@ -15,6 +15,7 @@ def calc_deltas(settings, data_object):
     """
     print('\nCalculating deltas...')
 
+    # Note: copy data_object._dict because data_object._dict cannot be used directly since it changes size in the loop
     dict_for_deltas = data_object._dict.copy()
 
     # update_dict = dict()

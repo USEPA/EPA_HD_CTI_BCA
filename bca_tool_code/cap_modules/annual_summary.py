@@ -34,25 +34,25 @@ class AnnualSummaryCAP:
 
         costs_start = settings.general_inputs.get_attribute_value('costs_start')
         discount_to_year = pd.to_numeric(settings.general_inputs.get_attribute_value('discount_to_yearID'))
-        if costs_start == 'start-year':
-            discount_offset = 0
-            annualized_offset = 1
-        elif costs_start == 'end-year':
+
+        discount_offset = 0
+        annualized_offset = 1
+        if costs_start == 'end-year':
             discount_offset = 1
             annualized_offset = 0
 
         # get cost attributes but only totals, per vehicle or mile costs are not relevant here
         nested_dict = [n_dict for key, n_dict in source_dict.items()][0]
-        all_costs = [k for k, v in nested_dict.items() if 'Cost' in k and 'Per' not in k]
-        emission_cost_args_25 = [item for item in all_costs if '_0.025' in item]
-        emission_cost_args_3 = [item for item in all_costs if '_0.03' in item]
-        emission_cost_args_5 = [item for item in all_costs if '_0.05' in item]
-        emission_cost_args_7 = [item for item in all_costs if '_0.07' in item]
-        non_emission_cost_args = [item for item in all_costs if '_0.0' not in item]
+        all_costs = tuple([k for k, v in nested_dict.items() if 'Cost' in k and 'Per' not in k])
+        emission_cost_args_25 = tuple([item for item in all_costs if '_0.025' in item])
+        emission_cost_args_3 = tuple([item for item in all_costs if '_0.03' in item])
+        emission_cost_args_5 = tuple([item for item in all_costs if '_0.05' in item])
+        emission_cost_args_7 = tuple([item for item in all_costs if '_0.07' in item])
+        non_emission_cost_args = tuple([item for item in all_costs if '_0.0' not in item])
 
-        rates = [settings.general_inputs.get_attribute_value('social_discount_rate_1'),
-                 settings.general_inputs.get_attribute_value('social_discount_rate_2')]
-        rates = [pd.to_numeric(rate) for rate in rates]
+        rates = tuple([settings.general_inputs.get_attribute_value('social_discount_rate_1'),
+                       settings.general_inputs.get_attribute_value('social_discount_rate_2')])
+        rates = tuple([pd.to_numeric(rate) for rate in rates])
         years = source.years
 
         # build the destination dictionary to house data
@@ -72,7 +72,7 @@ class AnnualSummaryCAP:
                                         )
 
         # then for discounted values
-        for series in ['AnnualValue', 'PresentValue', 'AnnualizedValue']:
+        for series in ('AnnualValue', 'PresentValue', 'AnnualizedValue'):
             for alt in range(0, num_alts):
                 for rate in rates:
                     for calendar_year in years:
@@ -88,7 +88,7 @@ class AnnualSummaryCAP:
         # first sum by year for each cost arg
         series = 'AnnualValue'
         for alt in range(0, num_alts):
-            for rate in [0, *rates]:
+            for rate in (0, *rates):
                 for calendar_year in years:
                     for arg in all_costs:
                         arg_sum = sum(v[arg] for k, v in source_dict.items()
@@ -122,8 +122,8 @@ class AnnualSummaryCAP:
                     for calendar_year in years:
                         periods = calendar_year - discount_to_year + discount_offset
                         present_value = destination_dict['PresentValue', alt, calendar_year, rate][arg]
-                        arg_annualized = present_value * rate * (1 + rate) ** periods \
-                                         / ((1 + rate) ** (periods + annualized_offset) - 1)
+                        arg_annualized = AnnualSummaryCAP.calc_annualized_value(present_value, rate, periods,
+                                                                                annualized_offset)
                         destination_dict[(series, alt, calendar_year, social_discount_rate)][arg] = arg_annualized
                         destination_dict[(series, alt, calendar_year, social_discount_rate)]['Periods'] = periods
 
@@ -132,8 +132,8 @@ class AnnualSummaryCAP:
                     for calendar_year in years:
                         periods = calendar_year - discount_to_year + discount_offset
                         present_value = destination_dict['PresentValue', alt, calendar_year, rate][arg]
-                        arg_annualized = present_value * rate * (1 + rate) ** periods \
-                                         / ((1 + rate) ** (periods + annualized_offset) - 1)
+                        arg_annualized = AnnualSummaryCAP.calc_annualized_value(present_value, rate, periods,
+                                                                                annualized_offset)
                         destination_dict[(series, alt, calendar_year, social_discount_rate)][arg] = arg_annualized
 
                 rate = 0.03
@@ -141,8 +141,8 @@ class AnnualSummaryCAP:
                     for calendar_year in years:
                         periods = calendar_year - discount_to_year + discount_offset
                         present_value = destination_dict['PresentValue', alt, calendar_year, rate][arg]
-                        arg_annualized = present_value * rate * (1 + rate) ** periods \
-                                         / ((1 + rate) ** (periods + annualized_offset) - 1)
+                        arg_annualized = AnnualSummaryCAP.calc_annualized_value(present_value, rate, periods,
+                                                                                annualized_offset)
                         destination_dict[(series, alt, calendar_year, social_discount_rate)][arg] = arg_annualized
 
                 rate = 0.05
@@ -150,8 +150,8 @@ class AnnualSummaryCAP:
                     for calendar_year in settings.years:
                         periods = calendar_year - discount_to_year + discount_offset
                         present_value = destination_dict['PresentValue', alt, calendar_year, rate][arg]
-                        arg_annualized = present_value * rate * (1 + rate) ** periods \
-                                         / ((1 + rate) ** (periods + annualized_offset) - 1)
+                        arg_annualized = AnnualSummaryCAP.calc_annualized_value(present_value, rate, periods,
+                                                                                annualized_offset)
                         destination_dict[(series, alt, calendar_year, social_discount_rate)][arg] = arg_annualized
 
                 rate = 0.07
@@ -159,8 +159,8 @@ class AnnualSummaryCAP:
                     for calendar_year in settings.years:
                         periods = calendar_year - discount_to_year + discount_offset
                         present_value = destination_dict['PresentValue', alt, calendar_year, rate][arg]
-                        arg_annualized = present_value * rate * (1 + rate) ** periods \
-                                         / ((1 + rate) ** (periods + annualized_offset) - 1)
+                        arg_annualized = AnnualSummaryCAP.calc_annualized_value(present_value, rate, periods,
+                                                                                annualized_offset)
                         destination_dict[(series, alt, calendar_year, social_discount_rate)][arg] = arg_annualized
 
     @staticmethod
@@ -187,3 +187,9 @@ class AnnualSummaryCAP:
     def add_key_value_pairs(key, input_dict):
 
         AnnualSummaryCAP._dict[key] = input_dict
+
+    @staticmethod
+    def calc_annualized_value(present_value, rate, periods, annualized_offset):
+
+        return present_value * rate * (1 + rate) ** periods \
+               / ((1 + rate) ** (periods + annualized_offset) - 1)

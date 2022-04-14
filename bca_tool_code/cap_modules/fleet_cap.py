@@ -19,6 +19,10 @@ class FleetCAP:
     year_max = 0
     years = 0
     fleet_df = pd.DataFrame() # used in RegClassSales
+    keys = None
+    age0_keys = None
+    ft2_keys = None
+    non0_dr_keys = None
 
     # create a dictionary of attributes to be summed (dict keys) and what attributes to include in the sum (dict values)
     # use pre-tax fuel price for total costs since it serves as the basis for social costs; use retail for averages
@@ -69,6 +73,12 @@ class FleetCAP:
         FleetCAP.calc_per_veh_cumulative_vmt()
 
         FleetCAP.add_keys_for_discounting(general_inputs)
+
+        # set keys
+        FleetCAP.keys = tuple([k for k in FleetCAP._dict.keys()])
+        FleetCAP.age0_keys = tuple([k for k, v in FleetCAP._dict.items() if v['ageID'] == 0])
+        FleetCAP.ft2_keys = tuple([k for k, v in FleetCAP._dict.items() if v['fuelTypeID'] == 2])
+        FleetCAP.non0_dr_keys = tuple([k for k, v in FleetCAP._dict.items() if v['DiscountRate'] != 0])
 
         InputFiles.input_files_pathlist.append(filepath)
 
@@ -214,9 +224,6 @@ class FleetCAP:
         st_vehicles = pd.Series(
             zip(zip(df_return['sourceTypeID'], df_return['regClassID'], df_return['fuelTypeID']), df_return['optionID'])).unique()
 
-        # for arg in FleetCAP.args_with_tech:
-        #     df_return.insert(df_return.columns.get_loc(arg) + 1, f'{arg}_withTech', 0)
-
         for (vehicle, alt) in st_vehicles:
             st, rc, ft = vehicle
             adjustment = MovesAdjCAP.get_attribute_value(vehicle, alt, 'percent')
@@ -231,10 +238,6 @@ class FleetCAP:
                               & (df_return['sourceTypeID'] == st)
                               & (df_return['regClassID'] == rc)
                               & (df_return['fuelTypeID'] == ft), f'{arg}'] = arg_with_tech
-                # df_return.loc[(df_return['optionID'] == alt)
-                #               & (df_return['sourceTypeID'] == st)
-                #               & (df_return['regClassID'] == rc)
-                #               & (df_return['fuelTypeID'] == ft), f'{arg}_withTech'] = arg_with_tech
 
         return df_return
 
@@ -255,7 +258,7 @@ class FleetCAP:
             The dictionary updated with cumulative annual average VMT/vehicle.
 
         """
-        # this loop calculates the cumulative vmt for each key with the averages_dict and saves it in the cumulative_vmt_dict
+        # this loop calculates the cumulative vmt for each key and saves it in the cumulative_vmt_dict
         cumulative_vmt_dict = dict()
         for key in FleetCAP._dict.keys():
             vehicle, alt, model_year, age_id, disc_rate = key
@@ -266,7 +269,7 @@ class FleetCAP:
                 cumulative_vmt = FleetCAP.get_attribute_value(key, 'VMT_PerVeh')
             cumulative_vmt_dict[key] = cumulative_vmt
 
-        # this loop updates the averages_dict with the contents of the cumulative_vmt_dict
+        # this loop updates the data object with the contents of the cumulative_vmt_dict
         for key in FleetCAP._dict.keys():
             cumulative_vmt = cumulative_vmt_dict[key]
             FleetCAP.update_dict(key, {'VMT_PerVeh_Cumulative': cumulative_vmt})

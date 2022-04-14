@@ -23,27 +23,24 @@ def discount_values(settings, data_object):
 
     # get cost attributes
     nested_dict = [n_dict for key, n_dict in data_object._dict.items()][0]
-    all_costs = [k for k, v in nested_dict.items() if 'Cost' in k]
-    emission_cost_args_25 = [item for item in all_costs if '_0.025' in item]
-    emission_cost_args_3 = [item for item in all_costs if '_0.03' in item]
-    emission_cost_args_5 = [item for item in all_costs if '_0.05' in item]
-    emission_cost_args_7 = [item for item in all_costs if '_0.07' in item]
-    non_emission_cost_args = [item for item in all_costs if '_0.0' not in item]
+    all_costs = tuple([k for k, v in nested_dict.items() if 'Cost' in k])
+    emission_cost_args_25 = tuple([item for item in all_costs if '_0.025' in item])
+    emission_cost_args_3 = tuple([item for item in all_costs if '_0.03' in item])
+    emission_cost_args_5 = tuple([item for item in all_costs if '_0.05' in item])
+    emission_cost_args_7 = tuple([item for item in all_costs if '_0.07' in item])
+    non_emission_cost_args = tuple([item for item in all_costs if '_0.0' not in item])
 
     costs_start = settings.general_inputs.get_attribute_value('costs_start')
     discount_to_year = pd.to_numeric(settings.general_inputs.get_attribute_value('discount_to_yearID'))
-
-    if costs_start == 'start-year':
-        discount_offset = 0
-    elif costs_start == 'end-year':
+    discount_offset = 0
+    if costs_start == 'end-year':
         discount_offset = 1
     else:
         print('costs_start entry in General Inputs file not set properly.')
 
-    # no need to discount undiscounted values with 0 percent discount rate
-    non0_dr_keys = [k for k, v in data_object._dict.items() if v['DiscountRate'] != 0]
+    # Note: there is no need to discount values where the discount rate is 0
 
-    for key in non0_dr_keys:
+    for key in data_object.non0_dr_keys:
         vehicle, alt, model_year, age_id, rate = key
         year = model_year + age_id
 

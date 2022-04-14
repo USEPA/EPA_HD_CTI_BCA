@@ -4,6 +4,7 @@ import pandas as pd
 class SourceTypeSales:
 
     _dict = dict()
+    age0_keys = None
 
     @staticmethod
     def create_sourcetype_sales_dict(df, cost_steps):
@@ -47,6 +48,9 @@ class SourceTypeSales:
         _df.fillna(0, inplace=True)
 
         SourceTypeSales._dict = _df.to_dict('index')
+
+        # set keys
+        SourceTypeSales.age0_keys = tuple([k for k, v in SourceTypeSales._dict.items() if v['ageID'] == 0])
 
     @staticmethod
     def get_attribute_value(key, attribute_name):

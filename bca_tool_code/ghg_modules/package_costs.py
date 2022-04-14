@@ -17,11 +17,9 @@ def calc_avg_package_cost_per_step(settings):
     scalers_object = settings.sourcetype_learning_scalers
     sales_object = settings.sourcetype_sales
 
-    age0_keys = [k for k, v in sales_object._dict.items() if v['ageID'] == 0]
-
     cost_steps = costs_object.cost_steps
 
-    for key in age0_keys:
+    for key in sales_object.age0_keys:
         unit, alt, model_year = key
         for cost_step in cost_steps:
             cost_step = pd.to_numeric(cost_step)
@@ -58,9 +56,7 @@ def calc_package_costs_per_veh(settings, data_object):
     print(f'\nCalculating GHG Tech costs per vehicle...')
     sales_object = settings.sourcetype_sales
 
-    age0_keys = [k for k, v in data_object._dict.items() if v['ageID'] == 0]
-
-    for key in age0_keys:
+    for key in data_object.age0_keys:
         vehicle, alt, model_year, age_id, disc_rate = key
 
         cost_steps = settings.sourcetype_costs.cost_steps
@@ -95,9 +91,7 @@ def calc_package_costs(data_object):
     """
     print(f'\nCalculating GHG Tech costs...')
 
-    age0_keys = [k for k, v in data_object._dict.items() if v['ageID'] == 0]
-
-    for key in age0_keys:
+    for key in data_object.age0_keys:
         cost_per_veh = data_object.get_attribute_value(key, 'TechCost_PerVeh')
         sales = data_object.get_attribute_value(key, 'VPOP')
         cost = cost_per_veh * sales

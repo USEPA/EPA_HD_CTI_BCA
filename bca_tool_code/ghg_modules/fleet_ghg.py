@@ -19,6 +19,9 @@ class FleetGHG:
     year_max = 0
     years = 0
     fleet_df = pd.DataFrame()
+    keys = None
+    age0_keys = None
+    non0_dr_keys = None
 
     # create a dictionary of attributes to be summed (dict keys) and what attributes to include in the sum (dict values)
     attributes_to_sum = {'OperatingCost':
@@ -68,6 +71,11 @@ class FleetGHG:
         FleetGHG.calc_per_veh_cumulative_vmt()
 
         FleetGHG.add_keys_for_discounting(general_inputs)
+
+        # set keys
+        FleetGHG.keys = tuple([k for k in FleetGHG._dict.keys()])
+        FleetGHG.age0_keys = tuple([k for k, v in FleetGHG._dict.items() if v['ageID'] == 0])
+        FleetGHG.non0_dr_keys = tuple([k for k, v in FleetGHG._dict.items() if v['DiscountRate'] != 0])
 
         InputFiles.input_files_pathlist.append(filepath)
 

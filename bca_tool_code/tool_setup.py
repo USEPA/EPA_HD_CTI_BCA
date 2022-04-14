@@ -89,20 +89,20 @@ class SetPaths:
 
         return
 
-    def input_files_pathlist(self, df):
-        """
-
-        Parameters:
-            df: DataFrame; contains input filenames based on the General_Inputs.csv file.
-
-        Returns:
-            A list of full path details for each of the input files allowing for copy/paste of those files into a bundle of folders and files saved to the outputs folder.
-
-        """
-        input_files_pathlist = [self.path_inputs / item for item in pd.Series(df['UserEntry.csv'])]
-        input_files_pathlist.append(self.path_inputs / 'Input_Files.csv')
-
-        return input_files_pathlist
+    # def input_files_pathlist(self, df):
+    #     """
+    #
+    #     Parameters:
+    #         df: DataFrame; contains input filenames based on the General_Inputs.csv file.
+    #
+    #     Returns:
+    #         A list of full path details for each of the input files allowing for copy/paste of those files into a bundle of folders and files saved to the outputs folder.
+    #
+    #     """
+    #     input_files_pathlist = [self.path_inputs / item for item in pd.Series(df['UserEntry.csv'])]
+    #     input_files_pathlist.append(self.path_inputs / 'Input_Files.csv')
+    #
+    #     return input_files_pathlist
 
     @staticmethod
     def run_id():
@@ -161,11 +161,11 @@ class SetInputs:
         self.general_inputs = GeneralInputs()
 
         # determine what's being run
-        self.no_action_alt = pd.to_numeric(general_inputs.get_attribute_value('no_action_alt'))
-        calc_cap_costs_value = general_inputs.get_attribute_value('calculate_cap_costs')
-        calc_cap_pollution_effects_value = general_inputs.get_attribute_value('calculate_cap_pollution_effects')
-        calc_ghg_costs_value = general_inputs.get_attribute_value('calculate_ghg_costs')
-        calc_ghg_pollution_effects_value = general_inputs.get_attribute_value('calculate_ghg_pollution_effects')
+        self.no_action_alt = pd.to_numeric(self.general_inputs.get_attribute_value('no_action_alt'))
+        calc_cap_costs_value = self.general_inputs.get_attribute_value('calculate_cap_costs')
+        calc_cap_pollution_effects_value = self.general_inputs.get_attribute_value('calculate_cap_pollution_effects')
+        calc_ghg_costs_value = self.general_inputs.get_attribute_value('calculate_ghg_costs')
+        calc_ghg_pollution_effects_value = self.general_inputs.get_attribute_value('calculate_ghg_pollution_effects')
 
         self.calc_cap_costs = True if calc_cap_costs_value == 'Y' else None
         self.calc_cap_pollution = True if calc_cap_pollution_effects_value == 'Y' else None

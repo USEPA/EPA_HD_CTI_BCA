@@ -95,7 +95,7 @@ def calc_emission_repair_costs_per_mile(settings, data_object):
     max_cpm_input_value = settings.repair_and_maintenance.get_attribute_value('max_R&M_CPM')
     emission_repair_share_input_value = settings.repair_and_maintenance.get_attribute_value('emission_repair_share')
 
-    for key in data_object._dict.keys():
+    for key in data_object.keys:
         vehicle, alt, model_year, age_id, disc_rate = key
 
         # Note: keys with non-zero discount rates won't have any cost data yet.
@@ -160,7 +160,7 @@ def calc_emission_repair_costs_per_veh(data_object):
     """
     print('\nCalculating emission repair costs per vehicle...')
 
-    for key in data_object._dict.keys():
+    for key in data_object.keys:
         repair_cpm = data_object.get_attribute_value(key, 'EmissionRepairCost_PerMile')
         vmt_per_veh = data_object.get_attribute_value(key, 'VMT_PerVeh')
         cost_per_veh = repair_cpm * vmt_per_veh
@@ -181,7 +181,7 @@ def calc_emission_repair_costs(data_object):
     """
     print(f'\nCalculating total emission repair costs...')
 
-    for key in data_object._dict.keys():
+    for key in data_object.keys:
         cost_per_veh = data_object.get_attribute_value(key, 'EmissionRepairCost_PerVeh')
         vpop = data_object.get_attribute_value(key, 'VPOP')
         cost = cost_per_veh * vpop

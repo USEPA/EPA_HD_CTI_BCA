@@ -18,7 +18,7 @@ def calc_criteria_emission_costs(settings, data_object):
         vehicle, alt, model_year, age_id, disc_rate = key
         calendar_year = model_year + age_id
         
-        factors = ['pm25_tailpipe', 'nox_tailpipe']
+        factors = ('pm25_tailpipe', 'nox_tailpipe')
         pm_tailpipe_dr1, pm_tailpipe_dr2, nox_tailpipe_dr1, nox_tailpipe_dr2 \
             = settings.dollar_per_ton_cap.get_factors(settings, calendar_year, *factors)
 
