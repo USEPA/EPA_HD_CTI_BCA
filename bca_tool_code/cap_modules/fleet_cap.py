@@ -56,7 +56,7 @@ class FleetCAP:
 
         df = FleetCAP.create_fleet_df(df, year_min)
         FleetCAP.fleet_df = df.copy()
-        
+
         new_attributes = FleetCAP.create_new_attributes(general_inputs)
 
         df['VMT_PerVeh'] = df['VMT'] / df['VPOP']

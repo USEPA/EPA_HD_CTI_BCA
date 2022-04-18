@@ -22,7 +22,7 @@ class SourceTypeLearningScalers:
         SourceTypeLearningScalers._dict = df.to_dict('index')
 
         # update input_files_pathlist if this class is used
-        InputFiles.input_files_pathlist.append(filepath)
+        InputFiles.update_pathlist(filepath)
 
     @staticmethod
     def get_seedvolume_factor(vehicle, alt):

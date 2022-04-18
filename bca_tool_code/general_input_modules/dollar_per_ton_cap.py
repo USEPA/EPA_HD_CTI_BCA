@@ -9,26 +9,22 @@ class DollarPerTonCAP:
     The DollarPerTonCAP class reads the cost factors input file and provides methods to query its contents.
 
     """
+    def __init__(self):
+        self._dict = dict()
 
-    _dict = dict()
-
-    @staticmethod
-    def init_from_file(filepath):
-
-        DollarPerTonCAP._dict.clear()
+    def init_from_file(self, filepath):
 
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
 
         key = df['yearID']
         df.set_index(key, inplace=True)
 
-        DollarPerTonCAP._dict = df.to_dict('index')
+        self._dict = df.to_dict('index')
 
         # update input_files_pathlist if this class is used
-        InputFiles.input_files_pathlist.append(filepath)
+        InputFiles.update_pathlist(filepath)
 
-    @staticmethod
-    def get_factors(settings, year_id, *factors):
+    def get_factors(self, settings, year_id, *factors):
         """
 
         Parameters:
@@ -50,6 +46,6 @@ class DollarPerTonCAP:
 
         for factor in factors:
             for dr in [cap_dr1, cap_dr2]:
-                factor_list.append(DollarPerTonCAP._dict[year_id][f'{factor}_{str(dr)}_USD_per_uston'])
+                factor_list.append(self._dict[year_id][f'{factor}_{str(dr)}_USD_per_uston'])
 
         return factor_list

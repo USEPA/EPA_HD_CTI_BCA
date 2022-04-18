@@ -14,30 +14,27 @@ class Deflators:
          This class assumes a file structured like those published by the Bureau of Economic Analysis.
 
     """
+    def __init__(self):
+        self._dict = dict()
+        self.deflators_and_adj_factors = pd.DataFrame()
 
-    _dict = dict()
-    deflators_and_adj_factors = pd.DataFrame()
-
-    @staticmethod
-    def init_from_file(filepath, general_inputs):
-
-        Deflators._dict.clear()
+    def init_from_file(self, filepath, general_inputs):
 
         df = read_input_file(filepath, skiprows=4, reset_index=True)
 
-        df = Deflators.deflator_df(df, 'Unnamed: 1', 'Gross domestic product')
+        df = self.deflator_df(df, 'Unnamed: 1', 'Gross domestic product')
 
-        df = Deflators.calc_adjustment_factors(general_inputs, df)
+        df = self.calc_adjustment_factors(general_inputs, df)
 
         key = df['yearID']
         df.set_index(key, inplace=True)
 
-        Deflators.deflators_and_adj_factors = df.copy()
+        self.deflators_and_adj_factors = df.copy()
 
-        Deflators._dict = df.to_dict('index')
+        self._dict = df.to_dict('index')
 
         # update input_files_pathlist if this class is used
-        InputFiles.input_files_pathlist.append(filepath)
+        InputFiles.update_pathlist(filepath)
 
     @staticmethod
     def deflator_df(df, id_col, id_value):
@@ -89,8 +86,8 @@ class Deflators:
 
         return df_return
 
-    @staticmethod
-    def convert_dollars_to_analysis_basis(general_inputs, df, *args):
+    # @staticmethod
+    def convert_dollars_to_analysis_basis(self, general_inputs, df, *args):
         """
         This function converts dollars into a consistent dollar basis as set via the General Inputs file.
 
@@ -106,7 +103,7 @@ class Deflators:
         dollar_years = pd.Series(pd.DataFrame(df.loc[df['DollarBasis'] > 1])['DollarBasis'].unique())
         for year in dollar_years:
             for arg in args:
-                df.loc[df['DollarBasis'] == year, arg] = df[arg] * Deflators._dict[year]['adjustment_factor']
+                df.loc[df['DollarBasis'] == year, arg] = df[arg] * self._dict[year]['adjustment_factor']
             df.loc[df['DollarBasis'] == year, 'DollarBasis'] = dollar_basis_analysis
 
         return df

@@ -2,7 +2,6 @@ import pandas as pd
 
 from bca_tool_code.general_input_modules.general_functions import read_input_file
 from bca_tool_code.general_input_modules.input_files import InputFiles
-from bca_tool_code.general_input_modules.deflators import Deflators
 
 
 class RegclassCosts:
@@ -18,7 +17,7 @@ class RegclassCosts:
     regclass_costs_in_analysis_dollars = pd.DataFrame()
 
     @staticmethod
-    def init_from_file(filepath, general_inputs):
+    def init_from_file(filepath, general_inputs, deflators):
 
         RegclassCosts._dict.clear()
         RegclassCosts.cost_steps.clear()
@@ -27,7 +26,7 @@ class RegclassCosts:
 
         RegclassCosts.cost_steps = [col for col in df.columns if '20' in col]
 
-        df = Deflators.convert_dollars_to_analysis_basis(general_inputs, df, *RegclassCosts.cost_steps)
+        df = deflators.convert_dollars_to_analysis_basis(general_inputs, df, *RegclassCosts.cost_steps)
 
         RegclassCosts.regclass_costs_in_analysis_dollars = df.copy()
 
@@ -39,7 +38,7 @@ class RegclassCosts:
         RegclassCosts._dict = df.to_dict('index')
 
         # update input_files_pathlist if this class is used
-        InputFiles.input_files_pathlist.append(filepath)
+        InputFiles.update_pathlist(filepath)
 
     @staticmethod
     def get_cost(key, cost_step):

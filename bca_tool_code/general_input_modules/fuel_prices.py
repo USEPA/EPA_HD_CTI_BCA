@@ -2,7 +2,7 @@ import pandas as pd
 
 from bca_tool_code.general_input_modules.general_functions import read_input_file
 from bca_tool_code.general_input_modules.input_files import InputFiles
-from bca_tool_code.general_input_modules.deflators import Deflators
+# from bca_tool_code.general_input_modules.deflators import Deflators
 
 
 class FuelPrices:
@@ -25,7 +25,7 @@ class FuelPrices:
                     }
 
     @staticmethod
-    def init_from_file(filepath, general_inputs):
+    def init_from_file(filepath, general_inputs, deflators):
 
         FuelPrices._dict.clear()
 
@@ -33,7 +33,7 @@ class FuelPrices:
 
         df = FuelPrices.get_prices_from_file(general_inputs, df, 'full name', 'Motor Gasoline', 'Diesel')
 
-        df = Deflators.convert_dollars_to_analysis_basis(general_inputs, df, 'retail_fuel_price', 'pretax_fuel_price')
+        df = deflators.convert_dollars_to_analysis_basis(general_inputs, df, 'retail_fuel_price', 'pretax_fuel_price')
 
         key = pd.Series(zip(df['yearID'], df['fuelTypeID']))
         df.set_index(key, inplace=True)
@@ -43,7 +43,7 @@ class FuelPrices:
         FuelPrices._dict = df.to_dict('index')
 
         # update input_files_pathlist if this class is used
-        InputFiles.input_files_pathlist.append(filepath)
+        InputFiles.update_pathlist(filepath)
 
     @staticmethod
     def get_price(yearID, fuelTypeID, *series):

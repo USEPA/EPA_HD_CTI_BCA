@@ -2,12 +2,8 @@ from bca_tool_code.general_input_modules.general_functions import read_input_fil
 from bca_tool_code.general_input_modules.input_files import InputFiles
 
 
-class GeneralInputs:
-    """
+class Options:
 
-    The GeneralInputs class reads the BCA_General_Inputs file and provides methods to query its contents.
-
-    """
     def __init__(self):
         self._dict = dict()
 
@@ -20,6 +16,6 @@ class GeneralInputs:
         # update input_files_pathlist if this class is used
         InputFiles.update_pathlist(filepath)
 
-    def get_attribute_value(self, attribute_name):
+    def get_option_name(self, alt):
 
-        return self._dict[attribute_name]['UserEntry']
+        return self._dict[alt]['OptionName']

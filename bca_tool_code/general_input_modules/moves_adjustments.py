@@ -4,10 +4,10 @@ from bca_tool_code.general_input_modules.general_functions import read_input_fil
 from bca_tool_code.general_input_modules.input_files import InputFiles
 
 
-class UsefulLife:
+class MovesAdj:
     """
 
-    The UsefulLife class reads the useful life input file and provides methods to query its contents.
+    The MovesAdj class reads the MOVES adjustments file and provides methods to query its contents.
 
     """
     def __init__(self):
@@ -17,7 +17,7 @@ class UsefulLife:
 
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
 
-        key = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID'], df['period']))
+        key = pd.Series(zip(zip(df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['optionID']))
         df.set_index(key, inplace=True)
 
         self._dict = df.to_dict('index')
@@ -25,6 +25,6 @@ class UsefulLife:
         # update input_files_pathlist if this class is used
         InputFiles.update_pathlist(filepath)
 
-    def get_attribute_value(self, key, attribute_name):
+    def get_attribute_value(self, vehicle, alt, attribute_name):
 
-        return self._dict[key][attribute_name]
+        return self._dict[vehicle, alt][attribute_name]

@@ -13,25 +13,22 @@ from bca_tool_code.general_input_modules.markups import Markups
 from bca_tool_code.general_input_modules.warranty import Warranty
 from bca_tool_code.general_input_modules.useful_life import UsefulLife
 from bca_tool_code.general_input_modules.dollar_per_ton_cap import DollarPerTonCAP
+from bca_tool_code.general_input_modules.options import Options
+from bca_tool_code.general_input_modules.moves_adjustments import MovesAdj
 
-from bca_tool_code.cap_input_modules.options_cap import OptionsCAP
-from bca_tool_code.cap_input_modules.moves_adjustments_cap import MovesAdjCAP
+from bca_tool_code.fleet import Fleet
+from bca_tool_code.annual_summary import AnnualSummary
+
 from bca_tool_code.cap_input_modules.regclass_costs import RegclassCosts
 from bca_tool_code.cap_input_modules.regclass_learning_scalers import RegclassLearningScalers
 from bca_tool_code.cap_input_modules.def_doserates import DefDoseRates
 from bca_tool_code.cap_input_modules.orvr_fuelchanges_cap import OrvrFuelChangesCAP
 from bca_tool_code.cap_input_modules.repair_and_maintenance import RepairAndMaintenance
-from bca_tool_code.cap_modules.fleet_cap import FleetCAP
 from bca_tool_code.cap_modules.regclass_sales import RegClassSales
-from bca_tool_code.cap_modules.annual_summary import AnnualSummaryCAP
 
-from bca_tool_code.ghg_input_modules.options_ghg import OptionsGHG
-from bca_tool_code.ghg_input_modules.moves_adjustments_ghg import MovesAdjGHG
 from bca_tool_code.ghg_input_modules.sourcetype_costs import SourceTypeCosts
 from bca_tool_code.ghg_input_modules.sourcetype_learning_scalers import SourceTypeLearningScalers
-from bca_tool_code.ghg_modules.fleet_ghg import FleetGHG
 from bca_tool_code.ghg_modules.sourcetype_sales import SourceTypeSales
-from bca_tool_code.ghg_modules.annual_summary import AnnualSummaryGHG
 
 
 class SetPaths:
@@ -141,9 +138,11 @@ class SetInputs:
         self.start_time = time()
         self.start_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')
 
-        InputFiles.init_from_file(set_paths.path_inputs / 'Input_Files.csv')
-        GeneralInputs.init_from_file(set_paths.path_inputs / InputFiles.get_filename('bca_inputs'))
+        self.input_files = InputFiles()
+        self.input_files.init_from_file(set_paths.path_inputs / 'Input_Files.csv')
+
         self.general_inputs = GeneralInputs()
+        self.general_inputs.init_from_file(set_paths.path_inputs / self.input_files.get_filename('bca_inputs'))
 
         # determine what's being run
         self.no_action_alt = pd.to_numeric(self.general_inputs.get_attribute_value('no_action_alt'))
@@ -157,86 +156,110 @@ class SetInputs:
         self.calc_ghg_costs = True if calc_ghg_costs_value == 'Y' else None
         self.calc_ghg_pollution = True if calc_ghg_pollution_effects_value == 'Y' else None
 
-        Deflators.init_from_file(set_paths.path_inputs / InputFiles.get_filename('deflators'), self.general_inputs)
-        FuelPrices.init_from_file(set_paths.path_inputs / InputFiles.get_filename('fuel_prices'), self.general_inputs)
-        DefPrices.init_from_file(set_paths.path_inputs / InputFiles.get_filename('def_prices'), self.general_inputs)
-
-        self.input_files_pathlist = InputFiles.input_files_pathlist
+        self.input_files_pathlist = self.input_files.input_files_pathlist
+        
         self.deflators = Deflators()
+        self.deflators.init_from_file(set_paths.path_inputs / self.input_files.get_filename('deflators'),
+                                      self.general_inputs)
+        
         self.fuel_prices = FuelPrices()
+        self.fuel_prices.init_from_file(set_paths.path_inputs / self.input_files.get_filename('fuel_prices'),
+                                        self.general_inputs, self.deflators)
+        
         self.def_prices = DefPrices()
+        self.def_prices.init_from_file(set_paths.path_inputs / self.input_files.get_filename('def_prices'),
+                                       self.general_inputs, self.deflators)
 
         if self.calc_cap_costs:
-            OptionsCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('options_cap'))
-            MovesAdjCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('moves_adjustments_cap'))
-            FleetCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('fleet_cap'), self.general_inputs)
-            RegclassCosts.init_from_file(set_paths.path_inputs / InputFiles.get_filename('regclass_costs'), self.general_inputs)
-            RegclassLearningScalers.init_from_file(
-                set_paths.path_inputs / InputFiles.get_filename('regclass_learning_scalers'))
+            self.options_cap = Options()
+            self.options_cap.init_from_file(set_paths.path_inputs / self.input_files.get_filename('options_cap'))
 
-            Markups.init_from_file(set_paths.path_inputs / InputFiles.get_filename('markups'))
-            Warranty.init_from_file(set_paths.path_inputs / InputFiles.get_filename('warranty'))
-            UsefulLife.init_from_file(set_paths.path_inputs / InputFiles.get_filename('useful_life'))
-            DefDoseRates.init_from_file(set_paths.path_inputs / InputFiles.get_filename('def_doserates'))
-            OrvrFuelChangesCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('orvr_fuelchanges_cap'))
-            RepairAndMaintenance.init_from_file(
-                set_paths.path_inputs / InputFiles.get_filename('repair_and_maintenance'), self.general_inputs)
+            self.moves_adj_cap = MovesAdj()
+            self.moves_adj_cap.init_from_file(set_paths.path_inputs / self.input_files.get_filename('moves_adjustments_cap'))
 
-            self.fleet_cap = FleetCAP()
-            self.options_cap = OptionsCAP()
+            self.fleet_cap = Fleet()
+            self.fleet_cap.init_from_file(set_paths.path_inputs / self.input_files.get_filename('fleet_cap'),
+                                          self.general_inputs, 'CAP', self.options_cap, self.moves_adj_cap)
+
             self.regclass_costs = RegclassCosts()
+            self.regclass_costs.init_from_file(set_paths.path_inputs / self.input_files.get_filename('regclass_costs'),
+                                               self.general_inputs, self.deflators)
+            
             self.regclass_learning_scalers = RegclassLearningScalers()
+            self.regclass_learning_scalers.init_from_file(
+                set_paths.path_inputs / self.input_files.get_filename('regclass_learning_scalers'))
+
             self.markups = Markups()
+            self.markups.init_from_file(set_paths.path_inputs / self.input_files.get_filename('markups'))
+            
             self.warranty = Warranty()
+            self.warranty.init_from_file(set_paths.path_inputs / self.input_files.get_filename('warranty'))
+            
             self.useful_life = UsefulLife()
+            self.useful_life.init_from_file(set_paths.path_inputs / self.input_files.get_filename('useful_life'))
+
             self.def_doserates = DefDoseRates()
+            self.def_doserates.init_from_file(set_paths.path_inputs / self.input_files.get_filename('def_doserates'))
+
             self.orvr_fuelchanges_cap = OrvrFuelChangesCAP()
+            self.orvr_fuelchanges_cap.init_from_file(set_paths.path_inputs / self.input_files.get_filename('orvr_fuelchanges_cap'))
+
             self.repair_and_maintenance = RepairAndMaintenance()
+            self.repair_and_maintenance.init_from_file(set_paths.path_inputs / self.input_files.get_filename('repair_and_maintenance'),
+                                                       self.general_inputs, self.deflators)
 
             # create additional and useful dicts and DataFrames
-            RegClassSales.create_regclass_sales_dict(FleetCAP.fleet_df, self.regclass_costs.cost_steps)
             self.regclass_sales = RegClassSales()
+            self.regclass_sales.create_regclass_sales_dict(self.fleet_cap.fleet_df, self.regclass_costs.cost_steps)
+
             self.repair_cpm_dict = dict()
             self.estimated_ages_dict = dict()
             self.wtd_def_cpm_dict = dict()
             self.wtd_repair_cpm_dict = dict()
             self.wtd_cap_fuel_cpm_dict = dict()
-            AnnualSummaryCAP.create_annual_summary_dict()
-            self.annual_summary_cap = AnnualSummaryCAP()
+            self.annual_summary_cap = AnnualSummary()
 
         if self.calc_cap_pollution:
-            DollarPerTonCAP.init_from_file(set_paths.path_inputs / InputFiles.get_filename('dollar_per_ton_cap'))
             self.dollar_per_ton_cap = DollarPerTonCAP()
+            self.dollar_per_ton_cap.init_from_file(set_paths.path_inputs / self.input_files.get_filename('dollar_per_ton_cap'))
 
         if self.calc_ghg_costs:
 
-            OptionsGHG.init_from_file(set_paths.path_inputs / InputFiles.get_filename('options_ghg'))
-            MovesAdjGHG.init_from_file(set_paths.path_inputs / InputFiles.get_filename('moves_adjustments_ghg'))
-            FleetGHG.init_from_file(set_paths.path_inputs / InputFiles.get_filename('fleet_ghg'), self.general_inputs)
-            SourceTypeCosts.init_from_file(set_paths.path_inputs / InputFiles.get_filename('sourcetype_costs'), self.general_inputs)
-            SourceTypeLearningScalers.init_from_file(set_paths.path_inputs / InputFiles.get_filename('sourcetype_learning_scalers'))
+            self.options_ghg = Options()
+            self.options_ghg.init_from_file(set_paths.path_inputs / self.input_files.get_filename('options_ghg'))
 
-            self.fleet_ghg = FleetGHG()
-            self.options_ghg = OptionsGHG()
+            self.moves_adj_ghg = MovesAdj()
+            self.moves_adj_ghg.init_from_file(set_paths.path_inputs / self.input_files.get_filename('moves_adjustments_ghg'))
+
+            self.fleet_ghg = Fleet()
+            self.fleet_ghg.init_from_file(set_paths.path_inputs / self.input_files.get_filename('fleet_ghg'),
+                                          self.general_inputs, 'GHG', self.options_ghg, self.moves_adj_ghg)
+
             self.sourcetype_costs = SourceTypeCosts()
+            self.sourcetype_costs.init_from_file(set_paths.path_inputs / self.input_files.get_filename('sourcetype_costs'),
+                                                 self.general_inputs, self.deflators)
+
             self.sourcetype_learning_scalers = SourceTypeLearningScalers()
+            self.sourcetype_learning_scalers.init_from_file(set_paths.path_inputs / self.input_files.get_filename('sourcetype_learning_scalers'))
 
             # create additional and useful dicts and DataFrames
-            SourceTypeSales.create_sourcetype_sales_dict(FleetGHG.fleet_df, self.sourcetype_costs.cost_steps)
             self.sourcetype_sales = SourceTypeSales()
+            self.sourcetype_sales.create_sourcetype_sales_dict(self.fleet_ghg.fleet_df, self.sourcetype_costs.cost_steps)
+
             self.wtd_ghg_fuel_cpm_dict = dict()
-            AnnualSummaryGHG.create_annual_summary_dict()
-            self.annual_summary_ghg = AnnualSummaryGHG()
+            self.annual_summary_ghg = AnnualSummary()
 
             if self.calc_cap_costs:
                 pass
             else:
-                Markups.init_from_file(set_paths.path_inputs / InputFiles.get_filename('markups'))
-                Warranty.init_from_file(set_paths.path_inputs / InputFiles.get_filename('warranty'))
-                UsefulLife.init_from_file(set_paths.path_inputs / InputFiles.get_filename('useful_life'))
                 self.markups = Markups()
+                self.markups.init_from_file(set_paths.path_inputs / self.input_files.get_filename('markups'))
+
                 self.warranty = Warranty()
+                self.warranty.init_from_file(set_paths.path_inputs / self.input_files.get_filename('warranty'))
+
                 self.useful_life = UsefulLife()
+                self.useful_life.init_from_file(set_paths.path_inputs / self.input_files.get_filename('useful_life'))
 
         self.row_header_for_fleet_files = ['yearID', 'modelYearID', 'ageID', 'optionID', 'OptionName',
                                            'sourceTypeID', 'sourceTypeName', 'regClassID', 'regClassName', 'fuelTypeID',

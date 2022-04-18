@@ -99,7 +99,8 @@ def main():
         discount_values(settings, settings.fleet_cap)
 
         # calc the annual summary, present values and annualized values (excluding cost/veh and cost/mile results)
-        AnnualSummaryCAP.annual_summary(settings, settings.fleet_cap, settings.annual_summary_cap, settings.options_cap)
+        settings.annual_summary_cap.annual_summary(settings, settings.fleet_cap, settings.annual_summary_cap, settings.options_cap)
+        # AnnualSummaryCAP.annual_summary(settings, settings.fleet_cap, settings.annual_summary_cap, settings.options_cap)
 
         # calc deltas relative to the no-action scenario
         calc_deltas(settings, settings.fleet_cap)
@@ -133,7 +134,8 @@ def main():
         discount_values(settings, settings.fleet_ghg)
 
         # calc the annual summary, present values and annualized values (excluding cost/veh and cost/mile results)
-        AnnualSummaryGHG.annual_summary(settings, settings.fleet_ghg, settings.annual_summary_ghg, settings.options_ghg)
+        settings.annual_summary_ghg.annual_summary(settings, settings.fleet_ghg, settings.annual_summary_ghg, settings.options_ghg)
+        # AnnualSummaryGHG.annual_summary(settings, settings.fleet_ghg, settings.annual_summary_ghg, settings.options_ghg)
 
         # calc deltas relative to the no-action scenario
         calc_deltas(settings, settings.fleet_ghg)
@@ -181,7 +183,6 @@ def main():
     else:
         path_of_run_folder, path_of_run_inputs_folder, path_of_run_results_folder, path_of_modified_inputs_folder, path_of_code_folder \
             = set_paths.create_output_paths(settings.start_time_readable, run_id)
-
 
     # copy input files into results folder; also save fuel_prices and reshaped files to this folder
     print('\nCopying input files and code to the outputs folder...\n')
