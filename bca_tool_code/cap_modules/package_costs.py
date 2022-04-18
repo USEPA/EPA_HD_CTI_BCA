@@ -5,7 +5,7 @@ def calc_avg_package_cost_per_step(settings):
     """
 
     Parameters:
-        settings: The SetInputs class.
+        settings: Object; The SetInputs class object.
 
     Returns:
         Updates to the sales object dictionary to include the year-over-year package costs, including learning
@@ -46,7 +46,7 @@ def calc_package_costs_per_veh(settings, data_object):
     """
 
     Parameters:
-        settings: The SetInputs class.\n
+        settings: Object; The SetInputs class object.\n
         data_object: Object; the fleet data object.
 
     Returns:

@@ -8,7 +8,7 @@ def calc_typical_vmt_per_year(settings, data_object, key):
     calculate the typical VMT for that vehicle -- the typical VMT for that vehicle will be set equal to the last prior MY vintage for which sufficient data were present.
 
     Parameters:
-        settings: The SetInputs class.\n
+        settings: Object; The SetInputs class object.\n
         data_object: Object; the fleet data object.\n
         key: Tuple; represents a sourcetype, regclass,fueltype, model year vehicle.
 
@@ -36,7 +36,7 @@ def calc_estimated_age(settings, key, typical_vmt):
     """
 
     Parameters:
-        settings: The SetInputs class.\n
+        settings: Object; The SetInputs class object.\n
         key: Tuple; represents a sourcetype_regclass_fueltype vehicle.\n
         typical_vmt: Numeric; the typical annual VMT/vehicle over a set number of years as set via the General Inputs
         workbook (see calc_typical_vmt_per_year function).
@@ -77,7 +77,7 @@ def calc_emission_repair_costs_per_mile(settings, data_object):
     """
 
     Parameters:
-        settings: The SetInputs class.\n
+        settings: Object; The SetInputs class object.\n
         data_object: Object; the fleet data object.
 
     Returns:

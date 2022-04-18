@@ -5,7 +5,7 @@ def calc_def_doserate(settings, vehicle):
     """
 
     Parameters:
-        settings: The SetInputs class \n
+        settings: Object; The SetInputs class object. \n
         vehicle: Tuple; represents a sourcetype_regclass_fueltype vehicle.\n
 
     Returns:
@@ -26,7 +26,7 @@ def calc_nox_reduction(settings, data_object, key):
     """
 
     Parameters:
-        settings: The SetInputs class. \n
+        settings: Object; The SetInputs class object. \n
         data_object: Object; the fleet data object.\n
         key: Tuple; represents the vehicle, alt, model year, age and discount rate.
 
@@ -50,7 +50,7 @@ def calc_def_costs(settings, data_object):
     """
 
     Parameters:
-        settings: The SetInputs class.\n
+        settings: Object; The SetInputs class object.\n
         data_object: Object; the fleet data object.
 
     Returns:
@@ -86,7 +86,7 @@ def calc_def_costs_per_veh(data_object):
     """
 
     Parameters:
-        settings: The SetInputs class.\n
+        settings: Object; The SetInputs class object.\n
         data_object: Object; the fleet data object.
 
     Returns:

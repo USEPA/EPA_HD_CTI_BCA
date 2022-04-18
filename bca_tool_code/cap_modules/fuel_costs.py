@@ -5,7 +5,7 @@ def calc_thc_reduction(settings, data_object, key):
     """
 
     Parameters:
-        settings: The SetInputs class. \n
+        settings: Object; The SetInputs class object. \n
         data_object: Object; the fleet data object.
         key: Tuple; represents the vehicle, alt, model year, age and discount rate.
 
@@ -29,7 +29,7 @@ def calc_fuel_costs(settings, data_object):
     """
 
     Parameters:
-        settings: The SetInputs class.\n
+        settings: Object; The SetInputs class object.\n
         data_object: Object; the fleet data object.
 
     Returns:

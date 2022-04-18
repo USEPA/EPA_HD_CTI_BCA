@@ -6,7 +6,7 @@ def create_weighted_cost_dict(settings, data_object, destination_dict, arg_to_we
     This function weights 'arg_to_weight' attributes by the 'arg_to_weight_by' attribute.
 
     Parameters::
-        settings: The SetInputs class.\n
+        settings: Object; The SetInputs class object.\n
         data_object: Object; the fleet data object.\n
         destination_dict: Dictionary into which to place results.
         arg_to_weight: String; the attribute to be weighted by the arg_to_weight_by argument.\n

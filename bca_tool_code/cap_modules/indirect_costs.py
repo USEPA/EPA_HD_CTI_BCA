@@ -6,7 +6,7 @@ def calc_project_markup_value(settings, engine, alt, markup_factor_name, model_y
     This function calculates the project markup value for the markup_factor (Warranty, RnD, Other, Profit) passed.
 
     Parameters:
-        settings: The SetInputs classs.\n
+        settings: Object; The SetInputs class object.\n
         engine:  Tuple; represents a regclass_fueltype engine.\n
         alt: Numeric; The Alternative or option ID.\n
         markup_factor_name: String; represents the name of the project markup factor value to return (warranty, r and d, other, etc.).\n
@@ -60,7 +60,7 @@ def calc_indirect_costs_per_veh(settings, data_object):
     """
 
     Parameters:
-        settings: The SetInputs class.\n
+        settings: Object; The SetInputs class object.\n
         data_object: Object; the fleet data object.
 
     Returns:
@@ -92,7 +92,7 @@ def calc_indirect_costs(settings, data_object):
     """
 
     Parameters:
-        settings: The SetInputs class.\n
+        settings: Object; The SetInputs class object.\n
         data_object: Object; the fleet data object.
 
     Returns:

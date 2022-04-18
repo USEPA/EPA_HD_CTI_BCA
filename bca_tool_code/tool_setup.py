@@ -93,7 +93,8 @@ class SetPaths:
         This method allows for a user-interactive identifier (name) for the given run.
 
         Returns:
-            A console prompt to enter a run identifier; entering "test" sends outputs to a test folder; if left blank a default name is used.
+            A console prompt to enter a run identifier; entering "test" sends outputs to a test folder; if left blank a
+            default name is used.
 
         """
         # set run id and files to generate
@@ -131,7 +132,8 @@ class SetInputs:
     def __init__(self):
         """
 
-        The SetInputs class establishes the input files to use and other input settings set in the BCA_Inputs file and needed within the tool.
+        The SetInputs class establishes the input files to use and other input settings set in the BCA_Inputs file and
+        needed within the tool.
 
         """
         set_paths = SetPaths()

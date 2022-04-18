@@ -2,7 +2,6 @@ import pandas as pd
 
 from bca_tool_code.general_input_modules.general_functions import read_input_file
 from bca_tool_code.general_input_modules.input_files import InputFiles
-# from bca_tool_code.general_input_modules.deflators import Deflators
 
 
 class DefPrices:

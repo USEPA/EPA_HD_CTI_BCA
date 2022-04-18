@@ -6,21 +6,11 @@ class AnnualSummary:
     def __init__(self):
         self._dict = dict()
 
-    # _dict = dict()
-
-    # @staticmethod
-    # def create_annual_summary_dict():
-    #
-    #     AnnualSummaryGHG._dict.clear()
-    #
-    #     return AnnualSummaryGHG._dict
-
-    # @staticmethod
     def annual_summary(self, settings, source, destination, options):
         """
 
         Parameters:
-            settings: The SetInputs class.\n
+            settings: Object; The SetInputs class object.\n
             source: Object; the fleet data object to summarize.\n
             destination: Object; the annual summary object to be updated.\n
             options: Object; the options object associated with the source object.
@@ -160,7 +150,6 @@ class AnnualSummary:
                         arg_annualized = self.calc_annualized_value(present_value, rate, periods, annualized_offset)
                         destination_dict[(series, alt, calendar_year, social_discount_rate)][arg] = arg_annualized
 
-    # @staticmethod
     def get_attribute_value(self, key, attribute_name):
 
         return self._dict[key][attribute_name]
@@ -180,7 +169,6 @@ class AnnualSummary:
         for attribute_name, attribute_value in input_dict.items():
             self._dict[key][attribute_name] = attribute_value
 
-    # @staticmethod
     def add_key_value_pairs(self, key, input_dict):
 
         self._dict[key] = input_dict

@@ -5,7 +5,7 @@ def calc_deltas(settings, data_object):
     This function calculates deltas for action alternatives relative to the no action alternative set via the General Inputs.
 
     Parameters:
-        settings: The SetInputs class. \n
+        settings: Object; The SetInputs class object. \n
         data_object: Object; contains values for calculating deltas.
 
     Returns:
@@ -76,7 +76,7 @@ def calc_deltas_weighted(settings, dict_for_deltas):
     This function calculates deltas for action alternatives relative to the passed no action alternative specifically for the weighted cost per mile dictionaries.
 
     Parameters:
-        settings: The SetInputs class. \n
+        settings: Object; The SetInputs class object. \n
         dict_for_deltas: Dictionary; contains values for calculating deltas.
 
     Returns:

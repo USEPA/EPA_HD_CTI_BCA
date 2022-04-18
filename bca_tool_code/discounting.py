@@ -7,7 +7,7 @@ def discount_values(settings, data_object):
     calculation to a given year and point within that year.
 
     Parameters:
-        settings: The SetInputs class.\n
+        settings: Object; The SetInputs class object.\n
         data_object: Object; the fleet data object.
 
     Returns:

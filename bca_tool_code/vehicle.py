@@ -118,7 +118,7 @@ class Vehicle:
         """
 
         Parameters:
-            settings: The SetInputs class.
+            settings: Object; The SetInputs class object.\n
             options_object: Object; the options object.\n
             data_object: Object; the data object to be updated.\n
             data_dict: Dictionary, the dictionary to be updated.
