@@ -15,7 +15,18 @@ class DefPrices:
         self.def_prices_in_analysis_dollars = pd.DataFrame()
 
     def init_from_file(self, filepath, general_inputs, deflators):
+        """
 
+        Parameters:
+            filepath: Path to the specified file.
+            general_inputs: The GeneralInputs class object.
+            deflators: The Deflators class object.
+
+        Returns:
+            Reads file at filepath; converts monetized values to analysis dollars (if applicable); creates a dictionary
+            and other attributes specified in the class __init__.
+
+        """
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x, index_col=0)
 
         df = deflators.convert_dollars_to_analysis_basis(general_inputs, df, 'DEF_USDperGal')

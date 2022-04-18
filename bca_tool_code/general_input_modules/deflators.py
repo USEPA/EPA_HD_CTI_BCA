@@ -19,7 +19,17 @@ class Deflators:
         self.deflators_and_adj_factors = pd.DataFrame()
 
     def init_from_file(self, filepath, general_inputs):
+        """
 
+        Parameters:
+            filepath: Path to the specified file.
+            general_inputs: The GeneralInputs class object.
+
+        Returns:
+            Reads file at filepath; converts monetized values to analysis dollars (if applicable); creates a dictionary
+            and other attributes specified in the class __init__.
+
+        """
         df = read_input_file(filepath, skiprows=4, reset_index=True)
 
         df = self.deflator_df(df, 'Unnamed: 1', 'Gross domestic product')
@@ -86,7 +96,6 @@ class Deflators:
 
         return df_return
 
-    # @staticmethod
     def convert_dollars_to_analysis_basis(self, general_inputs, df, *args):
         """
         This function converts dollars into a consistent dollar basis as set via the General Inputs file.

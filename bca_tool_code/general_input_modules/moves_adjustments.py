@@ -14,7 +14,16 @@ class MovesAdj:
         self._dict = dict()
 
     def init_from_file(self, filepath):
+        """
 
+        Parameters:
+            filepath: Path to the specified file.
+
+        Returns:
+            Reads file at filepath; converts monetized values to analysis dollars (if applicable); creates a dictionary
+            and other attributes specified in the class __init__.
+
+        """
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
 
         key = pd.Series(zip(zip(df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['optionID']))

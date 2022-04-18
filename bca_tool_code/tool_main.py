@@ -12,7 +12,6 @@ from time import time
 from bca_tool_code.tool_setup import SetInputs, SetPaths
 import bca_tool_code.general_input_modules.general_functions as gen_fxns
 
-# import bca_tool_code.cap_modules as cap
 import bca_tool_code.cap_modules.package_costs as cap_package_costs
 import bca_tool_code.cap_modules.indirect_costs as cap_indirect_costs
 import bca_tool_code.cap_modules.tech_costs as cap_tech_costs
@@ -39,7 +38,6 @@ def main():
         The results of the current run of the tool.
 
     """
-    # start_time_calcs = time()
     set_paths = SetPaths()
     run_id = set_paths.run_id()
 
@@ -52,7 +50,6 @@ def main():
     if settings.calc_cap_costs:
 
         # calculate package costs based on cumulative sales (learning is applied to cumulative sales)
-        cap_package_costs.calc_avg_package_cost_per_step(settings)
         cap_package_costs.calc_avg_package_cost_per_step(settings)
         cap_package_costs.calc_package_costs_per_veh(settings, settings.fleet_cap)
         cap_package_costs.calc_package_costs(settings.fleet_cap)

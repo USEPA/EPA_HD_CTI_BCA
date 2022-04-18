@@ -10,33 +10,54 @@ class DefDoseRates:
     The DefDoseRates class reads the DEF dose rates file and provides methods to query its contents.
 
     """
+    def __init__(self):
+        self._dict = dict()
 
-    _dict = dict()
+    def init_from_file(self, filepath):
+        """
 
-    @staticmethod
-    def init_from_file(filepath):
+        Parameters:
+            filepath: Path to the specified file.
 
-        DefDoseRates._dict.clear()
+        Returns:
+            Reads file at filepath; converts monetized values to analysis dollars (if applicable); creates a dictionary
+            and other attributes specified in the class __init__.
 
+        """
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
 
         key = pd.Series(zip(df['regClassID'], df['fuelTypeID']))
         df.set_index(key, inplace=True)
 
-        DefDoseRates._dict = df.to_dict('index')
+        self._dict = df.to_dict('index')
 
         # update input_files_pathlist if this class is used
         InputFiles.update_pathlist(filepath)
 
-    @staticmethod
-    def get_curve_coefficients(engine):
+    def get_curve_coefficients(self, engine):
+        """
 
-        slope, intercept = DefDoseRates._dict[engine]['slope_DEFdoserate'], \
-                           DefDoseRates._dict[engine]['intercept_DEFdoserate']
+        Parameters:
+            engine: tuple; (regclass_id, fueltype_id).
+
+        Returns:
+            The slope and intercept curve coefficients for calculating DEF doserate.
+
+        """
+        slope, intercept = self._dict[engine]['slope_DEFdoserate'], \
+                           self._dict[engine]['intercept_DEFdoserate']
 
         return slope, intercept
 
-    @staticmethod
-    def get_attribute_value(engine, attribute_name):
+    def get_attribute_value(self, engine, attribute_name):
+        """
 
-        return DefDoseRates._dict[engine][attribute_name]
+        Parameters:
+            engine: tuple; (regclass_id, fueltype_id).
+            attribute_name: str; the attribute name for which a value is sought.
+
+        Returns:
+            The slope and intercept curve coefficients for calculating DEF doserate.
+
+        """
+        return self._dict[engine][attribute_name]

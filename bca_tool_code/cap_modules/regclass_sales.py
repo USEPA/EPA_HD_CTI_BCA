@@ -2,12 +2,16 @@ import pandas as pd
 
 
 class RegClassSales:
+    """
 
-    _dict = dict()
-    age0_keys = None
+    The RegClassSales class creates the regclass sales by cost step and provides methods to query its data.
 
-    @staticmethod
-    def create_regclass_sales_dict(df, cost_steps):
+    """
+    def __init__(self):
+        self._dict = dict()
+        self.age0_keys = None
+
+    def create_regclass_sales_dict(self, df, cost_steps):
         """
 
         This method simply generates sales by regclass via Pandas which is faster than summing via dictionary.
@@ -21,7 +25,6 @@ class RegClassSales:
             a regclass_fueltype, and values representing sales (sales=VPOP at ageID=0) for each key by model year.
 
         """
-        RegClassSales._dict.clear()
         _df = df.copy()
         _df = pd.DataFrame(_df.loc[(_df['ageID'] == 0) & (_df['DiscountRate'] == 0),
                                    ['optionID', 'regClassID', 'fuelTypeID', 'modelYearID',
@@ -44,13 +47,12 @@ class RegClassSales:
 
         _df.fillna(0, inplace=True)
 
-        RegClassSales._dict = _df.to_dict('index')
+        self._dict = _df.to_dict('index')
 
         # set keys
-        RegClassSales.age0_keys = tuple([k for k, v in RegClassSales._dict.items() if v['ageID'] == 0])
+        self.age0_keys = tuple([k for k, v in self._dict.items() if v['ageID'] == 0])
 
-    @staticmethod
-    def get_attribute_value(key, attribute_name):
+    def get_attribute_value(self, key, attribute_name):
         """
 
         Args:
@@ -60,10 +62,9 @@ class RegClassSales:
         Returns:
 
         """
-        return RegClassSales._dict[key][attribute_name]
+        return self._dict[key][attribute_name]
 
-    @staticmethod
-    def update_dict(key, input_dict):
+    def update_dict(self, key, input_dict):
         """
 
         Parameters:
@@ -76,4 +77,4 @@ class RegClassSales:
         """
         for attribute, value in input_dict.items():
 
-            RegClassSales._dict[key][attribute] = value
+            self._dict[key][attribute] = value

@@ -4,15 +4,14 @@ from bca_tool_code.general_input_modules.general_functions import read_input_fil
 from bca_tool_code.general_input_modules.input_files import InputFiles
 
 
-class Markups:
+class OrvrFuelChanges:
     """
 
-    The Markups class reads the Markups input file and provides methods to query its contents.
+    The OrvrFuelChanges class reads the DEF dose rates file and provides methods to query its contents.
 
     """
     def __init__(self):
         self._dict = dict()
-        self.markup_factor_names = list()
 
     def init_from_file(self, filepath):
         """
@@ -25,18 +24,17 @@ class Markups:
             and other attributes specified in the class __init__.
 
         """
+
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
 
-        key = pd.Series(zip(df['fuelTypeID'], df['optionID'], df['Markup_Factor']))
+        key = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID']))
         df.set_index(key, inplace=True)
-
-        self.markup_factor_names = [arg for arg in df['Markup_Factor'].unique()]
 
         self._dict = df.to_dict('index')
 
         # update input_files_pathlist if this class is used
         InputFiles.update_pathlist(filepath)
 
-    def get_attribute_value(self, key, attribute_name):
+    def get_ml_per_gram(self, engine, alt):
 
-        return self._dict[key][attribute_name]
+        return self._dict[engine, alt]['ml/g']

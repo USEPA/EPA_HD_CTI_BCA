@@ -5,13 +5,26 @@ from bca_tool_code.general_input_modules.input_files import InputFiles
 
 
 class RegclassLearningScalers:
+    """
 
-    _dict = dict()
+    The RegclassLearningScalers class reads the regclass_learning_scalers input file and provides methods to query its
+    contents.
 
-    @staticmethod
-    def init_from_file(filepath):
+    """
+    def __init__(self):
+        self._dict = dict()
 
-        RegclassLearningScalers._dict.clear()
+    def init_from_file(self, filepath):
+        """
+
+        Parameters:
+            filepath: Path to the specified file.
+
+        Returns:
+            Reads file at filepath; converts monetized values to analysis dollars (if applicable); creates a dictionary
+            and other attributes specified in the class __init__.
+
+        """
 
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
 
@@ -19,12 +32,11 @@ class RegclassLearningScalers:
 
         df.set_index(key, inplace=True)
 
-        RegclassLearningScalers._dict = df.to_dict('index')
+        self._dict = df.to_dict('index')
 
         # update input_files_pathlist if this class is used
         InputFiles.update_pathlist(filepath)
 
-    @staticmethod
-    def get_seedvolume_factor(engine, alt):
+    def get_seedvolume_factor(self, engine, alt):
 
-        return RegclassLearningScalers._dict[engine, alt]['SeedVolumeFactor']
+        return self._dict[engine, alt]['SeedVolumeFactor']

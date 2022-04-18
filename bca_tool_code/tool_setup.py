@@ -22,7 +22,7 @@ from bca_tool_code.annual_summary import AnnualSummary
 from bca_tool_code.cap_input_modules.regclass_costs import RegclassCosts
 from bca_tool_code.cap_input_modules.regclass_learning_scalers import RegclassLearningScalers
 from bca_tool_code.cap_input_modules.def_doserates import DefDoseRates
-from bca_tool_code.cap_input_modules.orvr_fuelchanges_cap import OrvrFuelChangesCAP
+from bca_tool_code.cap_input_modules.orvr_fuelchanges import OrvrFuelChanges
 from bca_tool_code.cap_input_modules.repair_and_maintenance import RepairAndMaintenance
 from bca_tool_code.cap_modules.regclass_sales import RegClassSales
 
@@ -203,7 +203,7 @@ class SetInputs:
             self.def_doserates = DefDoseRates()
             self.def_doserates.init_from_file(set_paths.path_inputs / self.input_files.get_filename('def_doserates'))
 
-            self.orvr_fuelchanges_cap = OrvrFuelChangesCAP()
+            self.orvr_fuelchanges_cap = OrvrFuelChanges()
             self.orvr_fuelchanges_cap.init_from_file(set_paths.path_inputs / self.input_files.get_filename('orvr_fuelchanges_cap'))
 
             self.repair_and_maintenance = RepairAndMaintenance()

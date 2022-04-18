@@ -5,26 +5,38 @@ from bca_tool_code.general_input_modules.input_files import InputFiles
 
 
 class SourceTypeLearningScalers:
+    """
 
-    _dict = dict()
+    The SourceTypeLearningScalers class reads the sourcetype_learning_scalers input file and provides methods to query its
+    contents.
 
-    @staticmethod
-    def init_from_file(filepath):
+    """
 
-        SourceTypeLearningScalers._dict.clear()
+    def __init__(self):
+        self._dict = dict()
 
+    def init_from_file(self, filepath):
+        """
+
+        Parameters:
+            filepath: Path to the specified file.
+
+        Returns:
+            Reads file at filepath; converts monetized values to analysis dollars (if applicable); creates a dictionary
+            and other attributes specified in the class __init__.
+
+        """
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
 
         key = pd.Series(zip(zip(df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['optionID']))
 
         df.set_index(key, inplace=True)
 
-        SourceTypeLearningScalers._dict = df.to_dict('index')
+        self._dict = df.to_dict('index')
 
         # update input_files_pathlist if this class is used
         InputFiles.update_pathlist(filepath)
 
-    @staticmethod
-    def get_seedvolume_factor(vehicle, alt):
+    def get_seedvolume_factor(self, vehicle, alt):
 
-        return SourceTypeLearningScalers._dict[vehicle, alt]['SeedVolumeFactor']
+        return self._dict[vehicle, alt]['SeedVolumeFactor']

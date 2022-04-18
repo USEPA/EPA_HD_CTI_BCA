@@ -10,27 +10,35 @@ class RepairAndMaintenance:
     The RepairAndMaintenance class reads the repair and maintenance input file and provides methods to query its contents.
 
     """
+    def __init__(self):
+        self._dict = dict()
+        self.repair_and_maintenance_in_analysis_dollars = pd.DataFrame()
 
-    _dict = dict()
-    repair_and_maintenance_in_analysis_dollars = pd.DataFrame()
+    def init_from_file(self, filepath, general_inputs, deflators):
+        """
 
-    @staticmethod
-    def init_from_file(filepath, general_inputs, deflators):
+        Parameters:
+            filepath: Path to the specified file.
+            general_inputs: The GeneralInputs class object.
+            deflators: The Deflators class object.
 
-        RepairAndMaintenance._dict.clear()
+        Returns:
+            Reads file at filepath; converts monetized values to analysis dollars (if applicable); creates a dictionary
+            and other attributes specified in the class __init__.
+
+        """
 
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x, index_col=0)
 
         df = deflators.convert_dollars_to_analysis_basis(general_inputs, df, 'Value')
 
-        RepairAndMaintenance.repair_and_maintenance_in_analysis_dollars = df.copy()
+        self.repair_and_maintenance_in_analysis_dollars = df.copy()
 
-        RepairAndMaintenance._dict = df.to_dict('index')
+        self._dict = df.to_dict('index')
 
         # update input_files_pathlist if this class is used
         InputFiles.update_pathlist(filepath)
 
-    @staticmethod
-    def get_attribute_value(attribute_name):
+    def get_attribute_value(self, attribute_name):
 
-        return RepairAndMaintenance._dict[attribute_name]['Value']
+        return self._dict[attribute_name]['Value']

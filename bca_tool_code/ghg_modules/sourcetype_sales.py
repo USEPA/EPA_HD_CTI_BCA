@@ -2,12 +2,16 @@ import pandas as pd
 
 
 class SourceTypeSales:
+    """
 
-    _dict = dict()
-    age0_keys = None
+    The SourceTypeSales class creates the sourcetype sales by cost step and provides methods to query its data.
 
-    @staticmethod
-    def create_sourcetype_sales_dict(df, cost_steps):
+    """
+    def __init__(self):
+        self._dict = dict()
+        self.age0_keys = None
+
+    def create_sourcetype_sales_dict(self, df, cost_steps):
         """
 
         This method simply generates sales by sourcetype via Pandas which is faster than summing via dictionary.
@@ -22,7 +26,6 @@ class SourceTypeSales:
             year.
 
         """
-        SourceTypeSales._dict.clear()
         _df = df.copy()
         _df = pd.DataFrame(_df.loc[(_df['ageID'] == 0) & (_df['DiscountRate'] == 0),
                                    ['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'modelYearID',
@@ -47,13 +50,12 @@ class SourceTypeSales:
 
         _df.fillna(0, inplace=True)
 
-        SourceTypeSales._dict = _df.to_dict('index')
+        self._dict = _df.to_dict('index')
 
         # set keys
-        SourceTypeSales.age0_keys = tuple([k for k, v in SourceTypeSales._dict.items() if v['ageID'] == 0])
+        self.age0_keys = tuple([k for k, v in self._dict.items() if v['ageID'] == 0])
 
-    @staticmethod
-    def get_attribute_value(key, attribute_name):
+    def get_attribute_value(self, key, attribute_name):
         """
 
         Args:
@@ -63,10 +65,9 @@ class SourceTypeSales:
         Returns:
 
         """
-        return SourceTypeSales._dict[key][attribute_name]
+        return self._dict[key][attribute_name]
 
-    @staticmethod
-    def update_dict(key, input_dict):
+    def update_dict(self, key, input_dict):
         """
 
         Parameters:
@@ -79,4 +80,4 @@ class SourceTypeSales:
         """
         for attribute, value in input_dict.items():
 
-            SourceTypeSales._dict[key][attribute] = value
+            self._dict[key][attribute] = value
