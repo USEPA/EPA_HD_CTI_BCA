@@ -3,20 +3,22 @@ import pandas as pd
 
 def discount_values(settings, data_object):
     """
-    The discount function determines metrics appropriate for discounting (those contained in dict_of_values) and does the discounting
-    calculation to a given year and point within that year.
+
+    The discount function determines metrics appropriate for discounting (those contained in data_object dictionary)
+    and does the discounting calculation to a given year and point within that year.
 
     Parameters:
-        settings: Object; The SetInputs class object.\n
-        data_object: Object; the fleet data object.
+        settings: object; the SetInputs class object.\n
+        data_object: object; the fleet data object.
 
     Returns:
-        The passed dictionary with new key, value pairs where keys stipulate the discount rate and monetized values are discounted at the same rate as the discount rate of the input stream of values.
+        Updates the data_object dictionary with new key, value pairs where keys stipulate the discount rate and
+        monetized values are discounted at the same rate as the discount rate of the input stream of values.
 
     Note:
-        The costs_start entry of the BCA_General_Inputs file should be set to 'start-year' or 'end-year', where start-year represents costs
-        starting at time t=0 (i.e., first year costs are undiscounted), and end-year represents costs starting at time t=1 (i.e., first year
-        costs are discounted).
+        The costs_start entry of the BCA_General_Inputs file should be set to 'start-year' or 'end-year', where
+        start-year represents costs starting at time t=0 (i.e., first year costs are undiscounted), and end-year
+        represents costs starting at time t=1 (i.e., first year costs are discounted).
 
     """
     print(f'\nDiscounting values...')
@@ -48,34 +50,57 @@ def discount_values(settings, data_object):
 
         for arg in non_emission_cost_args:
             arg_value = data_object.get_attribute_value(key, arg)
-            arg_value_discounted = arg_value / ((1 + rate) ** (year - discount_to_year + discount_offset))
+            arg_value_discounted = discount_value(arg_value, rate, year, discount_to_year, discount_offset)
+            # arg_value_discounted = arg_value / ((1 + rate) ** (year - discount_to_year + discount_offset))
             update_dict[arg] = arg_value_discounted
 
         emission_rate = 0.025
         for arg in emission_cost_args_25:
             arg_value = data_object.get_attribute_value(key, arg)
-            arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
+            arg_value_discounted = discount_value(arg_value, emission_rate, year, discount_to_year, discount_offset)
+            # arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
             update_dict[arg] = arg_value_discounted
 
         emission_rate = 0.03
         for arg in emission_cost_args_3:
             arg_value = data_object.get_attribute_value(key, arg)
-            arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
+            arg_value_discounted = discount_value(arg_value, emission_rate, year, discount_to_year, discount_offset)
+            # arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
             update_dict[arg] = arg_value_discounted
 
         emission_rate = 0.05
         for arg in emission_cost_args_5:
             arg_value = data_object.get_attribute_value(key, arg)
-            arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
+            arg_value_discounted = discount_value(arg_value, emission_rate, year, discount_to_year, discount_offset)
+            # arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
             update_dict[arg] = arg_value_discounted
 
         emission_rate = 0.07
         for arg in emission_cost_args_7:
             arg_value = data_object.get_attribute_value(key, arg)
-            arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
+            arg_value_discounted = discount_value(arg_value, emission_rate, year, discount_to_year, discount_offset)
+            # arg_value_discounted = arg_value / ((1 + emission_rate) ** (year - discount_to_year + discount_offset))
             update_dict[arg] = arg_value_discounted
 
         data_object.update_dict(key, update_dict)
+
+
+def discount_value(arg_value, rate, year, discount_to, offset):
+    """
+
+    Parameters:
+        arg_value: Numeric; the value to be discounted.\n
+        rate: Numeric; the discount rate to use.\n
+        year: int; the calendar year associated with arg_value.\n
+        discount_to: int; the calendar year to which to discount the value.\n
+        offset: int; 0 or 1 reflecting whether costs are assumed to occur at the start of the year or the end of the
+        year.
+
+    Returns:
+        A single value representing arg_value discounted to the year discount_to at rate.
+
+    """
+    return arg_value / ((1 + rate) ** (year - discount_to + offset))
 
 
 if __name__ == '__main__':

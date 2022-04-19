@@ -5,11 +5,11 @@ def calc_avg_package_cost_per_step(settings):
     """
 
     Parameters:
-        settings: Object; The SetInputs class object.
+        settings: object; the SetInputs class object.
 
     Returns:
-        Updates to the sales object dictionary to include the year-over-year package costs, including learning
-        effects, at each cost step.
+        Updates the sales object dictionary to include the year-over-year package costs, including learning
+        effects, associated with each cost step.
 
     """
     learning_rate = pd.to_numeric(settings.general_inputs.get_attribute_value('learning_rate'))
@@ -46,11 +46,12 @@ def calc_package_costs_per_veh(settings, data_object):
     """
 
     Parameters:
-        settings: Object; The SetInputs class object.\n
-        data_object: Object; the fleet data object.
+        settings: object; the SetInputs class object.\n
+        data_object: object; the fleet data object.
 
     Returns:
-        Updates to the fleet data object to include the package cost per vehicle (average cost/veh).
+        Updates the data_object dictionary to include the package cost per vehicle (average cost/veh) including the
+        summation of costs associated with each cost step, if applicable.
 
     """
     print(f'\nCalculating CAP Direct costs per vehicle...')
@@ -80,14 +81,15 @@ def calc_package_costs(data_object):
     """
 
     Parameters:
-        data_object: Object; the fleet data object.
+        data_object: object; the fleet data object.
 
     Returns:
-        Updates to the fleet data object to include the package costs (package cost/veh * sales).
+        Updates the data_object dictionary to include the package costs (package cost/veh * sales).
 
     """
     print(f'\nCalculating CAP Direct costs...')
 
+    # Note: use age=0 keys only since only new vehicles incur package costs.
     for key in data_object.age0_keys:
         cost_per_veh = data_object.get_attribute_value(key, 'DirectCost_PerVeh')
         sales = data_object.get_attribute_value(key, 'VPOP')

@@ -5,12 +5,12 @@ def calc_thc_reduction(settings, data_object, key):
     """
 
     Parameters:
-        settings: Object; The SetInputs class object. \n
-        data_object: Object; the fleet data object.
-        key: Tuple; represents the vehicle, alt, model year, age and discount rate.
+        settings: object; the SetInputs class object. \n
+        data_object: object; the fleet data object.
+        key: tuple; ((sourcetype_id, regclass_id, fueltype_id), alt, model year, age, discount rate).
 
     Returns:
-        The THC reduction for the passed model year vehicle in the given calendar year.
+        The THC reduction for the passed model year vehicle at the given age.
 
     Notes:
         The thc_reduction calculation should be done such that it is positive if action has lower thc than no action.
@@ -29,11 +29,11 @@ def calc_fuel_costs(settings, data_object):
     """
 
     Parameters:
-        settings: Object; The SetInputs class object.\n
-        data_object: Object; the fleet data object.
+        settings: object; the SetInputs class object.\n
+        data_object: object; the fleet data object.
 
     Returns:
-        Updates the fleet dictionary to reflect fuel consumption (Gallons) adjusted to account for the fuel saved in
+        Updates the data_object dictionary to reflect fuel consumption (Gallons) adjusted to account for the fuel saved in
         association with ORVR. The dictionary is also updated to include the fuel costs associated with the gallons
         consumed (Gallons paid for * $/gallon fuel).
 
@@ -80,10 +80,10 @@ def calc_fuel_costs_per_veh(data_object):
     """
 
     Parameters:
-        data_object: Object; the fleet data object.
+        data_object: object; the fleet data object.
 
     Returns:
-        Updates the fleet dictionary to include fuel costs/vehicle and costs/mile.
+        Updates the data_object dictionary to include fuel costs/vehicle and costs/mile.
 
     """
     print('\nCalculating average fuel costs...')

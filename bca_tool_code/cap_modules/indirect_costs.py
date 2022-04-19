@@ -3,38 +3,36 @@
 def calc_project_markup_value(settings, engine, alt, markup_factor_name, model_year):
     """
 
-    This function calculates the project markup value for the markup_factor (Warranty, RnD, Other, Profit) passed.
+    This function calculates the project markup value for the passed markup_factor (Warranty, RnD, Other, Profit).
 
     Parameters:
-        settings: Object; The SetInputs class object.\n
-        engine:  Tuple; represents a regclass_fueltype engine.\n
-        alt: Numeric; The Alternative or option ID.\n
-        markup_factor_name: String; represents the name of the project markup factor value to return (warranty, r and d, other, etc.).\n
-        model_year: Numeric; the model year of the passed unit.
+        settings: object; the SetInputs class object.\n
+        engine: tuple; (regclass_id, fueltype_id).\n
+        alt: int; the option_id.\n
+        markup_factor_name: str; represents the name of the project markup factor value to return (warranty, r and d, other, etc.).\n
+        model_year: int; the model year of the passed unit.
 
     Returns:
-        A single markup factor value to be used in the project having been adjusted in accordance with the proposed warranty and useful life
-        changes and the Absolute/Relative scaling entries.
+        A single markup factor value to be used in the project having been adjusted in accordance with the proposed
+        warranty and useful life changes and the Absolute/Relative scaling entries.
 
     Note:
-        The project markup factor differs from the input markup factors by scaling where that scaling is done based on the "Absolute" or "Relative"
-        entries in the input file and by the scaling metric (Miles or Age) entries of the warranty/useful life input files. Whether Miles or Age is used is set
-        via the BCA_General_Inputs file.
+        The project markup factor differs from the input markup factors by scaling where that scaling is done based on
+        the "Absolute" or "Relative" entries in the input file and by the scaling metric (Miles or Age) entries of the
+        warranty/useful life input files. Whether Miles or Age is used is set via the BCA_General_Inputs file.
 
     """
     rc, ft = engine
 
     markups_key = ft, alt, markup_factor_name
     scaling_metric = settings.general_inputs.get_attribute_value('indirect_cost_scaling_metric')  # scaling metric will be 'Miles' or 'Age'
-    input_markup_value, scaler, scaled_by, num_years = settings.markups.get_attribute_value(markups_key, 'Value'), \
-                                                       settings.markups.get_attribute_value(markups_key, 'Scaler'), \
-                                                       settings.markups.get_attribute_value(markups_key, 'Scaled_by'), \
-                                                       settings.markups.get_attribute_value(markups_key, 'NumberOfYears')
+    input_markup_value, scaler, scaled_by, num_years = settings.markups.get_attribute_values(markups_key)
 
     numerator, denominator = 1, 1
 
     # remember that warranty and useful life provisions are by regclass, not sourcetype
     scaling_dict_key = ((rc, ft), alt, scaling_metric)
+    scaling_dict = dict()
     if scaled_by == 'Warranty':
         scaling_dict = settings.warranty
         numerator = scaling_dict.get_attribute_value(scaling_dict_key, f'{model_year}')
@@ -60,11 +58,11 @@ def calc_indirect_costs_per_veh(settings, data_object):
     """
 
     Parameters:
-        settings: Object; The SetInputs class object.\n
-        data_object: Object; the fleet data object.
+        settings: object; the SetInputs class object.\n
+        data_object: object; the fleet data object.
 
     Returns:
-        Updates to the fleet dictionary to include indirect costs per vehicle in sum and for each contribution factor.
+        Updates to the data_object dictionary to include indirect costs per vehicle in sum and for each contribution factor.
 
     """
     print('\nCalculating Indirect costs per vehicle...')
@@ -92,11 +90,11 @@ def calc_indirect_costs(settings, data_object):
     """
 
     Parameters:
-        settings: Object; The SetInputs class object.\n
-        data_object: Object; the fleet data object.
+        settings: object; the SetInputs class object.\n
+        data_object: object; the fleet data object.
 
     Returns:
-        Updates to the fleet dictionary to include total indirect costs in sum and for each contribution factor.
+        Updates to the data_object dictionary to include indirect costs in sum and for each contribution factor.
 
     """
     print('\nCalculating Indirect costs...')

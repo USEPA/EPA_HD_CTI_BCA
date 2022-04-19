@@ -30,5 +30,13 @@ class GeneralInputs:
         InputFiles.update_pathlist(filepath)
 
     def get_attribute_value(self, attribute_name):
+        """
 
+        Parameters:
+            attribute_name: str; the attribute for which the value is sought.
+
+        Returns:
+            The UserEntry value for the given attribute_name.
+
+        """
         return self._dict[attribute_name]['UserEntry']

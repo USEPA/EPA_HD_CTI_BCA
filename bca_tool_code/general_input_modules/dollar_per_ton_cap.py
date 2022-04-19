@@ -6,7 +6,7 @@ class DollarPerTonCAP:
 
     """
 
-    The DollarPerTonCAP class reads the cost factors input file and provides methods to query its contents.
+    The DollarPerTonCAP class reads the cost factors input file and provides methods to query contents.
 
     """
     def __init__(self):
@@ -19,8 +19,7 @@ class DollarPerTonCAP:
             filepath: Path to the specified file.
 
         Returns:
-            Reads file at filepath; converts monetized values to analysis dollars (if applicable); creates a dictionary
-            and other attributes specified in the class __init__.
+            Reads file at filepath, creates a dictionary and other attributes specified in the class __init__.
 
         """
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
@@ -37,12 +36,12 @@ class DollarPerTonCAP:
         """
 
         Parameters:
-            settings: The SetInputs class.\n
-            year_id: Numeric; the calendar year for which emission cost factors are needed.
-            factors: String(s); the CAP dollar per ton factors of interest.
+            settings: object; the SetInputs class object.\n
+            year_id: int; the calendar year for which emission cost factors are needed.
+            factors: str(s); the CAP dollar per ton factors of interest.
 
         Returns:
-            A list of dollar per ton factors.
+            A list of dollar per ton factors for the passed year_id.
 
         Note:
             Note that the BCA_General_Inputs file contains a toggle to stipulate whether to estimate emission (pollution)

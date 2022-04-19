@@ -96,8 +96,7 @@ def main():
         bca_tool_code.discounting.discount_values(settings, settings.fleet_cap)
 
         # calc the annual summary, present values and annualized values (excluding cost/veh and cost/mile results)
-        settings.annual_summary_cap.annual_summary(settings, settings.fleet_cap,
-                                                   settings.annual_summary_cap, settings.options_cap)
+        settings.annual_summary_cap.annual_summary(settings, settings.fleet_cap, settings.options_cap)
 
         # calc deltas relative to the no-action scenario
         bca_tool_code.calc_deltas.calc_deltas(settings, settings.fleet_cap)
@@ -135,8 +134,7 @@ def main():
         bca_tool_code.discounting.discount_values(settings, settings.fleet_ghg)
 
         # calc the annual summary, present values and annualized values (excluding cost/veh and cost/mile results)
-        settings.annual_summary_ghg.annual_summary(settings, settings.fleet_ghg,
-                                                   settings.annual_summary_ghg, settings.options_ghg)
+        settings.annual_summary_ghg.annual_summary(settings, settings.fleet_ghg, settings.options_ghg)
 
         # calc deltas relative to the no-action scenario
         bca_tool_code.calc_deltas.calc_deltas(settings, settings.fleet_ghg)

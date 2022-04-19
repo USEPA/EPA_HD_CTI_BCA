@@ -4,10 +4,10 @@ def calc_tech_costs_per_veh(data_object):
     """
     
     Parameters:
-        data_object: Object; the fleet data object.
+        data_object: object; the fleet data object.
 
     Returns:
-        Updates to the fleet dictionary to include average tech costs per vehicle (direct plus indirect).
+        Updates the data_object dictionary with average tech costs per vehicle (direct plus indirect).
 
     Note:
         Direct and indirect costs apply only for ageID=0 (i.e., new sales).
@@ -27,10 +27,10 @@ def calc_tech_costs(data_object):
     """
 
     Parameters:
-        data_object: Object; the fleet data object.
+        data_object: object; the fleet data object.
 
     Returns:
-        Updates to the fleet dictionary to include annual technology costs for all vehicles.
+        Updates the data_object dictionary to include technology costs for all vehicles.
 
     """
     print('\nCalculating Technology costs...')

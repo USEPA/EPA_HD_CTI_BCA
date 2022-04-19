@@ -35,5 +35,15 @@ class MovesAdj:
         InputFiles.update_pathlist(filepath)
 
     def get_attribute_value(self, vehicle, alt, attribute_name):
+        """
 
+        Parameters:
+            vehicle: tuple; (sourcetype_id, regclass_id, fueltype_id).\n
+            alt: int; the option_id.\n
+            attribute_name: str; the attribute name for which a value is sought.
+
+        Returns:
+            A single value associated with the attribute name for the given key.
+
+        """
         return self._dict[vehicle, alt][attribute_name]

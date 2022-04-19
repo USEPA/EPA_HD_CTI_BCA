@@ -10,13 +10,15 @@ import matplotlib.pyplot as plt
 
 class CreateFigures:
     def __init__(self, df, units, destination, program):
-        """The CreateFigures class  is used to generate charts.
+        """
+
+        The CreateFigures class is used to generate figures (charts).
 
         Parameters:
             df: DataFrame; contains data to be charted.\n
-            units: String; units for use on the y-axis of the created chart.\n
+            units: str; units for use on the y-axis of the created chart.\n
             destination: Path object; provides the path to which to save the created chart. \n
-            program: String; th program identifier (i.e., 'CAP' or 'GHG') to include in the saved filename.
+            program: str; the program identifier (i.e., 'CAP' or 'GHG') to include in the saved filename.
 
         """
         self.df = df
@@ -26,14 +28,16 @@ class CreateFigures:
         self.program = program
 
     def line_chart_args_by_option(self, dr, alt_name, year_min, year_max, *args):
-        """This method generates a chart showing passed arguments under the given alternative.
+        """
+
+        This method generates a chart showing passed arguments under the given alternative.
 
         Parameters:
             dr: Numeric; the discount rate of the data to be charted.\n
-            alt_name: String; the OptionName of the data to be charted.\n
-            year_min: Numeric; the minimum calendar year of data to be charted.\n
-            year_max: Numeric; the maximum calendar year of data t be charted.\n
-            args: String(s); the data attributes to be charted.
+            alt_name: str; the OptionName of the data to be charted.\n
+            year_min: int; the minimum calendar year of data to be charted.\n
+            year_max: int; the maximum calendar year of data to be charted.\n
+            args: str(s); the data attributes to be charted.
 
         Returns:
             A single chart saved to the destination folder.
@@ -56,14 +60,16 @@ class CreateFigures:
         return
 
     def line_chart_arg_by_options(self, dr, alt_names, year_min, year_max, arg):
-        """This method generates a chart showing the passed argument under each of the passed alternatives.
+        """
+
+        This method generates a chart showing the passed argument under each of the passed alternatives.
 
         Parameters:
             dr: Numeric; the discount rate of the data to be charted.\n
             alt_names: List; contains the OptionNames for which to chart data.\n
-            year_min: Numeric; the minimum calendar year of data to be charted.\n
-            year_max: Numeric; the maximum calendar year of data t be charted.\n
-            arg: String; the single data attribute to be charted.
+            year_min: int; the minimum calendar year of data to be charted.\n
+            year_max: int; the maximum calendar year of data t be charted.\n
+            arg: str; the single data attribute to be charted.
 
         Returns:
             A single chart saved to the destination folder.
@@ -86,7 +92,9 @@ class CreateFigures:
         return
 
     def create_figures(self, args):
-        """This function is called by tool_main and then controls the generation of charts by the ChartFigures class.
+        """
+
+        This method is called by tool_main and then controls the generation of charts by the CreateFigures class.
 
         Parameters:
             args: List; attributes to include in figures.

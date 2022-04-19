@@ -106,8 +106,8 @@ class SetPaths:
         """
 
         Parameters::
-            start_time_readable: String; the start time of the run, in text readable format.\n
-            run_id: The run ID entered by the user or the default value if the user does not provide an ID.
+            start_time_readable: str; the start time of the run, in text readable format.\n
+            run_id: str; the run ID entered by the user or the default value if the user does not provide an ID.
 
         Returns:
             Output paths into which to save outputs of the given run.
@@ -212,7 +212,7 @@ class SetInputs:
 
             # create additional and useful dicts and DataFrames
             self.regclass_sales = RegClassSales()
-            self.regclass_sales.create_regclass_sales_dict(self.fleet_cap.fleet_df, self.regclass_costs.cost_steps)
+            self.regclass_sales.create_regclass_sales_dict(self.fleet_cap, self.regclass_costs.cost_steps)
 
             self.repair_cpm_dict = dict()
             self.estimated_ages_dict = dict()
@@ -246,7 +246,7 @@ class SetInputs:
 
             # create additional and useful dicts and DataFrames
             self.sourcetype_sales = SourceTypeSales()
-            self.sourcetype_sales.create_sourcetype_sales_dict(self.fleet_ghg.fleet_df, self.sourcetype_costs.cost_steps)
+            self.sourcetype_sales.create_sourcetype_sales_dict(self.fleet_ghg, self.sourcetype_costs.cost_steps)
 
             self.wtd_ghg_fuel_cpm_dict = dict()
             self.annual_summary_ghg = AnnualSummary()

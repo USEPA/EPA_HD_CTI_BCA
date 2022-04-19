@@ -7,7 +7,8 @@ from bca_tool_code.general_input_modules.input_files import InputFiles
 class Fleet:
     """
 
-    The FleetCAP class reads the MOVES input data file and provides methods to query its contents.
+    The Fleet class reads the MOVES input data file, adjusts data as specified in moves_adjustments file and provides
+    methods to query its contents.
 
     """
     def __init__(self):
@@ -24,7 +25,18 @@ class Fleet:
         self.attributes_to_sum = None
 
     def init_from_file(self, filepath, general_inputs, program, options, adjustments):
+        """
 
+        Parameters:
+            filepath: Path to the specified file.\n
+            general_inputs: object; the GeneralInputs class object.\n
+            program: str; represents the program for the given instance (i.e., 'CAP' or 'GHG').\n
+            adjustments: object; the MovesAdj class object.
+
+        Returns:
+            Reads file at filepath; creates a dictionary and other attributes specified in the class __init__.
+
+        """
         df = read_input_file(filepath)
 
         df.insert(0, 'DiscountRate', 0)
@@ -73,7 +85,16 @@ class Fleet:
         InputFiles().input_files_pathlist.append(filepath)
 
     def get_attribute_values(self, key, *attribute_names):
+        """
 
+        Parameters:
+            key: tuple; ((sourcetype_id, regclass_id, fueltype_id), option_id, model_year, age_id, discount_rate).\n
+            *attribute_names: str(s); the attribute names for which values are sought.
+
+        Returns:
+            A list of attribute values associated with attribute_names for the given key.
+
+        """
         attribute_values = list()
         for attribute_name in attribute_names:
             attribute_values.append(self._dict[key][attribute_name])
@@ -81,7 +102,16 @@ class Fleet:
         return attribute_values
 
     def get_attribute_value(self, key, attribute_name):
+        """
 
+        Parameters:
+            key: ((sourcetype_id, regclass_id, fueltype_id), option_id, model_year, age_id, discount_rate).\n
+            attribute_name: str; the attribute name for which the value is sought.
+
+        Returns:
+            The attribute value associated with the attribute_name for the given key.
+
+        """
         return self._dict[key][attribute_name]
 
     def create_fleet_df(self, df, year_min, program, options, adjustments):
@@ -89,7 +119,10 @@ class Fleet:
 
         Parameters:
             df: DataFrame; the raw fleet input data (e.g., from MOVES). \n
-            year_min: Int; the first model year for the DataFrame.
+            year_min: int; the first model year to include in the returned DataFrame.\n
+            program: str; represents the program for the given instance (i.e., 'CAP' or 'GHG').\n
+            options: object; the options class object.\n
+            adjustments: object; the MovesAdj class object.
 
         Returns:
             A DataFrame of the MOVES inputs with necessary MOVES adjustments made according to the MOVES adjustments
@@ -151,18 +184,26 @@ class Fleet:
         return df_return
 
     def get_age0_min_year(self, df, attribute):
+        """
 
+        Parameters:
+            df: DataFrame; the input data (i.e., the MOVES data).\n
+            attribute: str; the attribute for which the age=0 minimum is sought (e.g., calendar year).
+
+        Returns:
+            A single value representing the minimum value of attribute for which age=0.
+
+        """
         return df.loc[df['ageID'] == 0, attribute].min()
 
     def calc_per_veh_cumulative_vmt(self):
-        """This function calculates cumulative average VMT/vehicle year-over-year for use in estimating a typical VMT
+        """
+
+        This method calculates cumulative average VMT/vehicle year-over-year for use in estimating a typical VMT
         per year and for estimating emission repair costs.
 
-        Parameters:
-            fleet_dict: Dictionary; the fleet data.
-
         Returns:
-            The dictionary updated with cumulative annual average VMT/vehicle.
+            Updates the fleet object dictionary with cumulative annual average VMT/vehicle.
 
         """
         # this loop calculates the cumulative vmt for each key and saves it in the cumulative_vmt_dict
@@ -182,7 +223,15 @@ class Fleet:
             self.update_dict(key, {'VMT_PerVeh_Cumulative': cumulative_vmt})
 
     def define_attributes_to_sum(self, program):
+        """
 
+        Parameters:
+            program: str; represents the program for the given instance (i.e., 'CAP' or 'GHG').\n
+
+        Returns:
+            Updates the attributes_to_sum object dictionary.
+
+        """
         # create a dictionary of attributes to be summed (dict keys) and what attributes to include in the sum (dict values)
         # use pre-tax fuel price for total costs since it serves as the basis for social costs; use retail for averages
         if program == 'CAP':
@@ -205,6 +254,15 @@ class Fleet:
                                           ['FuelCost_Retail_PerVeh']}
 
     def define_attributes_with_tech(self, program):
+        """
+
+        Parameters:
+            program: str; represents the program for the given instance (i.e., 'CAP' or 'GHG').\n
+
+        Returns:
+            Updates the attributes_with_tech object dictionary.
+
+        """
         if program == 'CAP':
             self.attributes_with_tech = ['VPOP', 'VMT', 'Gallons']
         else:
@@ -214,18 +272,33 @@ class Fleet:
         """
 
         Parameters:
-            key: Tuple; the key of the dictionary instance. \n
+            key: tuple; ((sourcetype_id, regclass_id, fueltype_id), option_id, model_year, age_id, discount_rate).\n
             input_dict: Dictionary; represents the attribute-value pairs to be updated.
 
         Returns:
-            The dictionary instance with each attribute updated with the appropriate value.
+            Updates the object dictionary with each attribute updated with the appropriate value.
+
+        Note:
+            The method updates an existing key having attribute_name with attribute_value.
 
         """
         for attribute_name, attribute_value in input_dict.items():
             self._dict[key][attribute_name] = attribute_value
 
     def add_key_value_pairs(self, key, input_dict):
+        """
 
+        Parameters:
+            key: tuple; ((sourcetype_id, regclass_id, fueltype_id), option_id, model_year, age_id, discount_rate).\n
+            input_dict: Dictionary; represents the attribute-value pairs to be updated.
+
+        Returns:
+            The dictionary instance with each attribute updated with the appropriate value.
+
+        Note:
+            This method updates the dictionary with a key with input_dict as a nested dictionary.
+
+        """
         self._dict[key] = input_dict
 
 
@@ -233,11 +306,11 @@ def create_new_attributes(general_inputs, program):
     """
 
     Parameters:
-        general_inputs: The GeneralInputs class. \n
-        program: .
+        general_inputs: object; the GeneralInputs class object. \n
+        program: str; represents the program for the given instance (i.e., 'CAP' or 'GHG').
 
     Returns:
-        A list of new attributes to be calculated and provided in output files.
+        A list of new attributes to be added to the data_object dictionary.
 
     """
     if program == 'CAP':
@@ -315,9 +388,8 @@ def add_keys_for_discounting(general_inputs, input_dict):
     """
 
     Parameters:
-        general_inputs: The GeneralInputs instance.
-        input_dict: Dictionary; into which new keys will be added that provide room for discounting data. \n
-        rates: Numeric; the discount rate keys to add.
+        general_inputs: object; the GeneralInputs class object.\n
+        input_dict: Dictionary; into which new keys will be added that provide room for discounting data.
 
     Returns:
         The passed dictionary with new keys added.

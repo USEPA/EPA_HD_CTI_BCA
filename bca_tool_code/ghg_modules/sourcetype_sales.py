@@ -11,22 +11,22 @@ class SourceTypeSales:
         self._dict = dict()
         self.age0_keys = None
 
-    def create_sourcetype_sales_dict(self, df, cost_steps):
+    def create_sourcetype_sales_dict(self, data_object, cost_steps):
         """
 
         This method simply generates sales by sourcetype via Pandas which is faster than summing via dictionary.
 
         Parameters:
-            df: DataFrame; the project fleet.
+            data_object: object; the fleet data object.\n
             cost_steps: List; steps of newly added costs, e.g., '2027', '2031'.
 
         Returns:
-            A dictionary of the fleet having keys of (vehicle, alt, modelYearID) where vehicle is a tuple representing
-            a sourcetype_regclass_fueltype, and values representing sales (sales=VPOP at ageID=0) for each key by model
-            year.
+            Creates a dictionary of the fleet having keys of (engine, alt, modelYearID) where engine is a
+            tuple (sourcetype_id, regclass_id, fueltype_id), and values representing sales (sales=VPOP at ageID=0) for
+            each key by model year; creates other attributes specified in the class __init__.
 
         """
-        _df = df.copy()
+        _df = data_object.fleet_df.copy()
         _df = pd.DataFrame(_df.loc[(_df['ageID'] == 0) & (_df['DiscountRate'] == 0),
                                    ['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'modelYearID',
                                     'ageID', 'VPOP', 'VPOP_withTech']]).reset_index(drop=True)
@@ -58,11 +58,12 @@ class SourceTypeSales:
     def get_attribute_value(self, key, attribute_name):
         """
 
-        Args:
-            key:
-            attribute_name:
+        Parameters:
+            key: tuple; ((sourcetype_id, regclass_id, fueltype_id), option_id, model year). \n
+            attribute_name: str; the attribute for which a value is sought.
 
         Returns:
+            The value of the attribute name for the given key.
 
         """
         return self._dict[key][attribute_name]
@@ -71,8 +72,8 @@ class SourceTypeSales:
         """
 
         Parameters:
-            key: Tuple; the Dictionary key. \n
-            input_dict: Dictionary; represents the attribute-value pairs to be updated.
+            key: tuple; ((sourcetype_id, regclass_id, fueltype_id), option_id, model year). \n
+            input_dict: Dictionary; represents the attribute_name-attribute_value pairs to be updated.
 
         Returns:
             The dictionary instance with each attribute updated with the appropriate value.

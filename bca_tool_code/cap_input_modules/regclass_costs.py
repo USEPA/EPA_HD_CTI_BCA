@@ -8,7 +8,7 @@ class RegclassCosts:
     """
 
     The RegclassCosts class reads the regclass_costs input file and converts all dollar values to dollar_basis_analysis
-    dollars.
+    dollars and provides methods to query the data.
 
     """
     def __init__(self):
@@ -20,9 +20,9 @@ class RegclassCosts:
         """
 
         Parameters:
-            filepath: Path to the specified file.
-            general_inputs: The GeneralInputs class object.
-            deflators: The Deflators class object.
+            filepath: Path to the specified file.\n
+            general_inputs: object; the GeneralInputs class object.\n
+            deflators: object; the Deflators class object.
 
         Returns:
             Reads file at filepath; converts monetized values to analysis dollars (if applicable); creates a dictionary
@@ -48,7 +48,18 @@ class RegclassCosts:
         InputFiles.update_pathlist(filepath)
 
     def get_cost(self, key, cost_step):
+        """
+
+        Parameters:
+            key: tuple; ((regclass_id, fueltype_id), option_id).\n
+            cost_step: int or str; the model year associated with the start year of a new standard.
+
+        Returns:
+            The package cost (direct or direct plus indirect, depending) for the passed key and step.
+
+        """
         step = cost_step
         if type(step) is not str:
             step = f'{step}'
+
         return self._dict[key][step]

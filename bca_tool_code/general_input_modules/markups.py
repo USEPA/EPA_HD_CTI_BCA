@@ -38,5 +38,30 @@ class Markups:
         InputFiles.update_pathlist(filepath)
 
     def get_attribute_value(self, key, attribute_name):
+        """
 
+        Parameters:
+            key: tuple; (fueltype_id, option_id, markup_factor), where markup_factor is, e.g., 'Warranty', RnD'.\n
+            attribute_name: str; the attribute name for which a value is sought.
+
+        Returns:
+            A single value associated with the attribute name for the given key.
+
+        """
         return self._dict[key][attribute_name]
+
+    def get_attribute_values(self, key):
+        """
+
+        Parameters:
+            key: tuple; (fueltype_id, option_id, markup_factor), where markup_factor is, e.g., 'Warranty', RnD'.
+
+        Returns:
+            A list of values for the given key.
+
+        """
+        values_list = list()
+        for attribute_name in ['Value', 'Scaler', 'Scaled_by', 'NumberOfYears']:
+            values_list.append(self.get_attribute_value(key, attribute_name))
+
+        return values_list

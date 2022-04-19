@@ -4,12 +4,12 @@ def calc_sum_of_costs(data_object, name_of_sum, *args):
     """
 
     Parameters:
-        data_object: Object; the fleet data object.\n
-        name_of_sum: String; used to identify the sum being done.\n
-        args: String(s); the attributes to be summed.
+        data_object: object; the fleet data object.\n
+        name_of_sum: str; used to identify the sum being done.\n
+        args: str(s); the attributes to be summed as name_of_sum.
 
     Returns:
-        Updates the fleet dictionary to include a new 'name_of_sum' parameter that sums the passed args.
+        Updates the data_object dictionary to include a new name_of_sum parameter that sums args.
 
     """
     print(f'\nCalculating {name_of_sum}...')

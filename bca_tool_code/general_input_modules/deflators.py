@@ -7,8 +7,8 @@ from bca_tool_code.general_input_modules.input_files import InputFiles
 class Deflators:
     """
 
-    The Deflators class reads the GDP Implicit Price Deflators file and generates factors for use in adjusting monetized
-    values to a consistent cost basis.
+    The Deflators class reads the GDP Implicit Price Deflators file, generates factors for use in adjusting monetized
+    values to a consistent cost basis, and provides methods to query the data.
 
     Note:
          This class assumes a file structured like those published by the Bureau of Economic Analysis.
@@ -23,11 +23,10 @@ class Deflators:
 
         Parameters:
             filepath: Path to the specified file.
-            general_inputs: The GeneralInputs class object.
+            general_inputs: object; the GeneralInputs class object
 
         Returns:
-            Reads file at filepath; converts monetized values to analysis dollars (if applicable); creates a dictionary
-            and other attributes specified in the class __init__.
+            Reads file at filepath; creates a dictionary and other attributes specified in the class __init__.
 
         """
         df = read_input_file(filepath, skiprows=4, reset_index=True)
@@ -52,8 +51,9 @@ class Deflators:
 
         Parameters:
             df: DataFrame; price deflator data.\n
-            id_col: String; the column name where id data can be found.\n
-            id_value: the value within id_col to return.
+            id_col: str; the column name where id data can be found.\n
+            id_value: str; the identifier for the values within id_col to return.
+
         Returns:
             A DataFrame consisting of only the data for the given AEO case; the name of the AEO case is also removed
             from the 'full name' column entries.
@@ -79,10 +79,12 @@ class Deflators:
         """
 
         Parameters:
+            general_inputs: object; the GeneralInputs class object.\n
             df: DataFrame; price deflator data.
 
         Returns:
-            A dictionary of deflators and adjustment_factors to apply to monetized values to put them all on a consistent dollar basis.
+            A dictionary of deflators and adjustment_factors to apply to monetized values to put them all on a consistent
+            dollar basis.
 
         """
         dollar_basis_analysis = int(general_inputs.get_attribute_value('dollar_basis_analysis'))
@@ -101,8 +103,9 @@ class Deflators:
         This function converts dollars into a consistent dollar basis as set via the General Inputs file.
 
         Parameters:
+            general_inputs: object; the GeneralInputs class object.\n
             df: DataFrame; contains the monetized values and their associated input cost basis.\n
-            args: String(s); the attributes within the passed df to be adjusted into 'dollar_basis' dollars.
+            args: str(s); the attributes within the passed df to be adjusted into 'dollar_basis' dollars.
 
         Returns:
             The passed DataFrame will all args adjusted into dollar_basis dollars.

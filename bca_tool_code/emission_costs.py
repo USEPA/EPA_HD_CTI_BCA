@@ -4,8 +4,8 @@ def calc_criteria_emission_costs(settings, data_object):
     """
     
     Parameters:
-        settings: Object; The SetInputs class object.\n
-        data_object: Object; the fleet data object.
+        settings: object; the SetInputs class object.\n
+        data_object: object; the fleet data object.
 
     Returns:
         Updates the fleet dictionary with emission costs ($/ton * inventory tons).

@@ -7,7 +7,7 @@ from bca_tool_code.general_input_modules.input_files import InputFiles
 class DefPrices:
     """
 
-    The DefPrices class reads the DEF prices file and provides methods to query its contents.
+    The DefPrices class reads the DEF prices file and provides methods to query contents.
 
     """
     def __init__(self):
@@ -19,8 +19,8 @@ class DefPrices:
 
         Parameters:
             filepath: Path to the specified file.
-            general_inputs: The GeneralInputs class object.
-            deflators: The Deflators class object.
+            general_inputs: object; the GeneralInputs class object.
+            deflators: object; the Deflators class object.
 
         Returns:
             Reads file at filepath; converts monetized values to analysis dollars (if applicable); creates a dictionary
@@ -39,5 +39,13 @@ class DefPrices:
         InputFiles.update_pathlist(filepath)
 
     def get_price(self, year_id):
+        """
 
+        Parameters:
+            year_id: int; the calendar year for which the price is sought.
+
+        Returns:
+            The DEF price per gallon for the passed year_id.
+
+        """
         return self._dict[year_id]['DEF_USDperGal']

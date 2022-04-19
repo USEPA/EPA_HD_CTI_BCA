@@ -25,7 +25,6 @@ class RegclassLearningScalers:
             and other attributes specified in the class __init__.
 
         """
-
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
 
         key = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID']))
@@ -38,5 +37,14 @@ class RegclassLearningScalers:
         InputFiles.update_pathlist(filepath)
 
     def get_seedvolume_factor(self, engine, alt):
+        """
 
+        Parameters:
+            engine: tuple; (regclass_id, fueltype_id). \n
+            alt: int; the option_id.
+
+        Returns:
+            The seed volume factor for the given engine and option_id.
+
+        """
         return self._dict[engine, alt]['SeedVolumeFactor']

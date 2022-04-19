@@ -4,9 +4,14 @@ from bca_tool_code.general_input_modules.general_functions import read_input_fil
 
 
 class InputFiles:
+    """
+
+    The InputFiles class reads the InputFiles.csv file and provides methods to query its contents.
+
+    """
 
     input_files_df = pd.DataFrame()
-    input_files_pathlist = list()
+    input_files_pathlist = list() # this list is updated when class objects are initiated.
 
     def __init__(self):
         self._dict = dict()
@@ -32,9 +37,27 @@ class InputFiles:
         self.input_files_pathlist.append(filepath)
 
     def get_filename(self, file_id):
+        """
 
+        Parameters:
+            file_id: str; the file_id stipulated in the InputFiles.csv file (e.g., bca_inputs).
+
+        Returns:
+            The name of the CSV file (e.g., BCA_General_Inputs.csv) associated with the given file_id
+            (e.g., bca_inputs).
+
+        """
         return self._dict[file_id]['UserEntry.csv']
 
     @staticmethod
     def update_pathlist(filepath):
+        """
+
+        Parameters:
+            filepath: Path to the specified file.
+
+        Returns:
+            Updates input_files_pathlist with the passed path.
+
+        """
         InputFiles.input_files_pathlist.append(filepath)

@@ -7,7 +7,7 @@ from bca_tool_code.general_input_modules.input_files import InputFiles
 class OrvrFuelChanges:
     """
 
-    The OrvrFuelChanges class reads the DEF dose rates file and provides methods to query its contents.
+    The OrvrFuelChanges class reads the orvr_fuelchanges_cap file and provides methods to query its contents.
 
     """
     def __init__(self):
@@ -24,7 +24,6 @@ class OrvrFuelChanges:
             and other attributes specified in the class __init__.
 
         """
-
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
 
         key = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID']))
@@ -36,5 +35,14 @@ class OrvrFuelChanges:
         InputFiles.update_pathlist(filepath)
 
     def get_ml_per_gram(self, engine, alt):
+        """
 
+        Parameters:
+            engine: tuple; (regclass_id, fueltype_id). \n
+            alt: int; the option_id.
+
+        Returns:
+            The milliliters of gasoline per gram of hydrocarbon captured that is available to be burned in the engine.
+
+        """
         return self._dict[engine, alt]['ml/g']

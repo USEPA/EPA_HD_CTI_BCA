@@ -2,15 +2,17 @@
 
 def calc_typical_vmt_per_year(settings, data_object, key):
     """
-    This function calculates a typical annual VMT/vehicle over a set number of years as set via the General Inputs workbook. This typical annual VMT/vehicle
-    can then be used to estimate the ages at which warranty and useful life will be reached. When insufficient years are available -- e.g., if the typical_vmt_thru_ageID
-    is set to >5 years and the given vehicle is a MY2041 vintage vehicle and the fleet input file contains data only thru CY2045, then insufficient data exist to
-    calculate the typical VMT for that vehicle -- the typical VMT for that vehicle will be set equal to the last prior MY vintage for which sufficient data were present.
+    This function calculates a typical annual VMT/vehicle over a set number of years as set via the General Inputs
+    workbook. This typical annual VMT/vehicle can then be used to estimate the ages at which warranty and useful life
+    will be reached. When insufficient years are available -- e.g., if the typical_vmt_thru_ageID is set to >5 years and
+    the given vehicle is a MY2041 vintage vehicle and the fleet input file contains data only thru CY2045, then
+    insufficient data exist to calculate the typical VMT for that vehicle -- the typical VMT for that vehicle will be
+    set equal to the last prior MY vintage for which sufficient data were present.
 
     Parameters:
-        settings: Object; The SetInputs class object.\n
-        data_object: Object; the fleet data object.\n
-        key: Tuple; represents a sourcetype, regclass,fueltype, model year vehicle.
+        settings: object; the SetInputs class object.\n
+        data_object: object; the fleet data object.\n
+        key: tuple; ((sourcetype_id, regclass_id, fueltype_id), alt, model year, age, discount rate).
 
     Returns:
         A single typical annual VMT/veh value for the passed vehicle of the given model year.
@@ -36,14 +38,14 @@ def calc_estimated_age(settings, key, typical_vmt):
     """
 
     Parameters:
-        settings: Object; The SetInputs class object.\n
-        key: Tuple; represents a sourcetype_regclass_fueltype vehicle.\n
-        typical_vmt: Numeric; the typical annual VMT/vehicle over a set number of years as set via the General Inputs
+        settings: object; the SetInputs class object.\n
+        key: tuple; ((sourcetype_id, regclass_id, fueltype_id), alt, model year, age, discount rate).\n
+        typical_vmt: numeric; the typical annual VMT/vehicle over a set number of years as set via the General Inputs
         workbook (see calc_typical_vmt_per_year function).
 
     Returns:
-        The passed dictionary updated to include the ages at which warranty and useful life will be reached for the
-        passed vehicle/model year.
+        Updates the estimated ages dictionary with the ages at which warranty and useful life will be reached for the
+        passed key.
 
     """
     vehicle, alt, model_year, age_id, disc_rate = key
@@ -77,15 +79,13 @@ def calc_emission_repair_costs_per_mile(settings, data_object):
     """
 
     Parameters:
-        settings: Object; The SetInputs class object.\n
-        data_object: Object; the fleet data object.
+        settings: object; the SetInputs class object.\n
+        data_object: object; the fleet data object.
 
     Returns:
-        Updates the fleet dictionary to include emission repair costs/mile.\n
-        A repair cost/mile dictionary containing details used in the calculation of repair cost/mile and which is then
-        written to an output file for the given run.\n
-        An estimated ages dictionary containing details behind the calculations and which is then written to an output
-        file for the given run.
+        Updates the data_object dictionary to include emission repair costs/mile.\n
+        Updates the repair cost/mile dictionary (repair_cpm_dict) containing details used in the calculation of repair
+        cost/mile; this dictionary is then written to an output file for the given run.
 
     """
     print('\nCalculating emission repair costs per mile...')
@@ -152,10 +152,10 @@ def calc_emission_repair_costs_per_veh(data_object):
     """
 
     Parameters:
-        data_object: Object; the fleet data object.
+        data_object: object; the fleet data object.
 
     Returns:
-        Updates the fleet dictionary with annual emission repair costs/vehicle for each dictionary key.
+        Updates the data_object dictionary with annual emission repair costs/vehicle for each dictionary key.
 
     """
     print('\nCalculating emission repair costs per vehicle...')
@@ -173,10 +173,10 @@ def calc_emission_repair_costs(data_object):
     """
 
     Parameters:
-        data_object: Object; the fleet data object.
+        data_object: object; the fleet data object.
 
     Returns:
-        The totals_dict dictionary updated with annual emission repair costs for all vehicles.
+        Updates the data_object dictionary with emission repair costs for all vehicles.
 
     """
     print(f'\nCalculating total emission repair costs...')

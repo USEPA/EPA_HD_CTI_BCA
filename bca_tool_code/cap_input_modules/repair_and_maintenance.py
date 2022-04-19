@@ -7,7 +7,8 @@ from bca_tool_code.general_input_modules.input_files import InputFiles
 class RepairAndMaintenance:
     """
 
-    The RepairAndMaintenance class reads the repair and maintenance input file and provides methods to query its contents.
+    The RepairAndMaintenance class reads the repair and maintenance input file, converts monetized values to analysis
+     dollars, and provides methods to query its contents.
 
     """
     def __init__(self):
@@ -27,7 +28,6 @@ class RepairAndMaintenance:
             and other attributes specified in the class __init__.
 
         """
-
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x, index_col=0)
 
         df = deflators.convert_dollars_to_analysis_basis(general_inputs, df, 'Value')
@@ -40,5 +40,13 @@ class RepairAndMaintenance:
         InputFiles.update_pathlist(filepath)
 
     def get_attribute_value(self, attribute_name):
+        """
 
+        Parameters:
+            attribute_name: str; the attribute for which a value is sought.
+
+        Returns:
+            The value of the passed attribute.
+
+        """
         return self._dict[attribute_name]['Value']

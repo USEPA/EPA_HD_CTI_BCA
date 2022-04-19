@@ -3,11 +3,13 @@ def calc_fuel_costs(settings, data_object):
     """
 
     Parameters:
-        settings: Object; The SetInputs class object.\n
-        data_object: Object; the fleet data object.
+        settings: object; the SetInputs class object.\n
+        data_object: object; the fleet data object.
 
     Returns:
-        Updates the fleet dictionary to reflect fuel costs.
+        Updates the data_object dictionary to reflect fuel consumption (Gallons) adjusted to account for the fuel saved
+        due to application of new technology. The dictionary is also updated to include the fuel costs associated with
+        the gallons consumed (Gallons paid for * $/gallon fuel).
 
     """
     print('\nCalculating GHG fuel costs...')
@@ -35,10 +37,10 @@ def calc_fuel_costs_per_veh(data_object):
     """
 
     Parameters:
-        data_object: Object; the fleet data object.
+        data_object: object; the fleet data object.
 
     Returns:
-        Updates the fleet dictionary to include fuel costs/vehicle and costs/mile.
+        Updates the data_object dictionary to include fuel costs/vehicle and costs/mile.
 
     """
     print('\nCalculating average fuel costs...')

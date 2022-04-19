@@ -5,8 +5,8 @@ def calc_def_doserate(settings, vehicle):
     """
 
     Parameters:
-        settings: Object; The SetInputs class object. \n
-        vehicle: Tuple; represents a sourcetype_regclass_fueltype vehicle.\n
+        settings: object; the SetInputs class object. \n
+        vehicle: tuple; (sourcetype_id, regclass_id, fueltype_id).\n
 
     Returns:
         The DEF dose rate for the passed vehicle (engine) based on the DEF dose rate input file.
@@ -26,12 +26,12 @@ def calc_nox_reduction(settings, data_object, key):
     """
 
     Parameters:
-        settings: Object; The SetInputs class object. \n
-        data_object: Object; the fleet data object.\n
-        key: Tuple; represents the vehicle, alt, model year, age and discount rate.
+        settings: object; the SetInputs class object. \n
+        data_object: object; the fleet data object.\n
+        key: tuple; ((sourcetype_id, regclass_id, fueltype_id), alt, model year, age, discount rate).
 
     Returns:
-        The NOx reduction for the passed model year vehicle in the given calendar year.
+        The NOx reduction for the passed model year vehicle at the given age.
 
     Notes:
         The nox_reduction calculation should be done such that it is positive if action has lower nox than no action.
@@ -50,20 +50,18 @@ def calc_def_costs(settings, data_object):
     """
 
     Parameters:
-        settings: Object; The SetInputs class object.\n
-        data_object: Object; the fleet data object.
+        settings: object; the SetInputs class object.\n
+        data_object: object; the fleet data object.
 
     Returns:
-        The passed dictionary updated with costs associated with DEF consumption.
+        Updates the data_object dictionary with costs associated with DEF consumption.
 
     """
     print('\nCalculating DEF costs...')
-
-    # Note: use keys where fueltype_id=2 (Diesel since they are the only vehicles that use DEF)
-
     def_gallons_per_ton_nox_reduction \
         = pd.to_numeric(settings.general_inputs.get_attribute_value('def_gallons_per_ton_nox_reduction'))
 
+    # Note: use keys where fueltype_id=2 (i.e., diesel, since they are the only vehicles that use DEF)
     for key in data_object.ft2_keys:
         vehicle, alt, model_year, age_id, disc_rate = key
         calendar_year = model_year + age_id
@@ -86,11 +84,10 @@ def calc_def_costs_per_veh(data_object):
     """
 
     Parameters:
-        settings: Object; The SetInputs class object.\n
-        data_object: Object; the fleet data object.
+        data_object: object; the fleet data object.
 
     Returns:
-        Updates the fleet dictionary with costs/mile and costs/vehicle associated with DEF consumption.
+        Updates the data_object dictionary with costs/mile and costs/vehicle associated with DEF consumption.
 
     """
     print('\nCalculating DEF average costs...')

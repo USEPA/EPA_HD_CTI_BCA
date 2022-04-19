@@ -38,5 +38,14 @@ class SourceTypeLearningScalers:
         InputFiles.update_pathlist(filepath)
 
     def get_seedvolume_factor(self, vehicle, alt):
+        """
 
+        Parameters:
+            vehicle: tuple; (sourcetype_id, regclass_id, fueltype_id). \n
+            alt: int; the option_id.
+
+        Returns:
+            The seed volume factor for the given vehicle and option_id.
+
+        """
         return self._dict[vehicle, alt]['SeedVolumeFactor']

@@ -78,11 +78,11 @@ class Vehicle:
         """
 
         Parameters:
-            data_object: Object; the data object to be updated.\n
+            data_object: object; the data object to be updated.\n
             data_dict: Dictionary, the dictionary to be updated.
 
         Returns:
-            Upates the data object dictionary or dictionary with new attributes identifying the option name.
+            Updates the data_object dictionary or data_dict dictionary with new attributes identifying the vehicle.
 
         """
         if data_object:
@@ -114,13 +114,13 @@ class Vehicle:
                 data_dict[key].update(update_dict)
 
     @staticmethod
-    def option_name(settings, options_object, data_object=None, data_dict=None):
+    def option_name(settings, options, data_object=None, data_dict=None):
         """
 
         Parameters:
-            settings: Object; The SetInputs class object.\n
-            options_object: Object; the options object.\n
-            data_object: Object; the data object to be updated.\n
+            settings: object; the SetInputs class object.\n
+            options: object; the options class object.\n
+            data_object: object; the data object to be updated.\n
             data_dict: Dictionary, the dictionary to be updated.
 
         Returns:
@@ -132,15 +132,15 @@ class Vehicle:
         else:
             _dict = data_dict.copy()
 
-        no_action_name = options_object.get_option_name(settings.no_action_alt)
+        no_action_name = options.get_option_name(settings.no_action_alt)
         for key in _dict.keys():
             alt = key[1]
-            if alt > len(options_object._dict):
+            if alt > len(options._dict):
                 action_alt = alt / 10
-                action_name = options_object.get_option_name(action_alt)
+                action_name = options.get_option_name(action_alt)
                 option_name = f'{action_name}_minus_{no_action_name}'
             else:
-                option_name = options_object.get_option_name(alt)
+                option_name = options.get_option_name(alt)
 
             update_dict = {'OptionName': option_name}
             if data_object:

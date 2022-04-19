@@ -3,17 +3,18 @@ import pandas as pd
 
 def create_weighted_cost_dict(settings, data_object, destination_dict, arg_to_weight, arg_to_weight_by):
     """
+
     This function weights 'arg_to_weight' attributes by the 'arg_to_weight_by' attribute.
 
     Parameters::
-        settings: Object; The SetInputs class object.\n
-        data_object: Object; the fleet data object.\n
+        settings: object; the SetInputs class object.\n
+        data_object: object; the fleet data object.\n
         destination_dict: Dictionary into which to place results.
-        arg_to_weight: String; the attribute to be weighted by the arg_to_weight_by argument.\n
-        arg_to_weight_by: String; the argument to weight by.
+        arg_to_weight: str; the attribute to be weighted by the arg_to_weight_by argument.\n
+        arg_to_weight_by: str; the argument to weight by.
 
     Returns:
-        A dictionary of arguments weighted by the weight_by argument.
+        Updates the destination_dict dictionary of arguments weighted by the weight_by argument.
 
     Note:
         The weighting is limited by the number of years (ages) to be included which is set in the general inputs file.

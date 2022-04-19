@@ -3,6 +3,11 @@ from bca_tool_code.general_input_modules.input_files import InputFiles
 
 
 class Options:
+    """
+
+    The Options class reads the options file and provides methods to query contents.
+
+    """
 
     def __init__(self):
         self._dict = dict()
@@ -26,5 +31,13 @@ class Options:
         InputFiles.update_pathlist(filepath)
 
     def get_option_name(self, alt):
+        """
 
+        Parameters:
+            alt: int; the option_id for which the option_name is sought.
+
+        Returns:
+            A string associated with the given alt (i.e., option_id).
+
+        """
         return self._dict[alt]['OptionName']

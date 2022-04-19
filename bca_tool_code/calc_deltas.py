@@ -5,33 +5,39 @@ def calc_deltas(settings, data_object):
     This function calculates deltas for action alternatives relative to the no action alternative set via the General Inputs.
 
     Parameters:
-        settings: Object; The SetInputs class object. \n
-        data_object: Object; contains values for calculating deltas.
+        settings: object; the SetInputs class object. \n
+        data_object: object; the fleet data object.
 
     Returns:
-        An updated dictionary containing deltas relative to the no_action_alt. OptionIDs (numeric) for the deltas will be the alt_id followed by the no_action_alt. \n
-        For example, deltas for optionID=1 relative to optionID=0 will have optionID=10. OptionNames will also show as 'OptionID=1_name minus OptionID=0_name'.
+        Updates the data_object dictionary with deltas relative to the no_action_alt. OptionIDs (numeric) for the deltas
+        will be the alt_id followed by the no_action_alt. For example, deltas for optionID=1 relative to optionID=0 will
+        have optionID=10. OptionNames will also show as 'OptionID=1_name minus OptionID=0_name'.
 
     """
     print('\nCalculating deltas...')
 
-    # Note: copy data_object._dict because data_object._dict cannot be used directly since it changes size in the loop
+    # Note: copy data_object._dict because data_object._dict cannot be used in the loop that follows since it changes
+    # size in the loop.
     dict_for_deltas = data_object._dict.copy()
 
-    # update_dict = dict()
     for key, value in dict_for_deltas.items():
         vehicle = model_year = age_id = calendar_year = series = None
         fleet_object_flag = None
         try:
-            # for totals and averages deltas
+            # for fleet dictionary deltas
             vehicle, alt, model_year, age_id, discount_rate = key
             st, rc, ft = vehicle
             fleet_object_flag = 1
         except ValueError:
-            # for annual summary deltas
-            series, alt, calendar_year, discount_rate  = key
+            # for annual_summary dictionary deltas
+            series, alt, calendar_year, discount_rate = key
 
-        args_to_delta = [k for k, v in value.items() if 'ID' not in k and 'DiscountRate' not in k and 'Series' not in k and 'Periods' not in k]
+        args_to_delta = [k for k, v in value.items()
+                         if 'ID' not in k
+                         and 'DiscountRate' not in k
+                         and 'Series' not in k
+                         and 'Periods' not in k]
+
         if alt != settings.no_action_alt:
             delta_alt = f'{alt}{settings.no_action_alt}'
             delta_alt = int(delta_alt)
@@ -73,15 +79,17 @@ def calc_deltas(settings, data_object):
 
 def calc_deltas_weighted(settings, dict_for_deltas):
     """
-    This function calculates deltas for action alternatives relative to the passed no action alternative specifically for the weighted cost per mile dictionaries.
+    This function calculates deltas for action alternatives relative to the passed no action alternative specifically
+    for the weighted cost per mile dictionaries.
 
     Parameters:
-        settings: Object; The SetInputs class object. \n
+        settings: object; the SetInputs class object. \n
         dict_for_deltas: Dictionary; contains values for calculating deltas.
 
     Returns:
-        An updated dictionary containing deltas relative to the no_action_alt. OptionIDs (numeric) for the deltas will be the alt_id followed by the no_action_alt. \n
-        For example, deltas for optionID=1 relative to optionID=0 would have optionID=10.
+        An updated dictionary containing deltas relative to the no_action_alt. OptionIDs (numeric) for the deltas will
+        be the alt_id followed by the no_action_alt. For example, deltas for optionID=1 relative to optionID=0 would
+        have optionID=10.
 
     Note:
         There is no age_id or discount rate in the key for the passed weighted dictionaries.
