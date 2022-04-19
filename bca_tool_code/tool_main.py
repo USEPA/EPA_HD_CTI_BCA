@@ -154,7 +154,8 @@ def main():
             bca_tool_code.vehicle.Vehicle().vehicle_name(data_object=obj, data_dict=None)
 
         # add option and vehicle names using data dictionaries
-        for obj in [settings.wtd_cap_fuel_cpm_dict, settings.wtd_repair_cpm_dict, settings.wtd_def_cpm_dict]:
+        for obj in [settings.wtd_cap_fuel_cpm_dict, settings.wtd_repair_cpm_dict, settings.wtd_def_cpm_dict,
+                    settings.estimated_ages_dict, settings.repair_cpm_dict]:
             bca_tool_code.vehicle.Vehicle().option_name(settings, settings.options_cap, data_object=None, data_dict=obj)
             bca_tool_code.vehicle.Vehicle().vehicle_name(data_object=None, data_dict=obj)
 
@@ -216,14 +217,22 @@ def main():
 
         gen_fxns.save_dict(settings.regclass_sales._dict, path_of_run_results_folder / 'CAP_sales_and_costs_by_step',
                            row_header=None, stamp=stamp, index=False)
-        gen_fxns.save_dict(settings.regclass_costs._dict, path_of_modified_inputs_folder / 'regclass_costs',
-                           row_header=None, stamp=stamp, index=False)
         gen_fxns.save_dict(settings.wtd_cap_fuel_cpm_dict, path_of_run_results_folder / 'CAP_vmt_weighted_fuel_cpm',
                            row_header=None, stamp=stamp, index=True)
         gen_fxns.save_dict(settings.wtd_def_cpm_dict, path_of_run_results_folder / 'CAP_vmt_weighted_def_cpm',
                            row_header=None, stamp=stamp, index=True)
         gen_fxns.save_dict(settings.wtd_repair_cpm_dict, path_of_run_results_folder / 'CAP_vmt_weighted_repair_cpm',
                            row_header=None, stamp=stamp, index=True)
+        gen_fxns.save_dict(settings.estimated_ages_dict, path_of_run_results_folder / 'CAP_estimated_ages',
+                           row_header=None, stamp=stamp, index=False)
+        gen_fxns.save_dict(settings.repair_cpm_dict, path_of_run_results_folder / 'CAP_repair_cpm_details',
+                           row_header=None, stamp=stamp, index=False)
+
+        # save DataFrames to CSV
+        settings.regclass_costs.regclass_costs_in_analysis_dollars.to_csv(
+            path_of_modified_inputs_folder / 'regclass_costs.csv', index=False)
+        settings.repair_and_maintenance.repair_and_maintenance_in_analysis_dollars.to_csv(
+            path_of_modified_inputs_folder / 'repair_and_maintenance.csv', index=True)
 
         # create figures
         arg_list = ['TechCost', 'EmissionRepairCost', 'DEFCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
@@ -243,23 +252,24 @@ def main():
 
         gen_fxns.save_dict(settings.sourcetype_sales._dict, path_of_run_results_folder / 'GHG_sales_and_costs_by_step',
                            row_header=None, stamp=stamp, index=False)
-        gen_fxns.save_dict(settings.sourcetype_costs._dict, path_of_modified_inputs_folder / 'sourcetype_costs',
-                           row_header=None, stamp=stamp, index=False)
         gen_fxns.save_dict(settings.wtd_ghg_fuel_cpm_dict, path_of_run_results_folder / 'GHG_vmt_weighted_fuel_cpm',
                            row_header=None, stamp=stamp, index=True)
+
+        # save DataFrames to CSV
+        settings.sourcetype_costs.sourcetype_costs_in_analysis_dollars.to_csv(
+            path_of_modified_inputs_folder / 'sourcetype_costs.csv', index=False)
 
         # create figures
         arg_list = ['TechCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
         bca_tool_code.create_figures.CreateFigures(
             ghg_summary_df, 'US Dollars', path_of_run_results_folder, 'GHG').create_figures(arg_list)
 
-    gen_fxns.save_dict(settings.fuel_prices.fuel_prices_in_analysis_dollars,
-                       path_of_modified_inputs_folder / f'fuel_prices_{settings.general_inputs.get_attribute_value("aeo_fuel_price_case")}',
-                       row_header=None, stamp=stamp, index=False)
-    gen_fxns.save_dict(settings.def_prices.def_prices_in_analysis_dollars,
-                       path_of_modified_inputs_folder / 'def_prices', row_header=None, stamp=stamp, index=False)
-    gen_fxns.save_dict(settings.deflators.deflators_and_adj_factors, path_of_modified_inputs_folder / 'deflators',
-                       row_header=None, stamp=stamp, index=False)
+    # save DataFrames to CSV
+    settings.fuel_prices.fuel_prices_in_analysis_dollars.to_csv(
+        path_of_modified_inputs_folder /
+        f'fuel_prices_{settings.general_inputs.get_attribute_value("aeo_fuel_price_case")}.csv', index=False)
+    settings.def_prices.def_prices_in_analysis_dollars.to_csv(path_of_modified_inputs_folder / 'def_prices.csv', index=True)
+    settings.deflators.deflators_and_adj_factors.to_csv(path_of_modified_inputs_folder / 'deflators.csv', index=True)
 
     end_time_outputs = end_time = time()
     elapsed_time_outputs = end_time_outputs - start_time_outputs
