@@ -9,7 +9,6 @@ class InputFiles:
     The InputFiles class reads the InputFiles.csv file and provides methods to query its contents.
 
     """
-
     input_files_df = pd.DataFrame()
     input_files_pathlist = list() # this list is updated when class objects are initiated.
 
@@ -40,13 +39,12 @@ class InputFiles:
         """
 
         Parameters:
-            file_id: str; the file_id stipulated in the InputFiles.csv file (e.g., bca_inputs).
+            file_id: str; the name of the CSV file (e.g., InputFiles.csv) associated with the given file_id (e.g., inpu
 
         Returns:
-            The name of the CSV file (e.g., BCA_General_Inputs.csv) associated with the given file_id
-            (e.g., bca_inputs).
 
         """
+
         return self._dict[file_id]['UserEntry.csv']
 
     @staticmethod
@@ -58,6 +56,5 @@ class InputFiles:
 
         Returns:
             Updates input_files_pathlist with the passed path.
-
         """
         InputFiles.input_files_pathlist.append(filepath)

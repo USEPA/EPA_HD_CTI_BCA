@@ -31,17 +31,14 @@ The list of necessary input files contained in the "inputs" folder is:
     - TechCostInputs_bySourceType_byFuelType.csv which provides the tech costs (direct plus indirect) by SourceType (used in the GHG analysis).
     - LearningRateScalars_byRegClass.csv which provides scalars to be applied in estimating learning effects on direct costs. Currently, this is used in the CAP analysis.
     - LearningRateScalars_bySourceType.csv which provides scalars to be applied in estimating learning effects on direct costs. Currently, this is used in the GHG analysis.
-    - IndirectCostInputs_RegClass.csv which provides indirect cost markup factors applied to reg class direct costs to estimate indirect costs; this is used in the CAP analysis.
-    - IndirectCostInputs_SourceType.csv which provides indirect cost markup factors applied to sourcetype direct costs to estimate indirect costs. Currently, this is not used.
+    - Markups.csv which provides indirect cost markup factors applied to reg class direct costs to estimate indirect costs; this is used in the CAP analysis.
     - ORVR_FuelChangeInputs_CAP.csv which provides the CAP fuel consumption impacts expected from adding onboard refueling vapor recovery systems to HD gasoline vehicles.
-    - ORVR_FuelChangeInputs_GHG.csv which provides the GHG fuel consumption impacts expected from adding onboard refueling vapor recovery systems to HD gasoline vehicles.
     - DEF_DoseRateInputs.csv which provides the CAP diesel exhaust fluid (DEF) dosing rates expected in the baseline scenario.
     - DEF_Prices.csv which provides DEF prices by calendar year.
     - CriteriaCostFactors.csv which provides the cost per ton of criteria emissions in the inventory (not used for the NPRM analysis).
     - Repair_and_Maintenance_Curve_Inputs.csv which provides inputs used in estimating CAP emission repair costs.
     - UsefulLife_Inputs.csv which provides useful life miles and ages under each CAP option.
     - Warranty_Inputs.csv which provides warranty miles and ages under each CAP option.
-    - UnitConversions.csv which provides conversion factors as needed by the tool.
     - Components_of_Selected_Petroleum_Product_Prices.csv which provides fuel prices.
     - Table_1.1.9_ImplicitPriceDeflators.csv which provides price deflators used by the tool to convert all monetary values to a consistent basis.
 
@@ -62,9 +59,9 @@ What are the output files?
 The output files are pretty self-explanatory by their file names.
 
 Output files generated if calculating CAP costs are:
-    - CAP_bca_tool_fleet_averages.csv which contains average results for all vehicles by calendar year/model year/age.
-    - CAP_bca_tool_fleet_totals.csv which contains total results for all vehicles by calendar year/model year/age.
-    - CAP_bca_tool_annual_summary.csv which contains annual sums, present values and annualized values using the fleet totals output file.
+    - CAP_bca_tool_all.csv which contains results for all vehicles by calendar year/model year/age.
+    - CAP_bca_tool_annual_summary.csv which contains annual sums, present values and annualized values using the bca_tool_all output file.
+    - CAP_sales_and_costs_by_step.csv which contains package costs and sales year-over-year associated with each standard implementation step.
     - CAP_bca_tool_estimated_ages.csv which contains the required, calculated and estimated warranty and useful life ages.
     - CAP_bca_tool_repair_cpm_details.csv which contains details of calculations used to estimate repair costs per mile.
     - CAP_bca_tool_vmt_weighted_emission_repair_cpm.csv which contains weighted cost per mile emission repair results by sourcetype/regclass/fueltype.
@@ -72,9 +69,9 @@ Output files generated if calculating CAP costs are:
     - CAP_bca_tool_vmt_weighted_def_cpm.csv which contains weighted cost per mile diesel exhaust fluid costs results by sourcetype/regclass/fueltype.
 
 Output files generated if calculating GHG costs are:
-    - GHG_bca_tool_fleet_averages.csv which contains average results for all vehicles by calendar year/model year/age.
-    - GHG_bca_tool_fleet_totals.csv which contains total results for all vehicles by calendar year/model year/age.
+    - GHG_bca_tool_all.csv which contains results for all vehicles by calendar year/model year/age.
     - GHG_bca_tool_annual_summary.csv which contains annual sums, present values and annualized values using the fleet totals output file.
+    - GHG_sales_and_costs_by_step.csv which contains package costs and sales year-over-year associated with each standard implementation step.
 
 A summary_log.csv is also created which contains the version number of the tool, date and time statistics for the run and input file data specific to the run.
 

@@ -89,7 +89,7 @@ class Fleet:
 
         Parameters:
             key: tuple; ((sourcetype_id, regclass_id, fueltype_id), option_id, model_year, age_id, discount_rate).\n
-            *attribute_names: str(s); the attribute names for which values are sought.
+            attribute_names: str(s); the attribute names for which values are sought.
 
         Returns:
             A list of attribute values associated with attribute_names for the given key.
