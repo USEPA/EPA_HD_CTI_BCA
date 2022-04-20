@@ -39,9 +39,11 @@ class InputFiles:
         """
 
         Parameters:
-            file_id: str; the name of the CSV file (e.g., InputFiles.csv) associated with the given file_id (e.g., inpu
+            file_id: str; the file_id stipulated in the InputFiles.csv file (e.g., bca_inputs).
 
         Returns:
+            The name of the CSV file (e.g., BCA_General_Inputs.csv) associated with the given file_id
+            (e.g., bca_inputs).
 
         """
 
@@ -56,5 +58,6 @@ class InputFiles:
 
         Returns:
             Updates input_files_pathlist with the passed path.
+
         """
         InputFiles.input_files_pathlist.append(filepath)
