@@ -97,33 +97,3 @@ def calc_package_costs(data_object):
 
         update_dict = {'DirectCost': cost}
         data_object.update_dict(key, update_dict)
-
-
-if __name__ == '__main__':
-    import pandas as pd
-    from pathlib import Path
-    from bca_tool_code.tool_setup import SetInputs
-    from bca_tool_code.project_fleet import create_fleet_df
-
-    settings = SetInputs()
-
-    path_project = Path(__file__).parent.parent
-    path_dev = path_project / 'dev'
-    path_dev.mkdir(exist_ok=True)
-
-    # create project fleet DataFrame which will include adjustments to the MOVES input file that are unique to the project.
-    cap_fleet_df = create_fleet_df(settings, settings.moves_cap, settings.options_cap_dict,
-                                   settings.moves_adjustments_cap_dict, 'VPOP', 'VMT', 'Gallons')
-
-    # create totals, averages and sales by regclass dictionaries
-    cap_totals_dict, cap_averages_dict, regclass_sales_dict = dict(), dict(), dict()
-    cap_totals_dict = FleetTotals(cap_totals_dict).create_fleet_totals_dict(settings, cap_fleet_df)
-    cap_averages_dict = FleetAverages(cap_averages_dict).create_fleet_averages_dict(settings, cap_fleet_df)
-    regclass_sales_dict = FleetTotals(regclass_sales_dict).create_regclass_sales_dict(cap_fleet_df)
-
-    # calculate direct costs per reg class based on cumulative regclass sales (learning is applied to cumulative sales)
-    regclass_yoy_costs_per_step = calc_yoy_costs_per_step(settings, regclass_sales_dict, 'VPOP_withTech', 'CAP')
-    df = pd.DataFrame(regclass_yoy_costs_per_step).transpose()
-
-    df.to_csv(path_dev / 'regclass_yoy_costs_per_step.csv', index=True)
-    print(f'\nOutput files have been saved to {path_dev}\n')

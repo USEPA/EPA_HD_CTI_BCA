@@ -127,20 +127,45 @@ if __name__ == '__main__':
     from bca_tool_code.calc_deltas import calc_deltas
 
     settings = SetInputs()
-    data = {((1, 1, 1), 0, 2027, 0, 0): {'sourceTypeID': 1, 'regClassID': 1, 'fuelTypeID': 1,
-                                         'optionID': 0, 'modelYearID': 2027, 'ageID': 0, 'DiscountRate': 0,
-                                         'A': 100, 'B': 200},
-            ((1, 1, 1), 0, 2027, 1, 0): {'sourceTypeID': 1, 'regClassID': 1, 'fuelTypeID': 1,
-                                         'optionID': 0, 'modelYearID': 2027, 'ageID': 1, 'DiscountRate': 0,
-                                         'A': 150, 'B': 250},
-            ((1, 1, 1), 1, 2027, 0, 0): {'sourceTypeID': 1, 'regClassID': 1, 'fuelTypeID': 1,
-                                         'optionID': 1, 'modelYearID': 2027, 'ageID': 0, 'DiscountRate': 0,
-                                         'A': 50, 'B': 150},
-            ((1, 1, 1), 1, 2027, 1, 0): {'sourceTypeID': 1, 'regClassID': 1, 'fuelTypeID': 1,
-                                         'optionID': 1, 'modelYearID': 2027, 'ageID': 1, 'DiscountRate': 0,
-                                         'A': 100, 'B': 200}}
 
-    data = calc_deltas(settings, data)
-    data_df = pd.DataFrame(data).transpose()
+    class Data:
+
+        _dict = dict()
+
+        def __init__(self):
+            data = {((1, 1, 1), 0, 2027, 0, 0): {'sourceTypeID': 1, 'regClassID': 1, 'fuelTypeID': 1,
+                                                 'optionID': 0, 'modelYearID': 2027, 'ageID': 0, 'DiscountRate': 0,
+                                                 'A': 100, 'B': 200},
+                    ((1, 1, 1), 0, 2027, 1, 0): {'sourceTypeID': 1, 'regClassID': 1, 'fuelTypeID': 1,
+                                                 'optionID': 0, 'modelYearID': 2027, 'ageID': 1, 'DiscountRate': 0,
+                                                 'A': 150, 'B': 250},
+                    ((1, 1, 1), 1, 2027, 0, 0): {'sourceTypeID': 1, 'regClassID': 1, 'fuelTypeID': 1,
+                                                 'optionID': 1, 'modelYearID': 2027, 'ageID': 0, 'DiscountRate': 0,
+                                                 'A': 50, 'B': 150},
+                    ((1, 1, 1), 1, 2027, 1, 0): {'sourceTypeID': 1, 'regClassID': 1, 'fuelTypeID': 1,
+                                                 'optionID': 1, 'modelYearID': 2027, 'ageID': 1, 'DiscountRate': 0,
+                                                 'A': 100, 'B': 200}}
+            self._dict = data
+
+        def add_key_value_pairs(self, key, input_dict):
+            """
+
+            Parameters:
+                key: tuple; ((sourcetype_id, regclass_id, fueltype_id), option_id, model_year, age_id, discount_rate).\n
+                input_dict: Dictionary; represents the attribute-value pairs to be updated.
+
+            Returns:
+                The dictionary instance with each attribute updated with the appropriate value.
+
+            Note:
+                This method updates the dictionary with a key with input_dict as a nested dictionary.
+
+            """
+            self._dict[key] = input_dict
+
+
+    data = Data()
+    calc_deltas(settings, data)
+    data_df = pd.DataFrame(data._dict).transpose()
 
     print(data_df) # delta values (optionID=10) should all be -50
