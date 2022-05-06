@@ -14,7 +14,7 @@ from bca_tool_code.general_input_modules.warranty import Warranty
 from bca_tool_code.general_input_modules.useful_life import UsefulLife
 from bca_tool_code.general_input_modules.dollar_per_ton_cap import DollarPerTonCAP
 from bca_tool_code.general_input_modules.options import Options
-from bca_tool_code.general_input_modules.moves_adjustments import MovesAdj
+from bca_tool_code.general_input_modules.moves_adjustments import MovesAdjustments
 
 from bca_tool_code.fleet import Fleet
 from bca_tool_code.annual_summary import AnnualSummary
@@ -29,6 +29,9 @@ from bca_tool_code.cap_modules.regclass_sales import RegClassSales
 from bca_tool_code.ghg_input_modules.sourcetype_costs import SourceTypeCosts
 from bca_tool_code.ghg_input_modules.sourcetype_learning_scalers import SourceTypeLearningScalers
 from bca_tool_code.ghg_modules.sourcetype_sales import SourceTypeSales
+
+from bca_tool_code.vehicle import Vehicle
+from bca_tool_code.general_input_modules.tech_penetrations import TechPenetrations
 
 
 class SetPaths:
@@ -176,27 +179,35 @@ class SetInputs:
             self.options_cap = Options()
             self.options_cap.init_from_file(set_paths.path_inputs / self.input_files.get_filename('options_cap'))
 
-            self.moves_adj_cap = MovesAdj()
+            self.moves_adj_cap = MovesAdjustments()
             self.moves_adj_cap.init_from_file(set_paths.path_inputs / self.input_files.get_filename('moves_adjustments_cap'))
 
+            self.cap_vehicle = Vehicle()
+            self.cap_vehicle.init_from_file(set_paths.path_inputs / self.input_files.get_filename('fleet_cap'),
+                                            self.options_cap, adjustments=self.moves_adj_cap)
             self.fleet_cap = Fleet()
-            self.fleet_cap.init_from_file(set_paths.path_inputs / self.input_files.get_filename('fleet_cap'),
-                                          self.general_inputs, 'CAP', self.options_cap, self.moves_adj_cap)
+            self.fleet_cap.create_cap_vehicles(self.no_action_alt, self.options_cap)
+            self.fleet_cap.calc_cumulative_vehicle_vmt()
+            # self.cap_vehicles_list = self.cap_vehicles.create_cap_vehicles(self.options_cap)
 
+        #     self.fleet_cap = Fleet()
+        #     self.fleet_cap.init_from_file(set_paths.path_inputs / self.input_files.get_filename('fleet_cap'),
+        #                                   self.general_inputs, 'CAP', self.options_cap, self.moves_adj_cap)
+        #     self.fleet_cap.create_vehicles()
             self.regclass_costs = RegclassCosts()
             self.regclass_costs.init_from_file(set_paths.path_inputs / self.input_files.get_filename('regclass_costs'),
                                                self.general_inputs, self.deflators)
-            
+
             self.regclass_learning_scalers = RegclassLearningScalers()
             self.regclass_learning_scalers.init_from_file(
                 set_paths.path_inputs / self.input_files.get_filename('regclass_learning_scalers'))
 
             self.markups = Markups()
             self.markups.init_from_file(set_paths.path_inputs / self.input_files.get_filename('markups'))
-            
+
             self.warranty = Warranty()
             self.warranty.init_from_file(set_paths.path_inputs / self.input_files.get_filename('warranty'))
-            
+
             self.useful_life = UsefulLife()
             self.useful_life.init_from_file(set_paths.path_inputs / self.input_files.get_filename('useful_life'))
 
@@ -211,8 +222,8 @@ class SetInputs:
                                                        self.general_inputs, self.deflators)
 
             # create additional and useful dicts and DataFrames
-            self.regclass_sales = RegClassSales()
-            self.regclass_sales.create_regclass_sales_dict(self.fleet_cap, self.regclass_costs.cost_steps)
+            # self.regclass_sales = RegClassSales()
+            # self.regclass_sales.create_regclass_sales_dict(self.fleet_cap, self.regclass_costs.cost_steps)
 
             self.repair_cpm_dict = dict()
             self.estimated_ages_dict = dict()
@@ -230,38 +241,45 @@ class SetInputs:
             self.options_ghg = Options()
             self.options_ghg.init_from_file(set_paths.path_inputs / self.input_files.get_filename('options_ghg'))
 
-            self.moves_adj_ghg = MovesAdj()
-            self.moves_adj_ghg.init_from_file(set_paths.path_inputs / self.input_files.get_filename('moves_adjustments_ghg'))
+            self.techpens_ghg = TechPenetrations()
+            self.techpens_ghg.init_from_file(set_paths.path_inputs / self.input_files.get_filename('techpens_ghg'))
 
-            self.fleet_ghg = Fleet()
-            self.fleet_ghg.init_from_file(set_paths.path_inputs / self.input_files.get_filename('fleet_ghg'),
-                                          self.general_inputs, 'GHG', self.options_ghg, self.moves_adj_ghg)
+            self.ghg_vehicle = Vehicle()
+            self.ghg_vehicle.init_from_file(set_paths.path_inputs / self.input_files.get_filename('fleet_ghg'),
+                                            self.options_ghg, adjustments=None, techpens=self.techpens_ghg)
 
-            self.sourcetype_costs = SourceTypeCosts()
-            self.sourcetype_costs.init_from_file(set_paths.path_inputs / self.input_files.get_filename('sourcetype_costs'),
-                                                 self.general_inputs, self.deflators)
+            self.fleet_ghg = Vehicles()
+            self.fleet_ghg.create_ghg_vehicles(self.options_ghg)
 
-            self.sourcetype_learning_scalers = SourceTypeLearningScalers()
-            self.sourcetype_learning_scalers.init_from_file(set_paths.path_inputs / self.input_files.get_filename('sourcetype_learning_scalers'))
-
-            # create additional and useful dicts and DataFrames
-            self.sourcetype_sales = SourceTypeSales()
-            self.sourcetype_sales.create_sourcetype_sales_dict(self.fleet_ghg, self.sourcetype_costs.cost_steps)
-
-            self.wtd_ghg_fuel_cpm_dict = dict()
-            self.annual_summary_ghg = AnnualSummary()
-
-            if self.calc_cap_costs:
-                pass
-            else:
-                self.markups = Markups()
-                self.markups.init_from_file(set_paths.path_inputs / self.input_files.get_filename('markups'))
-
-                self.warranty = Warranty()
-                self.warranty.init_from_file(set_paths.path_inputs / self.input_files.get_filename('warranty'))
-
-                self.useful_life = UsefulLife()
-                self.useful_life.init_from_file(set_paths.path_inputs / self.input_files.get_filename('useful_life'))
+            # self.fleet_ghg = Fleet()
+            # self.fleet_ghg.init_from_file(set_paths.path_inputs / self.input_files.get_filename('fleet_ghg'),
+            #                               self.general_inputs, 'GHG', self.options_ghg, self.moves_adj_ghg)
+            #
+            # self.sourcetype_costs = SourceTypeCosts()
+            # self.sourcetype_costs.init_from_file(set_paths.path_inputs / self.input_files.get_filename('sourcetype_costs'),
+            #                                      self.general_inputs, self.deflators)
+            #
+            # self.sourcetype_learning_scalers = SourceTypeLearningScalers()
+            # self.sourcetype_learning_scalers.init_from_file(set_paths.path_inputs / self.input_files.get_filename('sourcetype_learning_scalers'))
+            #
+            # # create additional and useful dicts and DataFrames
+            # self.sourcetype_sales = SourceTypeSales()
+            # self.sourcetype_sales.create_sourcetype_sales_dict(self.fleet_ghg, self.sourcetype_costs.cost_steps)
+            #
+            # self.wtd_ghg_fuel_cpm_dict = dict()
+            # self.annual_summary_ghg = AnnualSummary()
+            #
+            # if self.calc_cap_costs:
+            #     pass
+            # else:
+            #     self.markups = Markups()
+            #     self.markups.init_from_file(set_paths.path_inputs / self.input_files.get_filename('markups'))
+            #
+            #     self.warranty = Warranty()
+            #     self.warranty.init_from_file(set_paths.path_inputs / self.input_files.get_filename('warranty'))
+            #
+            #     self.useful_life = UsefulLife()
+            #     self.useful_life.init_from_file(set_paths.path_inputs / self.input_files.get_filename('useful_life'))
 
         self.row_header_for_fleet_files = ['yearID', 'modelYearID', 'ageID', 'optionID', 'OptionName',
                                            'sourceTypeID', 'sourceTypeName', 'regClassID', 'regClassName', 'fuelTypeID',

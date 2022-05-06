@@ -12,6 +12,7 @@ from time import time
 from bca_tool_code.tool_setup import SetInputs, SetPaths
 import bca_tool_code.general_input_modules.general_functions as gen_fxns
 
+import bca_tool_code.cap_modules.package_cost as cap_package_cost
 import bca_tool_code.cap_modules.package_costs as cap_package_costs
 import bca_tool_code.cap_modules.indirect_costs as cap_indirect_costs
 import bca_tool_code.cap_modules.tech_costs as cap_tech_costs
@@ -30,6 +31,10 @@ import bca_tool_code.calc_deltas
 import bca_tool_code.vehicle
 import bca_tool_code.create_figures
 
+# from bca_tool_code.costs import Costs
+from bca_tool_code.cap_modules.cap_costs import CapCosts
+from bca_tool_code.calc_ghg_costs import calc_ghg_costs
+
 
 def main():
     """
@@ -43,11 +48,27 @@ def main():
 
     settings = SetInputs()
 
+    # cap_costs = Costs()
+    # cap_costs.create_costs_dict(settings, 'CAP', settings.cap_vehicles_list)
     start_time_calcs = settings.end_time_inputs
 
     print("\nDoing the work...\n")
 
     if settings.calc_cap_costs:
+
+        for vehicle in settings.fleet_cap.vehicles_age0:
+            settings.fleet_cap.engine_sales(vehicle)
+
+        for vehicle in settings.fleet_cap.vehicles_age0:
+            for start_year in settings.regclass_costs.start_years:
+                settings.fleet_cap.cumulative_engine_sales(vehicle, start_year)
+
+        print('Calculating package costs per implementation start year...')
+        for vehicle in settings.fleet_cap.vehicles_age0:
+            for start_year in settings.regclass_costs.start_years:
+                cap_package_cost.calc_avg_package_cost_per_step(settings, vehicle, start_year)
+
+        CapCosts().calc_cap_costs(settings, set_paths)
 
         # calculate package costs based on cumulative sales (learning is applied to cumulative sales)
         cap_package_costs.calc_avg_package_cost_per_step(settings)
@@ -110,6 +131,8 @@ def main():
             = bca_tool_code.calc_deltas.calc_deltas_weighted(settings, settings.wtd_cap_fuel_cpm_dict)
 
     if settings.calc_ghg_costs:
+
+        calc_ghg_costs(settings)
 
         # calculate package costs based on cumulative sales (learning is applied to cumulative sales)
         ghg_package_costs.calc_avg_package_cost_per_step(settings)

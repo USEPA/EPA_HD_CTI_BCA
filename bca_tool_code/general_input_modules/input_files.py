@@ -10,7 +10,7 @@ class InputFiles:
 
     """
     input_files_df = pd.DataFrame()
-    input_files_pathlist = list() # this list is updated when class objects are initiated.
+    input_files_pathlist = list() # this list is updated when class objects are instantiated.
 
     def __init__(self):
         self._dict = dict()
