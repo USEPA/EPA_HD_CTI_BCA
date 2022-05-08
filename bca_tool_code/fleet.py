@@ -18,6 +18,7 @@ class Fleet:
         self.vehicles_age0 = list()
         self.vehicles_ft2 = list()
         self.vehicles_no_action = list()
+        self.cumulative_vmt_dict = dict()
 
     def create_cap_vehicles(self, no_action_alt, options):
         print('Creating CAP vehicle objects...')
@@ -166,36 +167,51 @@ class Fleet:
         """
         print('Calculating cumulative vmt and cumulative vmt per vehicle...')
         # this loop calculates the cumulative vmt for each key and saves it in the cumulative_vmt_dict
-        cumulative_vmt_dict = dict()
         for v in self.vehicles:
             age_last_year = v.age_id - 1
-            if (v.vehicle_id, v.option_id, v.modelyear_id, age_last_year) not in cumulative_vmt_dict:
+            if (v.vehicle_id, v.option_id, v.modelyear_id, age_last_year) not in self.cumulative_vmt_dict:
                 cumulative_vmt_per_veh = v.vmt_per_veh
             else:
                 cumulative_vmt_per_veh \
-                    = cumulative_vmt_dict[v.vehicle_id, v.option_id, v.modelyear_id, age_last_year] \
+                    = self.cumulative_vmt_dict[v.vehicle_id, v.option_id, v.modelyear_id, age_last_year] \
                       + v.vmt_per_veh
 
-            cumulative_vmt_dict[v.vehicle_id, v.option_id, v.modelyear_id, v.age_id] = cumulative_vmt_per_veh
+            self.cumulative_vmt_dict[v.vehicle_id, v.option_id, v.modelyear_id, v.age_id] = cumulative_vmt_per_veh
 
         # this loop updates the vehicle list with the contents of the cumulative_vmt_dict
         for v in self.vehicles:
-            v.vmt_per_veh_cumulative = cumulative_vmt_dict[v.vehicle_id, v.option_id, v.modelyear_id, v.age_id]
+            v.vmt_per_veh_cumulative = self.cumulative_vmt_dict[v.vehicle_id, v.option_id, v.modelyear_id, v.age_id]
 
-        #
-        #
-        # # key = (vehicle.engine_id, vehicle.option_id, vehicle.modelyear_id)
-        # vmt = sum([
-        #     v.vmt for v in self.vehicles
-        #     if v.vehicle_id == vehicle.vehicle_id
-        #        and v.option_id == vehicle.option_id
-        #        and v.modelyear_id == vehicle.modelyear_id
-        #        and v.age_id <= vehicle.age_id
-        # ])
-        #
-        # vehicle.cumulative_vmt = vmt
-        #
-        # return vmt
+    def calc_typical_vmt_per_year(self, settings, vehicle):
+        """
+        This function calculates a typical annual VMT/vehicle over a set number of years as set via the General Inputs
+        workbook. This typical annual VMT/vehicle can then be used to estimate the ages at which warranty and useful life
+        will be reached. When insufficient years are available -- e.g., if the typical_vmt_thru_ageID is set to >5 years and
+        the given vehicle is a MY2041 vintage vehicle and the fleet input file contains data only thru CY2045, then
+        insufficient data exist to calculate the typical VMT for that vehicle -- the typical VMT for that vehicle will be
+        set equal to the last prior MY vintage for which sufficient data were present.
+
+        Parameters:
+            settings: object; the SetInputs class object.\n
+            vehicle: object; an object of the Vehicle class.\n
+
+        Returns:
+            A single typical annual VMT/veh value for the given vehicle.
+
+        """
+        vmt_thru_age_id = int(settings.repair_and_maintenance.get_attribute_value('typical_vmt_thru_ageID'))
+        year_max = settings.cap_vehicle.year_max
+
+        if vehicle.modelyear_id + vmt_thru_age_id <= year_max:
+            year = vehicle.modelyear_id
+        else:
+            year = year_max - vmt_thru_age_id  # can't get appropriate cumulative VMT if modelyear+vmt_thru_age_id>year_max
+
+        cumulative_vmt = self.cumulative_vmt_dict[vehicle.vehicle_id, vehicle.option_id, year, vmt_thru_age_id]
+
+        typical_vmt = cumulative_vmt / (vmt_thru_age_id + 1)
+
+        return typical_vmt
 
     def update_object_dict(self, vehicle, update_dict):
         """

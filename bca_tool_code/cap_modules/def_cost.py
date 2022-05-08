@@ -40,7 +40,8 @@ def calc_nox_reduction(settings, vehicle):
         nox_no_action = [v.nox_ustons for v in settings.fleet_cap.vehicles_no_action
                          if v.vehicle_id == vehicle.vehicle_id
                          and v.option_id == settings.no_action_alt
-                         and v.modelyear_id == vehicle.modelyear_id][0]
+                         and v.modelyear_id == vehicle.modelyear_id
+                         and v.age_id == vehicle.age_id][0]
         nox_action = vehicle.nox_ustons
         nox_reduction = nox_no_action - nox_action
 

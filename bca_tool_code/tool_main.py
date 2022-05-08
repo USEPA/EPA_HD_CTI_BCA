@@ -63,7 +63,7 @@ def main():
             for start_year in settings.regclass_costs.start_years:
                 settings.fleet_cap.cumulative_engine_sales(vehicle, start_year)
 
-        print('Calculating package costs per implementation start year...')
+        # print('Calculating package costs per implementation start year...')
         for vehicle in settings.fleet_cap.vehicles_age0:
             for start_year in settings.regclass_costs.start_years:
                 cap_package_cost.calc_avg_package_cost_per_step(settings, vehicle, start_year)
@@ -71,30 +71,30 @@ def main():
         CapCosts().calc_cap_costs(settings, set_paths)
 
         # calculate package costs based on cumulative sales (learning is applied to cumulative sales)
-        cap_package_costs.calc_avg_package_cost_per_step(settings)
-        cap_package_costs.calc_package_costs_per_veh(settings, settings.fleet_cap)
-        cap_package_costs.calc_package_costs(settings.fleet_cap)
-
-        # calculate indirect costs
-        cap_indirect_costs.calc_indirect_costs_per_veh(settings, settings.fleet_cap)
-        cap_indirect_costs.calc_indirect_costs(settings, settings.fleet_cap)
-
-        # calculate total tech costs as direct plus indirect
-        cap_tech_costs.calc_tech_costs_per_veh(settings.fleet_cap)
-        cap_tech_costs.calc_tech_costs(settings.fleet_cap)
-
-        # calculate DEF costs
-        cap_def_costs.calc_def_costs(settings, settings.fleet_cap)
-        cap_def_costs.calc_def_costs_per_veh(settings.fleet_cap)
-
-        # calculate fuel costs, including adjustments for fuel consumption associated with ORVR
-        cap_fuel_costs.calc_fuel_costs(settings, settings.fleet_cap)
-        cap_fuel_costs.calc_fuel_costs_per_veh(settings.fleet_cap)
-
-        # calculate emission repair costs
-        cap_repair_costs.calc_emission_repair_costs_per_mile(settings, settings.fleet_cap)
-        cap_repair_costs.calc_emission_repair_costs_per_veh(settings.fleet_cap)
-        cap_repair_costs.calc_emission_repair_costs(settings.fleet_cap)
+        # cap_package_costs.calc_avg_package_cost_per_step(settings)
+        # cap_package_costs.calc_package_costs_per_veh(settings, settings.fleet_cap)
+        # cap_package_costs.calc_package_costs(settings.fleet_cap)
+        #
+        # # calculate indirect costs
+        # cap_indirect_costs.calc_indirect_costs_per_veh(settings, settings.fleet_cap)
+        # cap_indirect_costs.calc_indirect_costs(settings, settings.fleet_cap)
+        #
+        # # calculate total tech costs as direct plus indirect
+        # cap_tech_costs.calc_tech_costs_per_veh(settings.fleet_cap)
+        # cap_tech_costs.calc_tech_costs(settings.fleet_cap)
+        #
+        # # calculate DEF costs
+        # cap_def_costs.calc_def_costs(settings, settings.fleet_cap)
+        # cap_def_costs.calc_def_costs_per_veh(settings.fleet_cap)
+        #
+        # # calculate fuel costs, including adjustments for fuel consumption associated with ORVR
+        # cap_fuel_costs.calc_fuel_costs(settings, settings.fleet_cap)
+        # cap_fuel_costs.calc_fuel_costs_per_veh(settings.fleet_cap)
+        #
+        # # calculate emission repair costs
+        # cap_repair_costs.calc_emission_repair_costs_per_mile(settings, settings.fleet_cap)
+        # cap_repair_costs.calc_emission_repair_costs_per_veh(settings.fleet_cap)
+        # cap_repair_costs.calc_emission_repair_costs(settings.fleet_cap)
 
         # sum attributes in the attributes_to_sum dictionary
         for summed_attribute, sum_attributes in settings.fleet_cap.attributes_to_sum.items():

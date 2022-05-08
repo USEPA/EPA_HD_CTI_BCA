@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-def create_weighted_cost_dict(settings, data_object, destination_dict, arg_to_weight, arg_to_weight_by):
+def create_weighted_cost_dict(settings, data_object, year_max, destination_dict, arg_to_weight=None, arg_to_weight_by=None):
     """
 
     This function weights 'arg_to_weight' attributes by the 'arg_to_weight_by' attribute.
@@ -9,7 +9,8 @@ def create_weighted_cost_dict(settings, data_object, destination_dict, arg_to_we
     Parameters::
         settings: object; the SetInputs class object.\n
         data_object: object; the fleet data object.\n
-        destination_dict: Dictionary into which to place results.
+        year_max: int; the max calendar year of the input data.\n
+        destination_dict: Dictionary into which to place results.\n
         arg_to_weight: str; the attribute to be weighted by the arg_to_weight_by argument.\n
         arg_to_weight_by: str; the argument to weight by.
 
@@ -30,14 +31,16 @@ def create_weighted_cost_dict(settings, data_object, destination_dict, arg_to_we
 
     max_age_included = pd.to_numeric(settings.general_inputs.get_attribute_value('weighted_operating_cost_thru_ageID'))
 
-    for key in data_object.keys:
-        vehicle, alt, model_year, age_id, disc_rate = key
-        st, rc, ft = vehicle
+    keys_dr0 = [k for k,v in data_object.results.items() if v['DiscountRate'] == 0]
+
+    for key in keys_dr0:
+        vehicle_id, option_id, modelyear_id, age_id, discount_rate = key
+        st, rc, ft = vehicle_id
         if arg_to_weight == 'DEFCost_PerMile' and ft != 2:
             pass
         else:
-            if model_year <= (data_object.year_max - max_age_included - 1):
-                wtd_result_dict_key = (vehicle, alt, model_year)
+            if modelyear_id <= (year_max - max_age_included - 1):
+                wtd_result_dict_key = (vehicle_id, option_id, modelyear_id)
                 numerator, denominator = 0, 0
                 if wtd_result_dict_key in wtd_result_dict:
                     numerator = wtd_result_dict[wtd_result_dict_key]['numerator']
@@ -45,10 +48,10 @@ def create_weighted_cost_dict(settings, data_object, destination_dict, arg_to_we
                 else:
                     pass
                 if age_id <= max_age_included:
-                    arg_weight = data_object.get_attribute_value(key, arg_to_weight)
-                    arg_weight_by = data_object.get_attribute_value(key, arg_to_weight_by)
+                    arg_weight = data_object.results[key][arg_to_weight]
+                    arg_weight_by = data_object.results[key][arg_to_weight_by]
                     numerator += arg_weight * arg_weight_by
-                    denominator += data_object.get_attribute_value(key, arg_to_weight_by)
+                    denominator += data_object.results[key][arg_to_weight_by]
                     wtd_result_dict[wtd_result_dict_key] = {'numerator': numerator, 'denominator': denominator}
     for key in wtd_result_dict.keys():
         numerator = wtd_result_dict[key]['numerator']

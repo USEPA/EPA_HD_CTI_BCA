@@ -31,21 +31,23 @@ def calc_project_markup_value(settings, vehicle, markup_factor_name):
     numerator, denominator = 1, 1
 
     # remember that warranty and useful life provisions are by regclass, not sourcetype
-    scaling_dict_key = ((rc, ft), option_id, scaling_metric)
+    scaling_dict_key = ((rc, ft), option_id, modelyear_id, scaling_metric)
     scaling_dict = dict()
     if scaled_by == 'Warranty':
         scaling_dict = settings.warranty
-        numerator = scaling_dict.get_attribute_value(scaling_dict_key, f'{modelyear_id}')
+        numerator = scaling_dict.get_attribute_value(scaling_dict_key, 'period_value')
     elif scaled_by == 'Usefullife':
         scaling_dict = settings.useful_life
-        numerator = scaling_dict.get_attribute_value(scaling_dict_key, f'{modelyear_id}')
+        numerator = scaling_dict.get_attribute_value(scaling_dict_key, 'period_value')
     else:
         pass
 
     if scaler == 'Absolute':
-        denominator = scaling_dict.get_attribute_value(scaling_dict_key, '2024')
+        scaling_dict_key = ((rc, ft), option_id, 2024, scaling_metric)
+        denominator = scaling_dict.get_attribute_value(scaling_dict_key, 'period_value')
     elif scaler == 'Relative':
-        denominator = scaling_dict.get_attribute_value(scaling_dict_key, str(int(modelyear_id) - int(num_years)))
+        scaling_dict_key = ((rc, ft), option_id, modelyear_id - int(num_years), scaling_metric)
+        denominator = scaling_dict.get_attribute_value(scaling_dict_key, 'period_value')
     else:
         pass
 

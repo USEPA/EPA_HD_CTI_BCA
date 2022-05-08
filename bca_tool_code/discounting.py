@@ -24,7 +24,7 @@ def discount_values(settings, data_object):
     print(f'\nDiscounting values...')
 
     # get cost attributes
-    nested_dict = [n_dict for key, n_dict in data_object._dict.items()][0]
+    nested_dict = [n_dict for key, n_dict in data_object.results.items()][0]
     all_costs = tuple([k for k, v in nested_dict.items() if 'Cost' in k])
     emission_cost_args_25 = tuple([item for item in all_costs if '_0.025' in item])
     emission_cost_args_3 = tuple([item for item in all_costs if '_0.03' in item])
@@ -41,43 +41,43 @@ def discount_values(settings, data_object):
         print('costs_start entry in General Inputs file not set properly.')
 
     # Note: there is no need to discount values where the discount rate is 0
-
-    for key in data_object.non0_dr_keys:
-        vehicle, alt, model_year, age_id, rate = key
-        year = model_year + age_id
+    non0_dr_keys = [k for k, v in data_object.results.items() if v['DiscountRate'] != 0]
+    for key in non0_dr_keys:
+        vehicle_id, option_id, modelyear_id, age_id, rate = key
+        year = modelyear_id + age_id
 
         update_dict = dict()
 
         for arg in non_emission_cost_args:
-            arg_value = data_object.get_attribute_value(key, arg)
+            arg_value = data_object.results[key][arg]
             arg_value_discounted = discount_value(arg_value, rate, year, discount_to_year, discount_offset)
             update_dict[arg] = arg_value_discounted
 
         emission_rate = 0.025
         for arg in emission_cost_args_25:
-            arg_value = data_object.get_attribute_value(key, arg)
+            arg_value = data_object.results[key][arg]
             arg_value_discounted = discount_value(arg_value, emission_rate, year, discount_to_year, discount_offset)
             update_dict[arg] = arg_value_discounted
 
         emission_rate = 0.03
         for arg in emission_cost_args_3:
-            arg_value = data_object.get_attribute_value(key, arg)
+            arg_value = data_object.results[key][arg]
             arg_value_discounted = discount_value(arg_value, emission_rate, year, discount_to_year, discount_offset)
             update_dict[arg] = arg_value_discounted
 
         emission_rate = 0.05
         for arg in emission_cost_args_5:
-            arg_value = data_object.get_attribute_value(key, arg)
+            arg_value = data_object.results[key][arg]
             arg_value_discounted = discount_value(arg_value, emission_rate, year, discount_to_year, discount_offset)
             update_dict[arg] = arg_value_discounted
 
         emission_rate = 0.07
         for arg in emission_cost_args_7:
-            arg_value = data_object.get_attribute_value(key, arg)
+            arg_value = data_object.results[key][arg]
             arg_value_discounted = discount_value(arg_value, emission_rate, year, discount_to_year, discount_offset)
             update_dict[arg] = arg_value_discounted
 
-        data_object.update_dict(key, update_dict)
+        data_object.update_object_dict(key, update_dict)
 
 
 def discount_value(arg_value, rate, year, discount_to, offset):

@@ -32,6 +32,8 @@ from bca_tool_code.ghg_modules.sourcetype_sales import SourceTypeSales
 
 from bca_tool_code.vehicle import Vehicle
 from bca_tool_code.general_input_modules.tech_penetrations import TechPenetrations
+from bca_tool_code.estimated_age_at_event import EstimatedAge
+from bca_tool_code.cap_modules.repair_cost import EmissionRepairCost
 
 
 class SetPaths:
@@ -225,8 +227,10 @@ class SetInputs:
             # self.regclass_sales = RegClassSales()
             # self.regclass_sales.create_regclass_sales_dict(self.fleet_cap, self.regclass_costs.cost_steps)
 
-            self.repair_cpm_dict = dict()
-            self.estimated_ages_dict = dict()
+            self.emission_repair_cost = EmissionRepairCost()
+            # self.repair_cpm_dict = dict()
+            self.estimated_age = EstimatedAge()
+            # self.estimated_ages_dict = dict()
             self.wtd_def_cpm_dict = dict()
             self.wtd_repair_cpm_dict = dict()
             self.wtd_cap_fuel_cpm_dict = dict()

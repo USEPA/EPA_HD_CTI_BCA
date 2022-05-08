@@ -26,7 +26,17 @@ class Warranty:
         """
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
 
-        key = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID'], df['period']))
+        value_name = 'period_value'
+
+        df = pd.melt(df,
+                     id_vars=['optionID', 'regClassName', 'regClassID', 'fuelTypeID', 'period_id'],
+                     value_vars=[col for col in df.columns if '20' in col],
+                     var_name='start_year',
+                     value_name=value_name
+                     )
+        df['start_year'] = pd.to_numeric(df['start_year'])
+
+        key = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID'], df['start_year'], df['period_id']))
         df.set_index(key, inplace=True)
 
         self._dict = df.to_dict('index')
@@ -34,15 +44,15 @@ class Warranty:
         # update input_files_pathlist if this class is used
         InputFiles.update_pathlist(filepath)
 
-    def get_attribute_value(self, key, year_id):
+    def get_attribute_value(self, key, attribute_name):
         """
 
         Parameters:
-            key: tuple; ((regclass_id, fueltype_id), option_id, period), where period is 'Miles' or 'Age'.\n
+            key: tuple; ((regclass_id, fueltype_id), option_id, modelyear_id, period_id), where period is 'Miles' or 'Age'.\n
             year_id: str; the year for which a value is sought.
 
         Returns:
             A single value associated with the year_id for the given key.
 
         """
-        return self._dict[key][year_id]
+        return self._dict[key][attribute_name]
