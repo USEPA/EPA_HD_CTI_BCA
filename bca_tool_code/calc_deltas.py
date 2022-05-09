@@ -21,6 +21,7 @@ def calc_deltas(settings, data_object, options):
     # it changes size in the loop.
     dict_for_deltas = data_object.results.copy()
 
+    st = rc = ft = st_name = rc_name = ft_name = None
     for key, value in dict_for_deltas.items():
         vehicle_id = modelyear_id = age_id = year_id = series = None
         fleet_object_flag = None
