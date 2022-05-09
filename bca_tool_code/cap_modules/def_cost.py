@@ -76,4 +76,4 @@ def calc_def_cost(settings, vehicle):
         cost_per_veh = 0
         cost_per_mile = 0
 
-    return cost_per_veh, cost, cost_per_mile
+    return cost_per_veh, cost, cost_per_mile, gallons_def

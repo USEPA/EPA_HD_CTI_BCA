@@ -1,12 +1,13 @@
 
 
-def calc_deltas(settings, data_object):
+def calc_deltas(settings, data_object, options):
     """
     This function calculates deltas for action alternatives relative to the no action alternative set via the General Inputs.
 
     Parameters:
         settings: object; the SetInputs class object. \n
-        data_object: object; the fleet data object.
+        data_object: object; the fleet data object.\n
+        options: object; the options object associated with the data_object.
 
     Returns:
         Updates the data_object dictionary with deltas relative to the no_action_alt. OptionIDs (numeric) for the deltas
@@ -16,48 +17,60 @@ def calc_deltas(settings, data_object):
     """
     print('\nCalculating deltas...')
 
-    # Note: copy data_object._dict because data_object._dict cannot be used in the loop that follows since it changes
-    # size in the loop.
-    dict_for_deltas = data_object._dict.copy()
+    # Note: copy data_object results dictionary because that dictionary cannot be used in the loop that follows since
+    # it changes size in the loop.
+    dict_for_deltas = data_object.results.copy()
 
     for key, value in dict_for_deltas.items():
-        vehicle = model_year = age_id = calendar_year = series = None
+        vehicle_id = modelyear_id = age_id = year_id = series = None
         fleet_object_flag = None
         try:
             # for fleet dictionary deltas
-            vehicle, alt, model_year, age_id, discount_rate = key
-            st, rc, ft = vehicle
+            vehicle_id, option_id, modelyear_id, age_id, discount_rate = key
+            st, rc, ft = vehicle_id
+            st_name = dict_for_deltas[key]['sourceTypeName']
+            rc_name = dict_for_deltas[key]['regClassName']
+            ft_name = dict_for_deltas[key]['fuelTypeName']
             fleet_object_flag = 1
         except ValueError:
             # for annual_summary dictionary deltas
-            series, alt, calendar_year, discount_rate = key
+            series, option_id, year_id, discount_rate = key
 
         args_to_delta = [k for k, v in value.items()
                          if 'ID' not in k
+                         and 'Name' not in k
                          and 'DiscountRate' not in k
                          and 'Series' not in k
                          and 'Periods' not in k]
 
-        if alt != settings.no_action_alt:
-            delta_alt = f'{alt}{settings.no_action_alt}'
-            delta_alt = int(delta_alt)
+        if option_id != settings.no_action_alt:
+            delta_option_id = f'{option_id}{settings.no_action_alt}'
+            delta_option_id = int(delta_option_id)
+            option_name = options._dict[option_id]['optionName']
+            no_action_option_name = options._dict[settings.no_action_alt]['optionName']
+            delta_option_name = f'{option_name}_minus_{no_action_option_name}'
 
-            if fleet_object_flag: # note that annual summary doesen't have vehicle data
-                update_dict_key = (vehicle, delta_alt, model_year, age_id, discount_rate)
+            if fleet_object_flag: # note that annual summary doesen't have vehicle_id data
+                update_dict_key = (vehicle_id, delta_option_id, modelyear_id, age_id, discount_rate)
                 update_dict = {'DiscountRate': discount_rate,
-                               'yearID': model_year + age_id,
+                               'yearID': modelyear_id + age_id,
                                'sourceTypeID': st,
                                'regClassID': rc,
                                'fuelTypeID': ft,
-                               'optionID': delta_alt,
-                               'modelYearID': model_year,
+                               'optionID': delta_option_id,
+                               'modelYearID': modelyear_id,
                                'ageID': age_id,
+                               'optionName': delta_option_name,
+                               'sourceTypeName': st_name,
+                               'regClassName': rc_name,
+                               'fuelTypeName': ft_name,
                                }
 
             else:
-                update_dict_key = (series, delta_alt, calendar_year, discount_rate)
-                update_dict = {'optionID': delta_alt,
-                               'yearID': calendar_year,
+                update_dict_key = (series, delta_option_id, year_id, discount_rate)
+                update_dict = {'optionID': delta_option_id,
+                               'optionName': delta_option_name,
+                               'yearID': year_id,
                                'DiscountRate': discount_rate,
                                'Series': series,
                                'Periods': 1,
@@ -65,16 +78,16 @@ def calc_deltas(settings, data_object):
 
             for arg in args_to_delta:
                 if fleet_object_flag:
-                    no_action_arg_value = dict_for_deltas[(vehicle, settings.no_action_alt, model_year, age_id, discount_rate)][arg]
+                    no_action_arg_value = dict_for_deltas[(vehicle_id, settings.no_action_alt, modelyear_id, age_id, discount_rate)][arg]
                 else: # this works for annual summary
-                    no_action_arg_value = dict_for_deltas[(series, settings.no_action_alt, calendar_year, discount_rate)][arg]
-                    delta_periods = dict_for_deltas[(series, settings.no_action_alt, calendar_year, discount_rate)]['Periods']
+                    no_action_arg_value = dict_for_deltas[(series, settings.no_action_alt, year_id, discount_rate)][arg]
+                    delta_periods = dict_for_deltas[(series, settings.no_action_alt, year_id, discount_rate)]['Periods']
                     update_dict.update({'Periods': delta_periods})
                 action_arg_value = dict_for_deltas[key][arg]
                 delta_arg_value = action_arg_value - no_action_arg_value
                 update_dict.update({arg: delta_arg_value})
 
-            data_object.add_key_value_pairs(update_dict_key, update_dict)
+            data_object.update_object_dict(update_dict_key, update_dict)
 
 
 def calc_deltas_weighted(settings, dict_for_deltas):
@@ -88,7 +101,7 @@ def calc_deltas_weighted(settings, dict_for_deltas):
 
     Returns:
         An updated dictionary containing deltas relative to the no_action_alt. OptionIDs (numeric) for the deltas will
-        be the alt_id followed by the no_action_alt. For example, deltas for optionID=1 relative to optionID=0 would
+        be the option_id followed by the no_action_alt. For example, deltas for optionID=1 relative to optionID=0 would
         have optionID=10.
 
     Note:
@@ -98,24 +111,24 @@ def calc_deltas_weighted(settings, dict_for_deltas):
     print('\nCalculating weighted deltas...')
 
     update_dict = dict()
-    for key in dict_for_deltas.keys():
-        vehicle, alt, model_year = key
+    for key in dict_for_deltas:
+        vehicle_id, option_id, modelyear_id = key
 
         id_args = [k for k, v in dict_for_deltas[key].items() if 'ID' in k or 'Name' in k]
         args_to_delta = [k for k, v in dict_for_deltas[key].items() if k not in id_args]
 
-        if alt != settings.no_action_alt:
-            delta_alt = f'{alt}{settings.no_action_alt}'
-            delta_alt = int(delta_alt)
+        if option_id != settings.no_action_alt:
+            delta_option_id = f'{option_id}{settings.no_action_alt}'
+            delta_option_id = int(delta_option_id)
             delta_dict = dict()
             for arg in args_to_delta:
-                arg_value = dict_for_deltas[key][arg] - dict_for_deltas[(vehicle, settings.no_action_alt, model_year)][arg]
+                arg_value = dict_for_deltas[key][arg] - dict_for_deltas[(vehicle_id, settings.no_action_alt, modelyear_id)][arg]
                 delta_dict.update({arg: arg_value})
             for arg in id_args:
                 arg_value = dict_for_deltas[key][arg]
                 delta_dict.update({arg: arg_value})
-            delta_dict.update({'optionID': delta_alt})
-            update_dict[(vehicle, delta_alt, model_year)] = delta_dict
+            delta_dict.update({'optionID': delta_option_id})
+            update_dict[(vehicle_id, delta_option_id, modelyear_id)] = delta_dict
     dict_for_deltas.update(update_dict)
 
     return dict_for_deltas
@@ -151,7 +164,7 @@ if __name__ == '__main__':
             """
 
             Parameters:
-                key: tuple; ((sourcetype_id, regclass_id, fueltype_id), option_id, model_year, age_id, discount_rate).\n
+                key: tuple; (vehicle_id, option_id, modelyear_id, age_id, discount_rate).\n
                 input_dict: Dictionary; represents the attribute-value pairs to be updated.
 
             Returns:

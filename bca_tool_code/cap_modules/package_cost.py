@@ -40,9 +40,14 @@ def calc_avg_package_cost_per_step(settings, vehicle, start_year):
         except ZeroDivisionError:
             pass
 
-    update_dict = {'engine_id': vehicle.engine_id,
-                   'option_id': vehicle.option_id,
-                   'modelyear_id': vehicle.modelyear_id,
+    update_dict = {'optionID': vehicle.option_id,
+                   'engineID': vehicle.engine_id,
+                   'regClassID': vehicle.regclass_id,
+                   'fuelTypeID': vehicle.fueltype_id,
+                   'modelYearID': vehicle.modelyear_id,
+                   'optionName': vehicle.option_name,
+                   'regClassName': vehicle.regclass_name,
+                   'fuelTypeName': vehicle.fueltype_name,
                    f'cost_per_vehicle_{start_year}': pkg_cost_learned}
 
     settings.regclass_costs.update_package_cost_by_step(vehicle, update_dict)
@@ -78,34 +83,6 @@ def calc_package_cost(settings, vehicle):
     cost = cost_per_veh * vehicle.vpop
 
     return cost_per_veh, cost
-
-    # key = (vehicle.vehicle_id, option_id, modelyear_id, vehicle.age_id, 0)
-    # update_dict = {'DirectCost_PerVeh': cost}
-    # CapCosts._dict.update_object_dict(key, update_dict)
-
-
-# def calc_package_cost(vehicle):
-#     """
-#
-#     Parameters:
-#         data_object: object; the fleet data object.
-#
-#     Returns:
-#         Updates the data_object dictionary to include the package costs (package cost/veh * sales).
-#
-#     """
-#     print(f'\nCalculating CAP Direct costs...')
-#
-#     # Note: use age=0 keys only since only new vehicles incur package costs.
-#     # for key in data_object.age0_keys:
-#     key = (vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, vehicle.age_id, 0)
-#     cost_per_veh = CapCosts._dict.get_attribute_value(key, 'DirectCost_PerVeh')
-#     sales = CapCosts._dict.get_attribute_value(key, 'VPOP')
-#     cost = cost_per_veh * sales
-#
-#     return cost
-    # update_dict = {'DirectCost': cost}
-    # CapCosts._dict.update_object_dict(key, update_dict)
 
 
 if __name__ == '__main__':

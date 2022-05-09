@@ -2,9 +2,9 @@
 
 def calc_typical_vmt_per_year(settings, data_object, key):
     """
-    This function calculates a typical annual VMT/vehicle over a set number of years as set via the General Inputs
+    This function calculates a typical annual VMT/vehicle over a set number of year_ids as set via the General Inputs
     workbook. This typical annual VMT/vehicle can then be used to estimate the ages at which warranty and useful life
-    will be reached. When insufficient years are available -- e.g., if the typical_vmt_thru_ageID is set to >5 years and
+    will be reached. When insufficient year_ids are available -- e.g., if the typical_vmt_thru_ageID is set to >5 year_ids and
     the given vehicle is a MY2041 vintage vehicle and the fleet input file contains data only thru CY2045, then
     insufficient data exist to calculate the typical VMT for that vehicle -- the typical VMT for that vehicle will be
     set equal to the last prior MY vintage for which sufficient data were present.
@@ -20,12 +20,12 @@ def calc_typical_vmt_per_year(settings, data_object, key):
     """
     vehicle, alt, model_year, age_id, disc_rate = key
     vmt_thru_age_id = int(settings.repair_and_maintenance.get_attribute_value('typical_vmt_thru_ageID'))
-    year_max = data_object.year_max
+    year_max = data_object.year_id_max
 
     if model_year + vmt_thru_age_id <= year_max:
         year = model_year
     else:
-        year = year_max - vmt_thru_age_id # can't get cumulative VMT when model_year + vmt_thru_age_id exceeds year_max
+        year = year_max - vmt_thru_age_id # can't get cumulative VMT when model_year + vmt_thru_age_id exceeds year_id_max
 
     cumulative_vmt_key = (vehicle, alt, year, vmt_thru_age_id, 0)
     cumulative_vmt = data_object.get_attribute_value(cumulative_vmt_key, 'VMT_PerVeh_Cumulative')
@@ -40,7 +40,7 @@ def calc_estimated_age(settings, key, typical_vmt):
     Parameters:
         settings: object; the SetInputs class object.\n
         key: tuple; ((sourcetype_id, regclass_id, fueltype_id), alt, model year, age, discount rate).\n
-        typical_vmt: numeric; the typical annual VMT/vehicle over a set number of years as set via the General Inputs
+        typical_vmt: numeric; the typical annual VMT/vehicle over a set number of year_ids as set via the General Inputs
         workbook (see calc_typical_vmt_per_year function).
 
     Returns:

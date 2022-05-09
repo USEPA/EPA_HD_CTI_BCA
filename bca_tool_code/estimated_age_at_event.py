@@ -9,7 +9,7 @@ class EstimatedAge:
         Parameters:
             settings: object; the SetInputs class object.\n
             vehicle: object; an object of the Vehicle class.\n
-            typical_vmt: numeric; the typical annual VMT/vehicle over a set number of years as set via the General Inputs
+            typical_vmt: numeric; the typical annual VMT/vehicle over a set number of year_ids as set via the General Inputs
             workbook (see calc_typical_vmt_per_year function).
             identifiers: str(s); the event identifier (e.g., warranty, useful life)
 
@@ -37,15 +37,22 @@ class EstimatedAge:
 
             calculated_age = round(required_miles / typical_vmt)
             estimated_age = min(required_age, calculated_age)
-            self.estimated_ages_dict[estimated_ages_dict_key] = ({'vehicle': vehicle.vehicle_id,
-                                                                  'optionID': vehicle.option_id,
-                                                                  'modelYearID': vehicle.modelyear_id,
-                                                                  'identifier': identifier,
-                                                                  'typical_vmt': typical_vmt,
-                                                                  'required_age': required_age,
-                                                                  'calculated_age': calculated_age,
-                                                                  'estimated_age': estimated_age,
-                                                                  })
+            self.estimated_ages_dict[estimated_ages_dict_key] = ({
+                'optionID': vehicle.option_id,
+                'sourceTypeID': vehicle.sourcetype_id,
+                'regClassID': vehicle.regclass_id,
+                'fuelTypeID': vehicle.fueltype_id,
+                'modelYearID': vehicle.modelyear_id,
+                'optionName': vehicle.option_name,
+                'sourceTypeName': vehicle.sourcetype_name,
+                'regClassName': vehicle.regclass_name,
+                'fuelTypeName': vehicle.fueltype_name,
+                'identifier': identifier,
+                'typical_vmt': typical_vmt,
+                'required_age': required_age,
+                'calculated_age': calculated_age,
+                'estimated_age': estimated_age,
+            })
             return_list.append(estimated_age)
 
         return return_list

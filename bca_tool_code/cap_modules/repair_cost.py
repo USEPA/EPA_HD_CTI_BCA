@@ -2,9 +2,9 @@
 
 # def calc_typical_vmt_per_year(settings, vehicle):
 #     """
-#     This function calculates a typical annual VMT/vehicle over a set number of years as set via the General Inputs
+#     This function calculates a typical annual VMT/vehicle over a set number of year_ids as set via the General Inputs
 #     workbook. This typical annual VMT/vehicle can then be used to estimate the ages at which warranty and useful life
-#     will be reached. When insufficient years are available -- e.g., if the typical_vmt_thru_ageID is set to >5 years and
+#     will be reached. When insufficient year_ids are available -- e.g., if the typical_vmt_thru_ageID is set to >5 year_ids and
 #     the given vehicle is a MY2041 vintage vehicle and the fleet input file contains data only thru CY2045, then
 #     insufficient data exist to calculate the typical VMT for that vehicle -- the typical VMT for that vehicle will be
 #     set equal to the last prior MY vintage for which sufficient data were present.
@@ -18,12 +18,12 @@
 #
 #     """
 #     vmt_thru_age_id = int(settings.repair_and_maintenance.get_attribute_value('typical_vmt_thru_ageID'))
-#     year_max = settings.cap_vehicle.year_max
+#     year_id_max = settings.cap_vehicle.year_id_max
 #
-#     if vehicle.modelyear_id + vmt_thru_age_id <= year_max:
+#     if vehicle.modelyear_id + vmt_thru_age_id <= year_id_max:
 #         year = vehicle.modelyear_id
 #     else:
-#         year = year_max - vmt_thru_age_id # can't get appropriate cumulative VMT if modelyear+vmt_thru_age_id>year_max
+#         year = year_id_max - vmt_thru_age_id # can't get appropriate cumulative VMT if modelyear+vmt_thru_age_id>year_id_max
 #
 #     cumulative_vmt = settings.fleet_cap.cumulative_vmt_dict[vehicle.vehicle_id, vehicle.option_id, year, vehicle.age_id]
 #
@@ -38,7 +38,7 @@
 #     Parameters:
 #         settings: object; the SetInputs class object.\n
 #         vehicle: object; an object of the Vehicle class.\n
-#         typical_vmt: numeric; the typical annual VMT/vehicle over a set number of years as set via the General Inputs
+#         typical_vmt: numeric; the typical annual VMT/vehicle over a set number of year_ids as set via the General Inputs
 #         workbook (see calc_typical_vmt_per_year function).
 #
 #     Returns:
@@ -126,6 +126,16 @@ class EmissionRepairCost:
             cpm = max_cpm
 
         self.repair_cpm_dict[veh_id, option, my, age] = {
+            'optionID': vehicle.option_id,
+            'sourceTypeID': vehicle.sourcetype_id,
+            'regClassID': vehicle.regclass_id,
+            'fuelTypeID': vehicle.fueltype_id,
+            'modelYearID': vehicle.modelyear_id,
+            'ageID': vehicle.age_id,
+            'optionName': vehicle.option_name,
+            'sourceTypeName': vehicle.sourcetype_name,
+            'regClassName': vehicle.regclass_name,
+            'fuelTypeName': vehicle.fueltype_name,
             'reference_direct_cost': reference_pkg_cost,
             'direct_cost_scaler': direct_cost_scaler,
             'warranty_estimated_age': warranty_estimated_age,

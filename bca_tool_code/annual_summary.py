@@ -4,12 +4,12 @@ import pandas as pd
 class AnnualSummary:
     """
 
-    The AnnualSummary class creates a summary of results by calendar year along with present values and annualized values
+    The AnnualSummary class creates a summary of results by year_id along with present values and annualized values
     for use in the benefit-cost analysis.
 
     """
     def __init__(self):
-        self._dict = dict()
+        self.results = dict()
 
     def annual_summary(self, settings, data_object, options):
         """
@@ -17,7 +17,7 @@ class AnnualSummary:
         Parameters:
             settings: object; the SetInputs class object.\n
             data_object: object; the fleet data object to summarize.\n
-            options: object; the options object associated with the source object.
+            options: object; the options object associated with the data_object.
 
         Returns:
             Updates the annual summary dictionary with annual, present and annualized values based on the data_object.
@@ -25,8 +25,8 @@ class AnnualSummary:
         """
         print(f'\nCalculating Annual Values, Present Values and Annualized Values...')
 
-        source_dict = data_object._dict
-        num_alts = len(options._dict)
+        source_dict = data_object.results
+        num_option_ids = len(options._dict)
 
         costs_start = settings.general_inputs.get_attribute_value('costs_start')
         discount_to_year = pd.to_numeric(settings.general_inputs.get_attribute_value('discount_to_yearID'))
@@ -48,129 +48,135 @@ class AnnualSummary:
         rates = tuple([settings.general_inputs.get_attribute_value('social_discount_rate_1'),
                        settings.general_inputs.get_attribute_value('social_discount_rate_2')])
         rates = tuple([pd.to_numeric(rate) for rate in rates])
-        years = data_object.years
+        year_ids = settings.cap_vehicle.year_ids
 
         # build the destination dictionary to house data
 
         # first undiscounted annual values
-        for alt in range(0, num_alts):
+        for option_id in range(0, num_option_ids):
             rate = 0
             series = 'AnnualValue'
-            for calendar_year in years:
-                self._dict.update({(series, alt, calendar_year, rate): {'optionID': alt,
-                                                                        'yearID': calendar_year,
-                                                                        'DiscountRate': rate,
-                                                                        'Series': series,
-                                                                        'Periods': 1,
-                                                                        }
-                                   }
-                                  )
+            for year_id in year_ids:
+                self.results.update({
+                    (series, option_id, year_id, rate): {
+                        'optionID': option_id,
+                        'optionName': options._dict[option_id]['optionName'],
+                        'yearID': year_id,
+                        'DiscountRate': rate,
+                        'Series': series,
+                        'Periods': 1,
+                    }
+                }
+                )
 
         # then for discounted values
         for series in ('AnnualValue', 'PresentValue', 'AnnualizedValue'):
-            for alt in range(0, num_alts):
+            for option_id in range(0, num_option_ids):
                 for rate in rates:
-                    for calendar_year in years:
-                        self._dict.update({(series, alt, calendar_year, rate): {'optionID': alt,
-                                                                                'yearID': calendar_year,
-                                                                                'DiscountRate': rate,
-                                                                                'Series': series,
-                                                                                'Periods': 1,
-                                                                                }
-                                           }
-                                          )
+                    for year_id in year_ids:
+                        self.results.update({
+                            (series, option_id, year_id, rate): {
+                                'optionID': option_id,
+                                'optionName': options._dict[option_id]['optionName'],
+                                'yearID': year_id,
+                                'DiscountRate': rate,
+                                'Series': series,
+                                'Periods': 1,
+                            }
+                        }
+                        )
 
         # first sum by year for each cost arg
         series = 'AnnualValue'
-        for alt in range(0, num_alts):
+        for option_id in range(0, num_option_ids):
             for rate in (0, *rates):
-                for calendar_year in years:
+                for year_id in year_ids:
                     for arg in all_costs:
                         arg_sum = sum(v[arg] for k, v in source_dict.items()
-                                      if v['yearID'] == calendar_year
+                                      if v['yearID'] == year_id
                                       and v['DiscountRate'] == rate
-                                      and v['optionID'] == alt)
-                        self._dict[(series, alt, calendar_year, rate)][arg] = arg_sum
+                                      and v['optionID'] == option_id)
+                        self.results[(series, option_id, year_id, rate)][arg] = arg_sum
 
         # now do a cumulative sum year-over-year for each cost arg - these will be present values
         # (note change to destination_dict in arg_value calc and removal of rate=0)
         series = 'PresentValue'
-        for alt in range(0, num_alts):
+        for option_id in range(0, num_option_ids):
             for rate in rates:
                 for arg in all_costs:
-                    for calendar_year in years:
-                        periods = calendar_year - discount_to_year + discount_offset
-                        arg_value = sum(v[arg] for k, v in self._dict.items()
-                                        if v['yearID'] <= calendar_year
+                    for year_id in year_ids:
+                        periods = year_id - discount_to_year + discount_offset
+                        arg_value = sum(v[arg] for k, v in self.results.items()
+                                        if v['yearID'] <= year_id
                                         and v['DiscountRate'] == rate
-                                        and v['optionID'] == alt
+                                        and v['optionID'] == option_id
                                         and v['Series'] == 'AnnualValue')
-                        self._dict[(series, alt, calendar_year, rate)][arg] = arg_value
-                        self._dict[(series, alt, calendar_year, rate)]['Periods'] = periods
+                        self.results[(series, option_id, year_id, rate)][arg] = arg_value
+                        self.results[(series, option_id, year_id, rate)]['Periods'] = periods
 
         # now annualize those present values
         series = 'AnnualizedValue'
-        for alt in range(0, num_alts):
+        for option_id in range(0, num_option_ids):
             for social_discount_rate in rates:
                 rate = social_discount_rate
                 for arg in non_emission_cost_args:
-                    for calendar_year in years:
-                        periods = calendar_year - discount_to_year + discount_offset
-                        present_value = self._dict['PresentValue', alt, calendar_year, rate][arg]
+                    for year_id in year_ids:
+                        periods = year_id - discount_to_year + discount_offset
+                        present_value = self.results['PresentValue', option_id, year_id, rate][arg]
                         arg_annualized = self.calc_annualized_value(present_value, rate, periods, annualized_offset)
-                        self._dict[(series, alt, calendar_year, social_discount_rate)][arg] = arg_annualized
-                        self._dict[(series, alt, calendar_year, social_discount_rate)]['Periods'] = periods
+                        self.results[(series, option_id, year_id, social_discount_rate)][arg] = arg_annualized
+                        self.results[(series, option_id, year_id, social_discount_rate)]['Periods'] = periods
 
                 rate = 0.025
                 for arg in emission_cost_args_25:
-                    for calendar_year in years:
-                        periods = calendar_year - discount_to_year + discount_offset
-                        present_value = self._dict['PresentValue', alt, calendar_year, rate][arg]
+                    for year_id in year_ids:
+                        periods = year_id - discount_to_year + discount_offset
+                        present_value = self.results['PresentValue', option_id, year_id, rate][arg]
                         arg_annualized = self.calc_annualized_value(present_value, rate, periods, annualized_offset)
-                        self._dict[(series, alt, calendar_year, social_discount_rate)][arg] = arg_annualized
+                        self.results[(series, option_id, year_id, social_discount_rate)][arg] = arg_annualized
 
                 rate = 0.03
                 for arg in emission_cost_args_3:
-                    for calendar_year in years:
-                        periods = calendar_year - discount_to_year + discount_offset
-                        present_value = self._dict['PresentValue', alt, calendar_year, rate][arg]
+                    for year_id in year_ids:
+                        periods = year_id - discount_to_year + discount_offset
+                        present_value = self.results['PresentValue', option_id, year_id, rate][arg]
                         arg_annualized = self.calc_annualized_value(present_value, rate, periods, annualized_offset)
-                        self._dict[(series, alt, calendar_year, social_discount_rate)][arg] = arg_annualized
+                        self.results[(series, option_id, year_id, social_discount_rate)][arg] = arg_annualized
 
                 rate = 0.05
                 for arg in emission_cost_args_5:
-                    for calendar_year in settings.years:
-                        periods = calendar_year - discount_to_year + discount_offset
-                        present_value = self._dict['PresentValue', alt, calendar_year, rate][arg]
+                    for year_id in year_ids:
+                        periods = year_id - discount_to_year + discount_offset
+                        present_value = self.results['PresentValue', option_id, year_id, rate][arg]
                         arg_annualized = self.calc_annualized_value(present_value, rate, periods, annualized_offset)
-                        self._dict[(series, alt, calendar_year, social_discount_rate)][arg] = arg_annualized
+                        self.results[(series, option_id, year_id, social_discount_rate)][arg] = arg_annualized
 
                 rate = 0.07
                 for arg in emission_cost_args_7:
-                    for calendar_year in settings.years:
-                        periods = calendar_year - discount_to_year + discount_offset
-                        present_value = self._dict['PresentValue', alt, calendar_year, rate][arg]
+                    for year_id in year_ids:
+                        periods = year_id - discount_to_year + discount_offset
+                        present_value = self.results['PresentValue', option_id, year_id, rate][arg]
                         arg_annualized = self.calc_annualized_value(present_value, rate, periods, annualized_offset)
-                        self._dict[(series, alt, calendar_year, social_discount_rate)][arg] = arg_annualized
+                        self.results[(series, option_id, year_id, social_discount_rate)][arg] = arg_annualized
 
     def get_attribute_value(self, key, attribute_name):
         """
 
         Parameters:
-            key: tuple; (series, alt, calendar_year, rate), where series is 'AnnualValue', 'PresentValue' or 'AnnualizedValue'.\n
+            key: tuple; (series, option_id, year_id, rate), where series is 'AnnualValue', 'PresentValue' or 'AnnualizedValue'.\n
             attribute_name: str; the attribute for which the value is sought.
 
         Returns:
             The value associated with the attribute for the given key.
 
         """
-        return self._dict[key][attribute_name]
+        return self.results[key][attribute_name]
 
     def update_dict(self, key, input_dict):
         """
 
         Parameters:
-            key: tuple; (series, alt, calendar_year, rate), where series is 'AnnualValue', 'PresentValue' or 'AnnualizedValue'.\n
+            key: tuple; (series, option_id, year_id, rate), where series is 'AnnualValue', 'PresentValue' or 'AnnualizedValue'.\n
             input_dict: Dictionary; represents the attribute-value pairs to be updated.
 
         Returns:
@@ -181,13 +187,33 @@ class AnnualSummary:
 
         """
         for attribute_name, attribute_value in input_dict.items():
-            self._dict[key][attribute_name] = attribute_value
+            self.results[key][attribute_name] = attribute_value
+
+    def update_object_dict(self, key, update_dict):
+        """
+
+        Parameters:
+            key: tuple; ((vehicle_id), option_id, modelyear_id, age_id, discount_rate).\n
+            update_dict: Dictionary; represents the attribute-value pairs to be updated.
+
+        Returns:
+            Updates the object dictionary with each attribute updated with the appropriate value.
+
+        """
+        if key in self.results:
+            for attribute_name, attribute_value in update_dict.items():
+                self.results[key][attribute_name] = attribute_value
+
+        else:
+            self.results.update({key: {}})
+            for attribute_name, attribute_value in update_dict.items():
+                self.results[key].update({attribute_name: attribute_value})
 
     def add_key_value_pairs(self, key, input_dict):
         """
 
         Parameters:
-            key: tuple; (series, alt, calendar_year, rate), where series is 'AnnualValue', 'PresentValue' or 'AnnualizedValue'.\n
+            key: tuple; (series, option_id, year_id, rate), where series is 'AnnualValue', 'PresentValue' or 'AnnualizedValue'.\n
             input_dict: Dictionary; represents the attribute-value pairs to be updated.
 
         Returns:
@@ -197,7 +223,7 @@ class AnnualSummary:
             This method updates an existing dictionary key that has no attributes.
 
         """
-        self._dict[key] = input_dict
+        self.results[key] = input_dict
 
     @staticmethod
     def calc_annualized_value(present_value, rate, periods, annualized_offset):
@@ -211,7 +237,7 @@ class AnnualSummary:
             end of the year.
 
         Returns:
-            A single annualized value of present_value discounted at rate over periods number of years.
+            A single annualized value of present_value discounted at rate over periods number of year_ids.
 
         """
         return present_value * rate * (1 + rate) ** periods \

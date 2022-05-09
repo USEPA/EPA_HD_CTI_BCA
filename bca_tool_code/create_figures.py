@@ -44,7 +44,7 @@ class CreateFigures:
 
         """
         data = self.df.loc[(self.df['DiscountRate'] == dr)
-                           & (self.df['OptionName'] == alt_name)
+                           & (self.df['optionName'] == alt_name)
                            & (self.df['Series'] == 'AnnualValue')
                            & ((self.df['yearID'] >= year_min) & (self.df['yearID'] <= year_max)), :]
         for arg in args:
@@ -77,10 +77,10 @@ class CreateFigures:
         """
         for alt_name in alt_names:
             data = self.df.loc[(self.df['DiscountRate'] == dr)
-                               & (self.df['OptionName'] == alt_name)
+                               & (self.df['optionName'] == alt_name)
                                & (self.df['Series'] == 'AnnualValue')
                                & ((self.df['yearID'] >= year_min) & (self.df['yearID'] <= year_max)), :]
-            plt.plot((data.loc[data['OptionName'] == alt_name, 'yearID']), (data.loc[data['OptionName'] == alt_name, arg]),
+            plt.plot((data.loc[data['optionName'] == alt_name, 'yearID']), (data.loc[data['optionName'] == alt_name, arg]),
                      label=alt_name)
         plt.title(f'{self.program}, Annual Costs, {arg}, {dr}DR')
         plt.xlabel('calendar year')
@@ -105,7 +105,7 @@ class CreateFigures:
         """
         yearID_min = int(self.df['yearID'].min())
         yearID_max = int(self.df['yearID'].max())
-        alt_names = [arg for arg in pd.Series(self.df['OptionName'].unique()) if '_minus_' in arg]
+        alt_names = [arg for arg in pd.Series(self.df['optionName'].unique()) if '_minus_' in arg]
 
         for alt_name in alt_names:
             self.line_chart_args_by_option(0, alt_name, yearID_min, yearID_max, *args)

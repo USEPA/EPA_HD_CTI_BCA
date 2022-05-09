@@ -21,7 +21,8 @@ def calc_thc_reduction(settings, vehicle):
         thc_no_action = [v.thc_ustons for v in settings.fleet_cap.vehicles_no_action
                          if v.vehicle_id == vehicle.vehicle_id
                          and v.option_id == settings.no_action_alt
-                         and v.modelyear_id == vehicle.modelyear_id][0]
+                         and v.modelyear_id == vehicle.modelyear_id
+                         and v.age_id == vehicle.age_id][0]
         thc_action = vehicle.thc_ustons
         thc_reduction = thc_no_action - thc_action
 
@@ -71,35 +72,4 @@ def calc_fuel_cost(settings, vehicle):
         cost_per_mile = 0
         cost_per_veh = 0
 
-    return cost_per_veh, cost_retail, cost_pretax, cost_per_mile
-
-
-def calc_fuel_costs_per_veh(data_object):
-    """
-
-    Parameters:
-        data_object: object; the fleet data object.
-
-    Returns:
-        Updates the data_object dictionary to include fuel costs/vehicle and costs/mile.
-
-    """
-    print('\nCalculating average fuel costs...')
-
-    for key in data_object.keys:
-        fuel_cost = data_object.get_attribute_value(key, 'FuelCost_Retail')
-        vmt = data_object.get_attribute_value(key, 'VMT')
-        vpop = data_object.get_attribute_value(key, 'VPOP')
-
-        # try/except block to protect against divide by 0 error
-        try:
-            cost_per_mile = fuel_cost / vmt
-            cost_per_veh = fuel_cost / vpop
-        except ZeroDivisionError:
-            cost_per_mile = 0
-            cost_per_veh = 0
-
-        update_dict = {'FuelCost_Retail_PerMile': cost_per_mile,
-                       'FuelCost_Retail_PerVeh': cost_per_veh,
-                       }
-        data_object.update_dict(key, update_dict)
+    return cost_per_veh, cost_retail, cost_pretax, cost_per_mile, captured_gallons

@@ -9,6 +9,7 @@ from bca_tool_code.sum_by_vehicle import calc_sum_of_costs
 from bca_tool_code.emission_cost import calc_criteria_emission_cost
 from bca_tool_code.weighted_results import create_weighted_cost_dict
 from bca_tool_code.discounting import discount_values
+from bca_tool_code.calc_deltas import calc_deltas, calc_deltas_weighted
 
 
 class CapCosts:
@@ -22,7 +23,7 @@ class CapCosts:
             'OperatingCost_Owner_PerVeh': ['DEFCost_PerVeh', 'FuelCost_Retail_PerVeh', 'EmissionRepairCost_PerVeh']
         }
 
-    def calc_cap_costs(self, settings, set_paths):
+    def calc_cap_costs(self, settings):
         print('Calculating CAP costs...')
 
         discount_rate = 0
@@ -45,7 +46,7 @@ class CapCosts:
                 'sourceTypeID': veh.sourcetype_id,
                 'regClassID': veh.regclass_id,
                 'fuelTypeID': veh.fueltype_id,
-                'OptionName': veh.option_name,
+                'optionName': veh.option_name,
                 'sourceTypeName': veh.sourcetype_name,
                 'regClassName': veh.regclass_name,
                 'fuelTypeName': veh.fueltype_name,
@@ -68,10 +69,8 @@ class CapCosts:
             }
             self.update_object_dict(key, update_dict)
             self.update_object_dict(key, new_attributes_dict)
-        #
-        # add_keys_for_discounting(settings.general_inputs, self.results)
 
-        # calc tech costs for age_id = 0 vehicle objects
+        # calc tech costs for age_id=0 vehicle objects
         for veh in settings.fleet_cap.vehicles_age0:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
 
@@ -113,23 +112,25 @@ class CapCosts:
         # calculate DEF cost for diesel fueled vehicles
         for veh in settings.fleet_cap.vehicles_ft2:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
-            def_cost_per_veh, def_cost, def_cost_per_mile = calc_def_cost(settings, veh)
+            def_cost_per_veh, def_cost, def_cost_per_mile, def_gallons = calc_def_cost(settings, veh)
             update_dict = {
                 'DEFCost': def_cost,
                 'DEFCost_PerVeh': def_cost_per_veh,
                 'DEFCost_PerMile': def_cost_per_mile,
+                'DEF_Gallons': def_gallons,
             }
             self.update_object_dict(key, update_dict)
 
         # calculate fuel cost for all vehicles
         for veh in settings.fleet_cap.vehicles:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
-            fuel_cost_per_veh, retail_cost, pretax_cost, fuel_cost_per_mile = calc_fuel_cost(settings, veh)
+            fuel_cost_per_veh, retail_cost, pretax_cost, fuel_cost_per_mile, captured_gallons = calc_fuel_cost(settings, veh)
             update_dict = {
                 'FuelCost_Retail': retail_cost,
                 'FuelCost_Pretax': pretax_cost,
                 'FuelCost_Retail_PerVeh': fuel_cost_per_veh,
                 'FuelCost_Retail_PerMile': fuel_cost_per_mile,
+                'GallonsCaptured_byORVR': captured_gallons
             }
             self.update_object_dict(key, update_dict)
 
@@ -166,7 +167,7 @@ class CapCosts:
 
         # calc some weighted cost per mile results
         arg = 'VMT_PerVeh'
-        year_max = settings.cap_vehicle.year_max
+        year_max = settings.cap_vehicle.year_id_max
         create_weighted_cost_dict(settings, self, year_max, settings.wtd_def_cpm_dict,
                                   arg_to_weight='DEFCost_PerMile', arg_to_weight_by=arg)
         create_weighted_cost_dict(settings, self, year_max, settings.wtd_repair_cpm_dict,
@@ -178,37 +179,16 @@ class CapCosts:
         add_keys_for_discounting(settings.general_inputs, self.results)
         discount_values(settings, self)
 
-    # TODO calc deltas then GHG
-        stop = 0
-            # calc CAP pollution effects, if applicable
-            # if settings.calc_cap_pollution:
-            #     bca_tool_code.emission_costs.calc_criteria_emission_costs(settings, settings.fleet_cap)
-            #
-            # bca_tool_code.weighted_results.create_weighted_cost_dict(settings, settings.fleet_cap,
-            #                                                          settings.wtd_def_cpm_dict,
-            #                                                          'DEFCost_PerMile', 'VMT_PerVeh')
-            # bca_tool_code.weighted_results.create_weighted_cost_dict(settings, settings.fleet_cap,
-            #                                                          settings.wtd_repair_cpm_dict,
-            #                                                          'EmissionRepairCost_PerMile', 'VMT_PerVeh')
-            # bca_tool_code.weighted_results.create_weighted_cost_dict(settings, settings.fleet_cap,
-            #                                                          settings.wtd_cap_fuel_cpm_dict,
-            #                                                          'FuelCost_Retail_PerMile', 'VMT_PerVeh')
-            #
-            # bca_tool_code.discounting.discount_values(settings, settings.fleet_cap)
-            #
-            # # calc the annual summary, present values and annualized values (excluding cost/veh and cost/mile results)
-            # settings.annual_summary_cap.annual_summary(settings, settings.fleet_cap, settings.options_cap)
-            #
-            # # calc deltas relative to the no-action scenario
-            # bca_tool_code.calc_deltas.calc_deltas(settings, settings.fleet_cap)
-            # bca_tool_code.calc_deltas.calc_deltas(settings, settings.annual_summary_cap)
-            #
-            # settings.wtd_def_cpm_dict \
-            #     = bca_tool_code.calc_deltas.calc_deltas_weighted(settings, settings.wtd_def_cpm_dict)
-            # settings.wtd_repair_cpm_dict \
-            #     = bca_tool_code.calc_deltas.calc_deltas_weighted(settings, settings.wtd_repair_cpm_dict)
-            # settings.wtd_cap_fuel_cpm_dict \
-            #     = bca_tool_code.calc_deltas.calc_deltas_weighted(settings, settings.wtd_cap_fuel_cpm_dict)
+        # calc the annual summary, present values and annualized values (excluding cost/veh and cost/mile results)
+        settings.annual_summary_cap.annual_summary(settings, self, settings.options_cap)
+
+        # calc deltas relative to the no-action scenario
+        calc_deltas(settings, self, settings.options_cap)
+        calc_deltas(settings, settings.annual_summary_cap, settings.options_cap)
+
+        settings.wtd_def_cpm_dict = calc_deltas_weighted(settings, settings.wtd_def_cpm_dict)
+        settings.wtd_repair_cpm_dict = calc_deltas_weighted(settings, settings.wtd_repair_cpm_dict)
+        settings.wtd_cap_fuel_cpm_dict = calc_deltas_weighted(settings, settings.wtd_cap_fuel_cpm_dict)
 
     def update_object_dict(self, key, update_dict):
         """

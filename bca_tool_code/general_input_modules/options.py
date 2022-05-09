@@ -40,4 +40,4 @@ class Options:
             A string associated with the given alt (i.e., option_id).
 
         """
-        return self._dict[alt]['OptionName']
+        return self._dict[alt]['optionName']
