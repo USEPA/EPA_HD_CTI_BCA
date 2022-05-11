@@ -67,12 +67,11 @@ class GhgCosts:
         for veh in settings.fleet_ghg.vehicles_age0:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
 
-            tech_cost_per_veh, tech_cost, techpen, pkg_cost_per_veh = calc_package_cost(settings, veh)
+            tech_cost_per_veh, tech_cost, pkg_cost_per_veh = calc_package_cost(settings, veh)
             update_dict = {
-                'TechPenetration': techpen,
-                'TechCost': tech_cost,
-                'TechCost_PerVeh': tech_cost_per_veh,
                 'PackageCost_PerVeh': pkg_cost_per_veh,
+                'TechCost_PerVeh': tech_cost_per_veh,
+                'TechCost': tech_cost,
             }
             self.update_object_dict(key, update_dict)
 
@@ -81,10 +80,10 @@ class GhgCosts:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
             fuel_cost_per_veh, retail_cost, pretax_cost, fuel_cost_per_mile = calc_fuel_cost(settings, veh)
             update_dict = {
-                'FuelCost_Retail': retail_cost,
-                'FuelCost_Pretax': pretax_cost,
                 'FuelCost_Retail_PerVeh': fuel_cost_per_veh,
                 'FuelCost_Retail_PerMile': fuel_cost_per_mile,
+                'FuelCost_Retail': retail_cost,
+                'FuelCost_Pretax': pretax_cost,
             }
             self.update_object_dict(key, update_dict)
 
@@ -173,7 +172,6 @@ class GhgCosts:
         """
         new_attributes = [
             'PackageCost_PerVeh',
-            'TechPenetration',
             'TechCost_PerVeh',
             'FuelCost_Retail_PerMile',
             'FuelCost_Retail_PerVeh',

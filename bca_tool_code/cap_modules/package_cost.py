@@ -3,7 +3,7 @@ import pandas as pd
 
 def calc_avg_package_cost_per_step(settings, vehicle, start_year):
     """
-
+    Tech penetrations are applied here
     Parameters:
         settings: object; the SetInputs class object.
         vehicle: object; an object of the Vehicle class.
@@ -27,12 +27,15 @@ def calc_avg_package_cost_per_step(settings, vehicle, start_year):
         techpen = settings.techpens_cap.get_attribute_value(vehicle)
 
         sales_year1 \
-            = settings.fleet_cap.sales_by_start_year[engine_id, option_id, start_year]['engine_sales']
+            = settings.fleet_cap.sales_by_start_year[engine_id, option_id, start_year]['engine_sales'] \
+              * techpen
 
         cumulative_sales \
-            = settings.fleet_cap.sales_by_start_year[key][f'cumulative_engine_sales_{start_year}']
+            = settings.fleet_cap.sales_by_start_year[key][f'cumulative_engine_sales_{start_year}']\
+              * techpen
 
         pkg_cost = settings.engine_costs.get_start_year_cost((engine_id, option_id, start_year), 'pkg_cost')
+
         seedvolume_factor = settings.engine_learning_scalers.get_seedvolume_factor(engine_id, option_id)
 
         if sales_year1 + (sales_year1 * seedvolume_factor) != 0:
@@ -52,9 +55,9 @@ def calc_avg_package_cost_per_step(settings, vehicle, start_year):
         'optionName': vehicle.option_name,
         'regClassName': vehicle.regclass_name,
         'fuelTypeName': vehicle.fueltype_name,
-        'techpen': techpen,
         f'tech_cost_per_vehicle_{start_year}': pkg_cost_learned,
-        f'tech_applied_cost_per_vehicle_{start_year}': pkg_applied_cost_learned
+        f'techpen_{start_year}': techpen,
+        f'tech_applied_cost_per_vehicle_{start_year}': pkg_applied_cost_learned,
     }
 
     settings.engine_costs.update_package_cost_by_step(vehicle, update_dict)
@@ -74,7 +77,7 @@ def calc_package_cost(settings, vehicle):
     engine_id, option_id, modelyear_id = vehicle.engine_id, vehicle.option_id, vehicle.modelyear_id
     start_years = settings.engine_costs.start_years
 
-    techpen = settings.engine_costs.get_package_cost_by_step((engine_id, option_id, modelyear_id), 'techpen')[0]
+    # techpen = settings.engine_costs.get_package_cost_by_step((engine_id, option_id, modelyear_id), 'techpen')[0]
 
     if option_id == settings.no_action_alt:
         start_year = start_years[0]
@@ -102,7 +105,7 @@ def calc_package_cost(settings, vehicle):
 
     cost = cost_per_veh * vehicle.vpop
 
-    return cost_per_veh, cost, techpen, pkg_cost_per_veh
+    return cost_per_veh, cost, pkg_cost_per_veh
 
 
 if __name__ == '__main__':

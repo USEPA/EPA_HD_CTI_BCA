@@ -57,8 +57,8 @@ def calc_avg_package_cost_per_step(settings, vehicle, start_year):
         'sourceTypeName': vehicle.sourcetype_name,
         'regClassName': vehicle.regclass_name,
         'fuelTypeName': vehicle.fueltype_name,
-        'techpen': techpen,
         f'tech_cost_per_vehicle_{start_year}': pkg_cost_learned,
+        f'techpen_{start_year}': techpen,
         f'tech_applied_cost_per_vehicle_{start_year}': pkg_applied_cost_learned,
     }
 
@@ -78,8 +78,6 @@ def calc_package_cost(settings, vehicle):
     """
     vehicle_id, option_id, modelyear_id = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id
     start_years = settings.vehicle_costs.start_years
-
-    techpen = settings.vehicle_costs.get_package_cost_by_step((vehicle_id, option_id, modelyear_id), 'techpen')[0]
 
     if option_id == settings.no_action_alt:
         start_year = start_years[0]
@@ -107,7 +105,7 @@ def calc_package_cost(settings, vehicle):
 
     cost = cost_per_veh * vehicle.vpop
 
-    return cost_per_veh, cost, techpen, pkg_cost_per_veh
+    return cost_per_veh, cost, pkg_cost_per_veh
     #
     #
     # learning_rate = pd.to_numeric(settings.general_inputs.get_attribute_value('learning_rate'))

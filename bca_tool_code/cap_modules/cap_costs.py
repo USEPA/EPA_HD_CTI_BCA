@@ -74,7 +74,7 @@ class CapCosts:
         for veh in settings.fleet_cap.vehicles_age0:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
 
-            direct_applied_cost_per_veh, direct_cost, techpen, pkg_cost_per_veh = calc_package_cost(settings, veh)
+            direct_applied_cost_per_veh, direct_cost, pkg_cost_per_veh = calc_package_cost(settings, veh)
 
             indirect_cost_dict = calc_indirect_cost(settings, veh, direct_applied_cost_per_veh)
             warranty_cost_per_veh = indirect_cost_dict['Warranty_cost_per_veh']
@@ -92,13 +92,6 @@ class CapCosts:
             
             # update object dict with tech costs, all of which are for age_id=0 only
             update_dict = {
-                'DirectCost': direct_cost,
-                'WarrantyCost': warranty_cost,
-                'RnDCost': rnd_cost,
-                'OtherCost': other_cost,
-                'ProfitCost': profit_cost,
-                'IndirectCost': indirect_cost,
-                'TechCost': tech_cost,
                 'PackageCost_PerVeh': pkg_cost_per_veh,
                 'DirectCost_PerVeh': direct_applied_cost_per_veh,
                 'WarrantyCost_PerVeh': warranty_cost_per_veh,
@@ -107,6 +100,13 @@ class CapCosts:
                 'ProfitCost_PerVeh': profit_cost_per_veh,
                 'IndirectCost_PerVeh': indirect_cost_per_veh,
                 'TechCost_PerVeh': tech_cost_per_veh,
+                'DirectCost': direct_cost,
+                'WarrantyCost': warranty_cost,
+                'RnDCost': rnd_cost,
+                'OtherCost': other_cost,
+                'ProfitCost': profit_cost,
+                'IndirectCost': indirect_cost,
+                'TechCost': tech_cost,
             }
             self.update_object_dict(key, update_dict)
 
@@ -115,10 +115,10 @@ class CapCosts:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
             def_cost_per_veh, def_cost, def_cost_per_mile, def_gallons = calc_def_cost(settings, veh)
             update_dict = {
-                'DEFCost': def_cost,
                 'DEFCost_PerVeh': def_cost_per_veh,
                 'DEFCost_PerMile': def_cost_per_mile,
                 'DEF_Gallons': def_gallons,
+                'DEFCost': def_cost,
             }
             self.update_object_dict(key, update_dict)
 
@@ -128,11 +128,11 @@ class CapCosts:
             fuel_cost_per_veh, retail_cost, pretax_cost, fuel_cost_per_mile, captured_gallons \
                 = calc_fuel_cost(settings, veh)
             update_dict = {
-                'FuelCost_Retail': retail_cost,
-                'FuelCost_Pretax': pretax_cost,
+                'GallonsCaptured_byORVR': captured_gallons,
                 'FuelCost_Retail_PerVeh': fuel_cost_per_veh,
                 'FuelCost_Retail_PerMile': fuel_cost_per_mile,
-                'GallonsCaptured_byORVR': captured_gallons
+                'FuelCost_Retail': retail_cost,
+                'FuelCost_Pretax': pretax_cost,
             }
             self.update_object_dict(key, update_dict)
 
@@ -140,15 +140,16 @@ class CapCosts:
         # Note: the reference_pkg_cost should be diesel regclass=47, no_action_alt.
         for veh in settings.fleet_cap.vehicles:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
-            pkg_cost_per_veh = self.results[veh.vehicle_id, veh.option_id, veh.modelyear_id, 0, 0]['DirectCost_PerVeh']
+            direct_applied_cost_per_veh \
+                = self.results[veh.vehicle_id, veh.option_id, veh.modelyear_id, 0, 0]['DirectCost_PerVeh']
             reference_pkg_cost = self.results[(61, 47, 2), 0, veh.modelyear_id, 0, 0]['DirectCost_PerVeh']
             repair_cost_per_veh, repair_cost, repair_cost_per_mile \
-                = settings.emission_repair_cost.calc_emission_repair_cost(settings, veh, pkg_cost_per_veh,
+                = settings.emission_repair_cost.calc_emission_repair_cost(settings, veh, direct_applied_cost_per_veh,
                                                                           reference_pkg_cost)
             update_dict = {
-                'EmissionRepairCost': repair_cost,
                 'EmissionRepairCost_PerVeh': repair_cost_per_veh,
                 'EmissionRepairCost_PerMile': repair_cost_per_mile,
+                'EmissionRepairCost': repair_cost,
             }
             self.update_object_dict(key, update_dict)
 
@@ -242,7 +243,6 @@ class CapCosts:
         """
         new_attributes = [
             'PackageCost_PerVeh',
-            'TechPenetration',
             'DirectCost_PerVeh',
             'WarrantyCost_PerVeh',
             'RnDCost_PerVeh',
