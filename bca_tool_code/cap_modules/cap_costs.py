@@ -11,7 +11,7 @@ from bca_tool_code.weighted_results import create_weighted_cost_dict
 from bca_tool_code.discounting import discount_values
 from bca_tool_code.calc_deltas import calc_deltas, calc_deltas_weighted
 
-
+# TODO warranty and usefullife got messed up somehow on 5/10
 class CapCosts:
 
     def __init__(self):
@@ -74,9 +74,9 @@ class CapCosts:
         for veh in settings.fleet_cap.vehicles_age0:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
 
-            pkg_cost_per_veh, pkg_cost = calc_package_cost(settings, veh)
+            direct_applied_cost_per_veh, direct_cost, techpen, pkg_cost_per_veh = calc_package_cost(settings, veh)
 
-            indirect_cost_dict = calc_indirect_cost(settings, veh, pkg_cost_per_veh)
+            indirect_cost_dict = calc_indirect_cost(settings, veh, direct_applied_cost_per_veh)
             warranty_cost_per_veh = indirect_cost_dict['Warranty_cost_per_veh']
             rnd_cost_per_veh = indirect_cost_dict['RnD_cost_per_veh']
             other_cost_per_veh = indirect_cost_dict['Other_cost_per_veh']
@@ -88,18 +88,19 @@ class CapCosts:
             profit_cost = indirect_cost_dict['Profit_cost']
             indirect_cost = indirect_cost_dict['ic_sum']
 
-            tech_cost_per_veh, tech_cost = calc_tech_cost(veh, pkg_cost_per_veh, indirect_cost_per_veh)
+            tech_cost_per_veh, tech_cost = calc_tech_cost(veh, direct_applied_cost_per_veh, indirect_cost_per_veh)
             
             # update object dict with tech costs, all of which are for age_id=0 only
             update_dict = {
-                'DirectCost': pkg_cost,
+                'DirectCost': direct_cost,
                 'WarrantyCost': warranty_cost,
                 'RnDCost': rnd_cost,
                 'OtherCost': other_cost,
                 'ProfitCost': profit_cost,
                 'IndirectCost': indirect_cost,
                 'TechCost': tech_cost,
-                'DirectCost_PerVeh': pkg_cost_per_veh,
+                'PackageCost_PerVeh': pkg_cost_per_veh,
+                'DirectCost_PerVeh': direct_applied_cost_per_veh,
                 'WarrantyCost_PerVeh': warranty_cost_per_veh,
                 'RnDCost_PerVeh': rnd_cost_per_veh,
                 'OtherCost_PerVeh': other_cost_per_veh,
@@ -124,7 +125,8 @@ class CapCosts:
         # calculate fuel cost for all vehicles
         for veh in settings.fleet_cap.vehicles:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
-            fuel_cost_per_veh, retail_cost, pretax_cost, fuel_cost_per_mile, captured_gallons = calc_fuel_cost(settings, veh)
+            fuel_cost_per_veh, retail_cost, pretax_cost, fuel_cost_per_mile, captured_gallons \
+                = calc_fuel_cost(settings, veh)
             update_dict = {
                 'FuelCost_Retail': retail_cost,
                 'FuelCost_Pretax': pretax_cost,
@@ -180,21 +182,21 @@ class CapCosts:
         discount_values(settings, self)
 
         # calc the annual summary, present values and annualized values (excluding cost/veh and cost/mile results)
-        settings.annual_summary_cap.annual_summary(settings, self, settings.options_cap)
+        settings.annual_summary_cap.annual_summary(settings, self, settings.options_cap, settings.cap_vehicle.year_ids)
 
         # calc deltas relative to the no-action scenario
         calc_deltas(settings, self, settings.options_cap)
         calc_deltas(settings, settings.annual_summary_cap, settings.options_cap)
 
-        settings.wtd_def_cpm_dict = calc_deltas_weighted(settings, settings.wtd_def_cpm_dict)
-        settings.wtd_repair_cpm_dict = calc_deltas_weighted(settings, settings.wtd_repair_cpm_dict)
-        settings.wtd_cap_fuel_cpm_dict = calc_deltas_weighted(settings, settings.wtd_cap_fuel_cpm_dict)
+        settings.wtd_def_cpm_dict = calc_deltas_weighted(settings, settings.wtd_def_cpm_dict, settings.options_cap)
+        settings.wtd_repair_cpm_dict = calc_deltas_weighted(settings, settings.wtd_repair_cpm_dict, settings.options_cap)
+        settings.wtd_cap_fuel_cpm_dict = calc_deltas_weighted(settings, settings.wtd_cap_fuel_cpm_dict, settings.options_cap)
 
     def update_object_dict(self, key, update_dict):
         """
 
         Parameters:
-            key: tuple; ((vehicle_id), option_id, modelyear_id, age_id, discount_rate).\n
+            key: tuple; (vehicle_id, option_id, modelyear_id, age_id, discount_rate).\n
             update_dict: Dictionary; represents the attribute-value pairs to be updated.
 
         Returns:
@@ -238,43 +240,49 @@ class CapCosts:
             A list of new attributes to be added to the data_object dictionary.
 
         """
-        new_attributes = ['DirectCost',
-                          'WarrantyCost',
-                          'RnDCost',
-                          'OtherCost',
-                          'ProfitCost',
-                          'IndirectCost',
-                          'TechCost',
-                          'DEF_Gallons',
-                          'DEFCost',
-                          'GallonsCaptured_byORVR',
-                          'FuelCost_Retail',
-                          'FuelCost_Pretax',
-                          'EmissionRepairCost',
-                          'OperatingCost',
-                          'TechAndOperatingCost',
-                          'DirectCost_PerVeh',
-                          'WarrantyCost_PerVeh',
-                          'RnDCost_PerVeh',
-                          'OtherCost_PerVeh',
-                          'ProfitCost_PerVeh',
-                          'IndirectCost_PerVeh',
-                          'TechCost_PerVeh',
-                          'DEFCost_PerMile',
-                          'DEFCost_PerVeh',
-                          'FuelCost_Retail_PerMile',
-                          'FuelCost_Retail_PerVeh',
-                          'EmissionRepairCost_PerMile',
-                          'EmissionRepairCost_PerVeh',
-                          'OperatingCost_Owner_PerMile',
-                          'OperatingCost_Owner_PerVeh',
-                          ]
-
+        new_attributes = [
+            'PackageCost_PerVeh',
+            'TechPenetration',
+            'DirectCost_PerVeh',
+            'WarrantyCost_PerVeh',
+            'RnDCost_PerVeh',
+            'OtherCost_PerVeh',
+            'ProfitCost_PerVeh',
+            'IndirectCost_PerVeh',
+            'TechCost_PerVeh',
+            'DEFCost_PerMile',
+            'DEFCost_PerVeh',
+            'FuelCost_Retail_PerMile',
+            'FuelCost_Retail_PerVeh',
+            'EmissionRepairCost_PerMile',
+            'EmissionRepairCost_PerVeh',
+            'OperatingCost_Owner_PerMile',
+            'OperatingCost_Owner_PerVeh',
+            'DirectCost',
+            'WarrantyCost',
+            'RnDCost',
+            'OtherCost',
+            'ProfitCost',
+            'IndirectCost',
+            'TechCost',
+            'DEF_Gallons',
+            'DEFCost',
+            'GallonsCaptured_byORVR',
+            'FuelCost_Retail',
+            'FuelCost_Pretax',
+            'EmissionRepairCost',
+            'OperatingCost',
+            'TechAndOperatingCost',
+        ]
         if settings.calc_cap_pollution:
-            cap_attributes = ['PM25Cost_tailpipe_0.03', 'NOxCost_tailpipe_0.03',
-                              'PM25Cost_tailpipe_0.07', 'NOxCost_tailpipe_0.07',
-                              'CriteriaCost_tailpipe_0.03', 'CriteriaCost_tailpipe_0.07',
-                              ]
+            cap_attributes = [
+                'PM25Cost_tailpipe_0.03',
+                'NOxCost_tailpipe_0.03',
+                'PM25Cost_tailpipe_0.07',
+                'NOxCost_tailpipe_0.07',
+                'CriteriaCost_tailpipe_0.03',
+                'CriteriaCost_tailpipe_0.07',
+            ]
             new_attributes = new_attributes + cap_attributes
 
         return new_attributes

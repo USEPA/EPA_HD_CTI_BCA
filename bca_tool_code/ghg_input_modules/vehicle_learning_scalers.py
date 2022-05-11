@@ -4,13 +4,14 @@ from bca_tool_code.general_input_modules.general_functions import read_input_fil
 from bca_tool_code.general_input_modules.input_files import InputFiles
 
 
-class RegclassLearningScalers:
+class VehicleLearningScalers:
     """
 
-    The RegclassLearningScalers class reads the regclass_learning_scalers input file and provides methods to query its
+    The VehicleLearningScalers class reads the sourcetype_learning_scalers input file and provides methods to query its
     contents.
 
     """
+
     def __init__(self):
         self._dict = dict()
 
@@ -27,7 +28,7 @@ class RegclassLearningScalers:
         """
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
 
-        key = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID']))
+        key = pd.Series(zip(zip(df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['optionID']))
 
         df.set_index(key, inplace=True)
 
@@ -36,15 +37,15 @@ class RegclassLearningScalers:
         # update input_files_pathlist if this class is used
         InputFiles.update_pathlist(filepath)
 
-    def get_seedvolume_factor(self, engine, alt):
+    def get_seedvolume_factor(self, vehicle_id, option_id):
         """
 
         Parameters:
-            engine: tuple; (regclass_id, fueltype_id). \n
-            alt: int; the option_id.
+            vehicle_id: tuple; (sourcetype_id, regclass_id, fueltype_id). \n
+            option_id: int; the option_id.
 
         Returns:
-            The seed volume factor for the given engine and option_id.
+            The seed volume factor for the given vehicle and option_id.
 
         """
-        return self._dict[engine, alt]['SeedVolumeFactor']
+        return self._dict[vehicle_id, option_id]['SeedVolumeFactor']

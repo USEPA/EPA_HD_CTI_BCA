@@ -11,13 +11,14 @@ class AnnualSummary:
     def __init__(self):
         self.results = dict()
 
-    def annual_summary(self, settings, data_object, options):
+    def annual_summary(self, settings, data_object, options, year_ids):
         """
 
         Parameters:
             settings: object; the SetInputs class object.\n
             data_object: object; the fleet data object to summarize.\n
-            options: object; the options object associated with the data_object.
+            options: object; the options object associated with the data_object.\n
+            year_ids: range; the min_year_id thru max_year_id as set in settings.
 
         Returns:
             Updates the annual summary dictionary with annual, present and annualized values based on the data_object.
@@ -48,7 +49,7 @@ class AnnualSummary:
         rates = tuple([settings.general_inputs.get_attribute_value('social_discount_rate_1'),
                        settings.general_inputs.get_attribute_value('social_discount_rate_2')])
         rates = tuple([pd.to_numeric(rate) for rate in rates])
-        year_ids = settings.cap_vehicle.year_ids
+        # year_ids = settings.cap_vehicle.year_ids
 
         # build the destination dictionary to house data
 
@@ -60,7 +61,7 @@ class AnnualSummary:
                 self.results.update({
                     (series, option_id, year_id, rate): {
                         'optionID': option_id,
-                        'optionName': options._dict[option_id]['optionName'],
+                        'optionName': options.get_option_name(option_id),
                         'yearID': year_id,
                         'DiscountRate': rate,
                         'Series': series,
@@ -77,7 +78,7 @@ class AnnualSummary:
                         self.results.update({
                             (series, option_id, year_id, rate): {
                                 'optionID': option_id,
-                                'optionName': options._dict[option_id]['optionName'],
+                                'optionName': options.get_option_name(option_id),
                                 'yearID': year_id,
                                 'DiscountRate': rate,
                                 'Series': series,

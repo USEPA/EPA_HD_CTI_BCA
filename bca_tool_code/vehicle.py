@@ -18,7 +18,6 @@ class Vehicle:
     """
     vehicle_df = pd.DataFrame()
     attributes_to_adjust = list()  # these are MOVES attributes that need adjustment
-    attributes_for_techpens = list()
     year_id_min = 0
     year_id_max = 0
     year_ids = 0
@@ -254,7 +253,7 @@ class Vehicle:
         #     ).unique()
         #
         #     # df_return_years = df_return['modelyear_id'].unique()
-        #     # techpen_years = techpens.get_techpen_years
+        #     # start_years = techpens.get_techpen_years
         #     for (vehicle, alt) in vehicles:
         #         for modelyear_id in Vehicle.year_ids:
         #             st, rc, ft = vehicle

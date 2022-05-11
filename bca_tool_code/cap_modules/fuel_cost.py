@@ -37,9 +37,8 @@ def calc_fuel_cost(settings, vehicle):
         vehicle: object; an object of the Vehicle class.
 
     Returns:
-        Updates the data_object dictionary to reflect fuel consumption (Gallons) adjusted to account for the fuel saved in
-        association with ORVR. The dictionary is also updated to include the fuel costs associated with the gallons
-        consumed (Gallons paid for * $/gallon fuel).
+        Average retail fuel cost per vehicle, retail fuel cost, pretax fuel cost and retail cost per mile, and the
+        gallons of gasoline captured by ORVR, associated with the passed vehicle.
 
     Note:
         Note that gallons of fuel captured are not included in the MOVES runs that serve as the input fleet data for the

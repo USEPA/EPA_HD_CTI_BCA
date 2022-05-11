@@ -117,5 +117,7 @@ class Deflators:
             for arg in args:
                 df.loc[df['DollarBasis'] == year, arg] = df[arg] * self._dict[year]['adjustment_factor']
             df.loc[df['DollarBasis'] == year, 'DollarBasis'] = dollar_basis_analysis
+        for arg in args:
+            df.loc[df['DollarBasis'] != dollar_basis_analysis, arg] = 0
 
         return df

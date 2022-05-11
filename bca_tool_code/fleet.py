@@ -1,10 +1,12 @@
+from sys import exit
+
 from bca_tool_code.vehicle import Vehicle
 
 
 class Fleet:
 
     def __init__(self):
-        self.sales_and_cumsales_by_start_year = dict() # stores sales and cumulative sales per implementation start year
+        self.sales_by_start_year = dict() # stores sales and cumulative sales per implementation start year
         self.vehicles = list()
         self.vehicles_age0 = list()
         self.vehicles_ft2 = list()
@@ -53,7 +55,7 @@ class Fleet:
             if vehicle.option_id == no_action_alt:
                 self.vehicles_no_action.append(vehicle)
 
-    def create_ghg_vehicles(self, options):
+    def create_ghg_vehicles(self, no_action_alt, options):
         print('Creating GHG vehicle objects...')
         for index, row in Vehicle.vehicle_df.iterrows():
             vehicle = Vehicle()
@@ -82,12 +84,14 @@ class Fleet:
                 vehicle.vmt_per_veh = vehicle.vmt / vehicle.vpop
             except ZeroDivisionError:
                 vehicle.vmt_per_veh = 0
-            vehicle.vmt_per_veh_cumulative = 0
+            # vehicle.vmt_per_veh_cumulative = 0
             vehicle.gallons = row['gallons']
 
             self.vehicles.append(vehicle)
             if vehicle.age_id == 0:
                 self.vehicles_age0.append(vehicle)
+            if vehicle.option_id == no_action_alt:
+                self.vehicles_no_action.append(vehicle)
 
     def engine_sales(self, vehicle):
         """
@@ -98,10 +102,13 @@ class Fleet:
         Returns:
 
         """
+        if vehicle.age_id != 0:
+            print(f'Improper vehicle object passed to fleet.Fleet.engine_sales method.')
+            exit()
         sales = 0
         key = (vehicle.engine_id, vehicle.option_id, vehicle.modelyear_id)
-        if key in self.sales_and_cumsales_by_start_year:
-            sales = self.sales_and_cumsales_by_start_year[key]['engine_sales']
+        if key in self.sales_by_start_year:
+            sales = self.sales_by_start_year[key]['engine_sales']
         else:
             sales = sum([
                 v.vpop for v in self.vehicles
@@ -110,16 +117,19 @@ class Fleet:
                    and v.modelyear_id == vehicle.modelyear_id
                    and v.age_id == 0
             ])
-            update_dict = {'optionID': vehicle.option_id,
-                           'engineID': vehicle.engine_id,
-                           'regClassID': vehicle.regclass_id,
-                           'fuelTypeID': vehicle.fueltype_id,
-                           'modelYearID': vehicle.modelyear_id,
-                           'optionName': vehicle.option_name,
-                           'regClassName': vehicle.regclass_name,
-                           'fuelTypeName': vehicle.fueltype_name,
-                           'engine_sales': sales}
-            self.update_object_dict(vehicle, update_dict)
+            update_dict = {
+                'optionID': vehicle.option_id,
+                'engineID': vehicle.engine_id,
+                'regClassID': vehicle.regclass_id,
+                'fuelTypeID': vehicle.fueltype_id,
+                'modelYearID': vehicle.modelyear_id,
+                'optionName': vehicle.option_name,
+                'regClassName': vehicle.regclass_name,
+                'fuelTypeName': vehicle.fueltype_name,
+                'engine_sales': sales,
+            }
+
+            self.update_object_dict(vehicle, vehicle.engine_id, update_dict)
 
         return sales
 
@@ -136,15 +146,58 @@ class Fleet:
             Updates the object dictionary with the cumulative sales.
 
         """
+        if vehicle.age_id != 0:
+            print(f'Improper vehicle object passed to fleet.Fleet.cumulative_engine_sales method.')
+            exit()
         sales = sum([
-            v['engine_sales'] for k, v in self.sales_and_cumsales_by_start_year.items()
+            v['engine_sales'] for k, v in self.sales_by_start_year.items()
             if v['engineID'] == vehicle.engine_id
                and v['optionID'] == vehicle.option_id
                and (v['modelYearID'] >= start_year and v['modelYearID'] <= vehicle.modelyear_id)
         ])
 
         update_dict = {f'cumulative_engine_sales_{start_year}': sales}
-        self.update_object_dict(vehicle, update_dict)
+        self.update_object_dict(vehicle, vehicle.engine_id, update_dict)
+
+        return sales
+
+    def cumulative_vehicle_sales(self, vehicle, start_year):
+        """
+        cumulative vehicle sales in modelyear_id by implementation step
+        Parameters:
+            vehicle: object; an object of the Vehicle class.
+            start_year: int; the implementation step for which cumulative sales are sought.
+
+        Returns:
+            The cumulative sales of vehicles through its model year and for the given implementation
+            step.
+            Updates the object dictionary with the cumulative sales.
+
+        """
+        if vehicle.age_id != 0:
+            print(f'Improper vehicle object passed to fleet.Fleet.cumulative_vehicle_sales method.')
+            exit()
+        sales = sum([
+            v.vpop for v in self.vehicles_age0
+            if v.vehicle_id == vehicle.vehicle_id
+               and v.option_id == vehicle.option_id
+               and (v.modelyear_id >= start_year and v.modelyear_id <= vehicle.modelyear_id)
+        ])
+        update_dict = {
+            'optionID': vehicle.option_id,
+            'vehicleID': vehicle.vehicle_id,
+            'sourceTypeID': vehicle.sourcetype_id,
+            'regClassID': vehicle.regclass_id,
+            'fuelTypeID': vehicle.fueltype_id,
+            'modelYearID': vehicle.modelyear_id,
+            'optionName': vehicle.option_name,
+            'sourceTypeName': vehicle.sourcetype_name,
+            'regClassName': vehicle.regclass_name,
+            'fuelTypeName': vehicle.fueltype_name,
+            f'cumulative_vehicle_sales_{start_year}': sales,
+        }
+
+        self.update_object_dict(vehicle, vehicle.vehicle_id, update_dict)
 
         return sales
 
@@ -209,12 +262,13 @@ class Fleet:
 
         return typical_vmt
 
-    def update_object_dict(self, vehicle, update_dict):
+    def update_object_dict(self, vehicle, unit, update_dict):
         """
 
         Parameters:
             vehicle: object; an object of the Vehicle class.\n
-            input_dict: Dictionary; represents the attribute-value pairs to be updated.
+            unit: tuple; the vehicle unit to use in the key (e.g., engine_id or vehicle_id).\n
+            update_dict: Dictionary; represents the attribute-value pairs to be updated.
 
         Returns:
             Updates the object dictionary with each attribute updated with the appropriate value.
@@ -223,12 +277,12 @@ class Fleet:
             The method updates an existing key having attribute_name with attribute_value.
 
         """
-        key = vehicle.engine_id, vehicle.option_id, vehicle.modelyear_id
-        if key in self.sales_and_cumsales_by_start_year:
+        key = unit, vehicle.option_id, vehicle.modelyear_id
+        if key in self.sales_by_start_year:
             for attribute_name, attribute_value in update_dict.items():
-                self.sales_and_cumsales_by_start_year[key][attribute_name] = attribute_value
+                self.sales_by_start_year[key][attribute_name] = attribute_value
 
         else:
-            self.sales_and_cumsales_by_start_year.update({key: {}})
+            self.sales_by_start_year.update({key: {}})
             for attribute_name, attribute_value in update_dict.items():
-                self.sales_and_cumsales_by_start_year[key].update({attribute_name: attribute_value})
+                self.sales_by_start_year[key].update({attribute_name: attribute_value})

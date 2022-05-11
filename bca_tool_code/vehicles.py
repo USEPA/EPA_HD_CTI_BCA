@@ -127,9 +127,9 @@ class Vehicles:
         # sales = 0
         # vehicles = settings.cap_vehicles_list
         # key = (vehicle.engine_id, vehicle.option_id, vehicle.modelyear_id)
-        # if key in self.sales_and_cumsales_by_start_year:
-        #     if f'cumulative_engine_sales_{cost_step}' in self.sales_and_cumsales_by_start_year:
-        #         sales = self.sales_and_cumsales_by_start_year[key][f'cumulative_engine_sales_{cost_step}']
+        # if key in self.sales_by_start_year:
+        #     if f'cumulative_engine_sales_{cost_step}' in self.sales_by_start_year:
+        #         sales = self.sales_by_start_year[key][f'cumulative_engine_sales_{cost_step}']
         # else:
         sales = sum([
             v['engine_sales'] for k, v in self.sales_and_cumulative_sales_by_step.items()
@@ -184,8 +184,8 @@ class Vehicles:
     #
     #     """
     #     learning_rate = pd.to_numeric(settings.general_inputs.get_attribute_value('learning_rate'))
-    #     costs_object = settings.regclass_costs
-    #     scalers_object = settings.regclass_learning_scalers
+    #     costs_object = settings.engine_costs
+    #     scalers_object = settings.engine_learning_scalers
     #
     #     engine_id, option_id, modelyear_id = vehicle.engine_id, vehicle.option_id, vehicle.modelyear_id
     #     key = (engine_id, option_id, modelyear_id)

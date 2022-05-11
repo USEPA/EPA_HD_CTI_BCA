@@ -7,7 +7,7 @@ def calc_avg_package_cost_per_step(settings, vehicle, start_year):
     Parameters:
         settings: object; the SetInputs class object.
         vehicle: object; an object of the Vehicle class.
-        start_year: int;
+        start_year: int; the implementation year associated with the cost.
 
     Returns:
         Updates the sales object dictionary to include the year-over-year package costs, including learning
@@ -19,38 +19,45 @@ def calc_avg_package_cost_per_step(settings, vehicle, start_year):
     engine_id, option_id, modelyear_id = vehicle.engine_id, vehicle.option_id, vehicle.modelyear_id
     key = (engine_id, option_id, modelyear_id)
 
-    pkg_cost = pkg_cost_learned = 0
+    pkg_cost = techpen = pkg_cost_learned = pkg_applied_cost_learned = 0
 
     if modelyear_id < start_year:
         pass
     else:
+        techpen = settings.techpens_cap.get_attribute_value(vehicle)
+
         sales_year1 \
-            = settings.fleet_cap.sales_and_cumsales_by_start_year[engine_id, option_id, start_year]['engine_sales']
+            = settings.fleet_cap.sales_by_start_year[engine_id, option_id, start_year]['engine_sales']
 
         cumulative_sales \
-            = settings.fleet_cap.sales_and_cumsales_by_start_year[key][f'cumulative_engine_sales_{start_year}']
+            = settings.fleet_cap.sales_by_start_year[key][f'cumulative_engine_sales_{start_year}']
 
-        pkg_cost = settings.regclass_costs.get_start_year_cost((engine_id, option_id, start_year), 'pkg_cost')
-        seedvolume_factor = settings.regclass_learning_scalers.get_seedvolume_factor(engine_id, option_id)
+        pkg_cost = settings.engine_costs.get_start_year_cost((engine_id, option_id, start_year), 'pkg_cost')
+        seedvolume_factor = settings.engine_learning_scalers.get_seedvolume_factor(engine_id, option_id)
 
-        try:
+        if sales_year1 + (sales_year1 * seedvolume_factor) != 0:
             pkg_cost_learned = pkg_cost \
-                               * (((cumulative_sales + (sales_year1 * seedvolume_factor))
-                                   / (sales_year1 + (sales_year1 * seedvolume_factor))) ** learning_rate)
-        except ZeroDivisionError:
+                               * ((cumulative_sales + (sales_year1 * seedvolume_factor))
+                                  / (sales_year1 + (sales_year1 * seedvolume_factor))) ** learning_rate
+            pkg_applied_cost_learned = pkg_cost_learned * techpen
+        else:
             pass
 
-    update_dict = {'optionID': vehicle.option_id,
-                   'engineID': vehicle.engine_id,
-                   'regClassID': vehicle.regclass_id,
-                   'fuelTypeID': vehicle.fueltype_id,
-                   'modelYearID': vehicle.modelyear_id,
-                   'optionName': vehicle.option_name,
-                   'regClassName': vehicle.regclass_name,
-                   'fuelTypeName': vehicle.fueltype_name,
-                   f'cost_per_vehicle_{start_year}': pkg_cost_learned}
+    update_dict = {
+        'optionID': vehicle.option_id,
+        'engineID': vehicle.engine_id,
+        'regClassID': vehicle.regclass_id,
+        'fuelTypeID': vehicle.fueltype_id,
+        'modelYearID': vehicle.modelyear_id,
+        'optionName': vehicle.option_name,
+        'regClassName': vehicle.regclass_name,
+        'fuelTypeName': vehicle.fueltype_name,
+        'techpen': techpen,
+        f'tech_cost_per_vehicle_{start_year}': pkg_cost_learned,
+        f'tech_applied_cost_per_vehicle_{start_year}': pkg_applied_cost_learned
+    }
 
-    settings.regclass_costs.update_package_cost_by_step(vehicle, update_dict)
+    settings.engine_costs.update_package_cost_by_step(vehicle, update_dict)
 
 
 def calc_package_cost(settings, vehicle):
@@ -61,28 +68,41 @@ def calc_package_cost(settings, vehicle):
         vehicle: object; an object of the Vehicle class.
 
     Returns:
-        Updates the data_object dictionary to include the package cost per vehicle (average cost/veh) including the
-        summation of costs associated with each cost step, if applicable.
+        The package average cost and package cost associated with the passed vehicle.
 
     """
     engine_id, option_id, modelyear_id = vehicle.engine_id, vehicle.option_id, vehicle.modelyear_id
-    start_years = settings.regclass_costs.start_years
+    start_years = settings.engine_costs.start_years
+
+    techpen = settings.engine_costs.get_package_cost_by_step((engine_id, option_id, modelyear_id), 'techpen')[0]
 
     if option_id == settings.no_action_alt:
         start_year = start_years[0]
-        cost_per_veh = settings.regclass_costs.get_package_cost_by_step((engine_id, option_id, modelyear_id),
-                                                                        f'cost_per_vehicle_{start_year}')[0]
+        pkg_cost_per_veh \
+            = settings.engine_costs.get_package_cost_by_step((engine_id, option_id, modelyear_id),
+                                                             f'tech_cost_per_vehicle_{start_year}')[0]
+        cost_per_veh \
+            = settings.engine_costs.get_package_cost_by_step((engine_id, option_id, modelyear_id),
+                                                             f'tech_applied_cost_per_vehicle_{start_year}')[0]
     else:
-        cost_per_veh = settings.regclass_costs.get_package_cost_by_step((engine_id, settings.no_action_alt, modelyear_id),
-                                                                        f'cost_per_vehicle_{start_years[0]}')[0]
+        pkg_cost_per_veh \
+            = settings.engine_costs.get_package_cost_by_step((engine_id, settings.no_action_alt, modelyear_id),
+                                                             f'tech_cost_per_vehicle_{start_years[0]}')[0]
+        cost_per_veh \
+            = settings.engine_costs.get_package_cost_by_step((engine_id, settings.no_action_alt, modelyear_id),
+                                                             f'tech_applied_cost_per_vehicle_{start_years[0]}')[0]
         for start_year in start_years:
             if modelyear_id >= int(start_year):
-                cost_per_veh += settings.regclass_costs.get_package_cost_by_step((engine_id, option_id, modelyear_id),
-                                                                                 f'cost_per_vehicle_{start_year}')[0]
+                pkg_cost_per_veh \
+                    += settings.engine_costs.get_package_cost_by_step((engine_id, option_id, modelyear_id),
+                                                                      f'tech_cost_per_vehicle_{start_year}')[0]
+                cost_per_veh \
+                    += settings.engine_costs.get_package_cost_by_step((engine_id, option_id, modelyear_id),
+                                                                      f'tech_applied_cost_per_vehicle_{start_year}')[0]
 
     cost = cost_per_veh * vehicle.vpop
 
-    return cost_per_veh, cost
+    return cost_per_veh, cost, techpen, pkg_cost_per_veh
 
 
 if __name__ == '__main__':

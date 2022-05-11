@@ -4,18 +4,19 @@ from bca_tool_code.general_input_modules.general_functions import read_input_fil
 from bca_tool_code.general_input_modules.input_files import InputFiles
 
 
-class RegclassCosts:
+class VehicleCosts:
     """
 
-    The RegclassCosts class reads the regclass_costs input file and converts all dollar values to dollar_basis_analysis
+    The VehicleCosts class reads the vehicle_costs input file and converts all dollar values to dollar_basis_analysis
     dollars and provides methods to query the data.
 
     """
     def __init__(self):
         self._dict = dict()
         self.start_years = list()
-        self.regclass_costs_in_analysis_dollars = pd.DataFrame()
+        self.piece_costs_in_analysis_dollars = pd.DataFrame()
         self.package_cost_by_step = dict()
+        self.value_name = 'piece_cost'
 
     def init_from_file(self, filepath, general_inputs, deflators):
         """
@@ -32,26 +33,30 @@ class RegclassCosts:
         """
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
 
-        value_name = 'piece_cost'
-
         df = pd.melt(df,
-                     id_vars=['optionID', 'regClassID', 'fuelTypeID', 'TechDescription', 'DollarBasis'],
+                     id_vars=['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'TechDescription', 'DollarBasis'],
                      value_vars=[col for col in df.columns if '20' in col],
                      var_name='start_year',
-                     value_name=value_name)
+                     value_name=self.value_name)
 
         df['start_year'] = pd.to_numeric(df['start_year'])
         self.start_years = df['start_year'].unique()
 
-        df = deflators.convert_dollars_to_analysis_basis(general_inputs, df, value_name)
+        df = deflators.convert_dollars_to_analysis_basis(general_inputs, df, self.value_name)
 
-        self.regclass_costs_in_analysis_dollars = df.copy()
+        self.piece_costs_in_analysis_dollars = df.copy()
+        # self.start_years = [col for col in df.columns if '20' in col]
 
-        df = df.groupby(by=['optionID', 'regClassID', 'fuelTypeID', 'DollarBasis', 'start_year'], axis=0, as_index=False).sum()
+        # df = deflators.convert_dollars_to_analysis_basis(general_inputs, df, *self.start_years)
+
+        # self.piece_costs_in_analysis_dollars = df.copy()
+        df.drop(columns='DollarBasis', inplace=True)
+        df = df.groupby(by=['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'start_year'],
+                        axis=0, as_index=False).sum()
 
         df.rename(columns={'piece_cost': 'pkg_cost'}, inplace=True)
 
-        key = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID'], df['start_year']))
+        key = pd.Series(zip(zip(df['sourceTypeID'], df['regClassID'], df['fuelTypeID']), df['optionID'], df['start_year']))
         df.set_index(key, inplace=True)
 
         self._dict = df.to_dict('index')
@@ -63,72 +68,21 @@ class RegclassCosts:
         """
 
         Parameters:
-            key: tuple; (engine_id, option_id, start_year).\n
+            key: tuple; (vehicle_id, option_id, start_year).\n
             attribute_name: str; the attribute name associated with the needed cost (e.g., 'pkg_cost').
 
         Returns:
-            The start_year package cost for the passed engine_id under the option_id option.
+            The package cost for the passed key and step.
 
         """
-        # step = cost_step
-        # if type(step) is not str:
-        #     step = f'{step}'
-
         return self._dict[key][attribute_name]
-
-    # def calc_avg_package_cost_per_step(self, settings, vehicle, cost_step):
-    #     """
-    #
-    #     Parameters:
-    #         settings: object; the SetInputs class object.
-    #
-    #     Returns:
-    #         Updates the sales object dictionary to include the year-over-year package costs, including learning
-    #         effects, associated with each cost step.
-    #
-    #     """
-    #     learning_rate = pd.to_numeric(settings.general_inputs.get_attribute_value('learning_rate'))
-    #     # costs_object = settings.regclass_costs
-    #     scalers_object = settings.regclass_learning_scalers
-    #
-    #     engine_id, option_id, modelyear_id = vehicle.engine_id, vehicle.option_id, vehicle.modelyear_id
-    #     key = (engine_id, option_id, modelyear_id)
-    #     cost_step = pd.to_numeric(cost_step)
-    #
-    #     pkg_cost = pkg_cost_learned = 0
-    #
-    #     if modelyear_id < cost_step:
-    #         pass
-    #     else:
-    #         sales_year1 \
-    #             = settings.cap.engine_sales(vehicle)
-    #
-    #         cumulative_sales \
-    #             = settings.cap.cumulative_engine_sales(vehicle, cost_step)
-    #
-    #         pkg_cost = self.get_cost((engine_id, option_id), cost_step)
-    #         seedvolume_factor = scalers_object.get_seedvolume_factor(engine_id, option_id)
-    #
-    #         try:
-    #             pkg_cost_learned = pkg_cost \
-    #                                * (((cumulative_sales + (sales_year1 * seedvolume_factor))
-    #                                    / (sales_year1 + (sales_year1 * seedvolume_factor))) ** learning_rate)
-    #         except ZeroDivisionError:
-    #             pass
-    #
-    #     update_dict = {'engine_id': vehicle.engine_id,
-    #                    'option_id': vehicle.option_id,
-    #                    'modelyear_id': vehicle.modelyear_id,
-    #                    f'cost_per_vehicle_{cost_step}': pkg_cost_learned}
-    #
-    #     self.update_package_costs_by_step(vehicle, update_dict)
 
     def update_package_cost_by_step(self, vehicle, update_dict):
         """
 
         Parameters:
             vehicle: object; a vehicle object of the Vehicles class.\n
-            input_dict: Dictionary; represents the attribute-value pairs to be updated.
+            update_dict: Dictionary; represents the attribute-value pairs to be updated.
 
         Returns:
             Updates the object dictionary with each attribute updated with the appropriate value.
@@ -137,7 +91,7 @@ class RegclassCosts:
             The method updates an existing key having attribute_name with attribute_value.
 
         """
-        key = vehicle.engine_id, vehicle.option_id, vehicle.modelyear_id
+        key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id
         if key in self.package_cost_by_step:
             for attribute_name, attribute_value in update_dict.items():
                 self.package_cost_by_step[key][attribute_name] = attribute_value

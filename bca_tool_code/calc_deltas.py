@@ -45,11 +45,13 @@ def calc_deltas(settings, data_object, options):
                          and 'Periods' not in k]
 
         if option_id != settings.no_action_alt:
-            delta_option_id = f'{option_id}{settings.no_action_alt}'
-            delta_option_id = int(delta_option_id)
-            option_name = options._dict[option_id]['optionName']
-            no_action_option_name = options._dict[settings.no_action_alt]['optionName']
-            delta_option_name = f'{option_name}_minus_{no_action_option_name}'
+            delta_option_id = options.create_option_id(option_id, settings.no_action_alt)
+            delta_option_name = options.create_option_name(option_id, settings.no_action_alt)
+            # delta_option_id = f'{option_id}{settings.no_action_alt}'
+            # delta_option_id = int(delta_option_id)
+            # option_name = options._dict[option_id]['optionName']
+            # no_action_option_name = options._dict[settings.no_action_alt]['optionName']
+            # delta_option_name = f'{option_name}_minus_{no_action_option_name}'
 
             if fleet_object_flag: # note that annual summary doesen't have vehicle_id data
                 update_dict_key = (vehicle_id, delta_option_id, modelyear_id, age_id, discount_rate)
@@ -91,7 +93,7 @@ def calc_deltas(settings, data_object, options):
             data_object.update_object_dict(update_dict_key, update_dict)
 
 
-def calc_deltas_weighted(settings, dict_for_deltas):
+def calc_deltas_weighted(settings, dict_for_deltas, options):
     """
     This function calculates deltas for action alternatives relative to the passed no action alternative specifically
     for the weighted cost per mile dictionaries.
@@ -99,6 +101,7 @@ def calc_deltas_weighted(settings, dict_for_deltas):
     Parameters:
         settings: object; the SetInputs class object. \n
         dict_for_deltas: Dictionary; contains values for calculating deltas.
+        options: object; the options object associated with the data_object.
 
     Returns:
         An updated dictionary containing deltas relative to the no_action_alt. OptionIDs (numeric) for the deltas will
@@ -119,8 +122,10 @@ def calc_deltas_weighted(settings, dict_for_deltas):
         args_to_delta = [k for k, v in dict_for_deltas[key].items() if k not in id_args]
 
         if option_id != settings.no_action_alt:
-            delta_option_id = f'{option_id}{settings.no_action_alt}'
-            delta_option_id = int(delta_option_id)
+            delta_option_id = options.create_option_id(option_id, settings.no_action_alt)
+            delta_option_name = options.create_option_name(option_id, settings.no_action_alt)
+            # delta_option_id = f'{option_id}{settings.no_action_alt}'
+            # delta_option_id = int(delta_option_id)
             delta_dict = dict()
             for arg in args_to_delta:
                 arg_value = dict_for_deltas[key][arg] - dict_for_deltas[(vehicle_id, settings.no_action_alt, modelyear_id)][arg]
@@ -128,7 +133,9 @@ def calc_deltas_weighted(settings, dict_for_deltas):
             for arg in id_args:
                 arg_value = dict_for_deltas[key][arg]
                 delta_dict.update({arg: arg_value})
-            delta_dict.update({'optionID': delta_option_id})
+            delta_dict.update({'optionID': delta_option_id,
+                               'optionName': delta_option_name,
+                               })
             update_dict[(vehicle_id, delta_option_id, modelyear_id)] = delta_dict
     dict_for_deltas.update(update_dict)
 

@@ -13,11 +13,11 @@ def calc_avg_package_cost_per_step(settings):
 
     """
     learning_rate = pd.to_numeric(settings.general_inputs.get_attribute_value('learning_rate'))
-    costs_object = settings.regclass_costs
-    scalers_object = settings.regclass_learning_scalers
+    costs_object = settings.engine_costs
+    scalers_object = settings.engine_learning_scalers
     sales_object = settings.regclass_sales
 
-    cost_steps = costs_object.cost_steps
+    cost_steps = costs_object.start_years
 
     for key in sales_object.age0_keys:
         unit, alt, model_year = key
@@ -62,7 +62,7 @@ def calc_package_costs_per_veh(settings, data_object):
         st, rc, ft = vehicle
         engine = rc, ft
 
-        cost_steps = settings.regclass_costs.cost_steps
+        cost_steps = settings.engine_costs.start_years
 
         if alt == 0:
             cost_step = cost_steps[0]

@@ -41,3 +41,35 @@ class Options:
 
         """
         return self._dict[alt]['optionName']
+
+    @staticmethod
+    def create_option_id(action_id, no_action_id):
+        """
+        Create a new option_id.
+
+        Parameters:
+            action_id: int; the action scenario option_id.
+            no_action_id: int; the no_action scenario option_id.
+
+        Returns:
+            An option_id number in the order of args.
+
+        """
+        return int(f'{action_id}{no_action_id}')
+
+    def create_option_name(self, action_id, no_action_id):
+        """
+        Create a new option name.
+
+        Parameters:
+            action_id: int; the action scenario option_id.
+            no_action_id: int; the no_action scenario option_id.
+
+        Returns:
+            An option_name based on the passed ids.
+
+        """
+        action_name = self.get_option_name(action_id)
+        no_action_name = self.get_option_name(no_action_id)
+
+        return f'{action_name}_minus_{no_action_name}'
