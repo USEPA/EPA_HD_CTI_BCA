@@ -53,7 +53,6 @@ def main():
             for start_year in settings.engine_costs.start_years:
                 settings.fleet_cap.cumulative_engine_sales(vehicle, start_year)
 
-        # print('Calculating package costs per implementation start year...')
         for vehicle in settings.fleet_cap.vehicles_age0:
             for start_year in settings.engine_costs.start_years:
                 cap_package_cost.calc_avg_package_cost_per_step(settings, vehicle, start_year)
@@ -67,77 +66,12 @@ def main():
             for start_year in settings.vehicle_costs.start_years:
                 settings.fleet_ghg.cumulative_vehicle_sales(vehicle, start_year)
 
-        # print('Calculating package costs per implementation start year...')
         for vehicle in settings.fleet_ghg.vehicles_age0:
             for start_year in settings.vehicle_costs.start_years:
                 ghg_package_cost.calc_avg_package_cost_per_step(settings, vehicle, start_year)
 
         ghg_costs = GhgCosts()
         ghg_costs.calc_ghg_costs(settings)
-
-        # calc_ghg_costs(settings)
-
-        # calculate package costs based on cumulative sales (learning is applied to cumulative sales)
-        # ghg_package_costs.calc_avg_package_cost_per_step(settings)
-        # ghg_package_costs.calc_package_costs_per_veh(settings, settings.fleet_ghg)
-        # ghg_package_costs.calc_package_costs(settings.fleet_ghg)
-        #
-        # ghg_fuel_costs.calc_fuel_costs(settings, settings.fleet_ghg)
-        # ghg_fuel_costs.calc_fuel_costs_per_veh(settings.fleet_ghg)
-        #
-        # # sum attributes in the attributes_to_sum dictionary
-        # for summed_attribute, sum_attributes in settings.fleet_ghg.attributes_to_sum.items():
-        #     bca_tool_code.sum_by_vehicle.calc_sum_of_costs(settings.fleet_ghg, summed_attribute, *sum_attributes)
-        #
-        # # calc GHG pollution effects, if applicable
-        # if settings.calc_ghg_pollution:
-        #     pass
-        #
-        # bca_tool_code.weighted_results.create_weighted_cost_dict(settings, settings.fleet_ghg,
-        #                                                          settings.wtd_ghg_fuel_cpm_dict,
-        #                                                          'FuelCost_Retail_PerMile', 'VMT_PerVeh')
-        #
-        # bca_tool_code.discounting.discount_values(settings, settings.fleet_ghg)
-        #
-        # # calc the annual summary, present values and annualized values (excluding cost/veh and cost/mile results)
-        # settings.annual_summary_ghg.annual_summary(settings, settings.fleet_ghg, settings.options_ghg)
-        #
-        # # calc deltas relative to the no-action scenario
-        # bca_tool_code.calc_deltas.calc_deltas(settings, settings.fleet_ghg)
-        # bca_tool_code.calc_deltas.calc_deltas(settings, settings.annual_summary_ghg)
-        #
-        # settings.wtd_ghg_fuel_cpm_dict \
-        #     = bca_tool_code.calc_deltas.calc_deltas_weighted(settings, settings.wtd_ghg_fuel_cpm_dict)
-
-    # pass dicts thru the vehicle_name and/or option_name function to add some identifiers and generate some figures
-    # if settings.calc_cap_costs:
-    #     # add option names using data objects
-    #     for obj in [settings.fleet_cap, settings.regclass_sales, settings.annual_summary_cap]:
-    #         bca_tool_code.vehicle.Vehicle().option_name(settings, settings.options_cap, data_object=obj, data_dict=None)
-    #
-    #     # add vehicle names using data objects (exclude annual summary objects)
-    #     for obj in [settings.fleet_cap, settings.regclass_sales]:
-    #         bca_tool_code.vehicle.Vehicle().vehicle_name(data_object=obj, data_dict=None)
-    #
-    #     # add option and vehicle names using data dictionaries
-    #     for obj in [settings.wtd_cap_fuel_cpm_dict, settings.wtd_repair_cpm_dict, settings.wtd_def_cpm_dict,
-    #                 settings.estimated_ages_dict, settings.repair_cpm_dict]:
-    #         bca_tool_code.vehicle.Vehicle().option_name(settings, settings.options_cap, data_object=None, data_dict=obj)
-    #         bca_tool_code.vehicle.Vehicle().vehicle_name(data_object=None, data_dict=obj)
-    #
-    # if settings.calc_ghg_costs:
-    #     # add option names using data objects
-    #     for obj in [settings.fleet_ghg, settings.sourcetype_sales, settings.annual_summary_ghg]:
-    #         bca_tool_code.vehicle.Vehicle().option_name(settings, settings.options_ghg, data_object=obj, data_dict=None)
-    #
-    #     # add vehicle names using data objects (exclude annual summary objects)
-    #     for obj in [settings.fleet_ghg, settings.sourcetype_sales]:
-    #         bca_tool_code.vehicle.Vehicle().vehicle_name(data_object=obj, data_dict=None)
-    #
-    #     # add option and vehicle names using data dictionaries
-    #     for obj in [settings.wtd_ghg_fuel_cpm_dict]:
-    #         bca_tool_code.vehicle.Vehicle().option_name(settings, settings.options_ghg, data_object=None, data_dict=obj)
-    #         bca_tool_code.vehicle.Vehicle().vehicle_name(data_object=None, data_dict=obj)
 
     end_time_calcs = start_time_outputs = time()
     elapsed_time_calcs = end_time_calcs - start_time_calcs
@@ -259,23 +193,6 @@ def main():
         # save DataFrames to CSV
         settings.vehicle_costs.piece_costs_in_analysis_dollars.to_csv(
             path_of_modified_inputs_folder / 'GHG_vehicle_costs.csv', index=False)
-        # header = settings.row_header_for_fleet_files
-        # gen_fxns.save_dict(settings.fleet_ghg._dict, path_of_run_results_folder / 'GHG_bca_tool_all',
-        #                    row_header=header, stamp=stamp, index=False)
-        #
-        # header = settings.row_header_for_annual_summary_files
-        # ghg_summary_df = gen_fxns.save_dict_return_df(settings.annual_summary_ghg._dict,
-        #                                               path_of_run_results_folder / 'GHG_bca_tool_annual_summary',
-        #                                               row_header=header, stamp=stamp, index=False)
-        #
-        # gen_fxns.save_dict(settings.sourcetype_sales._dict, path_of_run_results_folder / 'GHG_sales_and_costs_by_step',
-        #                    row_header=None, stamp=stamp, index=False)
-        # gen_fxns.save_dict(settings.wtd_ghg_fuel_cpm_dict, path_of_run_results_folder / 'GHG_vmt_weighted_fuel_cpm',
-        #                    row_header=None, stamp=stamp, index=True)
-        #
-        # # save DataFrames to CSV
-        # settings.sourcetype_costs.piece_costs_in_analysis_dollars.to_csv(
-        #     path_of_modified_inputs_folder / 'sourcetype_costs.csv', index=False)
 
         # create figures
         arg_list = ['TechCost', 'FuelCost_Pretax', 'TechAndOperatingCost']

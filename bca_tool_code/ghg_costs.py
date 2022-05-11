@@ -20,7 +20,7 @@ class GhgCosts:
         }
 
     def calc_ghg_costs(self, settings):
-        print('Calculating GHG costs...')
+        print('\nCalculating GHG costs...')
 
         discount_rate = 0
 

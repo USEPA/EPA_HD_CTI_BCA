@@ -150,7 +150,7 @@ class Fleet:
                and (v['modelYearID'] >= start_year and v['modelYearID'] <= vehicle.modelyear_id)
         ])
 
-        update_dict = {f'cumulative_engine_sales_{start_year}': sales}
+        update_dict = {f'cumulative_engine_sales_{start_year}_std': sales}
         self.update_object_dict(vehicle, vehicle.engine_id, update_dict)
 
         return sales
@@ -188,7 +188,7 @@ class Fleet:
             'sourceTypeName': vehicle.sourcetype_name,
             'regClassName': vehicle.regclass_name,
             'fuelTypeName': vehicle.fueltype_name,
-            f'cumulative_vehicle_sales_{start_year}': sales,
+            f'cumulative_vehicle_sales_{start_year}_std': sales,
         }
 
         self.update_object_dict(vehicle, vehicle.vehicle_id, update_dict)

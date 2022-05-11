@@ -199,7 +199,6 @@ class SetInputs:
 
             self.fleet_cap = Fleet()
             self.fleet_cap.create_cap_vehicles(self.no_action_alt, self.options_cap)
-            # self.fleet_cap.calc_cumulative_vehicle_vmt()
 
             self.engine_costs = EngineCosts()
             self.engine_costs.init_from_file(

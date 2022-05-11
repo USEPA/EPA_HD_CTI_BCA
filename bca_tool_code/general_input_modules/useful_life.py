@@ -12,6 +12,7 @@ class UsefulLife:
     """
     def __init__(self):
         self._dict = dict()
+        self.start_years = list()
 
     def init_from_file(self, filepath):
         """
@@ -35,6 +36,7 @@ class UsefulLife:
                      value_name=value_name
                      )
         df['start_year'] = pd.to_numeric(df['start_year'])
+        self.start_years = df['start_year'].unique()
 
         key = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID'], df['start_year'], df['period_id']))
         df.set_index(key, inplace=True)
@@ -48,11 +50,19 @@ class UsefulLife:
         """
 
         Parameters:
-            key: tuple; ((regclass_id, fueltype_id), option_id, period), where period is 'Miles' or 'Age'.\n
-            year_id: str; the year for which a value is sought.
+            key: tuple; ((regclass_id, fueltype_id), option_id, period), where period_id is
+            'Miles' or 'Age'.\n
+            attribute_name: str; the attribute name for which a value is sought (e.g., period_value).
 
         Returns:
-            A single value associated with the year_id for the given key.
+            A single value associated with the period_id for the given key.
 
         """
-        return self._dict[key][attribute_name]
+        engine_id, option_id, my_id, period_id = key
+        if my_id == min(self.start_years):
+            year = my_id
+        else:
+            year = max([int(year) for year in self.start_years if int(year) <= my_id])
+        new_key = (engine_id, option_id, year, period_id)
+
+        return self._dict[new_key][attribute_name]
