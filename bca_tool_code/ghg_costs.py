@@ -1,12 +1,11 @@
 import pandas as pd
 
-from bca_tool_code.ghg_modules.package_cost import calc_package_cost
-from bca_tool_code.ghg_modules.fuel_cost import calc_fuel_cost
-from bca_tool_code.sum_by_vehicle import calc_sum_of_costs
-from bca_tool_code.emission_cost import calc_criteria_emission_cost
-from bca_tool_code.weighted_results import create_weighted_cost_dict
-from bca_tool_code.discounting import discount_values
-from bca_tool_code.calc_deltas import calc_deltas, calc_deltas_weighted
+from bca_tool_code.vehicle_cost_modules.package_cost import calc_package_cost
+from bca_tool_code.operation_modules.fuel_cost import calc_fuel_cost
+from bca_tool_code.general_modules.sum_by_vehicle import calc_sum_of_costs
+from bca_tool_code.general_modules.weighted_results import create_weighted_cost_dict
+from bca_tool_code.general_modules.discounting import discount_values
+from bca_tool_code.general_modules.calc_deltas import calc_deltas, calc_deltas_weighted
 
 
 class GhgCosts:
@@ -56,7 +55,7 @@ class GhgCosts:
                 'Energy_KJ': veh.energy_kj,
                 'VMT': veh.vmt,
                 'VMT_PerVeh': veh.vmt_per_veh,
-                # 'VMT_PerVeh_Cumulative': veh.vmt_per_veh_cumulative,
+                'Odometer': veh.odometer,
                 'VPOP': veh.vpop,
                 'Gallons': veh.gallons,
             }
@@ -78,7 +77,8 @@ class GhgCosts:
         # calculate fuel cost for all vehicles
         for veh in settings.fleet_ghg.vehicles:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
-            fuel_cost_per_veh, retail_cost, pretax_cost, fuel_cost_per_mile = calc_fuel_cost(settings, veh)
+            fuel_cost_per_veh, retail_cost, pretax_cost, fuel_cost_per_mile, captured_gallons \
+                = calc_fuel_cost(settings, veh, thc_reduction=None)
             update_dict = {
                 'FuelCost_Retail_PerVeh': fuel_cost_per_veh,
                 'FuelCost_Retail_PerMile': fuel_cost_per_mile,
@@ -100,7 +100,7 @@ class GhgCosts:
             for veh in settings.fleet_ghg.vehicles:
                 key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
                 # update_dict = calc_ghg_emission_cost(settings, veh)
-                self.update_object_dict(key, update_dict)
+                # self.update_object_dict(key, update_dict)
 
         # calc some weighted cost per mile results
         arg = 'VMT_PerVeh'

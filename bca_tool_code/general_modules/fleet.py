@@ -1,6 +1,6 @@
 from sys import exit
 
-from bca_tool_code.vehicle import Vehicle
+from bca_tool_code.general_modules.vehicle import Vehicle
 
 
 class Fleet:
@@ -11,7 +11,7 @@ class Fleet:
         self.vehicles_age0 = list()
         self.vehicles_ft2 = list()
         self.vehicles_no_action = list()
-        self.cumulative_vmt_dict = dict()
+        self.typical_vmt_dict = dict() # used for estimating ages at certain events (see estimated_age_at_event module)
 
     def create_cap_vehicles(self, no_action_alt, options):
         print('Creating CAP vehicle objects...')
@@ -40,11 +40,8 @@ class Fleet:
             vehicle.voc_ustons = row['voc_ustons']
             vehicle.vpop = row['vpop']
             vehicle.vmt = row['vmt']
-            try:
-                vehicle.vmt_per_veh = vehicle.vmt / vehicle.vpop
-            except ZeroDivisionError:
-                vehicle.vmt_per_veh = 0
-            vehicle.vmt_per_veh_cumulative = 0
+            vehicle.vmt_per_veh = row['vmt_per_veh']
+            vehicle.odometer = row['odometer']
             vehicle.gallons = row['gallons']
 
             self.vehicles.append(vehicle)
@@ -80,11 +77,8 @@ class Fleet:
             vehicle.energy_kj = row['energy_kj']
             vehicle.vpop = row['vpop']
             vehicle.vmt = row['vmt']
-            try:
-                vehicle.vmt_per_veh = vehicle.vmt / vehicle.vpop
-            except ZeroDivisionError:
-                vehicle.vmt_per_veh = 0
-            # vehicle.vmt_per_veh_cumulative = 0
+            vehicle.vmt_per_veh = row['vmt_per_veh']
+            vehicle.odometer = row['odometer']
             vehicle.gallons = row['gallons']
 
             self.vehicles.append(vehicle)
@@ -201,37 +195,7 @@ class Fleet:
 
         return sales
 
-    def calc_cumulative_vehicle_vmt(self):
-        """
-        cumulative vehicle vmt
-        Parameters:
-            vehicle: object; an object of the Vehicle class.
-
-        Returns:
-            Updates the vehicle list with cumulative vmt and cumulative vmt per vehicle.
-
-        Note:
-            Cumulative vmt  is needed only in the full vehicle list, so subset lists are not updated.
-
-        """
-        print('Calculating cumulative vmt and cumulative vmt per vehicle...')
-        # this loop calculates the cumulative vmt for each key and saves it in the cumulative_vmt_dict
-        for v in self.vehicles:
-            age_last_year = v.age_id - 1
-            if (v.vehicle_id, v.option_id, v.modelyear_id, age_last_year) not in self.cumulative_vmt_dict:
-                cumulative_vmt_per_veh = v.vmt_per_veh
-            else:
-                cumulative_vmt_per_veh \
-                    = self.cumulative_vmt_dict[v.vehicle_id, v.option_id, v.modelyear_id, age_last_year] \
-                      + v.vmt_per_veh
-
-            self.cumulative_vmt_dict[v.vehicle_id, v.option_id, v.modelyear_id, v.age_id] = cumulative_vmt_per_veh
-
-        # this loop updates the vehicle list with the contents of the cumulative_vmt_dict
-        for v in self.vehicles:
-            v.vmt_per_veh_cumulative = self.cumulative_vmt_dict[v.vehicle_id, v.option_id, v.modelyear_id, v.age_id]
-
-    def calc_typical_vmt_per_year(self, settings, vehicle):
+    def get_typical_vmt_per_year(self, settings, vehicle):
         """
         This function calculates a typical annual VMT/vehicle over a set number of year_ids as set via the General Inputs
         workbook. This typical annual VMT/vehicle can then be used to estimate the ages at which warranty and useful life
@@ -250,15 +214,25 @@ class Fleet:
         """
         vmt_thru_age_id = int(settings.repair_and_maintenance.get_attribute_value('typical_vmt_thru_ageID'))
         year_max = settings.cap_vehicle.year_id_max
+        key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id
 
-        if vehicle.modelyear_id + vmt_thru_age_id <= year_max:
-            year = vehicle.modelyear_id
+        if key in self.typical_vmt_dict:
+            typical_vmt = self.typical_vmt_dict[key]
+
+        elif vehicle.modelyear_id <= year_max and vehicle.age_id == vmt_thru_age_id:
+            typical_vmt = vehicle.odometer / (vmt_thru_age_id + 1)
+            self.typical_vmt_dict[key] = typical_vmt
+
         else:
-            year = year_max - vmt_thru_age_id  # can't get appropriate cumulative VMT if modelyear+vmt_thru_age_id>year_id_max
-
-        cumulative_vmt = self.cumulative_vmt_dict[vehicle.vehicle_id, vehicle.option_id, year, vmt_thru_age_id]
-
-        typical_vmt = cumulative_vmt / (vmt_thru_age_id + 1)
+            # Note: can't get appropriate typical VMT if modelyear+vmt_thru_age_id>year_max
+            year = min(vehicle.modelyear_id, year_max - vmt_thru_age_id)
+            odometer = [v.odometer for v in self.vehicles
+                        if v.vehicle_id == vehicle.vehicle_id
+                        and v.option_id == vehicle.option_id
+                        and v.modelyear_id == year
+                        and v.age_id == vmt_thru_age_id][0]
+            typical_vmt = odometer / (vmt_thru_age_id + 1)
+            self.typical_vmt_dict[key] = typical_vmt
 
         return typical_vmt
 

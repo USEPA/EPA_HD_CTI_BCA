@@ -50,9 +50,9 @@ class Vehicle:
         self.n2o_ustons = 0
         self.energy_kj = 0
         self.vmt = 0
-        self.cumulative_vmt = 0
+        self.vmt_per_veh = 0
+        self.odometer = 0
         self.vpop = 0
-        self.vpop_with_tech = 0
         self.gallons = 0
 
     def set_vehicle_id(self):
@@ -245,143 +245,32 @@ class Vehicle:
                                   & (df_return['regclass_id'] == rc)
                                   & (df_return['fueltype_id'] == ft), f'{arg}'] = arg_with_tech
 
-        # if techpens:
-        #     vehicles = pd.Series(
-        #         zip(
-        #             zip(df_return['sourcetype_id'], df_return['regclass_id'], df_return['fueltype_id']),
-        #             df_return['option_id'])
-        #     ).unique()
-        #
-        #     # df_return_years = df_return['modelyear_id'].unique()
-        #     # start_years = techpens.get_techpen_years
-        #     for (vehicle, alt) in vehicles:
-        #         for modelyear_id in Vehicle.year_ids:
-        #             st, rc, ft = vehicle
-        #             techpen = techpens.get_attribute_value(vehicle, alt, modelyear_id)
-        #
-        #             for arg in self.attributes_for_techpens:
-        #                 arg_with_tech = df_return.loc[(df_return['option_id'] == alt)
-        #                                               & (df_return['sourcetype_id'] == st)
-        #                                               & (df_return['regclass_id'] == rc)
-        #                                               & (df_return['fueltype_id'] == ft)
-        #                                               & (df_return['modelyear_id'] == modelyear_id), arg] * techpen
-        #                 df_return.loc[(df_return['option_id'] == alt)
-        #                                & (df_return['sourcetype_id'] == st)
-        #                                & (df_return['regclass_id'] == rc)
-        #                                & (df_return['fueltype_id'] == ft)
-        #                                & (df_return['modelyear_id'] == modelyear_id), f'{arg}_with_tech'] = arg_with_tech
+        df_return.insert(len(df_return.columns), 'vmt_per_veh', df_return['vmt'] / df_return['vpop'])
+        odometer = self.calc_odometer(df_return)
 
-                # if program == 'CAP':
-                #     df_return.loc[(df_return['option_id'] == alt)
-                #                   & (df_return['sourcetype_id'] == st)
-                #                   & (df_return['regclass_id'] == rc)
-                #                   & (df_return['fueltype_id'] == ft), f'{arg}'] = arg_with_tech
-                # else:
-                #     df_return.loc[(df_return['option_id'] == alt)
-                #                   & (df_return['sourcetype_id'] == st)
-                #                   & (df_return['regclass_id'] == rc)
-                #                   & (df_return['fueltype_id'] == ft), f'{arg}_withTech'] = arg_with_tech
+        df_return.insert(len(df_return.columns), 'odometer', odometer)
 
         Vehicle.vehicle_df = df_return.copy()
 
-    
-# class Vehicles(Vehicle):
-#
-#
-#     def __init__(self):
-#         super().__init__()
-#
-#     @staticmethod
-#     def create_cap_vehicles():
-#         vehicles = list()
-#         for index, row in Vehicle._vehicle_df.iterrows():
-#             vehicle = Vehicle()
-#             vehicle.year_id = int(row['year_id'])
-#             vehicle.sourcetype_id = int(row['sourcetype_id'])
-#             vehicle.sourcetype_name = vehicle.get_sourcetype_name()
-#             vehicle.regclass_id = int(row['regclass_id'])
-#             vehicle.regclass_name = vehicle.get_regclass_name()
-#             vehicle.fueltype_id = int(row['fueltype_id'])
-#             vehicle.fueltype_name = vehicle.get_fueltype_name()
-#             vehicle.modelyear_id = int(row['modelyear_id'])
-#             vehicle.age_id = int(row['age_id'])
-#             vehicle.option_id = int(row['option_id'])
-#             vehicle.engine_id = vehicle.set_engine_id()
-#             vehicle.vehicle_id = vehicle.set_vehicle_id()
-#             vehicle.thc_ustons = row['thc_ustons']
-#             vehicle.nox_ustons = row['nox_ustons']
-#             vehicle.pm25_exhaust_ustons = row['pm25_exhaust_ustons']
-#             vehicle.pm25_brakewear_ustons = row['pm25_brakewear_ustons']
-#             vehicle.pm25_tirewear_ustons = row['pm25_tirewear_ustons']
-#             vehicle.pm25_ustons = row['pm25_ustons']
-#             vehicle.voc_ustons = row['voc_ustons']
-#             vehicle.vmt = row['vmt']
-#             vehicle.vpop = row['vpop']
-#             vehicle.gallons = row['gallons']
-#             try:
-#                 vehicle.vmt_with_tech = row['vmt_with_tech']
-#             except NotImplemented:
-#                 pass
-#             try:
-#                 vehicle.vpop_with_tech = row['vpop_with_tech']
-#             except NotImplemented:
-#                 pass
-#             try:
-#                 vehicle.gallons_with_tech = row['gallons_with_tech']
-#             except NotImplemented:
-#                 pass
-#             vehicles.append(vehicle)
-#         return vehicles
-#
-#     @staticmethod
-#     def create_ghg_vehicles():
-#         vehicles = list()
-#         for index, row in Vehicle._vehicle_df.iterrows():
-#             vehicle = Vehicle()
-#             vehicle.year_id = int(row['year_id'])
-#             vehicle.sourcetype_id = int(row['sourcetype_id'])
-#             vehicle.sourcetype_name = vehicle.get_sourcetype_name()
-#             vehicle.regclass_id = int(row['regclass_id'])
-#             vehicle.regclass_name = vehicle.get_regclass_name()
-#             vehicle.fueltype_id = int(row['fueltype_id'])
-#             vehicle.fueltype_name = vehicle.get_fueltype_name()
-#             vehicle.modelyear_id = int(row['modelyear_id'])
-#             vehicle.age_id = int(row['age_id'])
-#             vehicle.option_id = int(row['option_id'])
-#             vehicle.engine_id = vehicle.set_engine_id()
-#             vehicle.vehicle_id = vehicle.set_vehicle_id()
-#             vehicle.thc_ustons = row['thc_ustons']
-#             vehicle_co2_ustons = row['co2_ustons']
-#             vehicle.ch4_ustons = row['ch4_ustons']
-#             vehicle.n2o_ustons = row['n2o_ustons']
-#             vehicle.so2_ustons = row['so2_ustons']
-#             vehicle_energy_kj = row['energy_kj']
-#             vehicle.vmt = row['vmt']
-#             vehicle.vpop = row['vpop']
-#             vehicle.gallons = row['gallons']
-#             try:
-#                 vehicle.vmt_with_tech = row['vmt_with_tech']
-#             except NotImplemented:
-#                 pass
-#             try:
-#                 vehicle.vpop_with_tech = row['vpop_with_tech']
-#             except NotImplemented:
-#                 pass
-#             try:
-#                 vehicle.gallons_with_tech = row['gallons_with_tech']
-#             except NotImplemented:
-#                 pass
-#             vehicles.append(vehicle)
-#         return vehicles
-#
-#     # @staticmethod
-#     def engine_sales(self, regclass_id, fueltype_id, option_id, *modelyear_ids):
-#         _dict = dict()
-#         for modelyear_id in modelyear_ids:
-#             _dict[modelyear_id] = sum([vehicle.vpop for vehicle in self.vehicles
-#                                        if vehicle.regclass_id == regclass_id
-#                                        and vehicle.fueltype_id == fueltype_id
-#                                        and vehicle.option_id == option_id
-#                                        and vehicle.age_id == 0
-#                                        and vehicle.modelyear_id == modelyear_id])
-#         return _dict
+    @staticmethod
+    def calc_odometer(df):
+        """
+
+        Parameters:
+            df: DataFrame; vehicle level data containing vmt_per_veh information.
+
+        Returns:
+            A pandas Series of odometer data (cumulative vmt_per_vehicle).
+
+        """
+        temp = df.groupby(by=[
+            'sourcetype_id',
+            'regclass_id',
+            'fueltype_id',
+            'option_id',
+            'modelyear_id',
+        ]).cumsum(axis=0)
+
+        odometer = temp['vmt_per_veh']
+
+        return odometer

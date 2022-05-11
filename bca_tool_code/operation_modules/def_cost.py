@@ -20,40 +20,13 @@ def calc_def_doserate(settings, vehicle):
     return base_doserate
 
 
-def calc_nox_reduction(settings, vehicle):
-    """
-
-    Parameters:
-        settings: object; the SetInputs class object. \n
-        vehicle: object; an object of the Vehicle class.
-
-    Returns:
-        The NOx reduction for the passed vehicle.
-
-    Notes:
-        The nox_reduction calculation should be done such that it is positive if action has lower nox than no action.
-
-    """
-    if vehicle.option_id == settings.no_action_alt:
-        nox_reduction = 0
-    else:
-        nox_no_action = [v.nox_ustons for v in settings.fleet_cap.vehicles_no_action
-                         if v.vehicle_id == vehicle.vehicle_id
-                         and v.option_id == settings.no_action_alt
-                         and v.modelyear_id == vehicle.modelyear_id
-                         and v.age_id == vehicle.age_id][0]
-        nox_action = vehicle.nox_ustons
-        nox_reduction = nox_no_action - nox_action
-
-    return nox_reduction
-
-
-def calc_def_cost(settings, vehicle):
+def calc_def_cost(settings, vehicle, nox_reduction=None):
     """
 
     Parameters:
         settings: object; the SetInputs class object.\n
-        vehicle: object; an object of the Vehicle class.
+        vehicle: object; an object of the Vehicle class.\n
+        nox_reduction: numeric; the nox_reduction, if applicable, for the vehicle relative to its no_action state.
 
     Returns:
         The DEF cost per vehicle and DEF cost for the given vehicle object.
@@ -65,7 +38,7 @@ def calc_def_cost(settings, vehicle):
     def_price = settings.def_prices.get_price(vehicle.year_id)
     gallons_fuel = vehicle.gallons
     base_doserate = calc_def_doserate(settings, vehicle)
-    nox_reduction = calc_nox_reduction(settings, vehicle)
+    # nox_reduction = calc_nox_reduction(settings, vehicle)
 
     gallons_def = gallons_fuel * base_doserate + nox_reduction * def_gallons_per_ton_nox_reduction
     cost = def_price * gallons_def

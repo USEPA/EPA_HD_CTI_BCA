@@ -1,17 +1,20 @@
 import pandas as pd
 
-from bca_tool_code.cap_modules.package_cost import calc_package_cost
-from bca_tool_code.cap_modules.indirect_cost import calc_indirect_cost
-from bca_tool_code.cap_modules.tech_cost import calc_tech_cost
-from bca_tool_code.cap_modules.def_cost import calc_def_cost
-from bca_tool_code.cap_modules.fuel_cost import calc_fuel_cost
-from bca_tool_code.sum_by_vehicle import calc_sum_of_costs
-from bca_tool_code.emission_cost import calc_criteria_emission_cost
-from bca_tool_code.weighted_results import create_weighted_cost_dict
-from bca_tool_code.discounting import discount_values
-from bca_tool_code.calc_deltas import calc_deltas, calc_deltas_weighted
+from bca_tool_code.general_modules.sum_by_vehicle import calc_sum_of_costs
+from bca_tool_code.general_modules.emission_cost import calc_criteria_emission_cost
+from bca_tool_code.general_modules.weighted_results import create_weighted_cost_dict
+from bca_tool_code.general_modules.discounting import discount_values
+from bca_tool_code.general_modules.calc_deltas import calc_deltas, calc_deltas_weighted
+from bca_tool_code.general_modules.emission_reduction import calc_nox_reduction, calc_thc_reduction
 
-# TODO warranty and usefullife got messed up somehow on 5/10
+from bca_tool_code.engine_cost_modules.package_cost import calc_package_cost
+from bca_tool_code.engine_cost_modules.indirect_cost import calc_indirect_cost
+from bca_tool_code.engine_cost_modules.tech_cost import calc_tech_cost
+
+from bca_tool_code.operation_modules.def_cost import calc_def_cost
+from bca_tool_code.operation_modules.fuel_cost import calc_fuel_cost
+
+
 class CapCosts:
 
     def __init__(self):
@@ -63,7 +66,7 @@ class CapCosts:
                 'Energy_KJ': veh.energy_kj,
                 'VMT': veh.vmt,
                 'VMT_PerVeh': veh.vmt_per_veh,
-                'VMT_PerVeh_Cumulative': veh.vmt_per_veh_cumulative,
+                'Odometer': veh.odometer,
                 'VPOP': veh.vpop,
                 'Gallons': veh.gallons,
             }
@@ -113,7 +116,9 @@ class CapCosts:
         # calculate DEF cost for diesel fueled vehicles
         for veh in settings.fleet_cap.vehicles_ft2:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
-            def_cost_per_veh, def_cost, def_cost_per_mile, def_gallons = calc_def_cost(settings, veh)
+            nox_reduction = calc_nox_reduction(settings, veh)
+            def_cost_per_veh, def_cost, def_cost_per_mile, def_gallons \
+                = calc_def_cost(settings, veh, nox_reduction=nox_reduction)
             update_dict = {
                 'DEFCost_PerVeh': def_cost_per_veh,
                 'DEFCost_PerMile': def_cost_per_mile,
@@ -125,9 +130,11 @@ class CapCosts:
         # calculate fuel cost for all vehicles
         for veh in settings.fleet_cap.vehicles:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
+            thc_reduction = calc_thc_reduction(settings, veh)
             fuel_cost_per_veh, retail_cost, pretax_cost, fuel_cost_per_mile, captured_gallons \
-                = calc_fuel_cost(settings, veh)
+                = calc_fuel_cost(settings, veh, thc_reduction=thc_reduction)
             update_dict = {
+                'Gallons': veh.gallons - captured_gallons,
                 'GallonsCaptured_byORVR': captured_gallons,
                 'FuelCost_Retail_PerVeh': fuel_cost_per_veh,
                 'FuelCost_Retail_PerMile': fuel_cost_per_mile,

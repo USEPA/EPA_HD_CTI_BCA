@@ -9,21 +9,21 @@ import shutil
 from datetime import datetime
 from time import time
 
-import bca_tool_code.emission_costs
-import bca_tool_code.sum_by_vehicle
-import bca_tool_code.discounting
-import bca_tool_code.weighted_results
-import bca_tool_code.calc_deltas
-import bca_tool_code.vehicle
-import bca_tool_code.create_figures
+import bca_tool_code.general_modules.emission_cost
+import bca_tool_code.general_modules.sum_by_vehicle
+import bca_tool_code.general_modules.discounting
+import bca_tool_code.general_modules.weighted_results
+import bca_tool_code.general_modules.calc_deltas
+import bca_tool_code.general_modules.vehicle
+import bca_tool_code.general_modules.create_figures
 
 import bca_tool_code.general_input_modules.general_functions as gen_fxns
-import bca_tool_code.cap_modules.package_cost as cap_package_cost
-import bca_tool_code.ghg_modules.package_cost as ghg_package_cost
+import bca_tool_code.engine_cost_modules.package_cost as cap_package_cost
+import bca_tool_code.vehicle_cost_modules.package_cost as ghg_package_cost
 
 from bca_tool_code.tool_setup import SetInputs, SetPaths
-from bca_tool_code.cap_modules.cap_costs import CapCosts
-from bca_tool_code.ghg_modules.ghg_costs import GhgCosts
+from bca_tool_code.cap_costs import CapCosts
+from bca_tool_code.ghg_costs import GhgCosts
 
 
 def main():
@@ -226,7 +226,7 @@ def main():
 
         # create figures
         arg_list = ['TechCost', 'EmissionRepairCost', 'DEFCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
-        bca_tool_code.create_figures.CreateFigures(
+        bca_tool_code.general_modules.create_figures.CreateFigures(
             cap_summary_df, 'US Dollars', path_of_run_results_folder, 'CAP').create_figures(arg_list)
 
     if settings.calc_ghg_costs:
@@ -279,7 +279,7 @@ def main():
 
         # create figures
         arg_list = ['TechCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
-        bca_tool_code.create_figures.CreateFigures(
+        bca_tool_code.general_modules.create_figures.CreateFigures(
             ghg_summary_df, 'US Dollars', path_of_run_results_folder, 'GHG').create_figures(arg_list)
 
     # save additional DataFrames to CSV

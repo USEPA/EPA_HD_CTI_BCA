@@ -1,40 +1,13 @@
 import pandas as pd
 
 
-def calc_thc_reduction(settings, vehicle):
-    """
-
-    Parameters:
-        settings: object; the SetInputs class object. \n
-        vehicle: object; an object of the Vehicle class.
-
-    Returns:
-        The THC reduction for the given vehicle object.
-
-    Notes:
-        The thc_reduction calculation should be done such that it is positive if action has lower thc than no action.
-
-    """
-    if vehicle.option_id == settings.no_action_alt:
-        thc_reduction = 0
-    else:
-        thc_no_action = [v.thc_ustons for v in settings.fleet_cap.vehicles_no_action
-                         if v.vehicle_id == vehicle.vehicle_id
-                         and v.option_id == settings.no_action_alt
-                         and v.modelyear_id == vehicle.modelyear_id
-                         and v.age_id == vehicle.age_id][0]
-        thc_action = vehicle.thc_ustons
-        thc_reduction = thc_no_action - thc_action
-
-    return thc_reduction
-
-
-def calc_fuel_cost(settings, vehicle):
+def calc_fuel_cost(settings, vehicle, thc_reduction=None):
     """
 
     Parameters:
         settings: object; the SetInputs class object.\n
-        vehicle: object; an object of the Vehicle class.
+        vehicle: object; an object of the Vehicle class.\n
+        thc_reduction: numeric: the thc_reduction, if applicable, for the vehicle relative to its no_action state.
 
     Returns:
         Average retail fuel cost per vehicle, retail fuel cost, pretax fuel cost and retail cost per mile, and the
@@ -52,10 +25,9 @@ def calc_fuel_cost(settings, vehicle):
     prices = ['retail_fuel_price', 'pretax_fuel_price']
     price_retail, price_pretax = settings.fuel_prices.get_price(vehicle.year_id, vehicle.fueltype_id, *prices)
 
-    # calculate gallons that would have evaporated without new ORVR
-    if vehicle.fueltype_id == 1:
+    # calculate gallons that would have evaporated without new ORVR, if applicable
+    if thc_reduction and vehicle.fueltype_id == 1:
         orvr_adjustment = settings.orvr_fuelchanges_cap.get_ml_per_gram(vehicle.engine_id, vehicle.option_id)
-        thc_reduction = calc_thc_reduction(settings, vehicle)
         captured_gallons = thc_reduction * orvr_adjustment * grams_per_short_ton * gallons_per_ml
 
     gallons = vehicle.gallons

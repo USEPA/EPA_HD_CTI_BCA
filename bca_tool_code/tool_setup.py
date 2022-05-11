@@ -16,22 +16,23 @@ from bca_tool_code.general_input_modules.dollar_per_ton_cap import DollarPerTonC
 from bca_tool_code.general_input_modules.options import Options
 from bca_tool_code.general_input_modules.moves_adjustments import MovesAdjustments
 
-from bca_tool_code.vehicle import Vehicle
-from bca_tool_code.fleet import Fleet
-from bca_tool_code.estimated_age_at_event import EstimatedAge
-from bca_tool_code.annual_summary import AnnualSummary
+from bca_tool_code.general_modules.vehicle import Vehicle
+from bca_tool_code.general_modules.fleet import Fleet
+from bca_tool_code.general_modules.estimated_age_at_event import EstimatedAge
+from bca_tool_code.general_modules.annual_summary import AnnualSummary
 
-from bca_tool_code.cap_input_modules.engine_costs import EngineCosts
-from bca_tool_code.cap_input_modules.engine_learning_scalers import EngineLearningScalers
-from bca_tool_code.cap_input_modules.tech_penetrations import CapTechPenetrations
-from bca_tool_code.cap_input_modules.def_doserates import DefDoseRates
-from bca_tool_code.cap_input_modules.orvr_fuelchanges import OrvrFuelChanges
-from bca_tool_code.cap_input_modules.repair_and_maintenance import RepairAndMaintenance
-from bca_tool_code.cap_modules.repair_cost import EmissionRepairCost
+from bca_tool_code.engine_input_modules.engine_costs import EngineCosts
+from bca_tool_code.engine_input_modules.engine_learning_scalers import EngineLearningScalers
+from bca_tool_code.engine_input_modules.tech_penetrations import CapTechPenetrations
 
-from bca_tool_code.ghg_input_modules.vehicle_costs import VehicleCosts
-from bca_tool_code.ghg_input_modules.vehicle_learning_scalers import VehicleLearningScalers
-from bca_tool_code.ghg_input_modules.tech_penetrations import GhgTechPenetrations
+from bca_tool_code.vehicle_input_modules.vehicle_costs import VehicleCosts
+from bca_tool_code.vehicle_input_modules.vehicle_learning_scalers import VehicleLearningScalers
+from bca_tool_code.vehicle_input_modules.tech_penetrations import GhgTechPenetrations
+
+from bca_tool_code.operation_input_modules.def_doserates import DefDoseRates
+from bca_tool_code.operation_input_modules.orvr_fuelchanges import OrvrFuelChanges
+from bca_tool_code.operation_input_modules.repair_and_maintenance import RepairAndMaintenance
+from bca_tool_code.operation_modules.repair_cost import EmissionRepairCost
 
 
 class SetPaths:
@@ -198,7 +199,7 @@ class SetInputs:
 
             self.fleet_cap = Fleet()
             self.fleet_cap.create_cap_vehicles(self.no_action_alt, self.options_cap)
-            self.fleet_cap.calc_cumulative_vehicle_vmt()
+            # self.fleet_cap.calc_cumulative_vehicle_vmt()
 
             self.engine_costs = EngineCosts()
             self.engine_costs.init_from_file(
@@ -290,30 +291,6 @@ class SetInputs:
                 self.useful_life = UsefulLife()
                 self.useful_life.init_from_file(
                     set_paths.path_inputs / self.input_files.get_filename('useful_life'))
-
-            # self.fleet_ghg = Fleet()
-            # self.fleet_ghg.init_from_file(set_paths.path_inputs / self.input_files.get_filename('fleet_ghg'),
-            #                               self.general_inputs, 'GHG', self.options_ghg, self.moves_adj_ghg)
-            #
-            # self.sourcetype_costs = VehicleCosts()
-            # self.sourcetype_costs.init_from_file(set_paths.path_inputs / self.input_files.get_filename('sourcetype_costs'),
-            #                                      self.general_inputs, self.deflators)
-            #
-            # self.sourcetype_learning_scalers = VehicleLearningScalers()
-            # self.sourcetype_learning_scalers.init_from_file(set_paths.path_inputs / self.input_files.get_filename('sourcetype_learning_scalers'))
-            #
-            # # create additional and useful dicts and DataFrames
-            # self.sourcetype_sales = SourceTypeSales()
-            # self.sourcetype_sales.create_sourcetype_sales_dict(self.fleet_ghg, self.sourcetype_costs.start_years)
-            #
-
-
-        # self.row_header_for_fleet_files = ['yearID', 'modelYearID', 'ageID', 'optionID', 'OptionName',
-        #                                    'sourceTypeID', 'sourceTypeName', 'regClassID', 'regClassName', 'fuelTypeID',
-        #                                    'fuelTypeName',
-        #                                    'DiscountRate',
-        #                                    ]
-        # self.row_header_for_annual_summary_files = ['yearID', 'optionID', 'OptionName', 'DiscountRate']
 
         self.end_time_inputs = time()
         self.elapsed_time_inputs = self.end_time_inputs - self.start_time
