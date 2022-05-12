@@ -13,7 +13,7 @@ class EngineCosts:
     """
     def __init__(self):
         self._dict = dict()
-        self.start_years = list()
+        self.standardyear_ids = list()
         self.piece_costs_in_analysis_dollars = pd.DataFrame()
         self.package_cost_by_step = dict()
         self.value_name = 'piece_cost'
@@ -36,23 +36,25 @@ class EngineCosts:
         df = pd.melt(df,
                      id_vars=['optionID', 'regClassID', 'fuelTypeID', 'TechDescription', 'DollarBasis'],
                      value_vars=[col for col in df.columns if '20' in col],
-                     var_name='start_year',
+                     var_name='standardyear_id',
                      value_name=self.value_name)
 
-        df['start_year'] = pd.to_numeric(df['start_year'])
-        self.start_years = df['start_year'].unique()
+        df['standardyear_id'] = pd.to_numeric(df['standardyear_id'])
+        self.standardyear_ids = df['standardyear_id'].unique()
 
         df = deflators.convert_dollars_to_analysis_basis(general_inputs, df, self.value_name)
 
         self.piece_costs_in_analysis_dollars = df.copy()
 
         df.drop(columns='DollarBasis', inplace=True)
-        df = df.groupby(by=['optionID', 'regClassID', 'fuelTypeID', 'start_year'],
+        df = df.groupby(by=['optionID', 'regClassID', 'fuelTypeID', 'standardyear_id'],
                         axis=0, as_index=False).sum()
 
         df.rename(columns={'piece_cost': 'pkg_cost'}, inplace=True)
 
-        key = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID'], df['start_year']))
+        key = pd.Series(zip(
+            zip(df['regClassID'], df['fuelTypeID']),
+            df['optionID'], df['standardyear_id']))
         df.set_index(key, inplace=True)
 
         self._dict = df.to_dict('index')
@@ -97,7 +99,7 @@ class EngineCosts:
             for attribute_name, attribute_value in update_dict.items():
                 self.package_cost_by_step[key].update({attribute_name: attribute_value})
 
-    def get_package_cost_by_step(self, key, *attribute_names):
+    def get_package_cost_by_standardyear_id(self, key, *attribute_names):
         """
 
         Parameters:

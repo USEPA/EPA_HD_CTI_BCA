@@ -50,11 +50,11 @@ def main():
             settings.fleet_cap.engine_sales(vehicle)
 
         for vehicle in settings.fleet_cap.vehicles_age0:
-            for start_year in settings.engine_costs.start_years:
+            for start_year in settings.engine_costs.standardyear_ids:
                 settings.fleet_cap.cumulative_engine_sales(vehicle, start_year)
 
         for vehicle in settings.fleet_cap.vehicles_age0:
-            for start_year in settings.engine_costs.start_years:
+            for start_year in settings.engine_costs.standardyear_ids:
                 cap_package_cost.calc_avg_package_cost_per_step(settings, vehicle, start_year)
 
         cap_costs = CapCosts()
@@ -63,11 +63,11 @@ def main():
     if settings.calc_ghg_costs:
 
         for vehicle in settings.fleet_ghg.vehicles_age0:
-            for start_year in settings.vehicle_costs.start_years:
+            for start_year in settings.vehicle_costs.standardyear_ids:
                 settings.fleet_ghg.cumulative_vehicle_sales(vehicle, start_year)
 
         for vehicle in settings.fleet_ghg.vehicles_age0:
-            for start_year in settings.vehicle_costs.start_years:
+            for start_year in settings.vehicle_costs.standardyear_ids:
                 ghg_package_cost.calc_avg_package_cost_per_step(settings, vehicle, start_year)
 
         ghg_costs = GhgCosts()

@@ -146,6 +146,7 @@ class SetInputs:
 
         self.input_files = InputFiles()
         self.input_files.init_from_file(set_paths.path_inputs / 'Input_Files.csv')
+        # self.input_files.init_from_file(set_paths.path_inputs / 'TEST_Input_Files.csv')
 
         self.general_inputs = GeneralInputs()
         self.general_inputs.init_from_file(set_paths.path_inputs / self.input_files.get_filename('bca_inputs'))
