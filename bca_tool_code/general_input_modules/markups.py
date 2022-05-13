@@ -12,6 +12,7 @@ class Markups:
     """
     def __init__(self):
         self._dict = dict()
+        self.contribution_factors = dict()
         self.markup_factor_names = list()
 
     def init_from_file(self, filepath):
@@ -65,3 +66,24 @@ class Markups:
             values_list.append(self.get_attribute_value(key, attribute_name))
 
         return values_list
+
+    def update_contribution_factors(self, vehicle, update_dict):
+        """
+
+        Parameters:
+            vehicle: object; a vehicle object of the Vehicles class.\n
+            update_dict: Dictionary; represents the attribute-value pairs to be updated.
+
+        Returns:
+            Updates the object dictionary with each attribute updated with the appropriate value.
+
+        """
+        key = vehicle.engine_id, vehicle.option_id, vehicle.modelyear_id
+        if key in self.contribution_factors:
+            for attribute_name, attribute_value in update_dict.items():
+                self.contribution_factors[key][attribute_name] = attribute_value
+
+        else:
+            self.contribution_factors.update({key: {}})
+            for attribute_name, attribute_value in update_dict.items():
+                self.contribution_factors[key].update({attribute_name: attribute_value})

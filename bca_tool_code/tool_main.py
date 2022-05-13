@@ -127,6 +127,11 @@ def main():
             row_header=None, stamp=stamp, index=False
         )
         gen_fxns.save_dict(
+            settings.markups.contribution_factors,
+            path_of_run_results_folder / 'CAP_indirect_cost_details',
+            row_header=None, stamp=stamp, index=False
+        )
+        gen_fxns.save_dict(
             settings.wtd_cap_fuel_cpm_dict,
             path_of_run_results_folder / 'CAP_vmt_weighted_fuel_cpm',
             row_header=None, stamp=stamp, index=True

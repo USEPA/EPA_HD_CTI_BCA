@@ -85,9 +85,6 @@ class EngineCosts:
         Returns:
             Updates the object dictionary with each attribute updated with the appropriate value.
 
-        Note:
-            The method updates an existing key having attribute_name with attribute_value.
-
         """
         key = vehicle.engine_id, vehicle.option_id, vehicle.modelyear_id
         if key in self.package_cost_by_step:
