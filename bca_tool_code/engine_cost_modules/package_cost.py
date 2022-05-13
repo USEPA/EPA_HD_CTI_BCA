@@ -19,7 +19,7 @@ def calc_avg_package_cost_per_step(settings, vehicle, standardyear_id):
     engine_id, option_id, modelyear_id = vehicle.engine_id, vehicle.option_id, vehicle.modelyear_id
     key = (engine_id, option_id, modelyear_id)
 
-    pkg_cost = techpen = pkg_cost_learned = pkg_applied_cost_learned = 0
+    pkg_cost = techpen = pkg_cost_learned = pkg_applied_cost_learned = learning_effect = 0
 
     if modelyear_id < standardyear_id:
         pass
@@ -39,9 +39,10 @@ def calc_avg_package_cost_per_step(settings, vehicle, standardyear_id):
         seedvolume_factor = settings.engine_learning_scalers.get_seedvolume_factor(engine_id, option_id)
 
         if sales_year1 + (sales_year1 * seedvolume_factor) != 0:
-            pkg_cost_learned = pkg_cost \
-                               * ((cumulative_sales + (sales_year1 * seedvolume_factor))
-                                  / (sales_year1 + (sales_year1 * seedvolume_factor))) ** learning_rate
+            learning_effect = ((cumulative_sales + (sales_year1 * seedvolume_factor))
+                               / (sales_year1 + (sales_year1 * seedvolume_factor))) ** learning_rate
+
+            pkg_cost_learned = pkg_cost * learning_effect
             pkg_applied_cost_learned = pkg_cost_learned * techpen
         else:
             pass
@@ -55,6 +56,7 @@ def calc_avg_package_cost_per_step(settings, vehicle, standardyear_id):
         'optionName': vehicle.option_name,
         'regClassName': vehicle.regclass_name,
         'fuelTypeName': vehicle.fueltype_name,
+        f'learning_effect_{standardyear_id}_std': learning_effect,
         f'tech_cost_per_vehicle_{standardyear_id}_std': pkg_cost_learned,
         f'techpen_{standardyear_id}_std': techpen,
         f'tech_applied_cost_per_vehicle_{standardyear_id}_std': pkg_applied_cost_learned,
