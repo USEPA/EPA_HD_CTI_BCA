@@ -31,7 +31,7 @@ class EmissionRepairCost:
 
         # calculate estimated ages at which warranty and useful life will occur
         warranty_estimated_age, usefullife_estimated_age \
-            = settings.estimated_age.calc_estimated_age(settings, vehicle, typical_vmt, 'Warranty', 'UsefulLife')
+            = settings.estimated_age.calc_estimated_age(settings, vehicle, typical_vmt)
 
         in_warranty_cpm = in_warranty_cpm_input_value * emission_repair_share_input_value * direct_cost_scaler
         at_usefullife_cpm = at_usefullife_cpm_input_value * emission_repair_share_input_value * direct_cost_scaler

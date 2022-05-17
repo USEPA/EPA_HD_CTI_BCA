@@ -2,21 +2,21 @@ class EstimatedAge:
 
     def __init__(self):
         self.estimated_ages_dict = dict()
+        self.identifiers = ['Warranty', 'UsefulLife']
 
-    def calc_estimated_age(self, settings, vehicle, typical_vmt, *identifiers):
+    def calc_estimated_age(self, settings, vehicle, typical_vmt):
         """
 
         Parameters:
             settings: object; the SetInputs class object.\n
             vehicle: object; an object of the Vehicle class.\n
-            typical_vmt: numeric; the typical annual VMT/vehicle over a set number of year_ids as set via the General Inputs
-            workbook (see calc_typical_vmt_per_year function).
-            identifiers: str(s); the event identifier (e.g., warranty, useful life)
+            typical_vmt: numeric; the typical annual VMT/vehicle over a set number of year_ids as set via the General
+            Inputs file (see calc_typical_vmt_per_year function).
 
         Returns:
             Updates the estimated ages dictionary with the ages at which an event (e.g., warranty, useful life) will be
             reached for the given vehicle.
-            Returns estimated ages for passed identifiers as a list.
+            Returns estimated ages for identifiers as a list.
 
         """
         miles_and_ages_dict = {'Warranty': settings.warranty,
@@ -24,7 +24,7 @@ class EstimatedAge:
                                }
 
         return_list = list()
-        for identifier in identifiers:
+        for identifier in self.identifiers:
             miles_and_ages = miles_and_ages_dict[identifier]
             estimated_ages_dict_key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, identifier
 
