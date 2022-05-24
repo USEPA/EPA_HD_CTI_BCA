@@ -18,8 +18,8 @@ import bca_tool_code.general_modules.vehicle
 import bca_tool_code.general_modules.create_figures
 
 import bca_tool_code.general_input_modules.general_functions as gen_fxns
-import bca_tool_code.engine_cost_modules.package_cost as cap_package_cost
-import bca_tool_code.vehicle_cost_modules.package_cost as ghg_package_cost
+import bca_tool_code.engine_cost_modules.engine_package_cost as cap_package_cost
+import bca_tool_code.vehicle_cost_modules.vehicle_package_cost as ghg_package_cost
 
 from bca_tool_code.tool_setup import SetInputs, SetPaths
 from bca_tool_code.cap_costs import CapCosts
@@ -216,29 +216,52 @@ def main():
     end_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')
     elapsed_time = end_time - settings.start_time
 
+    # create and save a summary log for the run
     summary_log = pd.DataFrame(
-        data={'Item': ['Version', 'Run folder',
-                       'Calc CAP costs', 'Calc CAP pollution',
-                       'Calc GHG costs', 'Calc GHG pollution',
-                       'Start of run', 'End of run',
-                       'Elapsed time read inputs', 'Elapsed time calculations',
-                       'Elapsed time save outputs', 'Elapsed runtime',
-                       ],
-              'Results': [bca_tool_code.__version__, path_of_run_folder,
-                          settings.calc_cap_costs, settings.calc_cap_pollution,
-                          settings.calc_ghg_costs, settings.calc_ghg_pollution,
-                          settings.start_time_readable, end_time_readable,
-                          settings.elapsed_time_inputs, elapsed_time_calcs,
-                          elapsed_time_outputs, elapsed_time,
-                          ],
-              'Units': ['', '',
-                        '', '',
-                        '', '',
-                        'YYYYmmdd-HHMMSS', 'YYYYmmdd-HHMMSS',
-                        'seconds', 'seconds',
-                        'seconds', 'seconds',
-                        ]
-              })
+        data={
+            'Item': [
+                'Version',
+                'Run folder',
+                'Calc CAP costs',
+                'Calc CAP pollution',
+                'Calc GHG costs',
+                'Calc GHG pollution',
+                'Start of run',
+                'End of run',
+                'Elapsed time read inputs',
+                'Elapsed time calculations',
+                'Elapsed time save outputs',
+                'Elapsed runtime',
+            ],
+            'Results': [
+                bca_tool_code.__version__,
+                path_of_run_folder,
+                settings.calc_cap_costs,
+                settings.calc_cap_pollution,
+                settings.calc_ghg_costs,
+                settings.calc_ghg_pollution,
+                settings.start_time_readable,
+                end_time_readable,
+                settings.elapsed_time_inputs,
+                elapsed_time_calcs,
+                elapsed_time_outputs,
+                elapsed_time,
+            ],
+            'Units': [
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                'YYYYmmdd-HHMMSS',
+                'YYYYmmdd-HHMMSS',
+                'seconds',
+                'seconds',
+                'seconds',
+                'seconds',
+            ]
+        })
     summary_log = pd.concat([summary_log, gen_fxns.get_file_datetime(settings.input_files_pathlist)],
                             axis=0, sort=False, ignore_index=True)
     summary_log.to_csv(path_of_run_results_folder / f'summary_log_{stamp}.csv', index=False)

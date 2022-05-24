@@ -203,7 +203,7 @@ class SetInputs:
 
             self.engine_costs = EngineCosts()
             self.engine_costs.init_from_file(
-                set_paths.path_inputs / self.input_files.get_filename('engine_costs'),
+                set_paths.path_inputs / self.input_files.get_filename('engine_costs_cap'),
                 self.general_inputs, self.deflators)
 
             self.engine_learning_scalers = EngineLearningScalers()
@@ -267,7 +267,7 @@ class SetInputs:
 
             self.vehicle_costs = VehicleCosts()
             self.vehicle_costs.init_from_file(
-                set_paths.path_inputs / self.input_files.get_filename('vehicle_costs'),
+                set_paths.path_inputs / self.input_files.get_filename('vehicle_costs_ghg'),
                 self.general_inputs, self.deflators)
 
             self.vehicle_learning_scalers = VehicleLearningScalers()

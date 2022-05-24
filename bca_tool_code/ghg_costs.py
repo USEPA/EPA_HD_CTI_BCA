@@ -1,6 +1,6 @@
 import pandas as pd
 
-from bca_tool_code.vehicle_cost_modules.package_cost import calc_package_cost
+from bca_tool_code.vehicle_cost_modules.vehicle_package_cost import calc_package_cost
 from bca_tool_code.operation_modules.fuel_cost import calc_fuel_cost
 from bca_tool_code.general_modules.sum_by_vehicle import calc_sum_of_costs
 from bca_tool_code.general_modules.weighted_results import create_weighted_cost_dict

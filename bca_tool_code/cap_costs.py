@@ -7,7 +7,7 @@ from bca_tool_code.general_modules.discounting import discount_values
 from bca_tool_code.general_modules.calc_deltas import calc_deltas, calc_deltas_weighted
 from bca_tool_code.general_modules.emission_reduction import calc_nox_reduction, calc_thc_reduction
 
-from bca_tool_code.engine_cost_modules.package_cost import calc_package_cost
+from bca_tool_code.engine_cost_modules.engine_package_cost import calc_package_cost
 from bca_tool_code.engine_cost_modules.indirect_cost import calc_indirect_cost
 from bca_tool_code.engine_cost_modules.tech_cost import calc_tech_cost
 

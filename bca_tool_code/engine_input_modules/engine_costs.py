@@ -7,8 +7,8 @@ from bca_tool_code.general_input_modules.input_files import InputFiles
 class EngineCosts:
     """
 
-    The EngineCosts class reads the engine_costs input file and converts all dollar values to dollar_basis_analysis
-    dollars and provides methods to query the data.
+    The EngineCosts class reads the appropriate engine_costs input file and converts all dollar values to
+    dollar_basis_analysis dollars and provides methods to query the data.
 
     """
     def __init__(self):
