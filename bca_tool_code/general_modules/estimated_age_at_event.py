@@ -35,6 +35,10 @@ class EstimatedAge:
                 = miles_and_ages.get_attribute_value((vehicle.engine_id, vehicle.option_id, vehicle.modelyear_id, 'Miles'),
                                                      'period_value')
 
+            if identifier == 'Warranty' and (vehicle.engine_id, vehicle.option_id) in settings.warranty_extended._dict:
+                extended_miles = settings.warranty_extended.get_required_miles_with_share(vehicle)
+                required_miles = max(required_miles, extended_miles)
+
             calculated_age = round(required_miles / typical_vmt)
             estimated_age = min(required_age, calculated_age)
             self.estimated_ages_dict[estimated_ages_dict_key] = ({

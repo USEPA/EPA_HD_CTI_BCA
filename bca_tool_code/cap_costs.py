@@ -23,7 +23,8 @@ class CapCosts:
             'OperatingCost': ['DEFCost', 'FuelCost_Pretax', 'EmissionRepairCost'],
             'TechAndOperatingCost': ['TechCost', 'OperatingCost'],
             'OperatingCost_Owner_PerMile': ['DEFCost_PerMile', 'FuelCost_Retail_PerMile', 'EmissionRepairCost_PerMile'],
-            'OperatingCost_Owner_PerVeh': ['DEFCost_PerVeh', 'FuelCost_Retail_PerVeh', 'EmissionRepairCost_PerVeh']
+            'OperatingCost_Owner_PerVeh': ['DEFCost_PerVeh', 'FuelCost_Retail_PerVeh', 'EmissionRepairCost_PerVeh'],
+            'TechAndOperatingCost_PerVeh': ['TechCost_PerVeh', 'OperatingCost_Owner_PerVeh'],
         }
 
     def calc_cap_costs(self, settings):
@@ -80,11 +81,17 @@ class CapCosts:
             direct_applied_cost_per_veh, direct_cost, pkg_cost_per_veh = calc_package_cost(settings, veh)
 
             indirect_cost_dict = calc_indirect_cost(settings, veh, direct_applied_cost_per_veh)
+            # warranty_base_cost_per_veh = indirect_cost_dict['Warranty_Base_cost_per_veh']
+            # warranty_extended_cost_per_veh = indirect_cost_dict['Warranty_Extended_cost_per_veh']
+            # warranty_cost_per_veh = warranty_base_cost_per_veh + warranty_extended_cost_per_veh
             warranty_cost_per_veh = indirect_cost_dict['Warranty_cost_per_veh']
             rnd_cost_per_veh = indirect_cost_dict['RnD_cost_per_veh']
             other_cost_per_veh = indirect_cost_dict['Other_cost_per_veh']
             profit_cost_per_veh = indirect_cost_dict['Profit_cost_per_veh']
             indirect_cost_per_veh = indirect_cost_dict['ic_sum_per_veh']
+            # warranty_base_cost = indirect_cost_dict['Warranty_Base_cost']
+            # warranty_extended_cost = indirect_cost_dict['Warranty_Extended_cost']
+            # warranty_cost = warranty_base_cost + warranty_extended_cost
             warranty_cost = indirect_cost_dict['Warranty_cost']
             rnd_cost = indirect_cost_dict['RnD_cost']
             other_cost = indirect_cost_dict['Other_cost']
@@ -97,6 +104,8 @@ class CapCosts:
             update_dict = {
                 'PackageCost_PerVeh': pkg_cost_per_veh,
                 'DirectCost_PerVeh': direct_applied_cost_per_veh,
+                # 'WarrantyBaseCost_PerVeh': warranty_base_cost_per_veh,
+                # 'WarrantyExtendedCost_PerVeh': warranty_extended_cost_per_veh,
                 'WarrantyCost_PerVeh': warranty_cost_per_veh,
                 'RnDCost_PerVeh': rnd_cost_per_veh,
                 'OtherCost_PerVeh': other_cost_per_veh,
@@ -104,6 +113,8 @@ class CapCosts:
                 'IndirectCost_PerVeh': indirect_cost_per_veh,
                 'TechCost_PerVeh': tech_cost_per_veh,
                 'DirectCost': direct_cost,
+                # 'WarrantyBaseCost': warranty_base_cost,
+                # 'WarrantyExtendedCost': warranty_extended_cost,
                 'WarrantyCost': warranty_cost,
                 'RnDCost': rnd_cost,
                 'OtherCost': other_cost,
@@ -251,6 +262,8 @@ class CapCosts:
         new_attributes = [
             'PackageCost_PerVeh',
             'DirectCost_PerVeh',
+            # 'WarrantyBaseCost_PerVeh',
+            # 'WarrantyExtendedCost_PerVeh',
             'WarrantyCost_PerVeh',
             'RnDCost_PerVeh',
             'OtherCost_PerVeh',
@@ -265,7 +278,10 @@ class CapCosts:
             'EmissionRepairCost_PerVeh',
             'OperatingCost_Owner_PerMile',
             'OperatingCost_Owner_PerVeh',
+            'TechAndOperatingCost_PerVeh',
             'DirectCost',
+            # 'WarrantyBaseCost',
+            # 'WarrantyExtendedCost',
             'WarrantyCost',
             'RnDCost',
             'OtherCost',

@@ -55,7 +55,7 @@ class Markups:
         """
 
         Parameters:
-            key: tuple; (fueltype_id, option_id, markup_factor), where markup_factor is, e.g., 'Warranty', RnD'.
+            key: tuple; (fueltype_id, option_id, markup_factor), where markup_factor is, e.g., 'Warranty', 'RnD'.
 
         Returns:
             A list of values for the given key.

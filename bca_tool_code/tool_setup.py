@@ -11,6 +11,7 @@ from bca_tool_code.general_input_modules.fuel_prices import FuelPrices
 from bca_tool_code.general_input_modules.def_prices import DefPrices
 from bca_tool_code.general_input_modules.markups import Markups
 from bca_tool_code.general_input_modules.warranty import Warranty
+from bca_tool_code.general_input_modules.warranty_extended import WarrantyExtended
 from bca_tool_code.general_input_modules.useful_life import UsefulLife
 from bca_tool_code.general_input_modules.dollar_per_ton_cap import DollarPerTonCAP
 from bca_tool_code.general_input_modules.options import Options
@@ -217,6 +218,10 @@ class SetInputs:
             self.warranty = Warranty()
             self.warranty.init_from_file(
                 set_paths.path_inputs / self.input_files.get_filename('warranty'))
+
+            self.warranty_extended = WarrantyExtended()
+            self.warranty_extended.init_from_file(
+                set_paths.path_inputs / self.input_files.get_filename('warranty_extended'))
 
             self.useful_life = UsefulLife()
             self.useful_life.init_from_file(

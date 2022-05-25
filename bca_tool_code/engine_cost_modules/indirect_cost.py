@@ -75,6 +75,9 @@ def calc_indirect_cost(settings, vehicle, pkg_cost):
     return_dict = dict()
     for markup_factor in markup_factors:
         markup_value = calc_project_markup_value(settings, vehicle, markup_factor)
+        if markup_factor == 'Warranty' and (vehicle.engine_id, vehicle.option_id) in settings.warranty_extended._dict:
+            extended_warranty_scaler = settings.warranty_extended.get_scaler(vehicle)
+            markup_value += markup_value * extended_warranty_scaler
         cost_per_veh = markup_value * pkg_cost
         ic_sum_per_veh += cost_per_veh
         return_dict.update({
