@@ -151,9 +151,14 @@ def main():
             path_of_run_results_folder / 'CAP_estimated_ages',
             row_header=None, stamp=stamp, index=False
         )
+        # gen_fxns.save_dict(
+        #     settings.emission_repair_cost.repair_cpm_dict,
+        #     path_of_run_results_folder / 'CAP_repair_cpm_details',
+        #     row_header=None, stamp=stamp, index=False
+        # )
         gen_fxns.save_dict(
-            settings.emission_repair_cost.repair_cpm_dict,
-            path_of_run_results_folder / 'CAP_repair_cpm_details',
+            settings.emission_repair_cost.repair_cost_details,
+            path_of_run_results_folder / 'CAP_repair_cost_details',
             row_header=None, stamp=stamp, index=False
         )
 

@@ -62,7 +62,7 @@ class WarrantyExtended:
 
         return scaler
 
-    def get_required_miles_with_share(self, vehicle):
+    def get_required_miles_with_share(self, engine_id, option_id):
         """
 
         Parameters:
@@ -72,7 +72,7 @@ class WarrantyExtended:
             The extended warranty miles multiplied by the share with extended warranty.
 
         """
-        engine_id, option_id = vehicle.engine_id, vehicle.option_id
+        # engine_id, option_id = vehicle.engine_id, vehicle.option_id
         key = engine_id, option_id
         extended_miles = self._dict[key]['Extended']
         share = self._dict[key]['Share']

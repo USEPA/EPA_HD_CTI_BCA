@@ -75,10 +75,60 @@ def calc_indirect_cost(settings, vehicle, pkg_cost):
     return_dict = dict()
     for markup_factor in markup_factors:
         markup_value = calc_project_markup_value(settings, vehicle, markup_factor)
-        if markup_factor == 'Warranty' and (vehicle.engine_id, vehicle.option_id) in settings.warranty_extended._dict:
-            extended_warranty_scaler = settings.warranty_extended.get_scaler(vehicle)
-            markup_value += markup_value * extended_warranty_scaler
         cost_per_veh = markup_value * pkg_cost
+        ic_sum_per_veh += cost_per_veh
+        return_dict.update({
+            'optionID': vehicle.option_id,
+            'engineID': vehicle.engine_id,
+            'regClassID': vehicle.regclass_id,
+            'fuelTypeID': vehicle.fueltype_id,
+            'modelYearID': vehicle.modelyear_id,
+            'optionName': vehicle.option_name,
+            'regClassName': vehicle.regclass_name,
+            'fuelTypeName': vehicle.fueltype_name,
+            f'{markup_factor}_cost_per_veh': cost_per_veh,
+            f'{markup_factor}_factor': markup_value,
+        })
+    return_dict.update({
+        'ic_sum_per_veh': ic_sum_per_veh,
+        'effective_markup': (pkg_cost + ic_sum_per_veh) / pkg_cost
+    })
+    settings.markups.update_contribution_factors(vehicle, return_dict)
+
+    for markup_factor in markup_factors:
+        cost = return_dict[f'{markup_factor}_cost_per_veh'] * vehicle.vpop
+        ic_sum += cost
+        return_dict.update({f'{markup_factor}_cost': cost})
+    return_dict.update({'ic_sum': ic_sum})
+
+    return return_dict
+
+
+def calc_indirect_cost_new_warranty(settings, vehicle, pkg_cost):
+    """
+
+    Parameters:
+        settings: object; the SetInputs class object.\n
+        vehicle: object; an object of the Vehicle class.
+        pkg_cost: numeric; the direct manufacturing cost for the given vehicle.
+
+    Returns:
+        A dictionary of indirect cost contributors and their values.
+
+    """
+    markup_factors = settings.markups.markup_factor_names
+
+    ic_sum_per_veh = 0
+    ic_sum = 0
+    return_dict = dict()
+    for markup_factor in markup_factors:
+        if markup_factor == 'Warranty':
+            key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, vehicle.age_id
+            markup_value = 'na'
+            cost_per_veh = settings.emission_repair_cost.repair_cost_details[key]['warranty_cost_per_veh']
+        else:
+            markup_value = calc_project_markup_value(settings, vehicle, markup_factor)
+            cost_per_veh = markup_value * pkg_cost
         ic_sum_per_veh += cost_per_veh
         return_dict.update({
             'optionID': vehicle.option_id,

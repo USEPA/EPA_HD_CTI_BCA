@@ -7,7 +7,7 @@ from bca_tool_code.general_modules.weighted_results import create_weighted_cost_
 from bca_tool_code.general_modules.discounting import discount_values
 from bca_tool_code.general_modules.calc_deltas import calc_deltas, calc_deltas_weighted
 
-
+# TODO how do all of the updates need to be reflected in the ghg costs?
 class GhgCosts:
 
     def __init__(self):

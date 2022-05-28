@@ -8,7 +8,7 @@ from bca_tool_code.general_modules.calc_deltas import calc_deltas, calc_deltas_w
 from bca_tool_code.general_modules.emission_reduction import calc_nox_reduction, calc_thc_reduction
 
 from bca_tool_code.engine_cost_modules.engine_package_cost import calc_package_cost
-from bca_tool_code.engine_cost_modules.indirect_cost import calc_indirect_cost
+from bca_tool_code.engine_cost_modules.indirect_cost import calc_indirect_cost_new_warranty
 from bca_tool_code.engine_cost_modules.tech_cost import calc_tech_cost
 
 from bca_tool_code.operation_modules.def_cost import calc_def_cost
@@ -74,47 +74,68 @@ class CapCosts:
             self.update_object_dict(key, update_dict)
             self.update_object_dict(key, new_attributes_dict)
 
-        # calc tech costs for age_id=0 vehicle objects
+        # calc direct costs for age_id=0 vehicle objects
         for veh in settings.fleet_cap.vehicles_age0:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
 
             direct_applied_cost_per_veh, direct_cost, pkg_cost_per_veh = calc_package_cost(settings, veh)
 
-            indirect_cost_dict = calc_indirect_cost(settings, veh, direct_applied_cost_per_veh)
-            # warranty_base_cost_per_veh = indirect_cost_dict['Warranty_Base_cost_per_veh']
-            # warranty_extended_cost_per_veh = indirect_cost_dict['Warranty_Extended_cost_per_veh']
-            # warranty_cost_per_veh = warranty_base_cost_per_veh + warranty_extended_cost_per_veh
+            # update object dict with direct costs, all of which are for age_id=0 only
+            update_dict = {
+                'PackageCost_PerVeh': pkg_cost_per_veh,
+                'DirectCost_PerVeh': direct_applied_cost_per_veh,
+                'DirectCost': direct_cost,
+            }
+            self.update_object_dict(key, update_dict)
+
+        # Calculate emission repair cost for all vehicles. This also determines warranty costs so should be done prior
+        # to calculating indirect costs so that warranty costs will be available.
+        # Note: the reference_pkg_cost should be diesel regclass=47, no_action_alt.
+        for veh in settings.fleet_cap.vehicles:
+            key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
+            direct_applied_cost_per_veh \
+                = self.results[veh.vehicle_id, veh.option_id, veh.modelyear_id, 0, 0]['DirectCost_PerVeh']
+            reference_pkg_cost = self.results[(61, 47, 2), 0, veh.modelyear_id, 0, 0]['DirectCost_PerVeh']
+            repair_cost_per_veh, repair_cost, repair_cost_per_mile \
+                = settings.emission_repair_cost.calc_emission_repair_and_warranty_cost(settings, veh,
+                                                                                       direct_applied_cost_per_veh,
+                                                                                       reference_pkg_cost)
+            update_dict = {
+                'EmissionRepairCost_PerVeh': repair_cost_per_veh,
+                'EmissionRepairCost_PerMile': repair_cost_per_mile,
+                'EmissionRepairCost': repair_cost,
+            }
+            self.update_object_dict(key, update_dict)
+
+        # calc indirect costs for age_id=0 vehicle objects
+        for veh in settings.fleet_cap.vehicles_age0:
+            key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
+            direct_applied_cost_per_veh \
+                = self.results[veh.vehicle_id, veh.option_id, veh.modelyear_id, 0, 0]['DirectCost_PerVeh']
+
+            indirect_cost_dict = calc_indirect_cost_new_warranty(settings, veh, direct_applied_cost_per_veh)
             warranty_cost_per_veh = indirect_cost_dict['Warranty_cost_per_veh']
             rnd_cost_per_veh = indirect_cost_dict['RnD_cost_per_veh']
             other_cost_per_veh = indirect_cost_dict['Other_cost_per_veh']
             profit_cost_per_veh = indirect_cost_dict['Profit_cost_per_veh']
             indirect_cost_per_veh = indirect_cost_dict['ic_sum_per_veh']
-            # warranty_base_cost = indirect_cost_dict['Warranty_Base_cost']
-            # warranty_extended_cost = indirect_cost_dict['Warranty_Extended_cost']
-            # warranty_cost = warranty_base_cost + warranty_extended_cost
             warranty_cost = indirect_cost_dict['Warranty_cost']
             rnd_cost = indirect_cost_dict['RnD_cost']
             other_cost = indirect_cost_dict['Other_cost']
             profit_cost = indirect_cost_dict['Profit_cost']
             indirect_cost = indirect_cost_dict['ic_sum']
 
+            # sum the direct and indirect costs to get the total tech costs
             tech_cost_per_veh, tech_cost = calc_tech_cost(veh, direct_applied_cost_per_veh, indirect_cost_per_veh)
             
             # update object dict with tech costs, all of which are for age_id=0 only
             update_dict = {
-                'PackageCost_PerVeh': pkg_cost_per_veh,
-                'DirectCost_PerVeh': direct_applied_cost_per_veh,
-                # 'WarrantyBaseCost_PerVeh': warranty_base_cost_per_veh,
-                # 'WarrantyExtendedCost_PerVeh': warranty_extended_cost_per_veh,
                 'WarrantyCost_PerVeh': warranty_cost_per_veh,
                 'RnDCost_PerVeh': rnd_cost_per_veh,
                 'OtherCost_PerVeh': other_cost_per_veh,
                 'ProfitCost_PerVeh': profit_cost_per_veh,
                 'IndirectCost_PerVeh': indirect_cost_per_veh,
                 'TechCost_PerVeh': tech_cost_per_veh,
-                'DirectCost': direct_cost,
-                # 'WarrantyBaseCost': warranty_base_cost,
-                # 'WarrantyExtendedCost': warranty_extended_cost,
                 'WarrantyCost': warranty_cost,
                 'RnDCost': rnd_cost,
                 'OtherCost': other_cost,
@@ -151,23 +172,6 @@ class CapCosts:
                 'FuelCost_Retail_PerMile': fuel_cost_per_mile,
                 'FuelCost_Retail': retail_cost,
                 'FuelCost_Pretax': pretax_cost,
-            }
-            self.update_object_dict(key, update_dict)
-
-        # calculate emission repair cost for all vehicles
-        # Note: the reference_pkg_cost should be diesel regclass=47, no_action_alt.
-        for veh in settings.fleet_cap.vehicles:
-            key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
-            direct_applied_cost_per_veh \
-                = self.results[veh.vehicle_id, veh.option_id, veh.modelyear_id, 0, 0]['DirectCost_PerVeh']
-            reference_pkg_cost = self.results[(61, 47, 2), 0, veh.modelyear_id, 0, 0]['DirectCost_PerVeh']
-            repair_cost_per_veh, repair_cost, repair_cost_per_mile \
-                = settings.emission_repair_cost.calc_emission_repair_cost(settings, veh, direct_applied_cost_per_veh,
-                                                                          reference_pkg_cost)
-            update_dict = {
-                'EmissionRepairCost_PerVeh': repair_cost_per_veh,
-                'EmissionRepairCost_PerMile': repair_cost_per_mile,
-                'EmissionRepairCost': repair_cost,
             }
             self.update_object_dict(key, update_dict)
 
@@ -262,8 +266,6 @@ class CapCosts:
         new_attributes = [
             'PackageCost_PerVeh',
             'DirectCost_PerVeh',
-            # 'WarrantyBaseCost_PerVeh',
-            # 'WarrantyExtendedCost_PerVeh',
             'WarrantyCost_PerVeh',
             'RnDCost_PerVeh',
             'OtherCost_PerVeh',
@@ -280,8 +282,6 @@ class CapCosts:
             'OperatingCost_Owner_PerVeh',
             'TechAndOperatingCost_PerVeh',
             'DirectCost',
-            # 'WarrantyBaseCost',
-            # 'WarrantyExtendedCost',
             'WarrantyCost',
             'RnDCost',
             'OtherCost',
