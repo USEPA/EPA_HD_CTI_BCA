@@ -119,33 +119,37 @@ class EmissionRepairCost:
             = settings.estimated_age.calc_estimated_age(settings, vehicle, typical_vmt,
                                                         warranty_provisions=vehicle.option_id)
 
-        try:
-            slope_nap = (at_usefullife_cpm - in_warranty_cpm) / (ul_age_nap - warranty_age_nap)
-        except ZeroDivisionError:
-            slope_nap = 0
-        try:
-            slope_ap = (at_usefullife_cpm - in_warranty_cpm) / (ul_age_ap - warranty_age_ap)
-        except ZeroDivisionError:
-            slope_ap = 0
+        # calculate the repair cost per mile slopes between warranty and useful life
+        slope_nap = self.calc_slope(in_warranty_cpm, at_usefullife_cpm, warranty_age_nap, ul_age_nap)
+        slope_ap = self.calc_slope(in_warranty_cpm, at_usefullife_cpm, warranty_age_ap, ul_age_ap)
+        slope_mixed = self.calc_slope(in_warranty_cpm, at_usefullife_cpm, warranty_age_nap, ul_age_ap)
 
         # now calculate the cost per mile under the no_action provisions
         cpm_nap = self.calc_repair_cpm(vehicle.age_id, warranty_age_nap, ul_age_nap, slope_nap,
                                        in_warranty_cpm, at_usefullife_cpm, max_cpm)
 
-        cost_per_veh_nap = cpm_nap * vehicle.vmt_per_veh
-        cost_nap = cost_per_veh_nap * vehicle.vpop
-
         # now calculate the cost per mile under the action provisions
         cpm_ap = self.calc_repair_cpm(vehicle.age_id, warranty_age_ap, ul_age_ap, slope_ap,
                                       in_warranty_cpm, at_usefullife_cpm, max_cpm)
 
+        # now calculate the cost per mile under the mixed provisions
+        cpm_mixed = self.calc_repair_cpm(vehicle.age_id, warranty_age_nap, ul_age_ap, slope_mixed,
+                                         in_warranty_cpm, at_usefullife_cpm, max_cpm)
+
+        # now calc the cost per vehicle and cost for each condition
+        cost_per_veh_nap = cpm_nap * vehicle.vmt_per_veh
+        # cost_nap = cost_per_veh_nap * vehicle.vpop
+
         cost_per_veh_ap = cpm_ap * vehicle.vmt_per_veh
         cost_ap = cost_per_veh_ap * vehicle.vpop
 
+        cost_per_veh_mixed = cpm_mixed * vehicle.vmt_per_veh
+        cost_mixed = cost_per_veh_mixed * vehicle.vpop
+
         # now determine whether costs are warranty or owner repair - estimated ages here are option_id provisions
         if vehicle.age_id + 1 <= warranty_age_ap:
-            in_warranty_cost_per_veh = cost_per_veh_nap
-            in_warranty_cost = cost_nap
+            in_warranty_cost_per_veh = cost_per_veh_mixed
+            in_warranty_cost = cost_mixed
             repair_cost_per_veh = 0
             repair_cost = 0
         else:
@@ -178,12 +182,15 @@ class EmissionRepairCost:
             'at_ul_cpm': at_usefullife_cpm,
             'slope_within_ul_nap': slope_nap,
             'slope_within_ul_ap': slope_ap,
+            'slope_within_ul_mixed': slope_mixed,
             'max_cpm': max_cpm,
             'cpm_nap': cpm_nap,
+            'cpm_mixed': cpm_mixed,
             'final_repair_cpm': cpm_ap,
             'in_warranty_repair_cost_per_veh': in_warranty_cost_per_veh,
             'beyond_warranty_repair_cost_per_veh': repair_cost_per_veh,
             'repair_cost_per_veh_nap': cost_per_veh_nap,
+            'repair_cost_per_veh_mixed': cost_per_veh_mixed,
             'warranty_cost_per_veh': 0,
             'warranty_cost': 0,
             'repair_cost': repair_cost,
@@ -207,6 +214,16 @@ class EmissionRepairCost:
             })
 
         return repair_cost_per_veh, repair_cost, cpm_ap
+
+    @staticmethod
+    def calc_slope(in_warranty_cpm, at_usefullife_cpm, age_1, age_2):
+        if age_2 == age_1:
+            m = 0
+            print('slope set to 0 due to zero division error')
+        else:
+            m = (at_usefullife_cpm - in_warranty_cpm) / (age_2 - age_1)
+
+        return m
 
     @staticmethod
     def calc_repair_cpm(veh_age, warranty_age, ul_age, slope, in_war_cpm, at_ul_cpm, max):
