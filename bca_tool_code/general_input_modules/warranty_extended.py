@@ -29,8 +29,10 @@ class WarrantyExtended:
 
         key = pd.Series(
             zip(
-                zip(df['regClassID'], df['fuelTypeID']
-                    ),
+                zip(
+                    df['regClassID'],
+                    df['fuelTypeID']
+                ),
                 df['optionID']
             )
         )
@@ -77,6 +79,21 @@ class WarrantyExtended:
         extended_miles = self._dict[key]['Extended']
         share = self._dict[key]['Share']
 
-        extended_miles = share * extended_miles
+        return extended_miles, share
 
-        return extended_miles
+
+    def get_share(self, engine_id, option_id):
+        """
+
+        Parameters:
+            vehicle: object; an object of the Vehicle class.
+
+        Returns:
+            The extended warranty miles multiplied by the share with extended warranty.
+
+        """
+        # engine_id, option_id = vehicle.engine_id, vehicle.option_id
+        key = engine_id, option_id
+        share = self._dict[key]['Share']
+
+        return share

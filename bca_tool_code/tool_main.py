@@ -167,6 +167,8 @@ def main():
             path_of_modified_inputs_folder / 'CAP_engine_costs.csv', index=False)
         settings.repair_and_maintenance.repair_and_maintenance_in_analysis_dollars.to_csv(
             path_of_modified_inputs_folder / 'repair_and_maintenance.csv', index=True)
+        settings.warranty_base_costs.piece_costs_in_analysis_dollars.to_csv(
+            path_of_modified_inputs_folder / 'CAP_base_warranty_costs.csv', index=False)
 
         # create figures
         arg_list = ['TechCost', 'EmissionRepairCost', 'DEFCost', 'FuelCost_Pretax', 'TechAndOperatingCost']

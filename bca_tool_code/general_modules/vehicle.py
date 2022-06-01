@@ -9,12 +9,6 @@ class Vehicle:
 
     Define vehicle attribute names for sourceTypeID, regClassID, fuelTypeID.
 
-    Parameters::
-        id: The associated ID from the MOVES input file.
-
-    Returns:
-        Source type name, Regclass name, Fuel type name.
-
     """
     vehicle_df = pd.DataFrame()
     attributes_to_adjust = list()  # these are MOVES attributes that need adjustment
@@ -127,9 +121,8 @@ class Vehicle:
 
         Parameters:
             filepath: Path to the specified file.\n
-            general_inputs: object; the GeneralInputs class object.\n
-            program: str; represents the program for the given instance (i.e., 'CAP' or 'GHG').\n
-            adjustments: object; the MovesAdjustments class object.
+            options: object; an instance of the Options class.\n
+            adjustments: object; an instance of the MovesAdjustments class (if applicable).
 
         Returns:
             Reads file at filepath; creates a dictionary and other attributes specified in the class __init__.
