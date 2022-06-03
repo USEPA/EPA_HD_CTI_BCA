@@ -105,7 +105,7 @@ class SetPaths:
         """
         # set run id and files to generate
         run_folder_identifier = input('\nProvide a run identifier for your output folder name (press return to use the default name)\n')
-        run_folder_identifier = run_folder_identifier if run_folder_identifier != '' else 'BCA-Tool-Results'
+        run_folder_identifier = run_folder_identifier if run_folder_identifier != '' else 'HD2027-Costs'
         return run_folder_identifier
 
     def create_output_paths(self, start_time_readable, run_id):
@@ -236,8 +236,8 @@ class SetInputs:
             )
             self.useful_life = UsefulLife()
             self.useful_life.init_from_file(
-                set_paths.path_inputs / self.input_files.get_filename('useful_life'))
-
+                set_paths.path_inputs / self.input_files.get_filename('useful_life')
+            )
             self.def_doserates = DefDoseRates()
             self.def_doserates.init_from_file(
                 set_paths.path_inputs / self.input_files.get_filename('def_doserates')

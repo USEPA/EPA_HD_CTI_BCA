@@ -150,6 +150,7 @@ class EmissionRepairCost:
         cost_per_veh_mixed = cpm_mixed * vehicle.vmt_per_veh
 
         # now determine whether costs are warranty or owner repair - estimated ages here are option_id provisions
+        # determine if age_id=0 in which case warranty costs equal the base warranty costs and there are no repair costs
         if vehicle.age_id == 0:
             key = vehicle.engine_id, 0
             in_warranty_cost_per_veh \
@@ -161,8 +162,8 @@ class EmissionRepairCost:
         elif 0 < vehicle.age_id + 1 <= warranty_age_ap:
             in_warranty_cost_per_veh = cost_per_veh_mixed * (1 - share_with_extended)
             in_warranty_cost = in_warranty_cost_per_veh * vehicle.vpop
-            repair_cost_per_veh = in_warranty_cost_per_veh
-            repair_cost = repair_cost_per_veh * vehicle.vpop
+            repair_cost_per_veh = 0  # in_warranty_cost_per_veh
+            repair_cost = 0  # repair_cost_per_veh * vehicle.vpop
         else:
             in_warranty_cost_per_veh = 0
             in_warranty_cost = 0

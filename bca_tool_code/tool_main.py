@@ -46,13 +46,16 @@ def main():
 
     if settings.calc_cap_costs:
 
+        # calculate year-over-year engine sales
         for vehicle in settings.fleet_cap.vehicles_age0:
             settings.fleet_cap.engine_sales(vehicle)
 
+        # calculate year-over-year cumulative engine sales (for use in learning effects)
         for vehicle in settings.fleet_cap.vehicles_age0:
             for start_year in settings.engine_costs.standardyear_ids:
                 settings.fleet_cap.cumulative_engine_sales(vehicle, start_year)
 
+        # calculate package costs by standard implementation start-year
         for vehicle in settings.fleet_cap.vehicles_age0:
             for start_year in settings.engine_costs.standardyear_ids:
                 cap_package_cost.calc_avg_package_cost_per_step(settings, vehicle, start_year)
