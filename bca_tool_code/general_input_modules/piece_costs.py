@@ -1,14 +1,15 @@
+import sys
 import pandas as pd
 
 from bca_tool_code.general_input_modules.general_functions import read_input_file
 from bca_tool_code.general_input_modules.input_files import InputFiles
 
 
-class VehicleCosts:
+class PieceCosts:
     """
 
-    The VehicleCosts class reads the vehicle_costs input file and converts all dollar values to dollar_basis_analysis
-    dollars and provides methods to query the data.
+    The EngineCosts class reads the appropriate engine_costs input file and converts all dollar values to
+    dollar_basis_analysis dollars and provides methods to query the data.
 
     """
     def __init__(self):
@@ -17,12 +18,14 @@ class VehicleCosts:
         self.piece_costs_in_analysis_dollars = pd.DataFrame()
         self.package_cost_by_step = dict()
         self.value_name = 'piece_cost'
+        self.unit_id = None
 
-    def init_from_file(self, filepath, general_inputs, deflators):
+    def init_from_file(self, filepath, unit_id, general_inputs, deflators):
         """
 
         Parameters:
             filepath: Path to the specified file.\n
+            unit_id: str; 'engine_id' or 'vehicle_id'.\n
             general_inputs: object; the GeneralInputs class object.\n
             deflators: object; the Deflators class object.
 
@@ -33,8 +36,23 @@ class VehicleCosts:
         """
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
 
+        self.unit_id = unit_id
+        if unit_id == 'engine_id':
+            df.insert(0,
+                      unit_id,
+                      pd.Series(zip(df['regClassID'], df['fuelTypeID'])))
+            id_vars = ['optionID', unit_id, 'regClassID', 'fuelTypeID', 'TechDescription', 'DollarBasis']
+        elif unit_id == 'vehicle_id':
+            df.insert(0,
+                      unit_id,
+                      pd.Series(zip(df['sourceTypeID'], df['regClassID'], df['fuelTypeID'])))
+            id_vars = ['optionID', unit_id, 'sourceTypeID', 'regClassID', 'fuelTypeID', 'TechDescription', 'DollarBasis']
+        else:
+            print(f'\nImproper unit_id passed to {self}')
+            sys.exit()
+
         df = pd.melt(df,
-                     id_vars=['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'TechDescription', 'DollarBasis'],
+                     id_vars=id_vars,
                      value_vars=[col for col in df.columns if '20' in col],
                      var_name='standardyear_id',
                      value_name=self.value_name)
@@ -47,14 +65,18 @@ class VehicleCosts:
         self.piece_costs_in_analysis_dollars = df.copy()
 
         df.drop(columns='DollarBasis', inplace=True)
-        df = df.groupby(by=['optionID', 'sourceTypeID', 'regClassID', 'fuelTypeID', 'standardyear_id'],
-                        axis=0, as_index=False).sum()
+
+        groupby_cols = id_vars[:-2]
+        groupby_cols.append('standardyear_id')
+        df = df.groupby(by=groupby_cols, axis=0, as_index=False).sum()
 
         df.rename(columns={'piece_cost': 'pkg_cost'}, inplace=True)
 
         key = pd.Series(zip(
-            zip(df['sourceTypeID'], df['regClassID'], df['fuelTypeID']),
-            df['optionID'], df['standardyear_id']))
+            df[unit_id],
+            df['optionID'],
+            df['standardyear_id']
+        ))
         df.set_index(key, inplace=True)
 
         self._dict = df.to_dict('index')
@@ -66,11 +88,11 @@ class VehicleCosts:
         """
 
         Parameters:
-            key: tuple; (vehicle_id, option_id, start_year).\n
+            key: tuple; (unit_id, option_id, start_year) where unit_id is 'engine_id' or 'vehicle_id'.\n
             attribute_name: str; the attribute name associated with the needed cost (e.g., 'pkg_cost').
 
         Returns:
-            The package cost for the passed key and step.
+            The start_year package cost for the passed engine_id under the option_id option.
 
         """
         return self._dict[key][attribute_name]
@@ -85,11 +107,10 @@ class VehicleCosts:
         Returns:
             Updates the object dictionary with each attribute updated with the appropriate value.
 
-        Note:
-            The method updates an existing key having attribute_name with attribute_value.
-
         """
-        key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id
+        key = vehicle.engine_id, vehicle.option_id, vehicle.modelyear_id
+        if self.unit_id == 'vehicle_id':
+            key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id
         if key in self.package_cost_by_step:
             for attribute_name, attribute_value in update_dict.items():
                 self.package_cost_by_step[key][attribute_name] = attribute_value
@@ -103,7 +124,7 @@ class VehicleCosts:
         """
 
         Parameters:
-            key: tuple; ((sourcetype_id, regclass_id, fueltype_id), option_id, model_year, age_id, discount_rate).\n
+            key: tuple; (vehicle_id, option_id, model_year, age_id, discount_rate).\n
             attribute_names: list; the list of attribute names for which values are sought.
 
         Returns:

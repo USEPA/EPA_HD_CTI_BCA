@@ -23,13 +23,11 @@ from bca_tool_code.general_modules.fleet import Fleet
 from bca_tool_code.general_modules.estimated_age_at_event import EstimatedAge
 from bca_tool_code.general_modules.annual_summary import AnnualSummary
 
-from bca_tool_code.engine_input_modules.engine_costs import EngineCosts
-from bca_tool_code.engine_input_modules.engine_learning_scalers import EngineLearningScalers
-from bca_tool_code.engine_input_modules.tech_penetrations import CapTechPenetrations
+from bca_tool_code.general_input_modules.piece_costs import PieceCosts
+from bca_tool_code.general_input_modules.tech_penetrations import TechPenetrations
 
-from bca_tool_code.vehicle_input_modules.vehicle_costs import VehicleCosts
+from bca_tool_code.engine_input_modules.engine_learning_scalers import EngineLearningScalers
 from bca_tool_code.vehicle_input_modules.vehicle_learning_scalers import VehicleLearningScalers
-from bca_tool_code.vehicle_input_modules.tech_penetrations import GhgTechPenetrations
 
 from bca_tool_code.operation_input_modules.def_doserates import DefDoseRates
 from bca_tool_code.operation_input_modules.orvr_fuelchanges import OrvrFuelChanges
@@ -192,9 +190,9 @@ class SetInputs:
             self.options_cap.init_from_file(
                 set_paths.path_inputs / self.input_files.get_filename('options_cap')
             )
-            self.techpens_cap = CapTechPenetrations()
+            self.techpens_cap = TechPenetrations()
             self.techpens_cap.init_from_file(
-                set_paths.path_inputs / self.input_files.get_filename('techpens_cap')
+                set_paths.path_inputs / self.input_files.get_filename('techpens_cap'), 'engine_id',
             )
             self.moves_adj_cap = MovesAdjustments()
             self.moves_adj_cap.init_from_file(
@@ -208,10 +206,10 @@ class SetInputs:
             self.fleet_cap = Fleet()
             self.fleet_cap.create_cap_vehicles(self.no_action_alt, self.options_cap)
 
-            self.engine_costs = EngineCosts()
+            self.engine_costs = PieceCosts()
             self.engine_costs.init_from_file(
                 set_paths.path_inputs / self.input_files.get_filename('engine_costs_cap'),
-                self.general_inputs, self.deflators
+                'engine_id', self.general_inputs, self.deflators
             )
             self.engine_learning_scalers = EngineLearningScalers()
             self.engine_learning_scalers.init_from_file(
@@ -270,9 +268,9 @@ class SetInputs:
             self.options_ghg.init_from_file(
                 set_paths.path_inputs / self.input_files.get_filename('options_ghg')
             )
-            self.techpens_ghg = GhgTechPenetrations()
+            self.techpens_ghg = TechPenetrations()
             self.techpens_ghg.init_from_file(
-                set_paths.path_inputs / self.input_files.get_filename('techpens_ghg')
+                set_paths.path_inputs / self.input_files.get_filename('techpens_ghg'), 'vehicle_id',
             )
             self.ghg_vehicle = Vehicle()
             self.ghg_vehicle.init_from_file(
@@ -282,10 +280,10 @@ class SetInputs:
             self.fleet_ghg = Fleet()
             self.fleet_ghg.create_ghg_vehicles(self.no_action_alt, self.options_ghg)
 
-            self.vehicle_costs = VehicleCosts()
+            self.vehicle_costs = PieceCosts()
             self.vehicle_costs.init_from_file(
                 set_paths.path_inputs / self.input_files.get_filename('vehicle_costs_ghg'),
-                self.general_inputs, self.deflators
+                'vehicle_id', self.general_inputs, self.deflators
             )
             self.vehicle_learning_scalers = VehicleLearningScalers()
             self.vehicle_learning_scalers.init_from_file(
