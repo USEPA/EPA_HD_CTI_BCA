@@ -46,9 +46,9 @@ class AnnualSummary:
         emission_cost_args_7 = tuple([item for item in all_costs if '_0.07' in item])
         non_emission_cost_args = tuple([item for item in all_costs if '_0.0' not in item])
 
-        rates = tuple([settings.general_inputs.get_attribute_value('social_discount_rate_1'),
-                       settings.general_inputs.get_attribute_value('social_discount_rate_2')])
-        rates = tuple([pd.to_numeric(rate) for rate in rates])
+        social_rates = tuple([settings.general_inputs.get_attribute_value('social_discount_rate_1'),
+                              settings.general_inputs.get_attribute_value('social_discount_rate_2')])
+        social_rates = tuple([pd.to_numeric(rate) for rate in social_rates])
         # year_ids = settings.cap_vehicle.year_ids
 
         # build the destination dictionary to house data
@@ -73,14 +73,14 @@ class AnnualSummary:
         # then for discounted values
         for series in ('AnnualValue', 'PresentValue', 'AnnualizedValue'):
             for option_id in range(0, num_option_ids):
-                for rate in rates:
+                for social_rate in social_rates:
                     for year_id in year_ids:
                         self.results.update({
-                            (series, option_id, year_id, rate): {
+                            (series, option_id, year_id, social_rate): {
                                 'optionID': option_id,
                                 'optionName': options.get_option_name(option_id),
                                 'yearID': year_id,
-                                'DiscountRate': rate,
+                                'DiscountRate': social_rate,
                                 'Series': series,
                                 'Periods': 1,
                             }
@@ -90,75 +90,74 @@ class AnnualSummary:
         # first sum by year for each cost arg
         series = 'AnnualValue'
         for option_id in range(0, num_option_ids):
-            for rate in (0, *rates):
+            for social_rate in (0, *social_rates):
                 for year_id in year_ids:
                     for arg in all_costs:
                         arg_sum = sum(v[arg] for k, v in source_dict.items()
                                       if v['yearID'] == year_id
-                                      and v['DiscountRate'] == rate
+                                      and v['DiscountRate'] == social_rate
                                       and v['optionID'] == option_id)
-                        self.results[(series, option_id, year_id, rate)][arg] = arg_sum
+                        self.results[(series, option_id, year_id, social_rate)][arg] = arg_sum
 
         # now do a cumulative sum year-over-year for each cost arg - these will be present values
         # (note change to destination_dict in arg_value calc and removal of rate=0)
         series = 'PresentValue'
         for option_id in range(0, num_option_ids):
-            for rate in rates:
+            for social_rate in social_rates:
                 for arg in all_costs:
                     for year_id in year_ids:
                         periods = year_id - discount_to_year + discount_offset
                         arg_value = sum(v[arg] for k, v in self.results.items()
                                         if v['yearID'] <= year_id
-                                        and v['DiscountRate'] == rate
+                                        and v['DiscountRate'] == social_rate
                                         and v['optionID'] == option_id
                                         and v['Series'] == 'AnnualValue')
-                        self.results[(series, option_id, year_id, rate)][arg] = arg_value
-                        self.results[(series, option_id, year_id, rate)]['Periods'] = periods
+                        self.results[(series, option_id, year_id, social_rate)][arg] = arg_value
+                        self.results[(series, option_id, year_id, social_rate)]['Periods'] = periods
 
         # now annualize those present values
         series = 'AnnualizedValue'
         for option_id in range(0, num_option_ids):
-            for social_discount_rate in rates:
-                rate = social_discount_rate
+            for social_rate in social_rates:
                 for arg in non_emission_cost_args:
                     for year_id in year_ids:
                         periods = year_id - discount_to_year + discount_offset
-                        present_value = self.results['PresentValue', option_id, year_id, rate][arg]
-                        arg_annualized = self.calc_annualized_value(present_value, rate, periods, annualized_offset)
-                        self.results[(series, option_id, year_id, social_discount_rate)][arg] = arg_annualized
-                        self.results[(series, option_id, year_id, social_discount_rate)]['Periods'] = periods
+                        present_value = self.results['PresentValue', option_id, year_id, social_rate][arg]
+                        arg_annualized = self.calc_annualized_value(present_value, social_rate, periods, annualized_offset)
+                        self.results[(series, option_id, year_id, social_rate)][arg] = arg_annualized
+                        self.results[(series, option_id, year_id, social_rate)]['Periods'] = periods
 
-                rate = 0.025
+                emission_rate = 0.025
                 for arg in emission_cost_args_25:
                     for year_id in year_ids:
                         periods = year_id - discount_to_year + discount_offset
-                        present_value = self.results['PresentValue', option_id, year_id, rate][arg]
-                        arg_annualized = self.calc_annualized_value(present_value, rate, periods, annualized_offset)
-                        self.results[(series, option_id, year_id, social_discount_rate)][arg] = arg_annualized
+                        present_value = self.results['PresentValue', option_id, year_id, social_rate][arg]
+                        arg_annualized = self.calc_annualized_value(present_value, emission_rate, periods, annualized_offset)
+                        self.results[(series, option_id, year_id, social_rate)][arg] = arg_annualized
 
-                rate = 0.03
+                emission_rate = 0.03
                 for arg in emission_cost_args_3:
                     for year_id in year_ids:
                         periods = year_id - discount_to_year + discount_offset
-                        present_value = self.results['PresentValue', option_id, year_id, rate][arg]
-                        arg_annualized = self.calc_annualized_value(present_value, rate, periods, annualized_offset)
-                        self.results[(series, option_id, year_id, social_discount_rate)][arg] = arg_annualized
+                        present_value = self.results['PresentValue', option_id, year_id, social_rate][arg]
+                        arg_annualized = self.calc_annualized_value(present_value, emission_rate, periods, annualized_offset)
+                        self.results[(series, option_id, year_id, social_rate)][arg] = arg_annualized
 
-                rate = 0.05
+                emission_rate = 0.05
                 for arg in emission_cost_args_5:
                     for year_id in year_ids:
                         periods = year_id - discount_to_year + discount_offset
-                        present_value = self.results['PresentValue', option_id, year_id, rate][arg]
-                        arg_annualized = self.calc_annualized_value(present_value, rate, periods, annualized_offset)
-                        self.results[(series, option_id, year_id, social_discount_rate)][arg] = arg_annualized
+                        present_value = self.results['PresentValue', option_id, year_id, social_rate][arg]
+                        arg_annualized = self.calc_annualized_value(present_value, emission_rate, periods, annualized_offset)
+                        self.results[(series, option_id, year_id, social_rate)][arg] = arg_annualized
 
-                rate = 0.07
+                emission_rate = 0.07
                 for arg in emission_cost_args_7:
                     for year_id in year_ids:
                         periods = year_id - discount_to_year + discount_offset
-                        present_value = self.results['PresentValue', option_id, year_id, rate][arg]
-                        arg_annualized = self.calc_annualized_value(present_value, rate, periods, annualized_offset)
-                        self.results[(series, option_id, year_id, social_discount_rate)][arg] = arg_annualized
+                        present_value = self.results['PresentValue', option_id, year_id, social_rate][arg]
+                        arg_annualized = self.calc_annualized_value(present_value, emission_rate, periods, annualized_offset)
+                        self.results[(series, option_id, year_id, social_rate)][arg] = arg_annualized
 
     def get_attribute_value(self, key, attribute_name):
         """

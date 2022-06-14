@@ -14,7 +14,8 @@ from bca_tool_code.general_input_modules.warranty import Warranty
 from bca_tool_code.general_input_modules.warranty_extended import WarrantyExtended
 from bca_tool_code.general_input_modules.warranty_base_costs import BaseWarrantyCosts
 from bca_tool_code.general_input_modules.useful_life import UsefulLife
-from bca_tool_code.general_input_modules.dollar_per_ton_cap import DollarPerTonCAP
+from bca_tool_code.general_input_modules.cost_factors import CostFactors
+# from bca_tool_code.general_input_modules.dollar_per_ton_cap import DollarPerTonCAP
 from bca_tool_code.general_input_modules.options import Options
 from bca_tool_code.general_input_modules.moves_adjustments import MovesAdjustments
 
@@ -256,11 +257,11 @@ class SetInputs:
             self.wtd_cap_fuel_cpm_dict = dict()
             self.annual_summary_cap = AnnualSummary()
 
-        if self.calc_cap_pollution:
-            self.dollar_per_ton_cap = DollarPerTonCAP()
-            self.dollar_per_ton_cap.init_from_file(
-                set_paths.path_inputs / self.input_files.get_filename('dollar_per_ton_cap')
-            )
+        # if self.calc_cap_pollution:
+        #     self.dollar_per_ton_cap = DollarPerTonCAP()
+        #     self.dollar_per_ton_cap.init_from_file(
+        #         set_paths.path_inputs / self.input_files.get_filename('dollar_per_ton_cap')
+        #     )
 
         if self.calc_ghg_costs:
 
@@ -307,5 +308,13 @@ class SetInputs:
                 self.useful_life.init_from_file(
                     set_paths.path_inputs / self.input_files.get_filename('useful_life')
                 )
+
+        if self.calc_ghg_pollution:
+            self.cost_factors_scc = CostFactors()
+            self.cost_factors_scc.init_from_file(
+                set_paths.path_inputs / self.input_files.get_filename('dollar_per_ton_scc'),
+                self.general_inputs, deflators=self.deflators
+            )
+
         self.end_time_inputs = time()
         self.elapsed_time_inputs = self.end_time_inputs - self.start_time

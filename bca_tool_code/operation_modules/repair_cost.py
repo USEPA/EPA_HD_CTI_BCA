@@ -232,7 +232,6 @@ class EmissionRepairCost:
     def calc_slope(in_warranty_cpm, at_usefullife_cpm, age_1, age_2):
         if age_2 == age_1:
             m = 0
-            # print('slope set to 0 due to zero division error')
         else:
             m = (at_usefullife_cpm - in_warranty_cpm) / (age_2 - age_1)
 

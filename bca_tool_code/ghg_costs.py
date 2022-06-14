@@ -6,6 +6,7 @@ from bca_tool_code.general_modules.sum_by_vehicle import calc_sum_of_costs
 from bca_tool_code.general_modules.weighted_results import create_weighted_cost_dict
 from bca_tool_code.general_modules.discounting import discount_values
 from bca_tool_code.general_modules.calc_deltas import calc_deltas, calc_deltas_weighted
+from bca_tool_code.general_modules.emission_cost import calc_ghg_emission_cost
 
 # TODO how do all of the updates need to be reflected in the ghg costs?
 class GhgCosts:
@@ -99,8 +100,8 @@ class GhgCosts:
         if settings.calc_ghg_pollution:
             for veh in settings.fleet_ghg.vehicles:
                 key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
-                # update_dict = calc_ghg_emission_cost(settings, veh)
-                # self.update_object_dict(key, update_dict)
+                update_dict = calc_ghg_emission_cost(settings, veh)
+                self.update_object_dict(key, update_dict)
 
         # calc some weighted cost per mile results
         arg = 'VMT_PerVeh'
