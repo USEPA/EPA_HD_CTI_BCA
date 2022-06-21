@@ -108,6 +108,8 @@ class EmissionRepairCost:
         at_usefullife_cpm = at_usefullife_cpm_input_value * emission_repair_share_input_value * direct_cost_scaler
         max_cpm = max_cpm_input_value * emission_repair_share_input_value * direct_cost_scaler
 
+        new_tech_adj_factor = settings.warranty_new_tech_adj.get_attribute_value(vehicle)
+
         typical_vmt = settings.fleet_cap.get_typical_vmt_per_year(settings, vehicle)
 
         # NOTE: nap refers to "no action provisions"; ap refers to "action provisions"
@@ -154,13 +156,13 @@ class EmissionRepairCost:
         if vehicle.age_id == 0:
             key = vehicle.engine_id, 0
             in_warranty_cost_per_veh \
-                = settings.warranty_base_costs.get_warranty_cost(key) * share_with_extended
-            in_warranty_cost_per_veh += cost_per_veh_mixed * (1 - share_with_extended)
+                = settings.warranty_base_costs.get_warranty_cost(key) * share_with_extended * (1 + new_tech_adj_factor)
+            in_warranty_cost_per_veh += cost_per_veh_mixed * (1 - share_with_extended) * (1 + new_tech_adj_factor)
             in_warranty_cost = in_warranty_cost_per_veh * vehicle.vpop
             repair_cost_per_veh = 0
             repair_cost = 0
         elif 0 < vehicle.age_id + 1 <= warranty_age_ap:
-            in_warranty_cost_per_veh = cost_per_veh_mixed * (1 - share_with_extended)
+            in_warranty_cost_per_veh = cost_per_veh_mixed * (1 - share_with_extended) * (1 + new_tech_adj_factor)
             in_warranty_cost = in_warranty_cost_per_veh * vehicle.vpop
             repair_cost_per_veh = 0  # in_warranty_cost_per_veh
             repair_cost = 0  # repair_cost_per_veh * vehicle.vpop

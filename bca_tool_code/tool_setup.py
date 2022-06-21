@@ -13,6 +13,7 @@ from bca_tool_code.general_input_modules.markups import Markups
 from bca_tool_code.general_input_modules.warranty import Warranty
 from bca_tool_code.general_input_modules.warranty_extended import WarrantyExtended
 from bca_tool_code.general_input_modules.warranty_base_costs import BaseWarrantyCosts
+from bca_tool_code.general_input_modules.warranty_new_tech_adj_factor import WarrantyNewTechAdj
 from bca_tool_code.general_input_modules.useful_life import UsefulLife
 from bca_tool_code.general_input_modules.cost_factors import CostFactors
 # from bca_tool_code.general_input_modules.dollar_per_ton_cap import DollarPerTonCAP
@@ -232,6 +233,10 @@ class SetInputs:
             self.warranty_base_costs.init_from_file(
                 set_paths.path_inputs / self.input_files.get_filename('base_warranty_costs'),
                 self.general_inputs, self.deflators
+            )
+            self.warranty_new_tech_adj = WarrantyNewTechAdj()
+            self.warranty_new_tech_adj.init_from_file(
+                set_paths.path_inputs / self.input_files.get_filename('warranty_new_tech_adj_factor'),
             )
             self.useful_life = UsefulLife()
             self.useful_life.init_from_file(
