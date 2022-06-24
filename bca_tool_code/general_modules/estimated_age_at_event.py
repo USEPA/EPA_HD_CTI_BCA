@@ -41,7 +41,7 @@ class EstimatedAge:
             share = 0
             if identifier == 'Warranty' and (vehicle.engine_id, option_id) in settings.warranty_extended._dict:
                 extended_miles, share \
-                    = settings.warranty_extended.get_required_miles_with_share(vehicle.engine_id, option_id)
+                    = settings.warranty_extended.get_required_miles_with_share(vehicle.engine_id)
                 extended_miles = extended_miles * share
                 required_miles = max(required_miles, extended_miles)
 

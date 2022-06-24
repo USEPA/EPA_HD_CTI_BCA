@@ -29,11 +29,8 @@ class WarrantyExtended:
 
         key = pd.Series(
             zip(
-                zip(
-                    df['regClassID'],
-                    df['fuelTypeID']
-                ),
-                df['optionID']
+                df['regClassID'],
+                df['fuelTypeID']
             )
         )
         df.set_index(key, inplace=True)
@@ -54,8 +51,8 @@ class WarrantyExtended:
             to the base warranty cost.
 
         """
-        engine_id, option_id = vehicle.engine_id, vehicle.option_id
-        key = engine_id, option_id
+        engine_id = vehicle.engine_id
+        key = engine_id
         base_miles = self._dict[key]['Base']
         extended_miles = self._dict[key]['Extended'] - base_miles
         share = self._dict[key]['Share']
@@ -64,36 +61,36 @@ class WarrantyExtended:
 
         return scaler
 
-    def get_required_miles_with_share(self, engine_id, option_id):
+    def get_required_miles_with_share(self, engine_id):
         """
 
         Parameters:
-            vehicle: object; an object of the Vehicle class.
+            engine_id: tuple; the engine_id (regclass_id, fueltype_id).
 
         Returns:
             The extended warranty miles multiplied by the share with extended warranty.
 
         """
         # engine_id, option_id = vehicle.engine_id, vehicle.option_id
-        key = engine_id, option_id
+        key = engine_id
         extended_miles = self._dict[key]['Extended']
         share = self._dict[key]['Share']
 
         return extended_miles, share
 
 
-    def get_share(self, engine_id, option_id):
+    def get_share(self, engine_id):
         """
 
         Parameters:
-            vehicle: object; an object of the Vehicle class.
+            engine_id: tuple; the engine_id (regclass_id, fueltype_id).
 
         Returns:
             The extended warranty miles multiplied by the share with extended warranty.
 
         """
         # engine_id, option_id = vehicle.engine_id, vehicle.option_id
-        key = engine_id, option_id
+        key = engine_id
         share = self._dict[key]['Share']
 
         return share

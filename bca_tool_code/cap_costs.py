@@ -96,10 +96,17 @@ class CapCosts:
             direct_applied_cost_per_veh \
                 = self.results[veh.vehicle_id, veh.option_id, veh.modelyear_id, 0, 0]['DirectCost_PerVeh']
             reference_pkg_cost = self.results[(61, 47, 2), 0, veh.modelyear_id, 0, 0]['DirectCost_PerVeh']
-            repair_cost_per_veh, repair_cost, repair_cost_per_mile \
-                = settings.emission_repair_cost.calc_emission_repair_and_warranty_cost(settings, veh,
-                                                                                       direct_applied_cost_per_veh,
-                                                                                       reference_pkg_cost)
+
+            if settings.warranty_cost_approach.__contains__('per_year'):
+                repair_cost_per_veh, repair_cost, repair_cost_per_mile \
+                    = settings.emission_repair_cost.calc_using_cost_per_year(settings, veh,
+                                                                             direct_applied_cost_per_veh,
+                                                                             reference_pkg_cost)
+            else:
+                repair_cost_per_veh, repair_cost, repair_cost_per_mile \
+                    = settings.emission_repair_cost.calc_emission_repair_and_warranty_cost(settings, veh,
+                                                                                           direct_applied_cost_per_veh,
+                                                                                           reference_pkg_cost)
             update_dict = {
                 'EmissionRepairCost_PerVeh': repair_cost_per_veh,
                 'EmissionRepairCost_PerMile': repair_cost_per_mile,

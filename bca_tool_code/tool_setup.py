@@ -238,6 +238,8 @@ class SetInputs:
             self.warranty_new_tech_adj.init_from_file(
                 set_paths.path_inputs / self.input_files.get_filename('warranty_new_tech_adj_factor'),
             )
+            self.warranty_cost_approach = self.general_inputs.get_attribute_value('warranty_cost_approach')
+
             self.useful_life = UsefulLife()
             self.useful_life.init_from_file(
                 set_paths.path_inputs / self.input_files.get_filename('useful_life')
