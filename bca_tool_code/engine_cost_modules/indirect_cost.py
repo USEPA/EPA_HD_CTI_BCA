@@ -132,14 +132,17 @@ def calc_indirect_cost_new_warranty(settings, vehicle, pkg_cost):
         ic_sum_per_veh += cost_per_veh
         return_dict.update({
             'optionID': vehicle.option_id,
+            'vehicleID': vehicle.vehicle_id,
             'engineID': vehicle.engine_id,
+            'sourceTypeID': vehicle.sourcetype_id,
             'regClassID': vehicle.regclass_id,
             'fuelTypeID': vehicle.fueltype_id,
             'modelYearID': vehicle.modelyear_id,
             'optionName': vehicle.option_name,
+            'sourceTypeName': vehicle.sourcetype_name,
             'regClassName': vehicle.regclass_name,
             'fuelTypeName': vehicle.fueltype_name,
-            f'{markup_factor}_cost_per_veh': cost_per_veh,
+            f'{markup_factor}Cost_PerVeh': cost_per_veh,
             f'{markup_factor}_factor': markup_value,
         })
     return_dict.update({
@@ -149,9 +152,9 @@ def calc_indirect_cost_new_warranty(settings, vehicle, pkg_cost):
     settings.markups.update_contribution_factors(vehicle, return_dict)
 
     for markup_factor in markup_factors:
-        cost = return_dict[f'{markup_factor}_cost_per_veh'] * vehicle.vpop
+        cost = return_dict[f'{markup_factor}Cost_PerVeh'] * vehicle.vpop
         ic_sum += cost
-        return_dict.update({f'{markup_factor}_cost': cost})
+        return_dict.update({f'{markup_factor}Cost': cost})
     return_dict.update({'ic_sum': ic_sum})
 
     return return_dict

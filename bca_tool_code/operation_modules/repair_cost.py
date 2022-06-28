@@ -295,8 +295,9 @@ class EmissionRepairCost:
 
         warranty_cost_per_year = settings.warranty_base_costs.get_warranty_cost(vehicle.engine_id)
         # warranty_cost_per_year = no_action_warranty_cost_per_year
-        if vehicle.option_id != settings.no_action_alt:
-            warranty_cost_per_year = warranty_cost_per_year * direct_cost_scaler
+        # if vehicle.option_id != settings.no_action_alt:
+        #     warranty_cost_per_year = warranty_cost_per_year * direct_cost_scaler
+        warranty_cost_per_year = warranty_cost_per_year * direct_cost_scaler
 
         new_tech_adj_factor = settings.warranty_new_tech_adj.get_attribute_value(vehicle)
 
@@ -343,8 +344,17 @@ class EmissionRepairCost:
 
         # now determine whether costs are warranty or owner repair - estimated ages here are option_id provisions
         # determine if age_id=0 in which case warranty costs equal the base warranty costs and there are no repair costs
-        if vehicle.age_id <= warranty_age_ap:
-            in_warranty_cost_per_veh = warranty_cost_per_year * share_with_extended * (1 + new_tech_adj_factor)
+        # estimated_ages_dict_key = vehicle.vehicle_id, settings.no_action_alt, vehicle.modelyear_id, 'Warranty'
+        # required_warranty_age_nap = settings.estimated_age.get_attribute_value(estimated_ages_dict_key, 'required_age')
+        # in_warranty_cost_per_veh = 0
+        if vehicle.age_id <= warranty_age_nap and vehicle.option_id == settings.no_action_alt:
+            in_warranty_cost_per_veh = warranty_cost_per_year
+            in_warranty_cost = in_warranty_cost_per_veh * vehicle.vpop
+            repair_cost_per_veh = 0
+            repair_cost = 0
+        elif vehicle.age_id <= warranty_age_ap and vehicle.option_id != settings.no_action_alt:
+            # in_warranty_cost_per_veh = warranty_cost_per_year * share_with_extended * (1 + new_tech_adj_factor)
+            in_warranty_cost_per_veh = warranty_cost_per_year * (1 + new_tech_adj_factor)
             in_warranty_cost = in_warranty_cost_per_veh * vehicle.vpop
             repair_cost_per_veh = 0
             repair_cost = 0

@@ -39,10 +39,12 @@ class EstimatedAge:
                                                      'period_value')
 
             share = 0
-            if identifier == 'Warranty' and (vehicle.engine_id, option_id) in settings.warranty_extended._dict:
+            if identifier == 'Warranty' \
+                    and vehicle.engine_id in settings.warranty_extended._dict: \
+                    # and option_id == settings.no_action_alt:
                 extended_miles, share \
                     = settings.warranty_extended.get_required_miles_with_share(vehicle.engine_id)
-                extended_miles = extended_miles * share
+                extended_miles = required_miles * (1 - share) + extended_miles * share
                 required_miles = max(required_miles, extended_miles)
 
             calculated_age = round(required_miles / typical_vmt)
@@ -67,3 +69,7 @@ class EstimatedAge:
             return_list.append(estimated_age)
 
         return return_list
+
+    def get_attribute_value(self, key, attribute_name):
+
+        return self.estimated_ages_dict[key][attribute_name]

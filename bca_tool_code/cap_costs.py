@@ -121,16 +121,19 @@ class CapCosts:
                 = self.results[veh.vehicle_id, veh.option_id, veh.modelyear_id, 0, 0]['DirectCost_PerVeh']
 
             indirect_cost_dict = calc_indirect_cost_new_warranty(settings, veh, direct_applied_cost_per_veh)
-            warranty_cost_per_veh = indirect_cost_dict['Warranty_cost_per_veh']
-            rnd_cost_per_veh = indirect_cost_dict['RnD_cost_per_veh']
-            other_cost_per_veh = indirect_cost_dict['Other_cost_per_veh']
-            profit_cost_per_veh = indirect_cost_dict['Profit_cost_per_veh']
+            warranty_cost_per_veh = indirect_cost_dict['WarrantyCost_PerVeh']
+            rnd_cost_per_veh = indirect_cost_dict['RnDCost_PerVeh']
+            other_cost_per_veh = indirect_cost_dict['OtherCost_PerVeh']
+            profit_cost_per_veh = indirect_cost_dict['ProfitCost_PerVeh']
             indirect_cost_per_veh = indirect_cost_dict['ic_sum_per_veh']
-            warranty_cost = indirect_cost_dict['Warranty_cost']
-            rnd_cost = indirect_cost_dict['RnD_cost']
-            other_cost = indirect_cost_dict['Other_cost']
-            profit_cost = indirect_cost_dict['Profit_cost']
+            warranty_cost = indirect_cost_dict['WarrantyCost']
+            rnd_cost = indirect_cost_dict['RnDCost']
+            other_cost = indirect_cost_dict['OtherCost']
+            profit_cost = indirect_cost_dict['ProfitCost']
             indirect_cost = indirect_cost_dict['ic_sum']
+
+            if settings.warranty_cost_approach.__contains__('per_year'):
+                settings.markups.revise_warranty_contribution(settings, veh)
 
             # sum the direct and indirect costs to get the total tech costs
             tech_cost_per_veh, tech_cost = calc_tech_cost(veh, direct_applied_cost_per_veh, indirect_cost_per_veh)
