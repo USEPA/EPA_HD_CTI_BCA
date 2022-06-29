@@ -132,8 +132,8 @@ class CapCosts:
             profit_cost = indirect_cost_dict['ProfitCost']
             indirect_cost = indirect_cost_dict['ic_sum']
 
-            if settings.warranty_cost_approach.__contains__('per_year'):
-                settings.markups.revise_warranty_contribution(settings, veh)
+            # if settings.warranty_cost_approach.__contains__('per_year'):
+            #     settings.markups.revise_warranty_contribution(settings, veh)
 
             # sum the direct and indirect costs to get the total tech costs
             tech_cost_per_veh, tech_cost = calc_tech_cost(veh, direct_applied_cost_per_veh, indirect_cost_per_veh)

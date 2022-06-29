@@ -39,7 +39,15 @@ class WarrantyNewTechAdj:
         df['start_year'] = pd.to_numeric(df['start_year'])
         self.start_years = df['start_year'].unique()
 
-        key = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID'], df['start_year']))
+        key = pd.Series(
+            zip(
+                zip(
+                    df['regClassID'],
+                    df['fuelTypeID']
+                ),
+                df['optionID'],
+                df['start_year'],
+            ))
         df.set_index(key, inplace=True)
 
         self._dict = df.to_dict('index')

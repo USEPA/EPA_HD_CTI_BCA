@@ -151,7 +151,7 @@ def main():
         )
         gen_fxns.save_dict(
             settings.estimated_age.estimated_ages_dict,
-            path_of_run_results_folder / 'CAP_estimated_ages',
+            path_of_run_results_folder / 'CAP_required_and_estimated_ages',
             row_header=None, stamp=stamp, index=False
         )
         # gen_fxns.save_dict(
@@ -164,6 +164,11 @@ def main():
             path_of_run_results_folder / 'CAP_repair_cost_details',
             row_header=None, stamp=stamp, index=False
         )
+        # gen_fxns.save_dict(
+        #     settings.emission_repair_cost.repair_cpm_curve_coeffs,
+        #     path_of_run_results_folder / 'CAP_repair_cpm_curve_coeffs',
+        #     row_header=None, stamp=stamp, index=False
+        # )
 
         # save DataFrames to CSV
         settings.engine_costs.piece_costs_in_analysis_dollars.to_csv(
