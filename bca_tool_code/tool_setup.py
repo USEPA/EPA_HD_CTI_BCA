@@ -213,6 +213,11 @@ class SetInputs:
                 set_paths.path_inputs / self.input_files.get_filename('engine_costs_cap'),
                 'engine_id', self.general_inputs, self.deflators
             )
+            self.replacement_costs = PieceCosts()
+            self.replacement_costs.init_from_file(
+                set_paths.path_inputs / self.input_files.get_filename('replacement_costs_cap'),
+                'engine_id', self.general_inputs, self.deflators
+            )
             self.engine_learning_scalers = EngineLearningScalers()
             self.engine_learning_scalers.init_from_file(
                 set_paths.path_inputs / self.input_files.get_filename('engine_learning_scalers')

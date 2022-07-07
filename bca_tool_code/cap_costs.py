@@ -78,13 +78,28 @@ class CapCosts:
         for veh in settings.fleet_cap.vehicles_age0:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
 
-            direct_applied_cost_per_veh, direct_cost, pkg_cost_per_veh = calc_package_cost(settings, veh)
+            direct_applied_cost_per_veh, direct_cost, pkg_cost_per_veh \
+                = calc_package_cost(settings, settings.engine_costs, veh)
 
             # update object dict with direct costs, all of which are for age_id=0 only
             update_dict = {
                 'PackageCost_PerVeh': pkg_cost_per_veh,
                 'DirectCost_PerVeh': direct_applied_cost_per_veh,
                 'DirectCost': direct_cost,
+            }
+            self.update_object_dict(key, update_dict)
+
+        # calc replacement costs for age_id=0 vehicle objects
+        for veh in settings.fleet_cap.vehicles_age0:
+            key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
+
+            replacement_applied_cost_per_veh, replacement_cost, replacement_pkg_cost_per_veh \
+                = calc_package_cost(settings, settings.replacement_costs, veh)
+
+            # update object dict with direct costs, all of which are for age_id=0 only
+            update_dict = {
+                'ReplacementCost_PerVeh': replacement_applied_cost_per_veh,
+                'ReplacementCost': replacement_cost,
             }
             self.update_object_dict(key, update_dict)
 
@@ -119,6 +134,8 @@ class CapCosts:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
             direct_applied_cost_per_veh \
                 = self.results[veh.vehicle_id, veh.option_id, veh.modelyear_id, 0, 0]['DirectCost_PerVeh']
+            replacement_applied_cost_per_veh \
+                = self.results[veh.vehicle_id, veh.option_id, veh.modelyear_id, 0, 0]['ReplacementCost_PerVeh']
 
             indirect_cost_dict = calc_indirect_cost_new_warranty(settings, veh, direct_applied_cost_per_veh)
             warranty_cost_per_veh = indirect_cost_dict['WarrantyCost_PerVeh']
@@ -136,7 +153,8 @@ class CapCosts:
             #     settings.markups.revise_warranty_contribution(settings, veh)
 
             # sum the direct and indirect costs to get the total tech costs
-            tech_cost_per_veh, tech_cost = calc_tech_cost(veh, direct_applied_cost_per_veh, indirect_cost_per_veh)
+            tech_cost_per_veh, tech_cost \
+                = calc_tech_cost(veh, direct_applied_cost_per_veh, indirect_cost_per_veh, replacement_applied_cost_per_veh)
             
             # update object dict with tech costs, all of which are for age_id=0 only
             update_dict = {
@@ -281,6 +299,7 @@ class CapCosts:
             'OtherCost_PerVeh',
             'ProfitCost_PerVeh',
             'IndirectCost_PerVeh',
+            'ReplacementCost_PerVeh',
             'TechCost_PerVeh',
             'DEFCost_PerMile',
             'DEFCost_PerVeh',
@@ -297,6 +316,7 @@ class CapCosts:
             'OtherCost',
             'ProfitCost',
             'IndirectCost',
+            'ReplacementCost',
             'TechCost',
             'DEF_Gallons',
             'DEFCost',

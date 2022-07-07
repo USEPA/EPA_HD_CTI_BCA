@@ -58,7 +58,11 @@ def main():
         # calculate package costs by standard implementation start-year
         for vehicle in settings.fleet_cap.vehicles_age0:
             for start_year in settings.engine_costs.standardyear_ids:
-                cap_package_cost.calc_avg_package_cost_per_step(settings, vehicle, start_year)
+                cap_package_cost.calc_avg_package_cost_per_step(settings, settings.engine_costs, vehicle, start_year)
+
+        for vehicle in settings.fleet_cap.vehicles_age0:
+            for start_year in settings.engine_costs.standardyear_ids:
+                cap_package_cost.calc_avg_package_cost_per_step(settings, settings.replacement_costs, vehicle, start_year)
 
         cap_costs = CapCosts()
         cap_costs.calc_cap_costs(settings)
@@ -130,6 +134,11 @@ def main():
             row_header=None, stamp=stamp, index=False
         )
         gen_fxns.save_dict(
+            settings.replacement_costs.package_cost_by_step,
+            path_of_run_results_folder / 'CAP_replacement_costs_by_implementation_year',
+            row_header=None, stamp=stamp, index=False
+        )
+        gen_fxns.save_dict(
             settings.markups.contribution_factors,
             path_of_run_results_folder / 'CAP_indirect_cost_details',
             row_header=None, stamp=stamp, index=False
@@ -173,6 +182,8 @@ def main():
         # save DataFrames to CSV
         settings.engine_costs.piece_costs_in_analysis_dollars.to_csv(
             path_of_modified_inputs_folder / 'CAP_engine_costs.csv', index=False)
+        settings.replacement_costs.piece_costs_in_analysis_dollars.to_csv(
+            path_of_modified_inputs_folder / 'CAP_replacement_costs.csv', index=False)
         settings.repair_and_maintenance.repair_and_maintenance_in_analysis_dollars.to_csv(
             path_of_modified_inputs_folder / 'repair_and_maintenance.csv', index=True)
         settings.warranty_base_costs.piece_costs_in_analysis_dollars.to_csv(
