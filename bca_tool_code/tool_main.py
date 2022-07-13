@@ -58,11 +58,13 @@ def main():
         # calculate package costs by standard implementation start-year
         for vehicle in settings.fleet_cap.vehicles_age0:
             for start_year in settings.engine_costs.standardyear_ids:
-                cap_package_cost.calc_avg_package_cost_per_step(settings, settings.engine_costs, vehicle, start_year)
+                cap_package_cost.calc_avg_package_cost_per_step(
+                    settings, settings.engine_costs, vehicle, start_year)
 
         for vehicle in settings.fleet_cap.vehicles_age0:
             for start_year in settings.engine_costs.standardyear_ids:
-                cap_package_cost.calc_avg_package_cost_per_step(settings, settings.replacement_costs, vehicle, start_year)
+                cap_package_cost.calc_avg_package_cost_per_step(
+                    settings, settings.replacement_costs, vehicle, start_year, labor=True)
 
         cap_costs = CapCosts()
         cap_costs.calc_cap_costs(settings)

@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-def calc_avg_package_cost_per_step(settings, cost_object, vehicle, standardyear_id):
+def calc_avg_package_cost_per_step(settings, cost_object, vehicle, standardyear_id, labor=False):
     """
     Tech penetrations are applied here
     Parameters:
@@ -9,6 +9,7 @@ def calc_avg_package_cost_per_step(settings, cost_object, vehicle, standardyear_
         cost_object: object; an object of the PieceCost class (e.g., settings.engine_costs or settings.replacement_costs).
         vehicle: object; an object of the Vehicle class.
         standardyear_id: int; the implementation year associated with the cost.
+        labor: boolean; if True, a labor cost from the RepairAndMaintenance class will be included in the package cost.
 
     Returns:
         Updates the engine_costs object dictionary to include the year-over-year package costs, including learning
@@ -20,7 +21,9 @@ def calc_avg_package_cost_per_step(settings, cost_object, vehicle, standardyear_
     engine_id, option_id, modelyear_id = vehicle.engine_id, vehicle.option_id, vehicle.modelyear_id
     key = (engine_id, option_id, modelyear_id)
 
-    pkg_cost = techpen = pkg_cost_learned = pkg_applied_cost_learned = learning_effect = 0
+    pkg_cost = techpen = pkg_cost_learned = pkg_applied_cost_learned = learning_effect = labor_cost = 0
+    if labor:
+        labor_cost = settings.repair_and_maintenance.get_attribute_value('replacement_cost_labor')
 
     if modelyear_id < standardyear_id:
         pass
@@ -47,7 +50,7 @@ def calc_avg_package_cost_per_step(settings, cost_object, vehicle, standardyear_
                 learning_effect = ((cumulative_sales + (sales_year1 * seedvolume_factor))
                                    / (sales_year1 + (sales_year1 * seedvolume_factor))) ** learning_rate
 
-                pkg_cost_learned = pkg_cost * learning_effect
+                pkg_cost_learned = pkg_cost * learning_effect + labor_cost
                 pkg_applied_cost_learned = pkg_cost_learned * techpen
             else:
                 pass
