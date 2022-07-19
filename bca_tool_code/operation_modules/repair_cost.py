@@ -256,16 +256,14 @@ class EmissionRepairCost:
         return m
 
     @staticmethod
-    def calc_repair_cpm(veh_age, age_1, age_2, slope, cpm_1, cpm_2, max_cpm=None):
+    def calc_repair_cpm(veh_age, age_1, slope, cpm_1, max_cpm=None):
         """
 
         Parameters:
             veh_age: int; the vehicle age_id.
             age_1: int; the age when cpm_1 is valid (e.g., the estimated warranty age, or maybe age=0).
-            age_2: int; the age when cpm_2 is valid (e.g., the estimated useful life age).
             slope: numeric; the slope of the repair cost per mile curve versus age.
             cpm_1: numeric; the cost/mile at age_1.
-            cpm_2: numeric; the cost/mile at age_2.
             max_cpm: numeric; the max cost/mile if applicable.
 
         Returns:
@@ -273,14 +271,7 @@ class EmissionRepairCost:
 
         """
         if max_cpm:
-            if (veh_age + 1) <= age_1:
-                cpm = cpm_1
-            elif age_1 < (veh_age + 1) < age_2:
-                cpm = slope * ((veh_age + 1) - age_1) + cpm_1
-            elif (veh_age + 1) == age_2:
-                cpm = cpm_2
-            else:
-                cpm = max_cpm
+            cpm = min(slope * ((veh_age + 1) - age_1) + cpm_1, max_cpm)
         else:
             cpm = slope * ((veh_age + 1) - age_1) + cpm_1
 
@@ -309,7 +300,13 @@ class EmissionRepairCost:
         # in_warranty_cpm = in_warranty_cpm_input_value * emission_repair_share_input_value * direct_cost_scaler
         in_warranty_cpm = 0
         at_usefullife_cpm = at_usefullife_cpm_input_value * emission_repair_share_input_value * direct_cost_scaler
-        max_cpm = None
+
+        # determine whether to use max_cpm or not (setting in general inputs file)
+        use_max_cpm = settings.general_inputs.get_attribute_value('use_max_R&M_cost_per_mile')
+        if use_max_cpm != 'Y':
+            max_cpm = None
+        else:
+            max_cpm = settings.repair_and_maintenance.get_attribute_value('max_R&M_CPM') * direct_cost_scaler
 
         warranty_cost_per_year = settings.warranty_base_costs.get_warranty_cost(vehicle.engine_id)
         warranty_cost_per_year = warranty_cost_per_year * direct_cost_scaler
@@ -332,12 +329,16 @@ class EmissionRepairCost:
         slope_ap = self.calc_slope(in_warranty_cpm, at_usefullife_cpm, warranty_age_nap, ul_age_ap)
 
         # now calculate the cost per mile under the no_action provisions
-        cpm_nap = max(self.calc_repair_cpm(vehicle.age_id, warranty_age_nap, ul_age_nap, slope_nap,
-                                           in_warranty_cpm, at_usefullife_cpm, max_cpm=max_cpm), 0)
+        cpm_nap = self.calc_repair_cpm(vehicle.age_id, warranty_age_nap, slope_nap,
+                                       in_warranty_cpm, max_cpm=max_cpm)
+        # cpm_nap = max(self.calc_repair_cpm(vehicle.age_id, warranty_age_nap, ul_age_nap, slope_nap,
+        #                                    in_warranty_cpm, at_usefullife_cpm, max_cpm=max_cpm), 0)
 
         # now calculate the cost per mile under the action provisions
-        cpm_ap = max(self.calc_repair_cpm(vehicle.age_id, warranty_age_nap, ul_age_ap, slope_ap,
-                                          in_warranty_cpm, at_usefullife_cpm, max_cpm=max_cpm), 0)
+        cpm_ap = self.calc_repair_cpm(vehicle.age_id, warranty_age_nap, slope_ap,
+                                      in_warranty_cpm, max_cpm=max_cpm)
+        # cpm_ap = max(self.calc_repair_cpm(vehicle.age_id, warranty_age_nap, ul_age_ap, slope_ap,
+        #                                   in_warranty_cpm, at_usefullife_cpm, max_cpm=max_cpm), 0)
 
         # now calc the cost per vehicle and cost for each condition
         cost_per_veh_nap = cpm_nap * vehicle.vmt_per_veh
@@ -348,14 +349,17 @@ class EmissionRepairCost:
         if vehicle.age_id == 0 and vehicle.option_id == settings.no_action_alt:
             warranty_cost_per_veh = warranty_cost_per_year * warranty_age_ap
             repair_cost_per_veh = 0
+            cpm_ap = 0
 
         elif vehicle.age_id == 0 and vehicle.option_id != settings.no_action_alt:
             warranty_cost_per_veh = warranty_cost_per_year * warranty_age_ap * (1 + new_tech_adj_factor)
             repair_cost_per_veh = 0
+            cpm_ap = 0
 
         elif 0 < vehicle.age_id <= warranty_age_ap:
             warranty_cost_per_veh = 0
             repair_cost_per_veh = 0
+            cpm_ap = 0
 
         else:
             warranty_cost_per_veh = 0
