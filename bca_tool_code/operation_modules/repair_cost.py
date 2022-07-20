@@ -299,14 +299,16 @@ class EmissionRepairCost:
 
         # in_warranty_cpm = in_warranty_cpm_input_value * emission_repair_share_input_value * direct_cost_scaler
         in_warranty_cpm = 0
-        at_usefullife_cpm = at_usefullife_cpm_input_value * emission_repair_share_input_value * direct_cost_scaler
+        at_usefullife_cpm = at_usefullife_cpm_input_value \
+                            * emission_repair_share_input_value * direct_cost_scaler
 
         # determine whether to use max_cpm or not (setting in general inputs file)
         use_max_cpm = settings.general_inputs.get_attribute_value('use_max_R&M_cost_per_mile')
         if use_max_cpm != 'Y':
             max_cpm = None
         else:
-            max_cpm = settings.repair_and_maintenance.get_attribute_value('max_R&M_CPM') * direct_cost_scaler
+            max_cpm = settings.repair_and_maintenance.get_attribute_value('max_R&M_CPM') \
+                      * emission_repair_share_input_value * direct_cost_scaler
 
         warranty_cost_per_year = settings.warranty_base_costs.get_warranty_cost(vehicle.engine_id)
         warranty_cost_per_year = warranty_cost_per_year * direct_cost_scaler
