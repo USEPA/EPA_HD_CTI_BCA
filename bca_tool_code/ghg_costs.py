@@ -97,7 +97,7 @@ class GhgCosts:
                 self.update_object_dict(key, update_dict)
 
         # calc GHG pollution effects, if applicable
-        if settings.calc_ghg_pollution:
+        if settings.runtime_options.calc_ghg_pollution:
             for veh in settings.fleet_ghg.vehicles:
                 key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
                 update_dict = calc_ghg_emission_cost(settings, veh)
@@ -110,18 +110,21 @@ class GhgCosts:
                                   arg_to_weight='FuelCost_Retail_PerMile', arg_to_weight_by=arg)
 
         # discount things
-        add_keys_for_discounting(settings.general_inputs, self.results)
-        discount_values(settings, self)
+        if settings.runtime_options.discount_values:
+            add_keys_for_discounting(settings.general_inputs, self.results)
+            discount_values(settings, self)
 
         # calc the annual summary, present values and annualized values (excluding cost/veh and cost/mile results)
-        settings.annual_summary_ghg.annual_summary(settings, self, settings.options_ghg, settings.ghg_vehicle.year_ids)
+        if settings.runtime_options.discount_values:
+            settings.annual_summary_ghg.annual_summary(settings, self, settings.options_ghg, settings.ghg_vehicle.year_ids)
 
         # calc deltas relative to the no-action scenario
-        calc_deltas(settings, self, settings.options_ghg)
-        calc_deltas(settings, settings.annual_summary_ghg, settings.options_ghg)
+        if settings.runtime_options.calc_deltas:
+            calc_deltas(settings, self, settings.options_ghg)
+            calc_deltas(settings, settings.annual_summary_ghg, settings.options_ghg)
 
-        settings.wtd_ghg_fuel_cpm_dict = calc_deltas_weighted(settings, settings.wtd_ghg_fuel_cpm_dict,
-                                                              settings.options_ghg)
+            settings.wtd_ghg_fuel_cpm_dict = calc_deltas_weighted(settings, settings.wtd_ghg_fuel_cpm_dict,
+                                                                  settings.options_ghg)
 
     def update_object_dict(self, key, update_dict):
         """
@@ -184,7 +187,7 @@ class GhgCosts:
             'OperatingCost',
             'TechAndOperatingCost',
         ]
-        if settings.calc_ghg_pollution:
+        if settings.runtime_options.calc_ghg_pollution:
             ghg_attributes = [
                 'CO2Cost_tailpipe_0.05',
                 'CO2Cost_tailpipe_0.03',

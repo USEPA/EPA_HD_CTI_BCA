@@ -212,7 +212,7 @@ class CapCosts:
                 self.update_object_dict(key, update_dict)
 
         # calc CAP pollution effects, if applicable
-        if settings.calc_cap_pollution:
+        if settings.runtime_options.calc_cap_pollution:
             for veh in settings.fleet_cap.vehicles:
                 key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
                 update_dict = calc_criteria_emission_cost(settings, veh)
@@ -229,19 +229,25 @@ class CapCosts:
                                   arg_to_weight='FuelCost_Retail_PerMile', arg_to_weight_by=arg)
 
         # discount things
-        add_keys_for_discounting(settings.general_inputs, self.results)
-        discount_values(settings, self)
+        if settings.runtime_options.discount_values:
+            add_keys_for_discounting(settings.general_inputs, self.results)
+            discount_values(settings, self)
 
         # calc the annual summary, present values and annualized values (excluding cost/veh and cost/mile results)
-        settings.annual_summary_cap.annual_summary(settings, self, settings.options_cap, settings.cap_vehicle.year_ids)
+        if settings.runtime_options.discount_values:
+            settings.annual_summary_cap.annual_summary(settings, self, settings.options_cap, settings.cap_vehicle.year_ids)
 
         # calc deltas relative to the no-action scenario
-        calc_deltas(settings, self, settings.options_cap)
-        calc_deltas(settings, settings.annual_summary_cap, settings.options_cap)
+        if settings.runtime_options.calc_deltas:
+            calc_deltas(settings, self, settings.options_cap)
+            calc_deltas(settings, settings.annual_summary_cap, settings.options_cap)
 
-        settings.wtd_def_cpm_dict = calc_deltas_weighted(settings, settings.wtd_def_cpm_dict, settings.options_cap)
-        settings.wtd_repair_cpm_dict = calc_deltas_weighted(settings, settings.wtd_repair_cpm_dict, settings.options_cap)
-        settings.wtd_cap_fuel_cpm_dict = calc_deltas_weighted(settings, settings.wtd_cap_fuel_cpm_dict, settings.options_cap)
+            settings.wtd_def_cpm_dict = calc_deltas_weighted(settings, settings.wtd_def_cpm_dict,
+                                                             settings.options_cap)
+            settings.wtd_repair_cpm_dict = calc_deltas_weighted(settings, settings.wtd_repair_cpm_dict,
+                                                                settings.options_cap)
+            settings.wtd_cap_fuel_cpm_dict = calc_deltas_weighted(settings, settings.wtd_cap_fuel_cpm_dict,
+                                                                  settings.options_cap)
 
     def update_object_dict(self, key, update_dict):
         """
@@ -327,7 +333,7 @@ class CapCosts:
             'OperatingCost',
             'TechAndOperatingCost',
         ]
-        if settings.calc_cap_pollution:
+        if settings.runtime_options.calc_cap_pollution:
             cap_attributes = [
                 'PM25Cost_tailpipe_0.03',
                 'NOxCost_tailpipe_0.03',

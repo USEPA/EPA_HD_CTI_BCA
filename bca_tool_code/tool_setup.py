@@ -5,6 +5,7 @@ from datetime import datetime
 import shutil
 
 from bca_tool_code.general_input_modules.input_files import InputFiles
+from bca_tool_code.general_input_modules.runtime_options import RuntimeOptions
 from bca_tool_code.general_input_modules.general_inputs import GeneralInputs
 from bca_tool_code.general_input_modules.deflators import Deflators
 from bca_tool_code.general_input_modules.fuel_prices import FuelPrices
@@ -146,6 +147,10 @@ class SetInputs:
         self.start_time = time()
         self.start_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')
 
+        self.runtime_options = RuntimeOptions()
+        self.runtime_options.init_from_file(
+            set_paths.path_inputs / 'Runtime_Options.csv'
+        )
         self.input_files = InputFiles()
         self.input_files.init_from_file(
             set_paths.path_inputs / 'Input_Files.csv'
@@ -159,15 +164,15 @@ class SetInputs:
 
         # determine what's being run
         self.no_action_alt = pd.to_numeric(self.general_inputs.get_attribute_value('no_action_alt'))
-        calc_cap_costs_value = self.general_inputs.get_attribute_value('calculate_cap_costs')
-        calc_cap_pollution_effects_value = self.general_inputs.get_attribute_value('calculate_cap_pollution_effects')
-        calc_ghg_costs_value = self.general_inputs.get_attribute_value('calculate_ghg_costs')
-        calc_ghg_pollution_effects_value = self.general_inputs.get_attribute_value('calculate_ghg_pollution_effects')
+        # calc_cap_costs_value = self.general_inputs.get_attribute_value('calculate_cap_costs')
+        # calc_cap_pollution_effects_value = self.general_inputs.get_attribute_value('calculate_cap_pollution_effects')
+        # calc_ghg_costs_value = self.general_inputs.get_attribute_value('calculate_ghg_costs')
+        # calc_ghg_pollution_effects_value = self.general_inputs.get_attribute_value('calculate_ghg_pollution_effects')
 
-        self.calc_cap_costs = True if calc_cap_costs_value == 'Y' else None
-        self.calc_cap_pollution = True if calc_cap_pollution_effects_value == 'Y' else None
-        self.calc_ghg_costs = True if calc_ghg_costs_value == 'Y' else None
-        self.calc_ghg_pollution = True if calc_ghg_pollution_effects_value == 'Y' else None
+        # self.calc_cap_costs = True if calc_cap_costs_value == 'Y' else None
+        # self.calc_cap_pollution = True if calc_cap_pollution_effects_value == 'Y' else None
+        # self.calc_ghg_costs = True if calc_ghg_costs_value == 'Y' else None
+        # self.calc_ghg_pollution = True if calc_ghg_pollution_effects_value == 'Y' else None
 
         self.input_files_pathlist = self.input_files.input_files_pathlist
 
@@ -187,7 +192,7 @@ class SetInputs:
             self.general_inputs, self.deflators
         )
 
-        if self.calc_cap_costs:
+        if self.runtime_options.calc_cap_costs:
             self.options_cap = Options()
             self.options_cap.init_from_file(
                 set_paths.path_inputs / self.input_files.get_filename('options_cap')
@@ -275,7 +280,7 @@ class SetInputs:
         #         set_paths.path_inputs / self.input_files.get_filename('dollar_per_ton_cap')
         #     )
 
-        if self.calc_ghg_costs:
+        if self.runtime_options.calc_ghg_costs:
 
             self.options_ghg = Options()
             self.options_ghg.init_from_file(
@@ -305,7 +310,7 @@ class SetInputs:
             self.wtd_ghg_fuel_cpm_dict = dict()
             self.annual_summary_ghg = AnnualSummary()
 
-            if self.calc_cap_costs:
+            if self.runtime_options.calc_cap_costs:
                 pass
             else:
                 self.markups = Markups()
@@ -321,7 +326,7 @@ class SetInputs:
                     set_paths.path_inputs / self.input_files.get_filename('useful_life')
                 )
 
-        if self.calc_ghg_pollution:
+        if self.runtime_options.calc_ghg_pollution:
             self.cost_factors_scc = CostFactors()
             self.cost_factors_scc.init_from_file(
                 set_paths.path_inputs / self.input_files.get_filename('dollar_per_ton_scc'),

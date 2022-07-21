@@ -44,7 +44,7 @@ def main():
 
     cap_costs = ghg_costs = None
 
-    if settings.calc_cap_costs:
+    if settings.runtime_options.calc_cap_costs:
 
         # calculate year-over-year engine sales
         for vehicle in settings.fleet_cap.vehicles_age0:
@@ -69,7 +69,7 @@ def main():
         cap_costs = CapCosts()
         cap_costs.calc_cap_costs(settings)
 
-    if settings.calc_ghg_costs:
+    if settings.runtime_options.calc_ghg_costs:
 
         for vehicle in settings.fleet_ghg.vehicles_age0:
             for start_year in settings.vehicle_costs.standardyear_ids:
@@ -114,7 +114,7 @@ def main():
 
     print("\nSaving the output files...\n")
     stamp = settings.start_time_readable
-    if settings.calc_cap_costs:
+    if settings.runtime_options.calc_cap_costs:
         gen_fxns.save_dict(
             cap_costs.results,
             path_of_run_results_folder / 'CAP_bca_tool_all',
@@ -191,12 +191,13 @@ def main():
         settings.warranty_base_costs.piece_costs_in_analysis_dollars.to_csv(
             path_of_modified_inputs_folder / 'CAP_base_warranty_costs.csv', index=False)
 
-        # create figures
-        arg_list = ['TechCost', 'EmissionRepairCost', 'DEFCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
-        bca_tool_code.general_modules.create_figures.CreateFigures(
-            cap_summary_df, 'US Dollars', path_of_run_results_folder, 'CAP').create_figures(arg_list)
+        # create figures, which are based on the annual summary, which requires discounted values
+        if settings.runtime_options.discount_values:
+            arg_list = ['TechCost', 'EmissionRepairCost', 'DEFCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
+            bca_tool_code.general_modules.create_figures.CreateFigures(
+                cap_summary_df, 'US Dollars', path_of_run_results_folder, 'CAP').create_figures(arg_list)
 
-    if settings.calc_ghg_costs:
+    if settings.runtime_options.calc_ghg_costs:
         gen_fxns.save_dict(
             ghg_costs.results,
             path_of_run_results_folder / 'GHG_bca_tool_all',
@@ -227,10 +228,11 @@ def main():
         settings.vehicle_costs.piece_costs_in_analysis_dollars.to_csv(
             path_of_modified_inputs_folder / 'GHG_vehicle_costs.csv', index=False)
 
-        # create figures
-        arg_list = ['TechCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
-        bca_tool_code.general_modules.create_figures.CreateFigures(
-            ghg_summary_df, 'US Dollars', path_of_run_results_folder, 'GHG').create_figures(arg_list)
+        # create figures, which are based on the annual summary, which requires discounted values
+        if settings.runtime_options.discount_values:
+            arg_list = ['TechCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
+            bca_tool_code.general_modules.create_figures.CreateFigures(
+                ghg_summary_df, 'US Dollars', path_of_run_results_folder, 'GHG').create_figures(arg_list)
 
     # save additional DataFrames to CSV
     settings.fuel_prices.fuel_prices_in_analysis_dollars.to_csv(
@@ -254,6 +256,8 @@ def main():
                 'Calc CAP pollution',
                 'Calc GHG costs',
                 'Calc GHG pollution',
+                'Discount Values',
+                'Calculate Deltas',
                 'Start of run',
                 'End of run',
                 'Elapsed time read inputs',
@@ -264,10 +268,12 @@ def main():
             'Results': [
                 bca_tool_code.__version__,
                 path_of_run_folder,
-                settings.calc_cap_costs,
-                settings.calc_cap_pollution,
-                settings.calc_ghg_costs,
-                settings.calc_ghg_pollution,
+                settings.runtime_options.calc_cap_costs,
+                settings.runtime_options.calc_cap_pollution,
+                settings.runtime_options.calc_ghg_costs,
+                settings.runtime_options.calc_ghg_pollution,
+                settings.runtime_options.discount_values,
+                settings.runtime_options.calc_deltas,
                 settings.start_time_readable,
                 end_time_readable,
                 settings.elapsed_time_inputs,
@@ -276,6 +282,8 @@ def main():
                 elapsed_time,
             ],
             'Units': [
+                '',
+                '',
                 '',
                 '',
                 '',
