@@ -130,6 +130,8 @@ class Vehicle:
         """
         df = read_input_file(filepath)
 
+        df = self.rename_attributes(df)
+
         # df.insert(0, 'discount_rate', 0)
         df.insert(df.columns.get_loc('modelyear_id') + 1, 'age_id', df['year_id'] - df['modelyear_id'])
 
@@ -267,3 +269,33 @@ class Vehicle:
         odometer = temp['vmt_per_veh']
 
         return odometer
+
+    @staticmethod
+    def rename_attributes(df):
+
+        rename_dict = {'sourceTypeID': 'sourcetype_id',
+                       'regClassID': 'regclass_id',
+                       'fuelTypeID': 'fueltype_id',
+                       'yearID': 'year_id',
+                       'Alternative': 'option_id',
+                       'modelYearID': 'modelyear_id',
+                       'VPOP': 'vpop',
+                       'VMT': 'vmt',
+                       'Gallons': 'gallons',
+                       'Energy_KJ': 'energy_kilojoules',
+                       'THC_UStons': 'thc_ustons',
+                       'CO_UStons': 'co_ustons',
+                       'NOx_UStons': 'nox_ustons',
+                       'CO2_UStons': 'co2_ustons',
+                       'CH4_UStons': 'ch4_ustons',
+                       'N2O_UStons': 'n2o_ustons',
+                       'SO2_UStons': 'so2_ustons',
+                       'VOC_UStons': 'voc_ustons',
+                       'PM25_exhaust_UStons': 'pm25_exhaust_ustons',
+                       'PM25_brakewear_UStons': 'pm25_brakewear_ustons',
+                       'PM25_tirewear_UStons': 'pm25_tirewear_ustons',
+                       }
+        for key in rename_dict:
+            df.rename(columns={key: rename_dict[key]}, inplace=True)
+
+        return df

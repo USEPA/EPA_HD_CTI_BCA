@@ -271,9 +271,9 @@ class EmissionRepairCost:
 
         """
         if max_cpm:
-            cpm = min(slope * ((veh_age + 1) - age_1) + cpm_1, max_cpm)
+            cpm = max(min(slope * ((veh_age + 1) - age_1) + cpm_1, max_cpm), 0)
         else:
-            cpm = slope * ((veh_age + 1) - age_1) + cpm_1
+            cpm = max(slope * ((veh_age + 1) - age_1) + cpm_1, 0)
 
         return cpm
 
