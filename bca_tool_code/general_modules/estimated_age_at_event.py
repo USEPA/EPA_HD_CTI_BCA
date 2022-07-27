@@ -5,7 +5,7 @@ class EstimatedAge:
         self.identifiers = ['Warranty', 'UsefulLife']
         self.warranty_basis = None
 
-    def calc_estimated_age(self, settings, vehicle, typical_vmt, warranty_provisions=None):
+    def calc_estimated_age(self, settings, vehicle, typical_vmt, provisions=None):
         """
 
         Parameters:
@@ -13,7 +13,7 @@ class EstimatedAge:
             vehicle: object; an object of the Vehicle class.\n
             typical_vmt: numeric; the typical annual VMT/vehicle over a set number of year_ids as set via the General
             Inputs file (see calc_typical_vmt_per_year function).\n
-            warranty_provisions: int; the option_id for which to estimate ages.
+            provisions: int; the option_id for which to estimate ages.
 
         Returns:
             Updates the estimated ages dictionary with the ages at which an event (e.g., warranty, useful life) will be
@@ -25,12 +25,17 @@ class EstimatedAge:
                                'UsefulLife': settings.useful_life,
                                }
 
-        option_id = warranty_provisions
+        option_id = provisions
 
         if self.warranty_basis:
             pass
         else:
             self.warranty_basis = settings.general_inputs.get_attribute_value('warranty_cost_basis')
+
+        avg_speed \
+            = settings.average_speed.get_attribute_value((vehicle.sourcetype_id, vehicle.regclass_id))
+
+        operating_hours_per_year = typical_vmt / avg_speed
 
         return_list = list()
         share = 0
@@ -40,12 +45,21 @@ class EstimatedAge:
                 miles_and_ages = miles_and_ages_dict[identifier]
                 estimated_ages_dict_key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, identifier
 
+                required_hours = calculated_age_hours = None
+                required_age = required_miles = 0
+                extended_miles = share = 0
+                calculated_age_miles = estimated_age = estimated_miles = 0
+
                 required_age \
                     = miles_and_ages.get_attribute_value((vehicle.engine_id, option_id, vehicle.modelyear_id, 'Age'),
                                                          'period_value')
                 required_miles \
                     = miles_and_ages.get_attribute_value((vehicle.engine_id, option_id, vehicle.modelyear_id, 'Miles'),
                                                          'period_value')
+                if identifier == 'Warranty' and vehicle.option_id != settings.no_action_alt:
+                    required_hours \
+                        = miles_and_ages.get_attribute_value((vehicle.engine_id, option_id, vehicle.modelyear_id, 'Hours'),
+                                                             'period_value')
 
                 if identifier == 'Warranty' \
                         and vehicle.engine_id in settings.warranty_extended._dict \
@@ -55,10 +69,16 @@ class EstimatedAge:
                     extended_miles = required_miles * (1 - share) + extended_miles * share
                     required_miles = max(required_miles, extended_miles)
 
-                # calculated_age = round(required_miles / typical_vmt)
-                calculated_age = required_miles / typical_vmt
-                estimated_age = min(required_age, calculated_age)
+                # calculated_age_miles = round(required_miles / typical_vmt)
+                calculated_age_miles = required_miles / typical_vmt
+                estimated_age = min(required_age, calculated_age_miles)
+
+                if required_hours:
+                    calculated_age_hours = required_hours / operating_hours_per_year
+                    estimated_age = min(required_age, calculated_age_miles, calculated_age_hours)
+
                 estimated_miles = typical_vmt * estimated_age
+
                 self.estimated_ages_dict[estimated_ages_dict_key] = ({
                     'optionID': vehicle.option_id,
                     'sourceTypeID': vehicle.sourcetype_id,
@@ -71,12 +91,16 @@ class EstimatedAge:
                     'fuelTypeName': vehicle.fueltype_name,
                     'identifier': identifier,
                     'typical_vmt': typical_vmt,
+                    'average_mph': avg_speed,
+                    'annual_operating_hours': operating_hours_per_year,
                     'required_age': required_age,
-                    'calculated_age': calculated_age,
-                    'estimated_age': estimated_age,
                     'required_miles': required_miles,
+                    'required_hours': required_hours,
+                    'calculated_age_miles': calculated_age_miles,
+                    'calculated_age_hours': calculated_age_hours,
+                    'estimated_age': estimated_age,
                     'estimated_miles': estimated_miles,
-                    'share_with_extended': share,
+                    'share_with_extended_warranty': share,
                 })
                 # append warranty & UL data to return_list
                 if self.warranty_basis.__contains__('estimated'):

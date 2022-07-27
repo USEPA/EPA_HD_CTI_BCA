@@ -39,7 +39,16 @@ class Warranty:
         df['start_year'] = pd.to_numeric(df['start_year'])
         self.start_years = df['start_year'].unique()
 
-        key = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID'], df['start_year'], df['period_id']))
+        key = pd.Series(
+            zip(
+                zip(
+                    df['regClassID'],
+                    df['fuelTypeID']),
+                df['optionID'],
+                df['start_year'],
+                df['period_id']
+            )
+        )
         df.set_index(key, inplace=True)
 
         self._dict = df.to_dict('index')
@@ -52,7 +61,7 @@ class Warranty:
 
         Parameters:
             key: tuple; ((regclass_id, fueltype_id), option_id, modelyear_id, period_id), where period_id is
-            'Miles' or 'Age'.\n
+            'Miles' or 'Age' or 'Hours'.\n
             attribute_name: str; the attribute name for which a value is sought (e.g., period_value).
 
         Returns:

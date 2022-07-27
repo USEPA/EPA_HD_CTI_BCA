@@ -16,6 +16,7 @@ from bca_tool_code.general_input_modules.warranty_extended import WarrantyExtend
 from bca_tool_code.general_input_modules.warranty_base_costs import BaseWarrantyCosts
 from bca_tool_code.general_input_modules.warranty_new_tech_adj_factor import WarrantyNewTechAdj
 from bca_tool_code.general_input_modules.useful_life import UsefulLife
+from bca_tool_code.general_input_modules.average_speed import AverageSpeed
 from bca_tool_code.general_input_modules.cost_factors import CostFactors
 # from bca_tool_code.general_input_modules.dollar_per_ton_cap import DollarPerTonCAP
 from bca_tool_code.general_input_modules.options import Options
@@ -253,6 +254,10 @@ class SetInputs:
             self.useful_life = UsefulLife()
             self.useful_life.init_from_file(
                 set_paths.path_inputs / self.input_files.get_filename('useful_life')
+            )
+            self.average_speed = AverageSpeed()
+            self.average_speed.init_from_file(
+                set_paths.path_inputs / self.input_files.get_filename('average_speed')
             )
             self.def_doserates = DefDoseRates()
             self.def_doserates.init_from_file(

@@ -119,11 +119,11 @@ class EmissionRepairCost:
         # NOTE: nap refers to "no action provisions"; ap refers to "action provisions"
         warranty_age_nap, ul_age_nap \
             = settings.estimated_age.calc_estimated_age(settings, vehicle, typical_vmt,
-                                                        warranty_provisions=settings.no_action_alt)
+                                                        provisions=settings.no_action_alt)
 
         warranty_age_ap, ul_age_ap \
             = settings.estimated_age.calc_estimated_age(settings, vehicle, typical_vmt,
-                                                        warranty_provisions=vehicle.option_id)
+                                                        provisions=vehicle.option_id)
 
         # get the share with extended warranty in the no-action scenario
         share_with_extended = 0
@@ -317,33 +317,32 @@ class EmissionRepairCost:
 
         typical_vmt = settings.fleet_cap.get_typical_vmt_per_year(settings, vehicle)
 
-        # NOTE: nap refers to "no action provisions"; ap refers to "action provisions"
-        warranty_age_nap, warranty_miles_nap, ul_age_nap, ul_miles_nap, share_with_extended \
-            = settings.estimated_age.calc_estimated_age(settings, vehicle, typical_vmt,
-                                                        warranty_provisions=settings.no_action_alt)
+        # # NOTE: nap refers to "no action provisions"; ap refers to "action provisions"
+        # warranty_age_nap, warranty_miles_nap, ul_age_nap, ul_miles_nap, share_with_extended \
+        #     = settings.estimated_age.calc_estimated_age(settings, vehicle, typical_vmt,
+        #                                                 provisions=settings.no_action_alt)
 
         warranty_age_ap, warranty_miles_ap, ul_age_ap, ul_miles_ap, share_with_extended \
             = settings.estimated_age.calc_estimated_age(settings, vehicle, typical_vmt,
-                                                        warranty_provisions=vehicle.option_id)
+                                                        provisions=vehicle.option_id)
 
         # calculate the repair cost per mile slopes starting at age=warranty_age_nap
-        slope_nap = self.calc_slope(in_warranty_cpm, at_usefullife_cpm, warranty_age_nap, ul_age_nap)
-        slope_ap = self.calc_slope(in_warranty_cpm, at_usefullife_cpm, warranty_age_nap, ul_age_ap)
+        # slope_nap = self.calc_slope(in_warranty_cpm, at_usefullife_cpm, warranty_age_nap, ul_age_nap)
+        # slope_ap = self.calc_slope(in_warranty_cpm, at_usefullife_cpm, warranty_age_nap, ul_age_ap)
+        slope_ap = self.calc_slope(in_warranty_cpm, at_usefullife_cpm, warranty_age_ap, ul_age_ap)
 
-        # now calculate the cost per mile under the no_action provisions
-        cpm_nap = self.calc_repair_cpm(vehicle.age_id, warranty_age_nap, slope_nap,
-                                       in_warranty_cpm, max_cpm=max_cpm)
-        # cpm_nap = max(self.calc_repair_cpm(vehicle.age_id, warranty_age_nap, ul_age_nap, slope_nap,
-        #                                    in_warranty_cpm, at_usefullife_cpm, max_cpm=max_cpm), 0)
+        # # now calculate the cost per mile under the no_action provisions
+        # cpm_nap = self.calc_repair_cpm(vehicle.age_id, warranty_age_nap, slope_nap,
+        #                                in_warranty_cpm, max_cpm=max_cpm)
 
         # now calculate the cost per mile under the action provisions
-        cpm_ap = self.calc_repair_cpm(vehicle.age_id, warranty_age_nap, slope_ap,
+        # cpm_ap = self.calc_repair_cpm(vehicle.age_id, warranty_age_nap, slope_ap,
+        #                               in_warranty_cpm, max_cpm=max_cpm)
+        cpm_ap = self.calc_repair_cpm(vehicle.age_id, warranty_age_ap, slope_ap,
                                       in_warranty_cpm, max_cpm=max_cpm)
-        # cpm_ap = max(self.calc_repair_cpm(vehicle.age_id, warranty_age_nap, ul_age_ap, slope_ap,
-        #                                   in_warranty_cpm, at_usefullife_cpm, max_cpm=max_cpm), 0)
 
         # now calc the cost per vehicle and cost for each condition
-        cost_per_veh_nap = cpm_nap * vehicle.vmt_per_veh
+        # cost_per_veh_nap = cpm_nap * vehicle.vmt_per_veh
 
         cost_per_veh_ap = cpm_ap * vehicle.vmt_per_veh
 
@@ -387,23 +386,23 @@ class EmissionRepairCost:
             'reference_direct_cost': reference_pkg_cost,
             'direct_cost_scaler': direct_cost_scaler,
             'share_with_ext_warranty': share_with_extended,
-            'warranty_est_age_nap': warranty_age_nap,
+            # 'warranty_est_age_nap': warranty_age_nap,
             'warranty_est_age_ap': warranty_age_ap,
-            'ul_est_age_nap': ul_age_nap,
+            # 'ul_est_age_nap': ul_age_nap,
             'ul_est_age_ap': ul_age_ap,
             'in_warranty_cpm': in_warranty_cpm,
             'at_ul_cpm': at_usefullife_cpm,
-            'slope_within_ul_nap': slope_nap,
+            # 'slope_within_ul_nap': slope_nap,
             'slope_within_ul_ap': slope_ap,
             # 'slope_within_ul_mixed': slope_mixed,
             'max_cpm': max_cpm,
-            'cpm_nap': cpm_nap,
+            # 'cpm_nap': cpm_nap,
             'cpm_ap': cpm_ap,
             # 'cpm_mixed': cpm_mixed,
             'final_repair_cpm': cpm_ap,
             # 'in_warranty_repair_cost_per_veh': in_warranty_cost_per_veh,
             'beyond_warranty_repair_cost_per_veh': repair_cost_per_veh,
-            'repair_cost_per_veh_nap': cost_per_veh_nap,
+            # 'repair_cost_per_veh_nap': cost_per_veh_nap,
             # 'repair_cost_per_veh_mixed': cost_per_veh_mixed,
             'warranty_cost_per_veh': warranty_cost_per_veh,
             'warranty_cost': warranty_cost,
