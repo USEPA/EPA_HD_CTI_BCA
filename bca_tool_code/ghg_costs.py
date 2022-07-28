@@ -1,5 +1,6 @@
 import pandas as pd
 
+import bca_tool_code.vehicle_cost_modules.vehicle_package_cost as ghg_package_cost
 from bca_tool_code.vehicle_cost_modules.vehicle_package_cost import calc_package_cost
 from bca_tool_code.operation_modules.fuel_cost import calc_fuel_cost
 from bca_tool_code.general_modules.sum_by_vehicle import calc_sum_of_costs
@@ -8,7 +9,7 @@ from bca_tool_code.general_modules.discounting import discount_values
 from bca_tool_code.general_modules.calc_deltas import calc_deltas, calc_deltas_weighted
 from bca_tool_code.general_modules.emission_cost import calc_ghg_emission_cost
 
-# TODO how do all of the updates need to be reflected in the ghg costs?
+
 class GhgCosts:
 
     def __init__(self):
@@ -20,7 +21,7 @@ class GhgCosts:
             'OperatingCost_Owner_PerVeh': ['FuelCost_Retail_PerVeh']
         }
 
-    def calc_ghg_costs(self, settings):
+    def calc_results(self, settings):
         print('\nCalculating GHG costs...')
 
         discount_rate = 0
@@ -63,7 +64,12 @@ class GhgCosts:
             self.update_object_dict(key, update_dict)
             self.update_object_dict(key, new_attributes_dict)
 
-        # calc tech costs for age_id=0 vehicle objects
+        # Tech costs by standard implementation step with learning -----------------------------------------------------
+        for vehicle in settings.fleet_ghg.vehicles_age0:
+            for start_year in settings.vehicle_costs.standardyear_ids:
+                ghg_package_cost.calc_avg_package_cost_per_step(settings, vehicle, start_year)
+
+        # Tech Costs by model year (sum implementation steps) ----------------------------------------------------------
         for veh in settings.fleet_ghg.vehicles_age0:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
 
@@ -75,7 +81,7 @@ class GhgCosts:
             }
             self.update_object_dict(key, update_dict)
 
-        # calculate fuel cost for all vehicles
+        # Fuel Costs ---------------------------------------------------------------------------------------------------
         for veh in settings.fleet_ghg.vehicles:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
             fuel_cost_per_veh, retail_cost, pretax_cost, fuel_cost_per_mile, captured_gallons \
@@ -88,7 +94,7 @@ class GhgCosts:
             }
             self.update_object_dict(key, update_dict)
 
-        # sum attributes in the attributes_to_sum dictionary
+        # sum attributes in the attributes_to_sum dictionary -----------------------------------------------------------
         for veh in settings.fleet_ghg.vehicles:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
             for summed_attribute, sum_attributes in self.attributes_to_sum.items():
@@ -96,29 +102,29 @@ class GhgCosts:
                 update_dict = {summed_attribute: summed_attribute_value}
                 self.update_object_dict(key, update_dict)
 
-        # calc GHG pollution effects, if applicable
+        # GHG pollution effects, if applicable -------------------------------------------------------------------------
         if settings.runtime_options.calc_ghg_pollution:
             for veh in settings.fleet_ghg.vehicles:
                 key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
                 update_dict = calc_ghg_emission_cost(settings, veh)
                 self.update_object_dict(key, update_dict)
 
-        # calc some weighted cost per mile results
+        # calc some weighted cost per mile results ---------------------------------------------------------------------
         arg = 'VMT_PerVeh'
         year_max = settings.ghg_vehicle.year_id_max
         create_weighted_cost_dict(settings, self, year_max, settings.wtd_ghg_fuel_cpm_dict,
                                   arg_to_weight='FuelCost_Retail_PerMile', arg_to_weight_by=arg)
 
-        # discount things
+        # discount things ----------------------------------------------------------------------------------------------
         if settings.runtime_options.discount_values:
             add_keys_for_discounting(settings.general_inputs, self.results)
             discount_values(settings, self)
 
-        # calc the annual summary, present values and annualized values (excluding cost/veh and cost/mile results)
+        # calc the annual summary, present values and annualized values (excluding cost/veh and cost/mile results) -----
         if settings.runtime_options.discount_values:
             settings.annual_summary_ghg.annual_summary(settings, self, settings.options_ghg, settings.ghg_vehicle.year_ids)
 
-        # calc deltas relative to the no-action scenario
+        # calc deltas relative to the no-action scenario ---------------------------------------------------------------
         if settings.runtime_options.calc_deltas:
             calc_deltas(settings, self, settings.options_ghg)
             calc_deltas(settings, settings.annual_summary_ghg, settings.options_ghg)

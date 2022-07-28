@@ -5,7 +5,7 @@ class EstimatedAge:
         self.identifiers = ['Warranty', 'UsefulLife']
         self.warranty_basis = None
 
-    def calc_estimated_age(self, settings, vehicle, typical_vmt, provisions=None):
+    def calc_estimated_age(self, settings, vehicle): #, typical_vmt, provisions=None):
         """
 
         Parameters:
@@ -25,12 +25,14 @@ class EstimatedAge:
                                'UsefulLife': settings.useful_life,
                                }
 
-        option_id = provisions
+        # option_id = provisions
 
         if self.warranty_basis:
             pass
         else:
             self.warranty_basis = settings.general_inputs.get_attribute_value('warranty_cost_basis')
+
+        typical_vmt = settings.fleet_cap.get_typical_vmt_per_year(settings, vehicle)
 
         avg_speed \
             = settings.average_speed.get_attribute_value((vehicle.sourcetype_id, vehicle.regclass_id))
@@ -50,15 +52,17 @@ class EstimatedAge:
                 extended_miles = share = 0
                 calculated_age_miles = estimated_age = estimated_miles = 0
 
+                engine_id, option_id, modelyear_id = vehicle.engine_id, vehicle.option_id, vehicle.modelyear_id
+
                 required_age \
-                    = miles_and_ages.get_attribute_value((vehicle.engine_id, option_id, vehicle.modelyear_id, 'Age'),
+                    = miles_and_ages.get_attribute_value((engine_id, option_id, modelyear_id, 'Age'),
                                                          'period_value')
                 required_miles \
-                    = miles_and_ages.get_attribute_value((vehicle.engine_id, option_id, vehicle.modelyear_id, 'Miles'),
+                    = miles_and_ages.get_attribute_value((engine_id, option_id, modelyear_id, 'Miles'),
                                                          'period_value')
                 if identifier == 'Warranty' and vehicle.option_id != settings.no_action_alt:
                     required_hours \
-                        = miles_and_ages.get_attribute_value((vehicle.engine_id, option_id, vehicle.modelyear_id, 'Hours'),
+                        = miles_and_ages.get_attribute_value((engine_id, option_id, modelyear_id, 'Hours'),
                                                              'period_value')
 
                 if identifier == 'Warranty' \
@@ -102,30 +106,30 @@ class EstimatedAge:
                     'estimated_miles': estimated_miles,
                     'share_with_extended_warranty': share,
                 })
-                # append warranty & UL data to return_list
-                if self.warranty_basis.__contains__('estimated'):
-                    return_list.append(estimated_age)
-                    return_list.append(estimated_miles)
-                elif self.warranty_basis.__contains__('required'):
-                    return_list.append(required_age)
-                    return_list.append(required_miles)
-                else:
-                    print(f'{self.warranty_basis} setting in "warranty_basis" entry of General Inputs file is not '
-                          f'appropriate.')
-        else:
-            for identifier in self.identifiers:
-                estimated_ages_dict_key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, identifier
-
-                if self.warranty_basis.__contains__('estimated'):
-                    age = self.estimated_ages_dict[estimated_ages_dict_key]['estimated_age']
-                    miles = self.estimated_ages_dict[estimated_ages_dict_key]['estimated_miles']
-                else:
-                    age = self.estimated_ages_dict[estimated_ages_dict_key]['required_age']
-                    miles = self.estimated_ages_dict[estimated_ages_dict_key]['required_miles']
-                return_list.append(age)
-                return_list.append(miles)
-        return_list.append(share)
-        return return_list
+        #         # append warranty & UL data to return_list
+        #         if self.warranty_basis.__contains__('estimated'):
+        #             return_list.append(estimated_age)
+        #             return_list.append(estimated_miles)
+        #         elif self.warranty_basis.__contains__('required'):
+        #             return_list.append(required_age)
+        #             return_list.append(required_miles)
+        #         else:
+        #             print(f'{self.warranty_basis} setting in "warranty_basis" entry of General Inputs file is not '
+        #                   f'appropriate.')
+        # else:
+        #     for identifier in self.identifiers:
+        #         estimated_ages_dict_key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, identifier
+        #
+        #         if self.warranty_basis.__contains__('estimated'):
+        #             age = self.estimated_ages_dict[estimated_ages_dict_key]['estimated_age']
+        #             miles = self.estimated_ages_dict[estimated_ages_dict_key]['estimated_miles']
+        #         else:
+        #             age = self.estimated_ages_dict[estimated_ages_dict_key]['required_age']
+        #             miles = self.estimated_ages_dict[estimated_ages_dict_key]['required_miles']
+        #         return_list.append(age)
+        #         return_list.append(miles)
+        # return_list.append(share)
+        # return return_list
 
     def get_attribute_value(self, key, attribute_name):
 

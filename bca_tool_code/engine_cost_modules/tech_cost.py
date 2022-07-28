@@ -1,17 +1,20 @@
-def calc_tech_cost(vehicle, pkg_cost_per_veh, indirect_cost_per_veh, replacement_cost_per_veh):
+def calc_tech_cost(settings, vehicle):
     """
 
     Parameters:
         vehicle: object; an object of the Vehicle class.
-        pkg_cost_per_veh: numeric; the direct manufacturing cost for the given vehicle inclusive of learning and techpens.
-        indirect_cost_per_veh: numeric; the indirect costs (the sum of all indirect cost contributors) for the given vehicle.
-        replacement_cost_per_veh: numeric; the replacement costs, if applicable.
 
     Returns:
         The tech cost per vehicle and tech cost (direct plus indirect).
 
     """
-    cost_per_veh = pkg_cost_per_veh + indirect_cost_per_veh + replacement_cost_per_veh
+    key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, vehicle.age_id, 0
+
+    attribute_names = ['DirectCost_PerVeh', 'IndirectCost_PerVeh', 'ReplacementCost_PerVeh']
+
+    direct_cost, indirect_cost, replacement_cost = settings.cap_costs.get_attribute_values(key, *attribute_names)
+
+    cost_per_veh = direct_cost + indirect_cost + replacement_cost
     cost = cost_per_veh * vehicle.vpop
 
     return cost_per_veh, cost

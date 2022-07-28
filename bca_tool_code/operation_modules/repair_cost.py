@@ -277,14 +277,12 @@ class EmissionRepairCost:
 
         return cpm
 
-    def calc_using_cost_per_year(self, settings, vehicle, pkg_cost, reference_pkg_cost):
+    def calc_using_cost_per_year(self, settings, vehicle):
         """
 
         Parameters:
             settings: object; the SetInputs class object.\n
-            vehicle: object; an object of the Vehicle class.\n
-            pkg_cost: numeric; the direct manufacturing cost of the passed vehicle.\n
-            reference_pkg_cost: numeric; the direct manufacturing cost of the reference vehicle.
+            vehicle: object; an object of the Vehicle class.
 
         Returns:
             Updates the data_object dictionary to include emission repair costs/mile.\n
@@ -295,9 +293,17 @@ class EmissionRepairCost:
         at_usefullife_cpm_input_value = settings.repair_and_maintenance.get_attribute_value('at-usefullife_R&M_CPM')
         emission_repair_share_input_value = settings.repair_and_maintenance.get_attribute_value('emission_repair_share')
 
+        vehicle_id, option_id, modelyear_id = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id
+        cost_key = vehicle_id, option_id, modelyear_id, 0, 0
+
+        pkg_cost = settings.cap_costs.get_attribute_value(cost_key, 'DirectCost_PerVeh')
+
+        # Note: the reference_pkg_cost should be diesel regclass=47, no_action_alt and the same model year as vehicle.
+        reference_pkg_cost \
+            = settings.cap_costs.get_attribute_value(((61, 47, 2), 0, modelyear_id, 0, 0), 'DirectCost_PerVeh')
+
         direct_cost_scaler = pkg_cost / reference_pkg_cost
 
-        # in_warranty_cpm = in_warranty_cpm_input_value * emission_repair_share_input_value * direct_cost_scaler
         in_warranty_cpm = 0
         at_usefullife_cpm = at_usefullife_cpm_input_value \
                             * emission_repair_share_input_value * direct_cost_scaler
@@ -310,63 +316,30 @@ class EmissionRepairCost:
             max_cpm = settings.repair_and_maintenance.get_attribute_value('max_R&M_CPM') \
                       * emission_repair_share_input_value * direct_cost_scaler
 
-        warranty_cost_per_year = settings.warranty_base_costs.get_warranty_cost(vehicle.engine_id)
-        warranty_cost_per_year = warranty_cost_per_year * direct_cost_scaler
+        # age estimated warranty and useful life ages
+        estimated_ages_dict_key = vehicle_id, option_id, modelyear_id, 'Warranty'
+        warranty_age \
+            = settings.estimated_age.get_attribute_value(estimated_ages_dict_key, 'estimated_age')
 
-        new_tech_adj_factor = settings.warranty_new_tech_adj.get_attribute_value(vehicle)
+        estimated_ages_dict_key = vehicle_id, option_id, modelyear_id, 'UsefulLife'
+        ul_age \
+            = settings.estimated_age.get_attribute_value(estimated_ages_dict_key, 'estimated_age')
 
-        typical_vmt = settings.fleet_cap.get_typical_vmt_per_year(settings, vehicle)
+        # calc the repair cost per mile curve slope
+        slope = self.calc_slope(in_warranty_cpm, at_usefullife_cpm, warranty_age, ul_age)
 
-        # # NOTE: nap refers to "no action provisions"; ap refers to "action provisions"
-        # warranty_age_nap, warranty_miles_nap, ul_age_nap, ul_miles_nap, share_with_extended \
-        #     = settings.estimated_age.calc_estimated_age(settings, vehicle, typical_vmt,
-        #                                                 provisions=settings.no_action_alt)
+        # calc the emission-repair cost per mile
+        cpm = self.calc_repair_cpm(vehicle.age_id, warranty_age, slope, in_warranty_cpm, max_cpm=max_cpm)
 
-        warranty_age_ap, warranty_miles_ap, ul_age_ap, ul_miles_ap, share_with_extended \
-            = settings.estimated_age.calc_estimated_age(settings, vehicle, typical_vmt,
-                                                        provisions=vehicle.option_id)
+        cost_per_veh = cpm * vehicle.vmt_per_veh
 
-        # calculate the repair cost per mile slopes starting at age=warranty_age_nap
-        # slope_nap = self.calc_slope(in_warranty_cpm, at_usefullife_cpm, warranty_age_nap, ul_age_nap)
-        # slope_ap = self.calc_slope(in_warranty_cpm, at_usefullife_cpm, warranty_age_nap, ul_age_ap)
-        slope_ap = self.calc_slope(in_warranty_cpm, at_usefullife_cpm, warranty_age_ap, ul_age_ap)
-
-        # # now calculate the cost per mile under the no_action provisions
-        # cpm_nap = self.calc_repair_cpm(vehicle.age_id, warranty_age_nap, slope_nap,
-        #                                in_warranty_cpm, max_cpm=max_cpm)
-
-        # now calculate the cost per mile under the action provisions
-        # cpm_ap = self.calc_repair_cpm(vehicle.age_id, warranty_age_nap, slope_ap,
-        #                               in_warranty_cpm, max_cpm=max_cpm)
-        cpm_ap = self.calc_repair_cpm(vehicle.age_id, warranty_age_ap, slope_ap,
-                                      in_warranty_cpm, max_cpm=max_cpm)
-
-        # now calc the cost per vehicle and cost for each condition
-        # cost_per_veh_nap = cpm_nap * vehicle.vmt_per_veh
-
-        cost_per_veh_ap = cpm_ap * vehicle.vmt_per_veh
-
-        # now determine warranty and repair/operating cost
-        if vehicle.age_id == 0 and vehicle.option_id == settings.no_action_alt:
-            warranty_cost_per_veh = warranty_cost_per_year * warranty_age_ap
+        if 0 < vehicle.age_id <= warranty_age:
             repair_cost_per_veh = 0
-            cpm_ap = 0
-
-        elif vehicle.age_id == 0 and vehicle.option_id != settings.no_action_alt:
-            warranty_cost_per_veh = warranty_cost_per_year * warranty_age_ap * (1 + new_tech_adj_factor)
-            repair_cost_per_veh = 0
-            cpm_ap = 0
-
-        elif 0 < vehicle.age_id <= warranty_age_ap:
-            warranty_cost_per_veh = 0
-            repair_cost_per_veh = 0
-            cpm_ap = 0
+            cpm = 0
 
         else:
-            warranty_cost_per_veh = 0
-            repair_cost_per_veh = cost_per_veh_ap
+            repair_cost_per_veh = cost_per_veh
 
-        warranty_cost = warranty_cost_per_veh * vehicle.vpop
         repair_cost = repair_cost_per_veh * vehicle.vpop
 
         key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, vehicle.age_id
@@ -385,84 +358,15 @@ class EmissionRepairCost:
             'vpop': vehicle.vpop,
             'reference_direct_cost': reference_pkg_cost,
             'direct_cost_scaler': direct_cost_scaler,
-            'share_with_ext_warranty': share_with_extended,
-            # 'warranty_est_age_nap': warranty_age_nap,
-            'warranty_est_age_ap': warranty_age_ap,
-            # 'ul_est_age_nap': ul_age_nap,
-            'ul_est_age_ap': ul_age_ap,
+            'warranty_est_age': warranty_age,
+            'ul_est_age': ul_age,
             'in_warranty_cpm': in_warranty_cpm,
             'at_ul_cpm': at_usefullife_cpm,
-            # 'slope_within_ul_nap': slope_nap,
-            'slope_within_ul_ap': slope_ap,
-            # 'slope_within_ul_mixed': slope_mixed,
+            'slope_within_ul': slope,
             'max_cpm': max_cpm,
-            # 'cpm_nap': cpm_nap,
-            'cpm_ap': cpm_ap,
-            # 'cpm_mixed': cpm_mixed,
-            'final_repair_cpm': cpm_ap,
-            # 'in_warranty_repair_cost_per_veh': in_warranty_cost_per_veh,
-            'beyond_warranty_repair_cost_per_veh': repair_cost_per_veh,
-            # 'repair_cost_per_veh_nap': cost_per_veh_nap,
-            # 'repair_cost_per_veh_mixed': cost_per_veh_mixed,
-            'warranty_cost_per_veh': warranty_cost_per_veh,
-            'warranty_cost': warranty_cost,
+            'repair_cpm': cpm,
+            'repair_cost_per_veh': repair_cost_per_veh,
             'repair_cost': repair_cost,
         }
 
-        return repair_cost_per_veh, repair_cost, cpm_ap
-
-#     # @staticmethod
-#     def calc_repair_cpm_curve(self, in_warranty_cpm, at_usefullife_cpm, warranty_units, ul_units, vehicle, provisions):
-#
-#         key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, provisions
-#
-#         x_series = pd.Series([0, warranty_units, ul_units])
-#         y_series = pd.Series([0, in_warranty_cpm, at_usefullife_cpm])
-#
-#         coeffs, _ = curve_fit(curve_coefficients, x_series, y_series)
-#         constant, x_term, x2_term = coeffs
-#
-#         self.repair_cpm_curve_coeffs[key] = {
-#             'optionID': vehicle.option_id,
-#             'sourceTypeID': vehicle.sourcetype_id,
-#             'regClassID': vehicle.regclass_id,
-#             'fuelTypeID': vehicle.fueltype_id,
-#             'modelYearID': vehicle.modelyear_id,
-#             'optionName': vehicle.option_name,
-#             'sourceTypeName': vehicle.sourcetype_name,
-#             'regClassName': vehicle.regclass_name,
-#             'fuelTypeName': vehicle.fueltype_name,
-#             'provisions': provisions,
-#             'constant': constant,
-#             'x_term': x_term,
-#             'x2_term': x2_term,
-#         }
-#
-#         return coeffs
-#
-#     def calc_cpm_from_curve(self, vehicle, provisions):
-#
-#         key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, provisions
-#         constant = self.repair_cpm_curve_coeffs[key]['constant']
-#         x_term = self.repair_cpm_curve_coeffs[key]['x_term']
-#         x2_term = self.repair_cpm_curve_coeffs[key]['x2_term']
-#         cpm = constant \
-#               + x_term * vehicle.vmt_per_veh \
-#               + x2_term * vehicle.vmt_per_veh ** 2
-#
-#         return cpm
-#
-#
-# def curve_coefficients(x_data, const, a, b):
-#     """
-#
-#     Second degree polynomial curve fit function.
-#
-#     :param x_data: Series of floats; the independent variable in the curve fit (e.g., odometer miles or age)
-#     :param const: Float; the constant coefficient in the curve fit.
-#     :param a: Float; the first degree coefficient in the curve fit.
-#     :param b: Float; the second degree coefficient in the curve fit.
-#     :return: const, a and b coefficient values based on the y-data passed via the function call.
-#
-#     """
-#     return const + a * x_data + b * x_data ** 2
+        return repair_cost_per_veh, repair_cost, cpm

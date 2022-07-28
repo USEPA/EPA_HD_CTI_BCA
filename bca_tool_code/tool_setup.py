@@ -38,6 +38,9 @@ from bca_tool_code.operation_input_modules.orvr_fuelchanges import OrvrFuelChang
 from bca_tool_code.operation_input_modules.repair_and_maintenance import RepairAndMaintenance
 from bca_tool_code.operation_modules.repair_cost import EmissionRepairCost
 
+from bca_tool_code.cap_costs import CapCosts
+from bca_tool_code.ghg_costs import GhgCosts
+
 
 class SetPaths:
     """
@@ -165,15 +168,6 @@ class SetInputs:
 
         # determine what's being run
         self.no_action_alt = pd.to_numeric(self.general_inputs.get_attribute_value('no_action_alt'))
-        # calc_cap_costs_value = self.general_inputs.get_attribute_value('calculate_cap_costs')
-        # calc_cap_pollution_effects_value = self.general_inputs.get_attribute_value('calculate_cap_pollution_effects')
-        # calc_ghg_costs_value = self.general_inputs.get_attribute_value('calculate_ghg_costs')
-        # calc_ghg_pollution_effects_value = self.general_inputs.get_attribute_value('calculate_ghg_pollution_effects')
-
-        # self.calc_cap_costs = True if calc_cap_costs_value == 'Y' else None
-        # self.calc_cap_pollution = True if calc_cap_pollution_effects_value == 'Y' else None
-        # self.calc_ghg_costs = True if calc_ghg_costs_value == 'Y' else None
-        # self.calc_ghg_pollution = True if calc_ghg_pollution_effects_value == 'Y' else None
 
         self.input_files_pathlist = self.input_files.input_files_pathlist
 
@@ -279,12 +273,6 @@ class SetInputs:
             self.wtd_cap_fuel_cpm_dict = dict()
             self.annual_summary_cap = AnnualSummary()
 
-        # if self.calc_cap_pollution:
-        #     self.dollar_per_ton_cap = DollarPerTonCAP()
-        #     self.dollar_per_ton_cap.init_from_file(
-        #         set_paths.path_inputs / self.input_files.get_filename('dollar_per_ton_cap')
-        #     )
-
         if self.runtime_options.calc_ghg_costs:
 
             self.options_ghg = Options()
@@ -337,6 +325,44 @@ class SetInputs:
                 set_paths.path_inputs / self.input_files.get_filename('dollar_per_ton_scc'),
                 self.general_inputs, deflators=self.deflators
             )
+
+        if self.runtime_options.calc_cap_costs:
+
+            # calculate year-over-year engine sales
+            for vehicle in self.fleet_cap.vehicles_age0:
+                self.fleet_cap.engine_sales(vehicle)
+
+            # calculate year-over-year cumulative engine sales (for use in learning effects)
+            for vehicle in self.fleet_cap.vehicles_age0:
+                for start_year in self.engine_costs.standardyear_ids:
+                    self.fleet_cap.cumulative_engine_sales(vehicle, start_year)
+
+            # # calculate package costs by standard implementation start-year
+            # for vehicle in settings.fleet_cap.vehicles_age0:
+            #     for start_year in settings.engine_costs.standardyear_ids:
+            #         cap_package_cost.calc_avg_package_cost_per_step(
+            #             settings, settings.engine_costs, vehicle, start_year)
+            #
+            # for vehicle in settings.fleet_cap.vehicles_age0:
+            #     for start_year in settings.engine_costs.standardyear_ids:
+            #         cap_package_cost.calc_avg_package_cost_per_step(
+            #             settings, settings.replacement_costs, vehicle, start_year, labor=True)
+
+            self.cap_costs = CapCosts()
+            # cap_costs.calc_cap_costs(settings)
+
+        if self.runtime_options.calc_ghg_costs:
+
+            for vehicle in self.fleet_ghg.vehicles_age0:
+                for start_year in self.vehicle_costs.standardyear_ids:
+                    self.fleet_ghg.cumulative_vehicle_sales(vehicle, start_year)
+
+            # for vehicle in settings.fleet_ghg.vehicles_age0:
+            #     for start_year in settings.vehicle_costs.standardyear_ids:
+            #         ghg_package_cost.calc_avg_package_cost_per_step(settings, vehicle, start_year)
+
+            self.ghg_costs = GhgCosts()
+            # ghg_costs.calc_ghg_costs(settings)
 
         self.end_time_inputs = time()
         self.elapsed_time_inputs = self.end_time_inputs - self.start_time

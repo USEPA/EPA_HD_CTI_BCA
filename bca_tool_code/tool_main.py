@@ -18,12 +18,12 @@ import bca_tool_code.general_modules.vehicle
 import bca_tool_code.general_modules.create_figures
 
 import bca_tool_code.general_input_modules.general_functions as gen_fxns
-import bca_tool_code.engine_cost_modules.engine_package_cost as cap_package_cost
-import bca_tool_code.vehicle_cost_modules.vehicle_package_cost as ghg_package_cost
+# import bca_tool_code.engine_cost_modules.engine_package_cost as cap_package_cost
+# import bca_tool_code.vehicle_cost_modules.vehicle_package_cost as ghg_package_cost
 
 from bca_tool_code.tool_setup import SetInputs, SetPaths
-from bca_tool_code.cap_costs import CapCosts
-from bca_tool_code.ghg_costs import GhgCosts
+# from bca_tool_code.cap_costs import CapCosts
+# from bca_tool_code.ghg_costs import GhgCosts
 
 
 def main():
@@ -42,45 +42,51 @@ def main():
 
     print("\nDoing the work...\n")
 
-    cap_costs = ghg_costs = None
-
     if settings.runtime_options.calc_cap_costs:
-
-        # calculate year-over-year engine sales
-        for vehicle in settings.fleet_cap.vehicles_age0:
-            settings.fleet_cap.engine_sales(vehicle)
-
-        # calculate year-over-year cumulative engine sales (for use in learning effects)
-        for vehicle in settings.fleet_cap.vehicles_age0:
-            for start_year in settings.engine_costs.standardyear_ids:
-                settings.fleet_cap.cumulative_engine_sales(vehicle, start_year)
-
-        # calculate package costs by standard implementation start-year
-        for vehicle in settings.fleet_cap.vehicles_age0:
-            for start_year in settings.engine_costs.standardyear_ids:
-                cap_package_cost.calc_avg_package_cost_per_step(
-                    settings, settings.engine_costs, vehicle, start_year)
-
-        for vehicle in settings.fleet_cap.vehicles_age0:
-            for start_year in settings.engine_costs.standardyear_ids:
-                cap_package_cost.calc_avg_package_cost_per_step(
-                    settings, settings.replacement_costs, vehicle, start_year, labor=True)
-
-        cap_costs = CapCosts()
-        cap_costs.calc_cap_costs(settings)
+        settings.cap_costs.calc_results(settings)
 
     if settings.runtime_options.calc_ghg_costs:
+        settings.ghg_costs.calc_results(settings)
 
-        for vehicle in settings.fleet_ghg.vehicles_age0:
-            for start_year in settings.vehicle_costs.standardyear_ids:
-                settings.fleet_ghg.cumulative_vehicle_sales(vehicle, start_year)
-
-        for vehicle in settings.fleet_ghg.vehicles_age0:
-            for start_year in settings.vehicle_costs.standardyear_ids:
-                ghg_package_cost.calc_avg_package_cost_per_step(settings, vehicle, start_year)
-
-        ghg_costs = GhgCosts()
-        ghg_costs.calc_ghg_costs(settings)
+    # cap_costs = ghg_costs = None
+    #
+    # if settings.runtime_options.calc_cap_costs:
+    #
+    #     # calculate year-over-year engine sales
+    #     for vehicle in settings.fleet_cap.vehicles_age0:
+    #         settings.fleet_cap.engine_sales(vehicle)
+    #
+    #     # calculate year-over-year cumulative engine sales (for use in learning effects)
+    #     for vehicle in settings.fleet_cap.vehicles_age0:
+    #         for start_year in settings.engine_costs.standardyear_ids:
+    #             settings.fleet_cap.cumulative_engine_sales(vehicle, start_year)
+    #
+    #     # calculate package costs by standard implementation start-year
+    #     for vehicle in settings.fleet_cap.vehicles_age0:
+    #         for start_year in settings.engine_costs.standardyear_ids:
+    #             cap_package_cost.calc_avg_package_cost_per_step(
+    #                 settings, settings.engine_costs, vehicle, start_year)
+    #
+    #     for vehicle in settings.fleet_cap.vehicles_age0:
+    #         for start_year in settings.engine_costs.standardyear_ids:
+    #             cap_package_cost.calc_avg_package_cost_per_step(
+    #                 settings, settings.replacement_costs, vehicle, start_year, labor=True)
+    #
+    #     cap_costs = CapCosts()
+    #     cap_costs.calc_cap_costs(settings)
+    #
+    # if settings.runtime_options.calc_ghg_costs:
+    #
+    #     for vehicle in settings.fleet_ghg.vehicles_age0:
+    #         for start_year in settings.vehicle_costs.standardyear_ids:
+    #             settings.fleet_ghg.cumulative_vehicle_sales(vehicle, start_year)
+    #
+    #     for vehicle in settings.fleet_ghg.vehicles_age0:
+    #         for start_year in settings.vehicle_costs.standardyear_ids:
+    #             ghg_package_cost.calc_avg_package_cost_per_step(settings, vehicle, start_year)
+    #
+    #     ghg_costs = GhgCosts()
+    #     ghg_costs.calc_ghg_costs(settings)
 
     end_time_calcs = start_time_outputs = time()
     elapsed_time_calcs = end_time_calcs - start_time_calcs
@@ -116,7 +122,7 @@ def main():
     stamp = settings.start_time_readable
     if settings.runtime_options.calc_cap_costs:
         gen_fxns.save_dict(
-            cap_costs.results,
+            settings.cap_costs.results,
             path_of_run_results_folder / 'CAP_bca_tool_all',
             row_header=None, stamp=stamp, index=False
         )
@@ -199,7 +205,7 @@ def main():
 
     if settings.runtime_options.calc_ghg_costs:
         gen_fxns.save_dict(
-            ghg_costs.results,
+            settings.ghg_costs.results,
             path_of_run_results_folder / 'GHG_bca_tool_all',
             row_header=None, stamp=stamp, index=False
         )

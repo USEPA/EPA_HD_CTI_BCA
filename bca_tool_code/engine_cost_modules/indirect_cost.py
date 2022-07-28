@@ -104,13 +104,12 @@ def calc_indirect_cost(settings, vehicle, pkg_cost):
     return return_dict
 
 
-def calc_indirect_cost_new_warranty(settings, vehicle, pkg_cost):
+def calc_indirect_cost_new_warranty(settings, vehicle):
     """
 
     Parameters:
         settings: object; the SetInputs class object.\n
         vehicle: object; an object of the Vehicle class.
-        pkg_cost: numeric; the direct manufacturing cost for the given vehicle.
 
     Returns:
         A dictionary of indirect cost contributors and their values.
@@ -118,14 +117,29 @@ def calc_indirect_cost_new_warranty(settings, vehicle, pkg_cost):
     """
     markup_factors = settings.markups.markup_factor_names
 
+    vehicle_id, option_id, modelyear_id = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id
+
+    pkg_cost \
+        = settings.cap_costs.get_attribute_value((vehicle_id, option_id, modelyear_id, 0, 0), 'DirectCost_PerVeh')
+
+    reference_pkg_cost \
+        = settings.cap_costs.get_attribute_value(((61, 47, 2), 0, modelyear_id, 0, 0), 'DirectCost_PerVeh')
+
+    direct_cost_scaler = pkg_cost / reference_pkg_cost
+    warranty_cost_per_year = settings.warranty_base_costs.get_warranty_cost(vehicle.engine_id)
+    warranty_cost_per_year = warranty_cost_per_year * direct_cost_scaler
+
     ic_sum_per_veh = 0
     ic_sum = 0
     return_dict = dict()
     for markup_factor in markup_factors:
         if markup_factor == 'Warranty':
-            key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, vehicle.age_id
+            estimated_ages_dict_key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, 'Warranty'
             markup_value = 'na'
-            cost_per_veh = settings.emission_repair_cost.repair_cost_details[key]['warranty_cost_per_veh']
+            warranty_age \
+                = settings.estimated_age.get_attribute_value(estimated_ages_dict_key, 'estimated_age')
+            new_tech_adj_factor = settings.warranty_new_tech_adj.get_attribute_value(vehicle)
+            cost_per_veh = warranty_cost_per_year * warranty_age * (1 + new_tech_adj_factor)
         else:
             markup_value = calc_project_markup_value(settings, vehicle, markup_factor)
             cost_per_veh = markup_value * pkg_cost
