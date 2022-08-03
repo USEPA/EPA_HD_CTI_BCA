@@ -28,7 +28,7 @@ class AverageSpeed:
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
 
         key = df['sourceTypeID']
-        
+
         df.set_index(key, inplace=True)
 
         self._dict = df.to_dict('index')
