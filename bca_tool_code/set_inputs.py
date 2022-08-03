@@ -1,9 +1,8 @@
 import pandas as pd
-from pathlib import Path
 from time import time
 from datetime import datetime
-import shutil
 
+from bca_tool_code.set_paths import SetPaths
 from bca_tool_code.general_input_modules.input_files import InputFiles
 from bca_tool_code.general_input_modules.runtime_options import RuntimeOptions
 from bca_tool_code.general_input_modules.general_inputs import GeneralInputs
@@ -40,103 +39,6 @@ from bca_tool_code.operation_modules.repair_cost import EmissionRepairCost
 
 from bca_tool_code.cap_costs import CapCosts
 from bca_tool_code.ghg_costs import GhgCosts
-
-
-class SetPaths:
-    """
-
-    The SetPaths class sets the paths and run_id info used by the tool.
-
-    """
-    def __init__(self):
-        self.path_code = Path(__file__).parent
-        self.path_project = self.path_code.parent
-        self.path_inputs = self.path_project / 'inputs'
-        self.path_outputs = self.path_project / 'outputs'
-        self.path_test = self.path_project / 'test'
-
-    def files_in_code_folder(self):
-        """
-
-        This is just a generator that allows for copy/paste of tool code into a bundle of folders and files saved to the outputs folder.
-
-        Returns:
-            A generator object.
-
-        """
-        files_in_path_code = (entry for entry in self.path_code.iterdir() if entry.is_file())
-
-        return files_in_path_code
-
-    def copy_code_to_destination(self, destination):
-        """
-
-        This is just a generator that allows for copy/paste of tool code into a bundle of folders and files saved to the outputs folder.
-
-        Parameters:
-            destination: Path; the destination folder; destination folder must exist prior to method call.
-
-        Returns:
-            Nothing, but copies contents of code folder to the destination.
-
-        """
-        # first copy files in the path_code folder
-        files_in_path_code = (entry for entry in self.path_code.iterdir() if entry.is_file())
-        for file in files_in_path_code:
-            shutil.copy2(file, destination / file.name)
-
-        # now make subfolders in destination and copy files from path_code subfolders
-        dirs_in_path_code = (entry for entry in self.path_code.iterdir() if entry.is_dir())
-        for d in dirs_in_path_code:
-            source_dir_name = Path(d).name
-            destination_subdir = destination / source_dir_name
-            destination_subdir.mkdir(exist_ok=False)
-            files_in_source_dir = (entry for entry in d.iterdir() if entry.is_file())
-            for file in files_in_source_dir:
-                shutil.copy2(file, destination_subdir / file.name)
-
-        return
-
-    @staticmethod
-    def run_id():
-        """
-
-        This method allows for a user-interactive identifier (name) for the given run.
-
-        Returns:
-            A console prompt to enter a run identifier; entering "test" sends outputs to a test folder; if left blank a
-            default name is used.
-
-        """
-        # set run id and files to generate
-        run_folder_identifier = input('\nProvide a run identifier for your output folder name (press return to use the default name)\n')
-        run_folder_identifier = run_folder_identifier if run_folder_identifier != '' else 'HD2027-Costs'
-        return run_folder_identifier
-
-    def create_output_paths(self, start_time_readable, run_id):
-        """
-
-        Parameters::
-            start_time_readable: str; the start time of the run, in text readable format.\n
-            run_id: str; the run ID entered by the user or the default value if the user does not provide an ID.
-
-        Returns:
-            Output paths into which to save outputs of the given run.
-
-        """
-        self.path_outputs.mkdir(exist_ok=True)
-        path_of_run_folder = self.path_outputs / f'{start_time_readable}_{run_id}'
-        path_of_run_folder.mkdir(exist_ok=False)
-        path_of_run_inputs_folder = path_of_run_folder / 'run_inputs'
-        path_of_run_inputs_folder.mkdir(exist_ok=False)
-        path_of_run_results_folder = path_of_run_folder / 'run_results'
-        path_of_run_results_folder.mkdir(exist_ok=False)
-        path_of_modified_inputs_folder = path_of_run_folder / 'modified_inputs'
-        path_of_modified_inputs_folder.mkdir(exist_ok=False)
-        path_of_code_folder = path_of_run_folder / 'code'
-        path_of_code_folder.mkdir(exist_ok=False)
-
-        return path_of_run_folder, path_of_run_inputs_folder, path_of_run_results_folder, path_of_modified_inputs_folder, path_of_code_folder
 
 
 class SetInputs:
@@ -337,19 +239,7 @@ class SetInputs:
                 for start_year in self.engine_costs.standardyear_ids:
                     self.fleet_cap.cumulative_engine_sales(vehicle, start_year)
 
-            # # calculate package costs by standard implementation start-year
-            # for vehicle in settings.fleet_cap.vehicles_age0:
-            #     for start_year in settings.engine_costs.standardyear_ids:
-            #         cap_package_cost.calc_avg_package_cost_per_step(
-            #             settings, settings.engine_costs, vehicle, start_year)
-            #
-            # for vehicle in settings.fleet_cap.vehicles_age0:
-            #     for start_year in settings.engine_costs.standardyear_ids:
-            #         cap_package_cost.calc_avg_package_cost_per_step(
-            #             settings, settings.replacement_costs, vehicle, start_year, labor=True)
-
             self.cap_costs = CapCosts()
-            # cap_costs.calc_cap_costs(settings)
 
         if self.runtime_options.calc_ghg_costs:
 
@@ -357,12 +247,7 @@ class SetInputs:
                 for start_year in self.vehicle_costs.standardyear_ids:
                     self.fleet_ghg.cumulative_vehicle_sales(vehicle, start_year)
 
-            # for vehicle in settings.fleet_ghg.vehicles_age0:
-            #     for start_year in settings.vehicle_costs.standardyear_ids:
-            #         ghg_package_cost.calc_avg_package_cost_per_step(settings, vehicle, start_year)
-
             self.ghg_costs = GhgCosts()
-            # ghg_costs.calc_ghg_costs(settings)
 
         self.end_time_inputs = time()
         self.elapsed_time_inputs = self.end_time_inputs - self.start_time

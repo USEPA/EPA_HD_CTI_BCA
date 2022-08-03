@@ -144,7 +144,7 @@ def calc_deltas_weighted(settings, dict_for_deltas, options):
 
 if __name__ == '__main__':
     import pandas as pd
-    from bca_tool_code.tool_setup import SetInputs
+    from bca_tool_code.set_inputs import SetInputs
     from bca_tool_code.general_modules.calc_deltas import calc_deltas
 
     settings = SetInputs()

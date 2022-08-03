@@ -124,7 +124,7 @@ def calc_package_cost(settings, cost_object, vehicle):
 
 
 if __name__ == '__main__':
-    from bca_tool_code.tool_setup import SetPaths
+    from bca_tool_code.set_inputs import SetPaths
     from bca_tool_code.general_input_modules.options import Options
     # vehicle = settings.cap_vehicles_list[0]
     cost_step = '2027'

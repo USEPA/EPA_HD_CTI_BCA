@@ -18,7 +18,6 @@ class EstimatedAge:
         Returns:
             Updates the estimated ages dictionary with the ages at which an event (e.g., warranty, useful life) will be
             reached for the given vehicle.
-            Returns estimated ages for identifiers as a list.
 
         """
         miles_and_ages_dict = {'Warranty': settings.warranty,
@@ -35,11 +34,11 @@ class EstimatedAge:
         typical_vmt = settings.fleet_cap.get_typical_vmt_per_year(settings, vehicle)
 
         avg_speed \
-            = settings.average_speed.get_attribute_value((vehicle.sourcetype_id, vehicle.regclass_id))
+            = settings.average_speed.get_attribute_value(vehicle.sourcetype_id)
 
         operating_hours_per_year = typical_vmt / avg_speed
 
-        return_list = list()
+        # return_list = list()
         share = 0
         if (vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, 'Warranty') not in self.estimated_ages_dict:
 

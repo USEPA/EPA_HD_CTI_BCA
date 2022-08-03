@@ -100,7 +100,7 @@ def discount_value(arg_value, rate, year, discount_to, offset):
 
 if __name__ == '__main__':
     import pandas as pd
-    from bca_tool_code.tool_setup import SetInputs
+    from bca_tool_code.set_inputs import SetInputs
     from bca_tool_code.general_modules.discounting import discount_values
 
     settings = SetInputs()
