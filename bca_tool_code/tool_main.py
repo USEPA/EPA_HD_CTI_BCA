@@ -106,21 +106,21 @@ def main():
             path_of_run_results_folder / 'CAP_indirect_cost_details',
             row_header=None, stamp=stamp, index=False
         )
-        gen_fxns.save_dict(
-            settings.wtd_cap_fuel_cpm_dict,
-            path_of_run_results_folder / 'CAP_vmt_weighted_fuel_cpm',
-            row_header=None, stamp=stamp, index=True
-        )
-        gen_fxns.save_dict(
-            settings.wtd_def_cpm_dict,
-            path_of_run_results_folder / 'CAP_vmt_weighted_def_cpm',
-            row_header=None, stamp=stamp, index=True
-        )
-        gen_fxns.save_dict(
-            settings.wtd_repair_cpm_dict,
-            path_of_run_results_folder / 'CAP_vmt_weighted_repair_cpm',
-            row_header=None, stamp=stamp, index=True
-        )
+        # gen_fxns.save_dict(
+        #     settings.wtd_cap_fuel_cpm_dict,
+        #     path_of_run_results_folder / 'CAP_vmt_weighted_fuel_cpm',
+        #     row_header=None, stamp=stamp, index=True
+        # )
+        # gen_fxns.save_dict(
+        #     settings.wtd_def_cpm_dict,
+        #     path_of_run_results_folder / 'CAP_vmt_weighted_def_cpm',
+        #     row_header=None, stamp=stamp, index=True
+        # )
+        # gen_fxns.save_dict(
+        #     settings.wtd_repair_cpm_dict,
+        #     path_of_run_results_folder / 'CAP_vmt_weighted_repair_cpm',
+        #     row_header=None, stamp=stamp, index=True
+        # )
         gen_fxns.save_dict(
             settings.estimated_age.estimated_ages_dict,
             path_of_run_results_folder / 'CAP_required_and_estimated_ages',
@@ -154,7 +154,7 @@ def main():
 
         # create figures, which are based on the annual summary, which requires discounted values
         if settings.runtime_options.discount_values:
-            arg_list = ['TechCost', 'EmissionRepairCost', 'DEFCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
+            arg_list = ['TechCost', 'RepairAndMaintenanceCost', 'DEFCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
             bca_tool_code.general_modules.create_figures.CreateFigures(
                 cap_summary_df, 'US Dollars', path_of_run_results_folder, 'CAP').create_figures(arg_list)
 

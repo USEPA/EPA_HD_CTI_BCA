@@ -35,6 +35,7 @@ from bca_tool_code.vehicle_input_modules.vehicle_learning_scalers import Vehicle
 from bca_tool_code.operation_input_modules.def_doserates import DefDoseRates
 from bca_tool_code.operation_input_modules.orvr_fuelchanges import OrvrFuelChanges
 from bca_tool_code.operation_input_modules.repair_and_maintenance import RepairAndMaintenance
+from bca_tool_code.operation_input_modules.repair_calc_attribute import RepairCalcAttribute
 from bca_tool_code.operation_modules.repair_cost import EmissionRepairCost
 
 from bca_tool_code.cap_costs import CapCosts
@@ -167,6 +168,10 @@ class SetInputs:
             self.repair_and_maintenance.init_from_file(
                 set_paths.path_inputs / self.input_files.get_filename('repair_and_maintenance'),
                 self.general_inputs, self.deflators
+            )
+            self.repair_calc_attr = RepairCalcAttribute()
+            self.repair_calc_attr.init_from_file(
+                set_paths.path_inputs / self.input_files.get_filename('repair_calc_attribute')
             )
             self.emission_repair_cost = EmissionRepairCost()
             self.estimated_age = EstimatedAge()

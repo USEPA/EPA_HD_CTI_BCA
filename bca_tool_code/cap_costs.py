@@ -21,11 +21,11 @@ class CapCosts:
     def __init__(self):
         self.results = dict()
         self.attributes_to_sum = {
-            'OperatingCost': ['DEFCost', 'FuelCost_Pretax', 'EmissionRepairCost'],
+            'OperatingCost': ['DEFCost', 'FuelCost_Pretax', 'RepairAndMaintenanceCost'],
             'TechAndOperatingCost': ['TechCost', 'OperatingCost'],
-            'OperatingCost_Owner_PerMile': ['DEFCost_PerMile', 'FuelCost_Retail_PerMile', 'EmissionRepairCost_PerMile'],
-            'OperatingCost_Owner_PerVeh': ['DEFCost_PerVeh', 'FuelCost_Retail_PerVeh', 'EmissionRepairCost_PerVeh'],
-            'TechAndOperatingCost_PerVeh': ['TechCost_PerVeh', 'OperatingCost_Owner_PerVeh'],
+            # 'OperatingCost_Owner_PerMile': ['DEFCost_PerMile', 'FuelCost_Retail_PerMile', 'EmissionRepairCost_PerMile'],
+            'OperatingCost_Owner_PerVeh': ['DEFCost_PerVeh', 'FuelCost_Retail_PerVeh', 'RepairAndMaintenanceCost_PerVeh'],
+            'TechAndOperatingCost_Owner_PerVeh': ['TechCost_PerVeh', 'OperatingCost_Owner_PerVeh'],
         }
 
     def calc_results(self, settings):
@@ -167,8 +167,10 @@ class CapCosts:
         for veh in settings.fleet_cap.vehicles:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
 
-            repair_cost_per_veh, repair_cost, repair_cost_per_mile \
-                = settings.emission_repair_cost.calc_using_cost_per_year(settings, veh)
+            repair_cost_per_veh, repair_cost, repair_cost_per_mile, repair_cost_per_hour \
+                = settings.emission_repair_cost.calc_repair_cost(settings, veh)
+            # repair_cost_per_veh, repair_cost, repair_cost_per_mile \
+            #     = settings.emission_repair_cost.calc_using_cost_per_year(settings, veh)
 
             # if settings.warranty_cost_approach.__contains__('per_year'):
             #     repair_cost_per_veh, repair_cost, repair_cost_per_mile \
@@ -179,9 +181,10 @@ class CapCosts:
             #                                                                                direct_applied_cost_per_veh,
             #                                                                                reference_pkg_cost)
             update_dict = {
-                'EmissionRepairCost_PerVeh': repair_cost_per_veh,
-                'EmissionRepairCost_PerMile': repair_cost_per_mile,
-                'EmissionRepairCost': repair_cost,
+                'RepairAndMaintenanceCost_PerVeh': repair_cost_per_veh,
+                'RepairAndMaintenanceCost_PerMile': repair_cost_per_mile,
+                'RepairAndMaintenanceCost_PerHour': repair_cost_per_hour,
+                'RepairAndMaintenanceCost': repair_cost,
             }
             self.update_object_dict(key, update_dict)
 
@@ -231,14 +234,14 @@ class CapCosts:
                 self.update_object_dict(key, update_dict)
 
         # calc some weighted cost per mile results ---------------------------------------------------------------------
-        arg = 'VMT_PerVeh'
-        year_max = settings.cap_vehicle.year_id_max
-        create_weighted_cost_dict(settings, self, year_max, settings.wtd_def_cpm_dict,
-                                  arg_to_weight='DEFCost_PerMile', arg_to_weight_by=arg)
-        create_weighted_cost_dict(settings, self, year_max, settings.wtd_repair_cpm_dict,
-                                  arg_to_weight='EmissionRepairCost_PerMile', arg_to_weight_by=arg)
-        create_weighted_cost_dict(settings, self, year_max, settings.wtd_cap_fuel_cpm_dict,
-                                  arg_to_weight='FuelCost_Retail_PerMile', arg_to_weight_by=arg)
+        # arg = 'VMT_PerVeh'
+        # year_max = settings.cap_vehicle.year_id_max
+        # create_weighted_cost_dict(settings, self, year_max, settings.wtd_def_cpm_dict,
+        #                           arg_to_weight='DEFCost_PerMile', arg_to_weight_by=arg)
+        # create_weighted_cost_dict(settings, self, year_max, settings.wtd_repair_cpm_dict,
+        #                           arg_to_weight='RepairAndMaintenanceCost_PerMile', arg_to_weight_by=arg)
+        # create_weighted_cost_dict(settings, self, year_max, settings.wtd_cap_fuel_cpm_dict,
+        #                           arg_to_weight='FuelCost_Retail_PerMile', arg_to_weight_by=arg)
 
         # discount things ----------------------------------------------------------------------------------------------
         if settings.runtime_options.discount_values:
@@ -254,12 +257,12 @@ class CapCosts:
             calc_deltas(settings, self, settings.options_cap)
             calc_deltas(settings, settings.annual_summary_cap, settings.options_cap)
 
-            settings.wtd_def_cpm_dict = calc_deltas_weighted(settings, settings.wtd_def_cpm_dict,
-                                                             settings.options_cap)
-            settings.wtd_repair_cpm_dict = calc_deltas_weighted(settings, settings.wtd_repair_cpm_dict,
-                                                                settings.options_cap)
-            settings.wtd_cap_fuel_cpm_dict = calc_deltas_weighted(settings, settings.wtd_cap_fuel_cpm_dict,
-                                                                  settings.options_cap)
+            # settings.wtd_def_cpm_dict = calc_deltas_weighted(settings, settings.wtd_def_cpm_dict,
+            #                                                  settings.options_cap)
+            # settings.wtd_repair_cpm_dict = calc_deltas_weighted(settings, settings.wtd_repair_cpm_dict,
+            #                                                     settings.options_cap)
+            # settings.wtd_cap_fuel_cpm_dict = calc_deltas_weighted(settings, settings.wtd_cap_fuel_cpm_dict,
+            #                                                       settings.options_cap)
 
     def update_object_dict(self, key, update_dict):
         """
@@ -336,11 +339,12 @@ class CapCosts:
             'DEFCost_PerVeh',
             'FuelCost_Retail_PerMile',
             'FuelCost_Retail_PerVeh',
-            'EmissionRepairCost_PerMile',
-            'EmissionRepairCost_PerVeh',
+            'RepairAndMaintenanceCost_PerMile',
+            'RepairAndMaintenanceCost_PerHour',
+            'RepairAndMaintenanceCost_PerVeh',
             'OperatingCost_Owner_PerMile',
             'OperatingCost_Owner_PerVeh',
-            'TechAndOperatingCost_PerVeh',
+            'TechAndOperatingCost_Owner_PerVeh',
             'DirectCost',
             'WarrantyCost',
             'RnDCost',
@@ -354,7 +358,7 @@ class CapCosts:
             'GallonsCaptured_byORVR',
             'FuelCost_Retail',
             'FuelCost_Pretax',
-            'EmissionRepairCost',
+            'RepairAndMaintenanceCost',
             'OperatingCost',
             'TechAndOperatingCost',
         ]

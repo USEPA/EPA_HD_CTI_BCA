@@ -95,7 +95,7 @@ class EstimatedAge:
                     'identifier': identifier,
                     'typical_vmt': typical_vmt,
                     'average_mph': avg_speed,
-                    'annual_operating_hours': operating_hours_per_year,
+                    'typical_operating_hours': operating_hours_per_year,
                     'required_age': required_age,
                     'required_miles': required_miles,
                     'required_hours': required_hours,

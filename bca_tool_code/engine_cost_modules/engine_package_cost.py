@@ -23,7 +23,7 @@ def calc_avg_package_cost_per_step(settings, cost_object, vehicle, standardyear_
 
     pkg_cost = techpen = pkg_cost_learned = pkg_applied_cost_learned = learning_effect = labor_cost = 0
     if labor:
-        labor_cost = settings.repair_and_maintenance.get_attribute_value('replacement_cost_labor')
+        labor_cost = settings.repair_and_maintenance.get_attribute_value(('replacement_cost_labor', 'dollars'))
 
     if modelyear_id < standardyear_id:
         pass

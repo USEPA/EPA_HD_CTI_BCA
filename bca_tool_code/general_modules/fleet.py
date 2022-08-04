@@ -212,7 +212,8 @@ class Fleet:
             A single typical annual VMT/veh value for the given vehicle.
 
         """
-        vmt_thru_age_id = int(settings.repair_and_maintenance.get_attribute_value('typical_vmt_thru_ageID'))
+        vmt_thru_age_id \
+            = int(settings.repair_and_maintenance.get_attribute_value(('typical_vmt_thru', 'age_id')))
         year_max = settings.cap_vehicle.year_id_max
         key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id
 

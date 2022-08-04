@@ -370,3 +370,133 @@ class EmissionRepairCost:
         }
 
         return repair_cost_per_veh, repair_cost, cpm
+
+    def calc_repair_cost(self, settings, vehicle):
+        """
+
+        Parameters:
+            settings: object; the SetInputs class object.\n
+            vehicle: object; an object of the Vehicle class.
+
+        Returns:
+            Updates the data_object dictionary to include emission repair costs/mile.\n
+            Updates the repair cost/mile dictionary (repair_cpm_dict) containing details used in the calculation of repair
+            cost/mile; this dictionary is then written to an output file for the given run.
+
+        """
+        dollars_per_mile_1 = dollars_per_mile_2 = max_dollars_per_mile = slope = avg_speed = operating_hours = None
+        dollars_per_mile = dollars_per_hour = 0
+
+        vehicle_id, option_id, modelyear_id = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id
+        cost_key = vehicle_id, option_id, modelyear_id, 0, 0
+
+        pkg_cost = settings.cap_costs.get_attribute_value(cost_key, 'DirectCost_PerVeh')
+
+        # Note: the reference_pkg_cost should be diesel regclass=47, no_action_alt and the same model year as vehicle.
+        reference_pkg_cost \
+            = settings.cap_costs.get_attribute_value(((61, 47, 2), 0, modelyear_id, 0, 0), 'DirectCost_PerVeh')
+
+        direct_cost_scaler = pkg_cost / reference_pkg_cost
+
+        # get repair cost calculation attribute
+        calc_basis = settings.repair_calc_attr.get_attribute_value(vehicle.sourcetype_id)
+
+        # get inputs from repair_calc_attributes
+        emission_repair_share_input_value \
+            = settings.repair_and_maintenance.get_attribute_value(('emission_repair_share',
+                                                                   'share_of_total_repair_and_maintenance'))
+        if calc_basis.__contains__('mile'):
+            dollars_per_mile_1 \
+                = settings.repair_and_maintenance.get_attribute_value(('independent_variable_1', 'dollars_per_mile'))
+                  # * emission_repair_share_input_value * direct_cost_scaler
+
+            dollars_per_mile_2 \
+                = settings.repair_and_maintenance.get_attribute_value(('independent_variable_2', 'dollars_per_mile'))
+                  # * emission_repair_share_input_value * direct_cost_scaler
+
+            use_max_cpm = settings.general_inputs.get_attribute_value('use_max_R&M_cost_per_mile')
+            if use_max_cpm == 'Y':
+                max_dollars_per_mile \
+                    = settings.repair_and_maintenance.get_attribute_value(('max', 'dollars_per_mile'))
+                      # * emission_repair_share_input_value * direct_cost_scaler
+        else:
+            dollars_per_hour \
+                = settings.repair_and_maintenance.get_attribute_value(('max', 'dollars_per_hour'))
+                  # * emission_repair_share_input_value * direct_cost_scaler
+
+        # age estimated warranty and useful life ages
+        estimated_ages_dict_key = vehicle_id, option_id, modelyear_id, 'Warranty'
+        warranty_age \
+            = settings.estimated_age.get_attribute_value(estimated_ages_dict_key, 'estimated_age')
+
+        estimated_ages_dict_key = vehicle_id, option_id, modelyear_id, 'UsefulLife'
+        ul_age \
+            = settings.estimated_age.get_attribute_value(estimated_ages_dict_key, 'estimated_age')
+
+        # calc the repair cost per mile curve slope, if needed
+        if dollars_per_mile_2:
+            slope = self.calc_slope(dollars_per_mile_1, dollars_per_mile_2, warranty_age, ul_age)
+
+            # calc the maintenance and repair cost per mile ## emission-repair cost per mile
+            dollars_per_mile \
+                = self.calc_repair_cpm(vehicle.age_id, warranty_age, slope, dollars_per_mile_1,
+                                       max_cpm=max_dollars_per_mile)
+
+            cost_per_veh = dollars_per_mile * vehicle.vmt_per_veh
+
+        else:
+            avg_speed = settings.average_speed.get_attribute_value(vehicle.sourcetype_id)
+            operating_hours = vehicle.vmt_per_veh / avg_speed
+            cost_per_veh = dollars_per_hour * operating_hours
+
+        if vehicle.age_id <= warranty_age:
+            r_and_m_cost_per_veh = cost_per_veh * (1 - emission_repair_share_input_value)
+            cpm = dollars_per_mile * (1 - emission_repair_share_input_value)
+            cph = dollars_per_hour * (1 - emission_repair_share_input_value)
+
+        elif vehicle.age_id <= ul_age:
+            r_and_m_cost_per_veh = cost_per_veh
+            cpm = dollars_per_mile
+            cph = dollars_per_hour
+
+        else:
+            r_and_m_cost_per_veh \
+                = cost_per_veh * (1 - emission_repair_share_input_value) \
+                  + cost_per_veh * emission_repair_share_input_value * direct_cost_scaler
+            cpm = dollars_per_mile * (1 - emission_repair_share_input_value) \
+                  + dollars_per_mile * emission_repair_share_input_value * direct_cost_scaler
+            cph = dollars_per_hour * (1 - emission_repair_share_input_value) \
+                  + dollars_per_hour * emission_repair_share_input_value * direct_cost_scaler
+
+        r_and_m_cost = r_and_m_cost_per_veh * vehicle.vpop
+
+        key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, vehicle.age_id
+        self.repair_cost_details[key] = {
+            'optionID': vehicle.option_id,
+            'sourceTypeID': vehicle.sourcetype_id,
+            'regClassID': vehicle.regclass_id,
+            'fuelTypeID': vehicle.fueltype_id,
+            'modelYearID': vehicle.modelyear_id,
+            'ageID': vehicle.age_id,
+            'optionName': vehicle.option_name,
+            'sourceTypeName': vehicle.sourcetype_name,
+            'regClassName': vehicle.regclass_name,
+            'fuelTypeName': vehicle.fueltype_name,
+            'vmt_per_veh': vehicle.vmt_per_veh,
+            'avg_speed': avg_speed,
+            'hours_per_veh': operating_hours,
+            'vpop': vehicle.vpop,
+            'reference_direct_cost': reference_pkg_cost,
+            'direct_cost_scaler': direct_cost_scaler,
+            'warranty_est_age': warranty_age,
+            'ul_est_age': ul_age,
+            'at_ul_cpm': dollars_per_mile_2,
+            'slope_within_ul': slope,
+            'max_cpm': max_dollars_per_mile,
+            'r_and_m_cpm': cpm,
+            'r_and_m_cph': cph,
+            'r_and_m_cost_per_veh': r_and_m_cost_per_veh,
+            'r_and_m_cost': r_and_m_cost,
+        }
+
+        return r_and_m_cost_per_veh, r_and_m_cost, cpm, cph

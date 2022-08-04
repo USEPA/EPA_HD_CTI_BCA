@@ -28,25 +28,31 @@ class RepairAndMaintenance:
             and other attributes specified in the class __init__.
 
         """
-        df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x, index_col=0)
+        df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x) #, index_col=0)
 
         df = deflators.convert_dollars_to_analysis_basis(general_inputs, df, 'Value')
 
         self.repair_and_maintenance_in_analysis_dollars = df.copy()
+
+        key = pd.Series(zip(
+            df['Metric'],
+            df['Units'],
+        ))
+        df.set_index(key, inplace=True)
 
         self._dict = df.to_dict('index')
 
         # update input_files_pathlist if this class is used
         InputFiles.update_pathlist(filepath)
 
-    def get_attribute_value(self, attribute_name):
+    def get_attribute_value(self, key):
         """
 
         Parameters:
-            attribute_name: str; the attribute for which a value is sought.
+            key: tuple of strings; e.g., ('max', 'dollars_per_mile').
 
         Returns:
             The value of the passed attribute.
 
         """
-        return self._dict[attribute_name]['Value']
+        return self._dict[key]['Value']
