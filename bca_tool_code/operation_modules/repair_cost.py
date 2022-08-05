@@ -391,38 +391,43 @@ class EmissionRepairCost:
         cost_key = vehicle_id, option_id, modelyear_id, 0, 0
 
         pkg_cost = settings.cap_costs.get_attribute_value(cost_key, 'DirectCost_PerVeh')
+        base_pkg_cost \
+            = settings.cap_costs.get_attribute_value((vehicle_id, settings.no_action_alt, modelyear_id, 0, 0),
+                                                     'DirectCost_PerVeh')
 
+        # calc a repair cost scaler to adjust the HHD inputs to LHD and MHD
         # Note: the reference_pkg_cost should be diesel regclass=47, no_action_alt and the same model year as vehicle.
         reference_pkg_cost \
             = settings.cap_costs.get_attribute_value(((61, 47, 2), 0, modelyear_id, 0, 0), 'DirectCost_PerVeh')
 
-        direct_cost_scaler = pkg_cost / reference_pkg_cost
+        repair_cost_scaler = base_pkg_cost / reference_pkg_cost
+        beyond_ul_cost_scaler = pkg_cost / base_pkg_cost
 
         # get repair cost calculation attribute
         calc_basis = settings.repair_calc_attr.get_attribute_value(vehicle.sourcetype_id)
 
         # get inputs from repair_calc_attributes
-        emission_repair_share_input_value \
+        emission_repair_share \
             = settings.repair_and_maintenance.get_attribute_value(('emission_repair_share',
                                                                    'share_of_total_repair_and_maintenance'))
         if calc_basis.__contains__('mile'):
             dollars_per_mile_1 \
-                = settings.repair_and_maintenance.get_attribute_value(('independent_variable_1', 'dollars_per_mile'))
-                  # * emission_repair_share_input_value * direct_cost_scaler
+                = settings.repair_and_maintenance.get_attribute_value(('independent_variable_1', 'dollars_per_mile')) \
+                  * repair_cost_scaler
 
             dollars_per_mile_2 \
-                = settings.repair_and_maintenance.get_attribute_value(('independent_variable_2', 'dollars_per_mile'))
-                  # * emission_repair_share_input_value * direct_cost_scaler
+                = settings.repair_and_maintenance.get_attribute_value(('independent_variable_2', 'dollars_per_mile')) \
+                  * repair_cost_scaler
 
             use_max_cpm = settings.general_inputs.get_attribute_value('use_max_R&M_cost_per_mile')
             if use_max_cpm == 'Y':
                 max_dollars_per_mile \
-                    = settings.repair_and_maintenance.get_attribute_value(('max', 'dollars_per_mile'))
-                      # * emission_repair_share_input_value * direct_cost_scaler
+                    = settings.repair_and_maintenance.get_attribute_value(('max', 'dollars_per_mile')) \
+                      * repair_cost_scaler
         else:
             dollars_per_hour \
-                = settings.repair_and_maintenance.get_attribute_value(('max', 'dollars_per_hour'))
-                  # * emission_repair_share_input_value * direct_cost_scaler
+                = settings.repair_and_maintenance.get_attribute_value(('max', 'dollars_per_hour')) \
+                  * repair_cost_scaler
 
         # age estimated warranty and useful life ages
         estimated_ages_dict_key = vehicle_id, option_id, modelyear_id, 'Warranty'
@@ -450,9 +455,9 @@ class EmissionRepairCost:
             cost_per_veh = dollars_per_hour * operating_hours
 
         if vehicle.age_id <= warranty_age:
-            r_and_m_cost_per_veh = cost_per_veh * (1 - emission_repair_share_input_value)
-            cpm = dollars_per_mile * (1 - emission_repair_share_input_value)
-            cph = dollars_per_hour * (1 - emission_repair_share_input_value)
+            r_and_m_cost_per_veh = cost_per_veh * (1 - emission_repair_share)
+            cpm = dollars_per_mile * (1 - emission_repair_share)
+            cph = dollars_per_hour * (1 - emission_repair_share)
 
         elif vehicle.age_id <= ul_age:
             r_and_m_cost_per_veh = cost_per_veh
@@ -461,12 +466,12 @@ class EmissionRepairCost:
 
         else:
             r_and_m_cost_per_veh \
-                = cost_per_veh * (1 - emission_repair_share_input_value) \
-                  + cost_per_veh * emission_repair_share_input_value * direct_cost_scaler
-            cpm = dollars_per_mile * (1 - emission_repair_share_input_value) \
-                  + dollars_per_mile * emission_repair_share_input_value * direct_cost_scaler
-            cph = dollars_per_hour * (1 - emission_repair_share_input_value) \
-                  + dollars_per_hour * emission_repair_share_input_value * direct_cost_scaler
+                = cost_per_veh * (1 - emission_repair_share) \
+                  + cost_per_veh * emission_repair_share * beyond_ul_cost_scaler
+            cpm = dollars_per_mile * (1 - emission_repair_share) \
+                  + dollars_per_mile * emission_repair_share * beyond_ul_cost_scaler
+            cph = dollars_per_hour * (1 - emission_repair_share) \
+                  + dollars_per_hour * emission_repair_share * beyond_ul_cost_scaler
 
         r_and_m_cost = r_and_m_cost_per_veh * vehicle.vpop
 
@@ -487,7 +492,8 @@ class EmissionRepairCost:
             'hours_per_veh': operating_hours,
             'vpop': vehicle.vpop,
             'reference_direct_cost': reference_pkg_cost,
-            'direct_cost_scaler': direct_cost_scaler,
+            'repair_cost_scaler': repair_cost_scaler,
+            'beyond_ul_cost_scaler': beyond_ul_cost_scaler,
             'warranty_est_age': warranty_age,
             'ul_est_age': ul_age,
             'at_ul_cpm': dollars_per_mile_2,

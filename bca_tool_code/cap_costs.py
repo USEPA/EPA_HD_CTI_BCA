@@ -255,7 +255,8 @@ class CapCosts:
         # calc deltas relative to the no-action scenario ---------------------------------------------------------------
         if settings.runtime_options.calc_deltas:
             calc_deltas(settings, self, settings.options_cap)
-            calc_deltas(settings, settings.annual_summary_cap, settings.options_cap)
+            if settings.runtime_options.discount_values:
+                calc_deltas(settings, settings.annual_summary_cap, settings.options_cap)
 
             # settings.wtd_def_cpm_dict = calc_deltas_weighted(settings, settings.wtd_def_cpm_dict,
             #                                                  settings.options_cap)
