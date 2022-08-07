@@ -1,3 +1,21 @@
+"""
+
+**INPUT FILE FORMAT**
+
+The file format consists of 'Table 1.1.9. Implicit Price Deflators for Gross Domestic Product' from the Bureau of
+Economic Analysis.
+
+The data represent price deflators for use in valuing dollars expressed in a different dollar basis than that desire for
+analysis. The code uses the Gross Domestic Product row of data only.
+
+File Type
+    comma-separated values (CSV)
+
+----
+
+**CODE**
+
+"""
 import pandas as pd
 
 from bca_tool_code.general_input_modules.general_functions import read_input_file

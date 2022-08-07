@@ -1,5 +1,35 @@
-import pandas as pd
+"""
 
+**INPUT FILE FORMAT**
+
+The file format consists of a one-row data header and subsequent data rows.
+
+The data represent the average speed, in miles per hour, for the indicated MOVES sourcetypes.
+
+File Type
+    comma-separated values (CSV)
+
+Sample Data Columns
+    .. csv-table::
+        :widths: auto
+
+        sourceTypeID,AvgSpeed MPH
+        11,41.4
+        21,41.5
+        31,42.9
+
+Data Column Name and Description
+    :sourceTypeID:
+        The MOVES source type ID, an integer.
+
+    :AvgSpeed MPH:
+        The average speed of the associated source type ID, a float or integer.
+
+----
+
+**CODE**
+
+"""
 from bca_tool_code.general_input_modules.general_functions import read_input_file
 from bca_tool_code.general_input_modules.input_files import InputFiles
 

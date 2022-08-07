@@ -44,11 +44,16 @@ def calc_avg_package_cost_per_step(settings, cost_object, vehicle, standardyear_
 
             pkg_cost = cost_object.get_start_year_cost((engine_id, option_id, standardyear_id), 'pkg_cost')
 
-            seedvolume_factor = settings.engine_learning_scalers.get_seedvolume_factor(engine_id, option_id)
+            # seedvolume_factor = settings.engine_learning_scalers.get_seedvolume_factor(engine_id, option_id)
 
-            if sales_year1 + (sales_year1 * seedvolume_factor) != 0:
-                learning_effect = ((cumulative_sales + (sales_year1 * seedvolume_factor))
-                                   / (sales_year1 + (sales_year1 * seedvolume_factor))) ** learning_rate
+            # if sales_year1 + (sales_year1 * seedvolume_factor) != 0:
+            if sales_year1 != 0:
+                learning_effect \
+                    = settings.engine_learning_scalers.calc_learning_effect(vehicle, sales_year1, cumulative_sales,
+                                                                            learning_rate)
+
+                # learning_effect = ((cumulative_sales + (sales_year1 * seedvolume_factor))
+                #                    / (sales_year1 + (sales_year1 * seedvolume_factor))) ** learning_rate
 
                 pkg_cost_learned = pkg_cost * learning_effect + labor_cost
                 pkg_applied_cost_learned = pkg_cost_learned * techpen

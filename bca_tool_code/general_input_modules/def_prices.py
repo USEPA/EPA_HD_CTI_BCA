@@ -1,3 +1,38 @@
+"""
+
+**INPUT FILE FORMAT**
+
+The file format consists of a one-row data header and subsequent data rows.
+
+The data represent the retail price of diesel exhaust fluid (DEF).
+
+File Type
+    comma-separated values (CSV)
+
+Sample Data Columns
+    .. csv-table::
+        :widths: auto
+
+        yearID,DEF_USDperGal,DollarBasis
+        2012,2.6,2011
+        2013,2.55,2011
+        2014,2.5,2011
+
+Data Column Name and Description
+    :yearID:
+        The calendar year, an integer.
+
+    :DEF_USDperGal:
+        The DEF retail price per gallon.
+
+    :DollarBasis:
+        The dollar value of the associated price; prices are converted to analysis dollars in code.
+
+----
+
+**CODE**
+
+"""
 import pandas as pd
 
 from bca_tool_code.general_input_modules.general_functions import read_input_file
