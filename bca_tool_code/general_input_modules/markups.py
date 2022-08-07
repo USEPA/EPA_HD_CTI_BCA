@@ -1,3 +1,54 @@
+"""
+
+**INPUT FILE FORMAT**
+
+The file format consists of a one-row data header and subsequent data rows.
+
+The data represent indirect cost contributors to the Retail Price Equivalent markup factor. The contributors are used
+to calculate the indirect cost portion of the tech cost. The data also represent the scalers, the scaling metric and the
+number of years of applicability that can be applied to each individual contribution factor to estimate increases due
+to the associated policy option.
+
+File Type
+    comma-separated values (CSV)
+
+Sample Data Columns
+    .. csv-table::
+        :widths: auto
+
+        optionID,fuelTypeID,Markup_Factor,Value,Scaler,Scaled_by,NumberOfYears
+        0,1,Warranty,0,None,None,
+        0,1,RnD,0.05,None,None,
+        0,1,Other,0.36,None,None,
+        0,1,Profit,0.06,None,None,
+
+Data Column Name and Description
+    :optionID:
+        The option or alternative number.
+
+    :fuelTypeID:
+        The MOVES fuel type ID, an integer, where 1=Gasoline, 2=Diesel, etc.
+
+    :Markup_Factor:
+        The indirect cost contribution factor name.
+
+    :Value:
+        The indirect cost contribution factor value.
+
+    :Scaler:
+        The scaling approach to use, whether absolute or relative.
+
+    :Scaled_by:
+        The policy provision that impacts the scaling of the contribution factor, i.e., 'Warranty' or 'R&D'.
+
+    :NumberOfYears:
+        The number of year, an integer, to including the scaling factor.
+
+----
+
+**CODE**
+
+"""
 import pandas as pd
 
 from bca_tool_code.general_input_modules.general_functions import read_input_file

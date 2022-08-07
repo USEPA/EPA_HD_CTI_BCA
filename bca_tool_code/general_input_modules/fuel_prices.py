@@ -1,3 +1,21 @@
+"""
+
+**INPUT FILE FORMAT**
+
+The file format consists of the 'Components of Selected Petroleum Product Prices' from the Energy Information
+Administration's Annual Energy Outlook.
+
+The data represent liquid fuel prices for use in calculating operating costs. Which AEO fuel price case to use is set
+via the General Inputs file. Fuel prices are converted to analysis dollars in-code.
+
+File Type
+    comma-separated values (CSV)
+
+----
+
+**CODE**
+
+"""
 import pandas as pd
 
 from bca_tool_code.general_input_modules.general_functions import read_input_file

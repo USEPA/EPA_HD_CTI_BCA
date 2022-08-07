@@ -1,3 +1,39 @@
+"""
+
+**INPUT FILE FORMAT**
+
+The file format consists of a one-row data header and subsequent data rows.
+
+The data represent the input file names to use for the given run.
+
+File Type
+    comma-separated values (CSV)
+
+Sample Data Columns
+    .. csv-table::
+        :widths: auto
+
+        DoNotChange,UserEntry.csv,Notes
+        bca_inputs,BCA_General_Inputs.csv,
+        options_cap,Options_CAP_os0622.csv,
+        fuel_prices,Components_of_Selected_Petroleum_Product_Prices.csv,
+        deflators,Table_1.1.9_ImplicitPriceDeflators.csv,
+
+Data Column Name and Description
+    :DoNotChange:
+        The file type associated, in-code, with the UserEntry.csv file name; these entries should not be changed.
+
+    :UserEntry.csv:
+        The user provided file name to use, including the '.csv' extension. Files must be CSV format.
+
+    :Notes:
+        Optional notes provided by the user; notes are ignored in-code.
+
+----
+
+**CODE**
+
+"""
 import pandas as pd
 
 from bca_tool_code.general_input_modules.general_functions import read_input_file
