@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 from bca_tool_code.general_input_modules.general_functions import read_input_file
 from bca_tool_code.general_input_modules.input_files import InputFiles
@@ -27,6 +28,8 @@ class Warranty:
 
         """
         df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
+
+        df = df.replace(np.nan, None)
 
         # value_name = 'period_value'
 

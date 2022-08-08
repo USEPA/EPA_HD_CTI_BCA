@@ -59,10 +59,14 @@ class EstimatedAge:
                 required_miles \
                     = miles_and_ages.get_attribute_value((engine_id, option_id, modelyear_id, 'Miles'),
                                                          'period_value')
-                if identifier == 'Warranty' and vehicle.option_id != settings.no_action_alt:
-                    required_hours \
-                        = miles_and_ages.get_attribute_value((engine_id, option_id, modelyear_id, 'Hours'),
-                                                             'period_value')
+                required_hours \
+                    = miles_and_ages.get_attribute_value((engine_id, option_id, modelyear_id, 'Hours'),
+                                                         'period_value')
+
+                # if identifier == 'Warranty' and vehicle.option_id != settings.no_action_alt:
+                #     required_hours \
+                #         = miles_and_ages.get_attribute_value((engine_id, option_id, modelyear_id, 'Hours'),
+                #                                              'period_value')
 
                 if identifier == 'Warranty' \
                         and vehicle.engine_id in settings.warranty_extended._dict \
@@ -81,6 +85,7 @@ class EstimatedAge:
                     estimated_age = min(required_age, calculated_age_miles, calculated_age_hours)
 
                 estimated_miles = typical_vmt * estimated_age
+                estimated_hours = operating_hours_per_year * estimated_age
 
                 self.estimated_ages_dict[estimated_ages_dict_key] = ({
                     'optionID': vehicle.option_id,
@@ -103,6 +108,7 @@ class EstimatedAge:
                     'calculated_age_hours': calculated_age_hours,
                     'estimated_age': estimated_age,
                     'estimated_miles': estimated_miles,
+                    'estimated_hours': estimated_hours,
                     'share_with_extended_warranty': share,
                 })
         #         # append warranty & UL data to return_list
