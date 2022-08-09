@@ -1,5 +1,6 @@
 import pandas as pd
 from scipy.optimize import curve_fit
+from math import ceil, floor
 
 
 class EmissionRepairCost:
@@ -395,7 +396,7 @@ class EmissionRepairCost:
             = settings.cap_costs.get_attribute_value((vehicle_id, settings.no_action_alt, modelyear_id, 0, 0),
                                                      'DirectCost_PerVeh')
 
-        # calc a repair cost scaler to adjust the HHD inputs to LHD and MHD
+        # calc an emission repair cost scaler to adjust the HHD inputs to LHD and MHD
         # Note: the reference_pkg_cost should be diesel regclass=47, no_action_alt and the same model year as vehicle.
         reference_pkg_cost \
             = settings.cap_costs.get_attribute_value(((61, 47, 2), 0, modelyear_id, 0, 0), 'DirectCost_PerVeh')
@@ -413,21 +414,21 @@ class EmissionRepairCost:
         if calc_basis.__contains__('mile'):
             dollars_per_mile_1 \
                 = settings.repair_and_maintenance.get_attribute_value(('independent_variable_1', 'dollars_per_mile')) \
-                  * repair_cost_scaler
+                  * repair_cost_scaler * emission_repair_share
 
             dollars_per_mile_2 \
                 = settings.repair_and_maintenance.get_attribute_value(('independent_variable_2', 'dollars_per_mile')) \
-                  * repair_cost_scaler
+                  * repair_cost_scaler * emission_repair_share
 
             use_max_cpm = settings.general_inputs.get_attribute_value('use_max_R&M_cost_per_mile')
             if use_max_cpm == 'Y':
                 max_dollars_per_mile \
                     = settings.repair_and_maintenance.get_attribute_value(('max', 'dollars_per_mile')) \
-                      * repair_cost_scaler
+                      * repair_cost_scaler * emission_repair_share
         else:
             dollars_per_hour \
                 = settings.repair_and_maintenance.get_attribute_value(('max', 'dollars_per_hour')) \
-                  * repair_cost_scaler
+                  * repair_cost_scaler * emission_repair_share
 
         # age estimated warranty and useful life ages
         estimated_ages_dict_key = vehicle_id, option_id, modelyear_id, 'Warranty'
@@ -438,11 +439,14 @@ class EmissionRepairCost:
         ul_age \
             = settings.estimated_age.get_attribute_value(estimated_ages_dict_key, 'estimated_age')
 
+        avg_speed = settings.average_speed.get_attribute_value(vehicle.sourcetype_id)
+        operating_hours = vehicle.vmt_per_veh / avg_speed
+
         # calc the repair cost per mile curve slope, if needed
         if dollars_per_mile_2:
             slope = self.calc_slope(dollars_per_mile_1, dollars_per_mile_2, warranty_age, ul_age)
 
-            # calc the maintenance and repair cost per mile ## emission-repair cost per mile
+            # calc the emission-repair cost per mile
             dollars_per_mile \
                 = self.calc_repair_cpm(vehicle.age_id, warranty_age, slope, dollars_per_mile_1,
                                        max_cpm=max_dollars_per_mile)
@@ -450,30 +454,31 @@ class EmissionRepairCost:
             cost_per_veh = dollars_per_mile * vehicle.vmt_per_veh
 
         else:
-            avg_speed = settings.average_speed.get_attribute_value(vehicle.sourcetype_id)
-            operating_hours = vehicle.vmt_per_veh / avg_speed
             cost_per_veh = dollars_per_hour * operating_hours
 
-        if vehicle.age_id <= warranty_age:
-            r_and_m_cost_per_veh = cost_per_veh * (1 - emission_repair_share)
-            cpm = dollars_per_mile * (1 - emission_repair_share)
-            cph = dollars_per_hour * (1 - emission_repair_share)
+        if vehicle.age_id < warranty_age < vehicle.age_id + 1:
+            # this calcs the portion not covered during the year in-which warranty is reached
+            # plus 1 here because MOVES uses age_id=0 for first year but EstimatedAge does not
+            fraction = ceil(warranty_age) - warranty_age
+            r_and_m_cost_per_veh = cost_per_veh * fraction
 
-        elif vehicle.age_id <= ul_age:
-            r_and_m_cost_per_veh = cost_per_veh
-            cpm = dollars_per_mile
-            cph = dollars_per_hour
+        elif vehicle.age_id + 1 <= warranty_age:
+            # plus 1 here because MOVES uses age_id=0 for first year but EstimatedAge does not
+            r_and_m_cost_per_veh = 0
+
+        elif vehicle.age_id < ul_age < vehicle.age_id + 1:
+            fraction_at_lower_cost = ul_age - floor(ul_age)
+            fraction_at_higher_cost = ceil(ul_age) - ul_age
+
+            r_and_m_cost_per_veh \
+                = cost_per_veh * (fraction_at_lower_cost + fraction_at_higher_cost * beyond_ul_cost_scaler)
 
         else:
-            r_and_m_cost_per_veh \
-                = cost_per_veh * (1 - emission_repair_share) \
-                  + cost_per_veh * emission_repair_share * beyond_ul_cost_scaler
-            cpm = dollars_per_mile * (1 - emission_repair_share) \
-                  + dollars_per_mile * emission_repair_share * beyond_ul_cost_scaler
-            cph = dollars_per_hour * (1 - emission_repair_share) \
-                  + dollars_per_hour * emission_repair_share * beyond_ul_cost_scaler
+            r_and_m_cost_per_veh = cost_per_veh * beyond_ul_cost_scaler
 
         r_and_m_cost = r_and_m_cost_per_veh * vehicle.vpop
+        cpm = r_and_m_cost_per_veh / vehicle.vmt_per_veh
+        cph = r_and_m_cost_per_veh / operating_hours
 
         key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, vehicle.age_id
         self.repair_cost_details[key] = {
@@ -491,18 +496,24 @@ class EmissionRepairCost:
             'avg_speed': avg_speed,
             'hours_per_veh': operating_hours,
             'vpop': vehicle.vpop,
-            'reference_direct_cost': reference_pkg_cost,
-            'repair_cost_scaler': repair_cost_scaler,
+            'reference_pkg_direct_cost': reference_pkg_cost,
+            'base_pkg_direct_cost': base_pkg_cost,
+            'pkg_direct_cost': pkg_cost,
+            'emission_repair_cost_scaler': repair_cost_scaler,
             'beyond_ul_cost_scaler': beyond_ul_cost_scaler,
             'warranty_est_age': warranty_age,
             'ul_est_age': ul_age,
             'at_ul_cpm': dollars_per_mile_2,
             'slope_within_ul': slope,
             'max_cpm': max_dollars_per_mile,
-            'r_and_m_cpm': cpm,
-            'r_and_m_cph': cph,
-            'r_and_m_cost_per_veh': r_and_m_cost_per_veh,
-            'r_and_m_cost': r_and_m_cost,
+            'emission_repair_cpm': cpm,
+            'emission_repair_cph': cph,
+            'emission_repair_cost_per_veh': r_and_m_cost_per_veh,
+            'emission_repair_cost': r_and_m_cost,
+            # 'r_and_m_cpm': cpm,
+            # 'r_and_m_cph': cph,
+            # 'r_and_m_cost_per_veh': r_and_m_cost_per_veh,
+            # 'r_and_m_cost': r_and_m_cost,
         }
 
         return r_and_m_cost_per_veh, r_and_m_cost, cpm, cph

@@ -154,7 +154,7 @@ def main():
 
         # create figures, which are based on the annual summary, which requires discounted values
         if settings.runtime_options.discount_values:
-            arg_list = ['TechCost', 'RepairAndMaintenanceCost', 'DEFCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
+            arg_list = ['TechCost', 'EmissionRepairCost', 'DEFCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
             bca_tool_code.general_modules.create_figures.CreateFigures(
                 cap_summary_df, 'US Dollars', path_of_run_results_folder, 'CAP').create_figures(arg_list)
 
