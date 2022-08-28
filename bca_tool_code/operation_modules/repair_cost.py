@@ -411,7 +411,8 @@ class EmissionRepairCost:
         emission_repair_share \
             = settings.repair_and_maintenance.get_attribute_value(('emission_repair_share',
                                                                    'share_of_total_repair_and_maintenance'))
-        if calc_basis.__contains__('mile'):
+        if 'mile' in calc_basis:
+        # if calc_basis.__contains__('mile'):
             dollars_per_mile_1 \
                 = settings.repair_and_maintenance.get_attribute_value(('independent_variable_1', 'dollars_per_mile')) \
                   * repair_cost_scaler * emission_repair_share
