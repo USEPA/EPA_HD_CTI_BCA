@@ -92,11 +92,16 @@ class AnnualSummary:
         for option_id in range(0, num_option_ids):
             for social_rate in (0, *social_rates):
                 for year_id in year_ids:
+                    temp_dict = {k: v for k, v in source_dict.items()
+                                 if v['yearID'] == year_id
+                                 and v['DiscountRate'] == social_rate
+                                 and v['optionID'] == option_id}
                     for arg in all_costs:
-                        arg_sum = sum(v[arg] for k, v in source_dict.items()
-                                      if v['yearID'] == year_id
-                                      and v['DiscountRate'] == social_rate
-                                      and v['optionID'] == option_id)
+                        arg_sum = sum(v[arg] for k, v in temp_dict.items())
+                        # arg_sum = sum(v[arg] for k, v in source_dict.items()
+                        #               if v['yearID'] == year_id
+                        #               and v['DiscountRate'] == social_rate
+                        #               and v['optionID'] == option_id)
                         self.results[(series, option_id, year_id, social_rate)][arg] = arg_sum
 
         # now do a cumulative sum year-over-year for each cost arg - these will be present values
@@ -107,11 +112,16 @@ class AnnualSummary:
                 for arg in all_costs:
                     for year_id in year_ids:
                         periods = year_id - discount_to_year + discount_offset
-                        arg_value = sum(v[arg] for k, v in self.results.items()
-                                        if v['yearID'] <= year_id
-                                        and v['DiscountRate'] == social_rate
-                                        and v['optionID'] == option_id
-                                        and v['Series'] == 'AnnualValue')
+                        if (series, option_id, year_id - 1, social_rate) not in self.results:
+                            arg_value = self.results[('AnnualValue', option_id, year_id, social_rate)][arg]
+                        else:
+                            arg_value = self.results[(series, option_id, year_id - 1, social_rate)][arg]
+                            arg_value += self.results[('AnnualValue', option_id, year_id, social_rate)][arg]
+                        # arg_value = sum(v[arg] for k, v in self.results.items()
+                        #                 if v['yearID'] <= year_id
+                        #                 and v['DiscountRate'] == social_rate
+                        #                 and v['optionID'] == option_id
+                        #                 and v['Series'] == 'AnnualValue')
                         self.results[(series, option_id, year_id, social_rate)][arg] = arg_value
                         self.results[(series, option_id, year_id, social_rate)]['Periods'] = periods
 

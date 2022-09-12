@@ -124,7 +124,7 @@ class PieceCosts:
         """
 
         Parameters:
-            key: tuple; (vehicle_id, option_id, model_year, age_id, discount_rate).\n
+            key: tuple; (unit_id, option_id, model_year).\n
             attribute_names: list; the list of attribute names for which values are sought.
 
         Returns:
