@@ -15,7 +15,7 @@ Sample Data Columns
 
         DoNotChange,UserEntry.csv,Notes
         bca_inputs,BCA_General_Inputs.csv,
-        options_cap,Options_CAP_os0622.csv,
+        options,Options_CAP_os0622.csv,
         fuel_prices,Components_of_Selected_Petroleum_Product_Prices.csv,
         deflators,Table_1.1.9_ImplicitPriceDeflators.csv,
 

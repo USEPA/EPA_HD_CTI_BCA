@@ -30,7 +30,6 @@ from bca_tool_code.general_input_modules.piece_costs import PieceCosts
 from bca_tool_code.general_input_modules.tech_penetrations import TechPenetrations
 
 from bca_tool_code.engine_input_modules.engine_learning_scalers import EngineLearningScalers
-from bca_tool_code.vehicle_input_modules.vehicle_learning_scalers import VehicleLearningScalers
 
 from bca_tool_code.operation_input_modules.def_doserates import DefDoseRates
 from bca_tool_code.operation_input_modules.orvr_fuelchanges import OrvrFuelChanges
@@ -38,8 +37,7 @@ from bca_tool_code.operation_input_modules.repair_and_maintenance import RepairA
 from bca_tool_code.operation_input_modules.repair_calc_attribute import RepairCalcAttribute
 from bca_tool_code.operation_modules.repair_cost import EmissionRepairCost
 
-from bca_tool_code.cap_costs import CapCosts
-from bca_tool_code.ghg_costs import GhgCosts
+from bca_tool_code.cost_calcs import CostCalcs
 
 
 class SetInputs:
@@ -71,6 +69,7 @@ class SetInputs:
 
         # determine what's being run
         self.no_action_alt = pd.to_numeric(self.general_inputs.get_attribute_value('no_action_alt'))
+        self.project_name = self.general_inputs.get_attribute_value('project_name')
 
         self.input_files_pathlist = self.input_files.input_files_pathlist
 
@@ -91,36 +90,41 @@ class SetInputs:
         )
 
         if self.runtime_options.calc_cap_costs:
-            self.options_cap = Options()
-            self.options_cap.init_from_file(
-                set_paths.path_inputs / self.input_files.get_filename('options_cap')
+            self.options = Options()
+            self.options.init_from_file(
+                set_paths.path_inputs / self.input_files.get_filename('options')
             )
-            self.techpens_cap = TechPenetrations()
-            self.techpens_cap.init_from_file(
-                set_paths.path_inputs / self.input_files.get_filename('techpens_cap'), 'engine_id',
+            self.techpens = TechPenetrations()
+            self.techpens.init_from_file(
+                set_paths.path_inputs / self.input_files.get_filename('techpens'), 'engine_id',
             )
-            self.moves_adj_cap = MovesAdjustments()
-            self.moves_adj_cap.init_from_file(
-                set_paths.path_inputs / self.input_files.get_filename('moves_adjustments_cap')
+            self.moves_adj = MovesAdjustments()
+            self.moves_adj.init_from_file(
+                set_paths.path_inputs / self.input_files.get_filename('moves_adjustments')
             )
-            self.cap_vehicle = Vehicle()
-            self.cap_vehicle.init_from_file(
-                set_paths.path_inputs / self.input_files.get_filename('fleet_cap'),
-                self.options_cap, adjustments=self.moves_adj_cap
+            self.vehicle = Vehicle()
+            self.vehicle.init_from_file(
+                set_paths.path_inputs / self.input_files.get_filename('fleet'),
+                self.options, adjustments=self.moves_adj
             )
-            self.fleet_cap = Fleet()
-            self.fleet_cap.create_cap_vehicles(self.no_action_alt, self.options_cap)
+            self.fleet = Fleet()
+            self.fleet.create_vehicles(self.no_action_alt, self.options)
 
             self.engine_costs = PieceCosts()
             self.engine_costs.init_from_file(
-                set_paths.path_inputs / self.input_files.get_filename('engine_costs_cap'),
+                set_paths.path_inputs / self.input_files.get_filename('engine_costs'),
                 'engine_id', self.general_inputs, self.deflators
             )
-            self.replacement_costs = PieceCosts()
-            self.replacement_costs.init_from_file(
-                set_paths.path_inputs / self.input_files.get_filename('replacement_costs_cap'),
-                'engine_id', self.general_inputs, self.deflators
-            )
+            try:
+                set_paths.path_inputs / self.input_files.get_filename('replacement_costs')
+                self.replacement_costs = PieceCosts()
+                self.replacement_costs.init_from_file(
+                    set_paths.path_inputs / self.input_files.get_filename('replacement_costs'),
+                    'engine_id', self.general_inputs, self.deflators
+                )
+            except:
+                self.replacement_costs = None
+
             self.engine_learning_scalers = EngineLearningScalers()
             self.engine_learning_scalers.init_from_file(
                 set_paths.path_inputs / self.input_files.get_filename('engine_learning_scalers')
@@ -142,10 +146,15 @@ class SetInputs:
                 set_paths.path_inputs / self.input_files.get_filename('base_warranty_costs'),
                 self.general_inputs, self.deflators
             )
-            self.warranty_new_tech_adj = WarrantyNewTechAdj()
-            self.warranty_new_tech_adj.init_from_file(
-                set_paths.path_inputs / self.input_files.get_filename('warranty_new_tech_adj_factor'),
-            )
+            try:
+                set_paths.path_inputs / self.input_files.get_filename('warranty_new_tech_adj_factor')
+                self.warranty_new_tech_adj = WarrantyNewTechAdj()
+                self.warranty_new_tech_adj.init_from_file(
+                    set_paths.path_inputs / self.input_files.get_filename('warranty_new_tech_adj_factor'),
+                )
+            except:
+                self.warranty_new_tech_adj = None
+
             self.warranty_cost_approach = self.general_inputs.get_attribute_value('warranty_cost_approach')
 
             self.useful_life = UsefulLife()
@@ -180,79 +189,18 @@ class SetInputs:
             self.wtd_cap_fuel_cpm_dict = dict()
             self.annual_summary_cap = AnnualSummary()
 
-        if self.runtime_options.calc_ghg_costs:
-
-            self.options_ghg = Options()
-            self.options_ghg.init_from_file(
-                set_paths.path_inputs / self.input_files.get_filename('options_ghg')
-            )
-            self.techpens_ghg = TechPenetrations()
-            self.techpens_ghg.init_from_file(
-                set_paths.path_inputs / self.input_files.get_filename('techpens_ghg'), 'vehicle_id',
-            )
-            self.ghg_vehicle = Vehicle()
-            self.ghg_vehicle.init_from_file(
-                set_paths.path_inputs / self.input_files.get_filename('fleet_ghg'),
-                self.options_ghg, adjustments=None
-            )
-            self.fleet_ghg = Fleet()
-            self.fleet_ghg.create_ghg_vehicles(self.no_action_alt, self.options_ghg)
-
-            self.vehicle_costs = PieceCosts()
-            self.vehicle_costs.init_from_file(
-                set_paths.path_inputs / self.input_files.get_filename('vehicle_costs_ghg'),
-                'vehicle_id', self.general_inputs, self.deflators
-            )
-            self.vehicle_learning_scalers = VehicleLearningScalers()
-            self.vehicle_learning_scalers.init_from_file(
-                set_paths.path_inputs / self.input_files.get_filename('vehicle_learning_scalers')
-            )
-            self.wtd_ghg_fuel_cpm_dict = dict()
-            self.annual_summary_ghg = AnnualSummary()
-
-            if self.runtime_options.calc_cap_costs:
-                pass
-            else:
-                self.markups = Markups()
-                self.markups.init_from_file(
-                    set_paths.path_inputs / self.input_files.get_filename('markups')
-                )
-                self.warranty = Warranty()
-                self.warranty.init_from_file(
-                    set_paths.path_inputs / self.input_files.get_filename('warranty')
-                )
-                self.useful_life = UsefulLife()
-                self.useful_life.init_from_file(
-                    set_paths.path_inputs / self.input_files.get_filename('useful_life')
-                )
-
-        if self.runtime_options.calc_ghg_pollution:
-            self.cost_factors_scc = CostFactors()
-            self.cost_factors_scc.init_from_file(
-                set_paths.path_inputs / self.input_files.get_filename('dollar_per_ton_scc'),
-                self.general_inputs, deflators=self.deflators
-            )
-
         if self.runtime_options.calc_cap_costs:
 
             # calculate year-over-year engine sales
-            for vehicle in self.fleet_cap.vehicles_age0:
-                self.fleet_cap.engine_sales(vehicle)
+            for vehicle in self.fleet.vehicles_age0:
+                self.fleet.engine_sales(vehicle)
 
             # calculate year-over-year cumulative engine sales (for use in learning effects)
-            for vehicle in self.fleet_cap.vehicles_age0:
+            for vehicle in self.fleet.vehicles_age0:
                 for start_year in self.engine_costs.standardyear_ids:
-                    self.fleet_cap.cumulative_engine_sales(vehicle, start_year)
+                    self.fleet.cumulative_engine_sales(vehicle, start_year)
 
-            self.cap_costs = CapCosts()
-
-        if self.runtime_options.calc_ghg_costs:
-
-            for vehicle in self.fleet_ghg.vehicles_age0:
-                for start_year in self.vehicle_costs.standardyear_ids:
-                    self.fleet_ghg.cumulative_vehicle_sales(vehicle, start_year)
-
-            self.ghg_costs = GhgCosts()
+            self.cost_calcs = CostCalcs()
 
         self.end_time_inputs = time()
         self.elapsed_time_inputs = self.end_time_inputs - self.start_time

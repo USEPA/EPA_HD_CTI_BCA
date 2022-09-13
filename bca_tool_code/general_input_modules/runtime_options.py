@@ -14,9 +14,7 @@ class RuntimeOptions:
         self._dict = dict()
         self.runtime_options = list()
         self.calc_cap_costs = False
-        self.calc_ghg_costs = False
         self.calc_cap_pollution = False
-        self.calc_ghg_pollution = False
         self.discount_values = False
         self.calc_deltas = False
 
@@ -70,7 +68,5 @@ class RuntimeOptions:
 
         self.calc_cap_costs = self.get_attribute_value('calculate_cap_costs')
         self.calc_cap_pollution = self.get_attribute_value('calculate_cap_pollution_effects')
-        self.calc_ghg_costs = self.get_attribute_value('calculate_ghg_costs')
-        self.calc_ghg_pollution = self.get_attribute_value('calculate_ghg_pollution_effects')
         self.discount_values = self.get_attribute_value('discount_values')
         self.calc_deltas = self.get_attribute_value('calculate_deltas')

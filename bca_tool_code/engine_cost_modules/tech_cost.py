@@ -9,10 +9,22 @@ def calc_tech_cost(settings, vehicle):
 
     """
     key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, vehicle.age_id, 0
+    replacement_cost = 0
 
-    attribute_names = ['DirectCost_PerVeh', 'IndirectCost_PerVeh', 'ReplacementCost_PerVeh']
+    if settings.replacement_costs:
+        attribute_names = [
+            'DirectCost_PerVeh',
+            'IndirectCost_PerVeh',
+            'ReplacementCost_PerVeh'
+        ]
+        direct_cost, indirect_cost, replacement_cost = settings.cost_calcs.get_attribute_values(key, *attribute_names)
 
-    direct_cost, indirect_cost, replacement_cost = settings.cap_costs.get_attribute_values(key, *attribute_names)
+    else:
+        attribute_names = [
+            'DirectCost_PerVeh',
+            'IndirectCost_PerVeh'
+        ]
+        direct_cost, indirect_cost = settings.cost_calcs.get_attribute_values(key, *attribute_names)
 
     cost_per_veh = direct_cost + indirect_cost + replacement_cost
     cost = cost_per_veh * vehicle.vpop

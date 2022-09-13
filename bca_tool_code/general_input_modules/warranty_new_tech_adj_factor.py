@@ -27,7 +27,7 @@ class WarrantyNewTechAdj:
             and other attributes specified in the class __init__.
 
         """
-        df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
+        df = read_input_file(filepath, skiprows=1, usecols=lambda x: 'Notes' not in x)
         df.fillna(0, inplace=True)
 
         df = pd.melt(df,

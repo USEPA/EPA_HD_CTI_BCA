@@ -49,7 +49,7 @@ class AnnualSummary:
         social_rates = tuple([settings.general_inputs.get_attribute_value('social_discount_rate_1'),
                               settings.general_inputs.get_attribute_value('social_discount_rate_2')])
         social_rates = tuple([pd.to_numeric(rate) for rate in social_rates])
-        # year_ids = settings.cap_vehicle.year_ids
+        # year_ids = settings.vehicle.year_ids
 
         # build the destination dictionary to house data
 

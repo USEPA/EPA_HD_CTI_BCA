@@ -77,7 +77,7 @@ class Markups:
             and other attributes specified in the class __init__.
 
         """
-        df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
+        df = read_input_file(filepath, skiprows=1, usecols=lambda x: 'Notes' not in x)
 
         key = pd.Series(zip(df['fuelTypeID'], df['optionID'], df['Markup_Factor']))
         df.set_index(key, inplace=True)
@@ -159,8 +159,8 @@ class Markups:
 
         estimated_age = settings.estimated_age.get_attribute_value(estimated_ages_dict_key, 'estimated_age')
 
-        if vehicle.modelyear_id + estimated_age > settings.cap_vehicle.year_id_max:
-            modelyear_id = settings.cap_vehicle.year_id_max - estimated_age
+        if vehicle.modelyear_id + estimated_age > settings.vehicle.year_id_max:
+            modelyear_id = settings.vehicle.year_id_max - estimated_age
             key = vehicle.vehicle_id, vehicle.engine_id, vehicle.option_id, modelyear_id
             warranty_cost = self.contribution_factors[key]['WarrantyCost_PerVeh']
             update_dict = {'WarrantyCost_PerVeh': warranty_cost}

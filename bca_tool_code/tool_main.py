@@ -38,10 +38,7 @@ def main():
     print("\nDoing the work...\n")
 
     if settings.runtime_options.calc_cap_costs:
-        settings.cap_costs.calc_results(settings)
-
-    if settings.runtime_options.calc_ghg_costs:
-        settings.ghg_costs.calc_results(settings)
+        settings.cost_calcs.calc_results(settings)
 
     end_time_calcs = start_time_outputs = time()
     elapsed_time_calcs = end_time_calcs - start_time_calcs
@@ -74,36 +71,37 @@ def main():
             print('\nUnable to copy Python code to run results folder when using the executable.\n')
 
     print("\nSaving the output files...\n")
-    stamp = settings.start_time_readable
+    stamp = f'{settings.project_name}_{settings.start_time_readable}'
     if settings.runtime_options.calc_cap_costs:
         gen_fxns.save_dict(
-            settings.cap_costs.results,
-            path_of_run_results_folder / 'CAP_bca_tool_all',
+            settings.cost_calcs.results,
+            path_of_run_results_folder / 'all_costs',
             row_header=None, stamp=stamp, index=False
         )
-        cap_summary_df = gen_fxns.save_dict_return_df(
+        annual_summary_df = gen_fxns.save_dict_return_df(
             settings.annual_summary_cap.results,
-            path_of_run_results_folder / 'CAP_bca_tool_annual_summary',
+            path_of_run_results_folder / 'annual_summary',
             row_header=None, stamp=stamp, index=False
         )
         gen_fxns.save_dict(
-            settings.fleet_cap.sales_by_start_year,
-            path_of_run_results_folder / 'CAP_sales_by_implementation_year',
+            settings.fleet.sales_by_start_year,
+            path_of_run_results_folder / 'sales_by_implementation_year',
             row_header=None, stamp=stamp, index=False
         )
         gen_fxns.save_dict(
             settings.engine_costs.package_cost_by_step,
-            path_of_run_results_folder / 'CAP_package_costs_by_implementation_year',
+            path_of_run_results_folder / 'package_costs_by_implementation_year',
             row_header=None, stamp=stamp, index=False
         )
-        gen_fxns.save_dict(
-            settings.replacement_costs.package_cost_by_step,
-            path_of_run_results_folder / 'CAP_replacement_costs_by_implementation_year',
-            row_header=None, stamp=stamp, index=False
-        )
+        if settings.replacement_costs:
+            gen_fxns.save_dict(
+                settings.replacement_costs.package_cost_by_step,
+                path_of_run_results_folder / 'replacement_costs_by_implementation_year',
+                row_header=None, stamp=stamp, index=False
+            )
         gen_fxns.save_dict(
             settings.markups.contribution_factors,
-            path_of_run_results_folder / 'CAP_indirect_cost_details',
+            path_of_run_results_folder / 'indirect_cost_details',
             row_header=None, stamp=stamp, index=False
         )
         # gen_fxns.save_dict(
@@ -123,7 +121,7 @@ def main():
         # )
         gen_fxns.save_dict(
             settings.estimated_age.estimated_ages_dict,
-            path_of_run_results_folder / 'CAP_required_and_estimated_ages',
+            path_of_run_results_folder / 'required_and_estimated_ages',
             row_header=None, stamp=stamp, index=False
         )
         # gen_fxns.save_dict(
@@ -133,7 +131,7 @@ def main():
         # )
         gen_fxns.save_dict(
             settings.emission_repair_cost.repair_cost_details,
-            path_of_run_results_folder / 'CAP_repair_cost_details',
+            path_of_run_results_folder / 'repair_cost_details',
             row_header=None, stamp=stamp, index=False
         )
         # gen_fxns.save_dict(
@@ -144,56 +142,20 @@ def main():
 
         # save DataFrames to CSV
         settings.engine_costs.piece_costs_in_analysis_dollars.to_csv(
-            path_of_modified_inputs_folder / 'CAP_engine_costs.csv', index=False)
-        settings.replacement_costs.piece_costs_in_analysis_dollars.to_csv(
-            path_of_modified_inputs_folder / 'CAP_replacement_costs.csv', index=False)
+            path_of_modified_inputs_folder / 'engine_costs.csv', index=False)
         settings.repair_and_maintenance.repair_and_maintenance_in_analysis_dollars.to_csv(
             path_of_modified_inputs_folder / 'repair_and_maintenance.csv', index=True)
         settings.warranty_base_costs.piece_costs_in_analysis_dollars.to_csv(
-            path_of_modified_inputs_folder / 'CAP_base_warranty_costs.csv', index=False)
+            path_of_modified_inputs_folder / 'base_warranty_costs.csv', index=False)
+        if settings.replacement_costs:
+            settings.replacement_costs.piece_costs_in_analysis_dollars.to_csv(
+                path_of_modified_inputs_folder / 'replacement_costs.csv', index=False)
 
         # create figures, which are based on the annual summary, which requires discounted values
         if settings.runtime_options.discount_values:
             arg_list = ['TechCost', 'EmissionRepairCost', 'DEFCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
             bca_tool_code.general_modules.create_figures.CreateFigures(
-                cap_summary_df, 'US Dollars', path_of_run_results_folder, 'CAP').create_figures(arg_list)
-
-    if settings.runtime_options.calc_ghg_costs:
-        gen_fxns.save_dict(
-            settings.ghg_costs.results,
-            path_of_run_results_folder / 'GHG_bca_tool_all',
-            row_header=None, stamp=stamp, index=False
-        )
-        ghg_summary_df = gen_fxns.save_dict_return_df(
-            settings.annual_summary_ghg.results,
-            path_of_run_results_folder / 'GHG_bca_tool_annual_summary',
-            row_header=None, stamp=stamp, index=False
-        )
-        gen_fxns.save_dict(
-            settings.fleet_ghg.sales_by_start_year,
-            path_of_run_results_folder / 'GHG_sales_by_implementation_year',
-            row_header=None, stamp=stamp, index=False
-        )
-        gen_fxns.save_dict(
-            settings.vehicle_costs.package_cost_by_step,
-            path_of_run_results_folder / 'GHG_package_costs_by_implementation_year',
-            row_header=None, stamp=stamp, index=False
-        )
-        gen_fxns.save_dict(
-            settings.wtd_ghg_fuel_cpm_dict,
-            path_of_run_results_folder / 'GHG_vmt_weighted_fuel_cpm',
-            row_header=None, stamp=stamp, index=True
-        )
-
-        # save DataFrames to CSV
-        settings.vehicle_costs.piece_costs_in_analysis_dollars.to_csv(
-            path_of_modified_inputs_folder / 'GHG_vehicle_costs.csv', index=False)
-
-        # create figures, which are based on the annual summary, which requires discounted values
-        if settings.runtime_options.discount_values:
-            arg_list = ['TechCost', 'FuelCost_Pretax', 'TechAndOperatingCost']
-            bca_tool_code.general_modules.create_figures.CreateFigures(
-                ghg_summary_df, 'US Dollars', path_of_run_results_folder, 'GHG').create_figures(arg_list)
+                annual_summary_df, 'US Dollars', path_of_run_results_folder, settings.project_name).create_figures(arg_list)
 
     # save additional DataFrames to CSV
     settings.fuel_prices.fuel_prices_in_analysis_dollars.to_csv(
@@ -215,8 +177,6 @@ def main():
                 'Run folder',
                 'Calc CAP costs',
                 'Calc CAP pollution',
-                'Calc GHG costs',
-                'Calc GHG pollution',
                 'Discount Values',
                 'Calculate Deltas',
                 'Start of run',
@@ -231,8 +191,6 @@ def main():
                 path_of_run_folder,
                 settings.runtime_options.calc_cap_costs,
                 settings.runtime_options.calc_cap_pollution,
-                settings.runtime_options.calc_ghg_costs,
-                settings.runtime_options.calc_ghg_pollution,
                 settings.runtime_options.discount_values,
                 settings.runtime_options.calc_deltas,
                 settings.start_time_readable,
@@ -243,8 +201,6 @@ def main():
                 elapsed_time,
             ],
             'Units': [
-                '',
-                '',
                 '',
                 '',
                 '',

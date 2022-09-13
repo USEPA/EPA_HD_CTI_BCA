@@ -16,7 +16,7 @@ from bca_tool_code.operation_modules.def_cost import calc_def_cost
 from bca_tool_code.operation_modules.fuel_cost import calc_fuel_cost
 
 
-class CapCosts:
+class CostCalcs:
 
     def __init__(self):
         self.results = dict()
@@ -29,7 +29,7 @@ class CapCosts:
         }
 
     def calc_results(self, settings):
-        print('Calculating CAP costs...')
+        print('Calculating costs...')
 
         discount_rate = 0
 
@@ -40,7 +40,7 @@ class CapCosts:
             new_attributes_dict.update({new_attribute: 0})
 
         # create keys and include physical data for each vehicle and attributes from the new attributes dictionary
-        for veh in settings.fleet_cap.vehicles:
+        for veh in settings.fleet.vehicles:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
 
             update_dict = {
@@ -76,18 +76,19 @@ class CapCosts:
             self.update_object_dict(key, new_attributes_dict)
 
         # Direct costs by standard implementation step with learning ---------------------------------------------------
-        for vehicle in settings.fleet_cap.vehicles_age0:
+        for vehicle in settings.fleet.vehicles_age0:
             for start_year in settings.engine_costs.standardyear_ids:
                 cap_package_cost.calc_avg_package_cost_per_step(
                     settings, settings.engine_costs, vehicle, start_year)
 
-        for vehicle in settings.fleet_cap.vehicles_age0:
-            for start_year in settings.engine_costs.standardyear_ids:
-                cap_package_cost.calc_avg_package_cost_per_step(
-                    settings, settings.replacement_costs, vehicle, start_year, labor=True)
+        if settings.replacement_costs:
+            for vehicle in settings.fleet.vehicles_age0:
+                for start_year in settings.engine_costs.standardyear_ids:
+                    cap_package_cost.calc_avg_package_cost_per_step(
+                        settings, settings.replacement_costs, vehicle, start_year, labor=True)
 
         # Direct Costs by model year (sum implementation steps) --------------------------------------------------------
-        for veh in settings.fleet_cap.vehicles_age0:
+        for veh in settings.fleet.vehicles_age0:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
 
             direct_applied_cost_per_veh, direct_cost, pkg_cost_per_veh \
@@ -102,25 +103,26 @@ class CapCosts:
             self.update_object_dict(key, update_dict)
 
         # Replacement Costs, where applicable --------------------------------------------------------------------------
-        for veh in settings.fleet_cap.vehicles_age0:
-            key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
+        if settings.replacement_costs:
+            for veh in settings.fleet.vehicles_age0:
+                key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
 
-            replacement_applied_cost_per_veh, replacement_cost, replacement_pkg_cost_per_veh \
-                = calc_package_cost(settings, settings.replacement_costs, veh)
+                replacement_applied_cost_per_veh, replacement_cost, replacement_pkg_cost_per_veh \
+                    = calc_package_cost(settings, settings.replacement_costs, veh)
 
-            # update object dict with direct costs, all of which are for age_id=0 only
-            update_dict = {
-                'ReplacementCost_PerVeh': replacement_applied_cost_per_veh,
-                'ReplacementCost': replacement_cost,
-            }
-            self.update_object_dict(key, update_dict)
+                # update object dict with direct costs, all of which are for age_id=0 only
+                update_dict = {
+                    'ReplacementCost_PerVeh': replacement_applied_cost_per_veh,
+                    'ReplacementCost': replacement_cost,
+                }
+                self.update_object_dict(key, update_dict)
 
         # Estimated Ages at which warranty and useful life will be reached ---------------------------------------------
-        for veh in settings.fleet_cap.vehicles_age0:
+        for veh in settings.fleet.vehicles_age0:
             settings.estimated_age.calc_estimated_age(settings, veh)
 
         # Indirect Costs -----------------------------------------------------------------------------------------------
-        for veh in settings.fleet_cap.vehicles_age0:
+        for veh in settings.fleet.vehicles_age0:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
 
             indirect_cost_dict \
@@ -151,7 +153,7 @@ class CapCosts:
             self.update_object_dict(key, update_dict)
 
         # Tech Costs (Direct + Indirect) -------------------------------------------------------------------------------
-        for veh in settings.fleet_cap.vehicles_age0:
+        for veh in settings.fleet.vehicles_age0:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
             tech_cost_per_veh, tech_cost \
                 = calc_tech_cost(settings, veh) #, direct_applied_cost_per_veh, indirect_cost_per_veh, replacement_applied_cost_per_veh)
@@ -164,7 +166,7 @@ class CapCosts:
             self.update_object_dict(key, update_dict)
 
         # Emission Repair Costs ----------------------------------------------------------------------------------------
-        for veh in settings.fleet_cap.vehicles:
+        for veh in settings.fleet.vehicles:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
 
             repair_cost_per_veh, repair_cost, repair_cost_per_mile, repair_cost_per_hour \
@@ -189,7 +191,7 @@ class CapCosts:
             self.update_object_dict(key, update_dict)
 
         # DEF Costs for diesel fueled vehicles -------------------------------------------------------------------------
-        for veh in settings.fleet_cap.vehicles_ft2:
+        for veh in settings.fleet.vehicles_ft2:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
             nox_reduction = calc_nox_reduction(settings, veh)
             def_cost_per_veh, def_cost, def_cost_per_mile, def_gallons \
@@ -203,7 +205,7 @@ class CapCosts:
             self.update_object_dict(key, update_dict)
 
         # Fuel Costs ---------------------------------------------------------------------------------------------------
-        for veh in settings.fleet_cap.vehicles:
+        for veh in settings.fleet.vehicles:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
             thc_reduction = calc_thc_reduction(settings, veh)
             fuel_cost_per_veh, retail_cost, pretax_cost, fuel_cost_per_mile, captured_gallons \
@@ -219,7 +221,7 @@ class CapCosts:
             self.update_object_dict(key, update_dict)
 
         # sum attributes in the attributes_to_sum dictionary -----------------------------------------------------------
-        for veh in settings.fleet_cap.vehicles:
+        for veh in settings.fleet.vehicles:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
             for summed_attribute, sum_attributes in self.attributes_to_sum.items():
                 summed_attribute_value = calc_sum_of_costs(key, self.results, *sum_attributes)
@@ -228,14 +230,14 @@ class CapCosts:
 
         # CAP pollution effects, if applicable -------------------------------------------------------------------------
         if settings.runtime_options.calc_cap_pollution:
-            for veh in settings.fleet_cap.vehicles:
+            for veh in settings.fleet.vehicles:
                 key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
                 update_dict = calc_criteria_emission_cost(settings, veh)
                 self.update_object_dict(key, update_dict)
 
         # calc some weighted cost per mile results ---------------------------------------------------------------------
         # arg = 'VMT_PerVeh'
-        # year_max = settings.cap_vehicle.year_id_max
+        # year_max = settings.vehicle.year_id_max
         # create_weighted_cost_dict(settings, self, year_max, settings.wtd_def_cpm_dict,
         #                           arg_to_weight='DEFCost_PerMile', arg_to_weight_by=arg)
         # create_weighted_cost_dict(settings, self, year_max, settings.wtd_repair_cpm_dict,
@@ -250,20 +252,20 @@ class CapCosts:
 
         # calc the annual summary, present values and annualized values (excluding cost/veh and cost/mile results) -----
         if settings.runtime_options.discount_values:
-            settings.annual_summary_cap.annual_summary(settings, self, settings.options_cap, settings.cap_vehicle.year_ids)
+            settings.annual_summary_cap.annual_summary(settings, self, settings.options, settings.vehicle.year_ids)
 
         # calc deltas relative to the no-action scenario ---------------------------------------------------------------
         if settings.runtime_options.calc_deltas:
-            calc_deltas(settings, self, settings.options_cap)
+            calc_deltas(settings, self, settings.options)
             if settings.runtime_options.discount_values:
-                calc_deltas(settings, settings.annual_summary_cap, settings.options_cap)
+                calc_deltas(settings, settings.annual_summary_cap, settings.options)
 
             # settings.wtd_def_cpm_dict = calc_deltas_weighted(settings, settings.wtd_def_cpm_dict,
-            #                                                  settings.options_cap)
+            #                                                  settings.options)
             # settings.wtd_repair_cpm_dict = calc_deltas_weighted(settings, settings.wtd_repair_cpm_dict,
-            #                                                     settings.options_cap)
+            #                                                     settings.options)
             # settings.wtd_cap_fuel_cpm_dict = calc_deltas_weighted(settings, settings.wtd_cap_fuel_cpm_dict,
-            #                                                       settings.options_cap)
+            #                                                       settings.options)
 
     def update_object_dict(self, key, update_dict):
         """
@@ -334,7 +336,6 @@ class CapCosts:
             'OtherCost_PerVeh',
             'ProfitCost_PerVeh',
             'IndirectCost_PerVeh',
-            'ReplacementCost_PerVeh',
             'TechCost_PerVeh',
             'DEFCost_PerMile',
             'DEFCost_PerVeh',
@@ -352,7 +353,6 @@ class CapCosts:
             'OtherCost',
             'ProfitCost',
             'IndirectCost',
-            'ReplacementCost',
             'TechCost',
             'DEF_Gallons',
             'DEFCost',
@@ -363,6 +363,12 @@ class CapCosts:
             'OperatingCost',
             'TechAndOperatingCost',
         ]
+        if settings.replacement_costs:
+            replacement_attributes = [
+                'ReplacementCost_PerVeh',
+                'ReplacementCost',
+            ]
+            new_attributes = new_attributes + replacement_attributes
         if settings.runtime_options.calc_cap_pollution:
             cap_attributes = [
                 'PM25Cost_tailpipe_0.03',

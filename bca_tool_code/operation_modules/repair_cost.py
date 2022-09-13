@@ -36,8 +36,8 @@ class EmissionRepairCost:
         at_usefullife_cpm = at_usefullife_cpm_input_value * emission_repair_share_input_value * direct_cost_scaler
         max_cpm = max_cpm_input_value * emission_repair_share_input_value * direct_cost_scaler
 
-        typical_vmt = settings.fleet_cap.get_typical_vmt_per_year(settings, vehicle)
-        # typical_vmt = settings.fleet_cap.calc_typical_vmt_per_year(settings, vehicle)
+        typical_vmt = settings.fleet.get_typical_vmt_per_year(settings, vehicle)
+        # typical_vmt = settings.fleet.calc_typical_vmt_per_year(settings, vehicle)
 
         # calculate estimated ages at which warranty and useful life will occur
         warranty_estimated_age, usefullife_estimated_age \
@@ -115,7 +115,7 @@ class EmissionRepairCost:
 
         new_tech_adj_factor = settings.warranty_new_tech_adj.get_attribute_value(vehicle)
 
-        typical_vmt = settings.fleet_cap.get_typical_vmt_per_year(settings, vehicle)
+        typical_vmt = settings.fleet.get_typical_vmt_per_year(settings, vehicle)
 
         # NOTE: nap refers to "no action provisions"; ap refers to "action provisions"
         warranty_age_nap, ul_age_nap \
@@ -297,11 +297,11 @@ class EmissionRepairCost:
         vehicle_id, option_id, modelyear_id = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id
         cost_key = vehicle_id, option_id, modelyear_id, 0, 0
 
-        pkg_cost = settings.cap_costs.get_attribute_value(cost_key, 'DirectCost_PerVeh')
+        pkg_cost = settings.cost_calcs.get_attribute_value(cost_key, 'DirectCost_PerVeh')
 
         # Note: the reference_pkg_cost should be diesel regclass=47, no_action_alt and the same model year as vehicle.
         reference_pkg_cost \
-            = settings.cap_costs.get_attribute_value(((61, 47, 2), 0, modelyear_id, 0, 0), 'DirectCost_PerVeh')
+            = settings.cost_calcs.get_attribute_value(((61, 47, 2), 0, modelyear_id, 0, 0), 'DirectCost_PerVeh')
 
         direct_cost_scaler = pkg_cost / reference_pkg_cost
 
@@ -391,15 +391,15 @@ class EmissionRepairCost:
         vehicle_id, option_id, modelyear_id = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id
         cost_key = vehicle_id, option_id, modelyear_id, 0, 0
 
-        pkg_cost = settings.cap_costs.get_attribute_value(cost_key, 'DirectCost_PerVeh')
+        pkg_cost = settings.cost_calcs.get_attribute_value(cost_key, 'DirectCost_PerVeh')
         base_pkg_cost \
-            = settings.cap_costs.get_attribute_value((vehicle_id, settings.no_action_alt, modelyear_id, 0, 0),
+            = settings.cost_calcs.get_attribute_value((vehicle_id, settings.no_action_alt, modelyear_id, 0, 0),
                                                      'DirectCost_PerVeh')
 
         # calc an emission repair cost scaler to adjust the HHD inputs to LHD and MHD
         # Note: the reference_pkg_cost should be diesel regclass=47, no_action_alt and the same model year as vehicle.
         reference_pkg_cost \
-            = settings.cap_costs.get_attribute_value(((61, 47, 2), 0, modelyear_id, 0, 0), 'DirectCost_PerVeh')
+            = settings.cost_calcs.get_attribute_value(((61, 47, 2), 0, modelyear_id, 0, 0), 'DirectCost_PerVeh')
 
         repair_cost_scaler = base_pkg_cost / reference_pkg_cost
         beyond_ul_cost_scaler = pkg_cost / base_pkg_cost
@@ -467,7 +467,7 @@ class EmissionRepairCost:
             # plus 1 here because MOVES uses age_id=0 for first year but EstimatedAge does not
             r_and_m_cost_per_veh = 0
 
-        elif vehicle.age_id < ul_age < vehicle.age_id + 1:
+        elif vehicle.age_id + 1 < ul_age < vehicle.age_id + 1:
             fraction_at_lower_cost = ul_age - floor(ul_age)
             fraction_at_higher_cost = ceil(ul_age) - ul_age
 

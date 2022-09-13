@@ -120,10 +120,10 @@ def calc_indirect_cost_new_warranty(settings, vehicle):
     vehicle_id, option_id, modelyear_id = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id
 
     pkg_cost \
-        = settings.cap_costs.get_attribute_value((vehicle_id, option_id, modelyear_id, 0, 0), 'DirectCost_PerVeh')
+        = settings.cost_calcs.get_attribute_value((vehicle_id, option_id, modelyear_id, 0, 0), 'DirectCost_PerVeh')
 
     reference_pkg_cost \
-        = settings.cap_costs.get_attribute_value(((61, 47, 2), 0, modelyear_id, 0, 0), 'DirectCost_PerVeh')
+        = settings.cost_calcs.get_attribute_value(((61, 47, 2), 0, modelyear_id, 0, 0), 'DirectCost_PerVeh')
 
     direct_cost_scaler = pkg_cost / reference_pkg_cost
     warranty_cost_per_year = settings.warranty_base_costs.get_warranty_cost(vehicle.engine_id)
@@ -131,6 +131,7 @@ def calc_indirect_cost_new_warranty(settings, vehicle):
 
     ic_sum_per_veh = 0
     ic_sum = 0
+    new_tech_adj_factor = 0
     return_dict = dict()
     for markup_factor in markup_factors:
         if markup_factor == 'Warranty':
@@ -138,7 +139,8 @@ def calc_indirect_cost_new_warranty(settings, vehicle):
             markup_value = 'na'
             warranty_age \
                 = settings.estimated_age.get_attribute_value(estimated_ages_dict_key, 'estimated_age')
-            new_tech_adj_factor = settings.warranty_new_tech_adj.get_attribute_value(vehicle)
+            if settings.warranty_new_tech_adj:
+                new_tech_adj_factor = settings.warranty_new_tech_adj.get_attribute_value(vehicle)
             cost_per_veh = warranty_cost_per_year * warranty_age * (1 + new_tech_adj_factor)
         else:
             markup_value = calc_project_markup_value(settings, vehicle, markup_factor)

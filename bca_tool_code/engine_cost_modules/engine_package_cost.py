@@ -32,14 +32,14 @@ def calc_avg_package_cost_per_step(settings, cost_object, vehicle, standardyear_
             pass
         else:
 
-            techpen = settings.techpens_cap.get_attribute_value(vehicle, standardyear_id)
+            techpen = settings.techpens.get_attribute_value(vehicle, standardyear_id)
 
             sales_year1 \
-                = settings.fleet_cap.sales_by_start_year[engine_id, option_id, standardyear_id]['engine_sales'] \
+                = settings.fleet.sales_by_start_year[engine_id, option_id, standardyear_id]['engine_sales'] \
                   * techpen
 
             cumulative_sales \
-                = settings.fleet_cap.sales_by_start_year[key][f'cumulative_engine_sales_{standardyear_id}_std']\
+                = settings.fleet.sales_by_start_year[key][f'cumulative_engine_sales_{standardyear_id}_std']\
                   * techpen
 
             pkg_cost = cost_object.get_start_year_cost((engine_id, option_id, standardyear_id), 'pkg_cost')
@@ -148,5 +148,5 @@ if __name__ == '__main__':
     )
 
     options_cap = Options()
-    options_cap.init_from_file(set_paths.path_inputs / 'options_cap.csv')
-    # cap_vehicls = Vehicles().create_cap_vehicles(options_cap)
+    options_cap.init_from_file(set_paths.path_inputs / 'options.csv')
+    # cap_vehicls = Vehicles().create_cap_vehicles(options)

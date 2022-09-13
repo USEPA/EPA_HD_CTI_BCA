@@ -24,7 +24,7 @@ class DefDoseRates:
             and other attributes specified in the class __init__.
 
         """
-        df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
+        df = read_input_file(filepath, skiprows=1, usecols=lambda x: 'Notes' not in x)
 
         key = pd.Series(zip(df['regClassID'], df['fuelTypeID']))
         df.set_index(key, inplace=True)

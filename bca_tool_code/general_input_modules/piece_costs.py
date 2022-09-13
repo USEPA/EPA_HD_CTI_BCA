@@ -34,7 +34,7 @@ class PieceCosts:
             and other attributes specified in the class __init__.
 
         """
-        df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x)
+        df = read_input_file(filepath, skiprows=1, usecols=lambda x: 'Notes' not in x)
 
         self.unit_id = unit_id
         if unit_id == 'engine_id':

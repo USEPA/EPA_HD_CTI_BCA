@@ -23,7 +23,7 @@ class Options:
             and other attributes specified in the class __init__.
 
         """
-        df = read_input_file(filepath, usecols=lambda x: 'Notes' not in x, index_col=0)
+        df = read_input_file(filepath, skiprows=1, usecols=lambda x: 'Notes' not in x, index_col=0)
 
         self._dict = df.to_dict('index')
 

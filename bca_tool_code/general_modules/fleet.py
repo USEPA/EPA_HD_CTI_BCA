@@ -13,8 +13,8 @@ class Fleet:
         self.vehicles_no_action = list()
         self.typical_vmt_dict = dict() # used for estimating ages at certain events (see estimated_age_at_event module)
 
-    def create_cap_vehicles(self, no_action_alt, options):
-        print('Creating CAP vehicle objects...')
+    def create_vehicles(self, no_action_alt, options):
+        print('Creating vehicle objects...')
         for index, row in Vehicle.vehicle_df.iterrows():
             vehicle = Vehicle()
             vehicle.year_id = int(row['year_id'])
@@ -49,41 +49,6 @@ class Fleet:
                 self.vehicles_age0.append(vehicle)
             if vehicle.fueltype_id == 2:
                 self.vehicles_ft2.append(vehicle)
-            if vehicle.option_id == no_action_alt:
-                self.vehicles_no_action.append(vehicle)
-
-    def create_ghg_vehicles(self, no_action_alt, options):
-        print('Creating GHG vehicle objects...')
-        for index, row in Vehicle.vehicle_df.iterrows():
-            vehicle = Vehicle()
-            vehicle.year_id = int(row['year_id'])
-            vehicle.sourcetype_id = int(row['sourcetype_id'])
-            vehicle.sourcetype_name = vehicle.get_sourcetype_name()
-            vehicle.regclass_id = int(row['regclass_id'])
-            vehicle.regclass_name = vehicle.get_regclass_name()
-            vehicle.fueltype_id = int(row['fueltype_id'])
-            vehicle.fueltype_name = vehicle.get_fueltype_name()
-            vehicle.modelyear_id = int(row['modelyear_id'])
-            vehicle.age_id = int(row['age_id'])
-            vehicle.option_id = int(row['option_id'])
-            vehicle.engine_id = vehicle.set_engine_id()
-            vehicle.vehicle_id = vehicle.set_vehicle_id()
-            vehicle.option_name = options.get_option_name(vehicle.option_id)
-            vehicle.thc_ustons = row['thc_ustons']
-            vehicle.co2_ustons = row['co2_ustons']
-            vehicle.ch4_ustons = row['ch4_ustons']
-            vehicle.n2o_ustons = row['n2o_ustons']
-            vehicle.so2_ustons = row['so2_ustons']
-            vehicle.energy_kj = row['energy_kj']
-            vehicle.vpop = row['vpop']
-            vehicle.vmt = row['vmt']
-            vehicle.vmt_per_veh = row['vmt_per_veh']
-            vehicle.odometer = row['odometer']
-            vehicle.gallons = row['gallons']
-
-            self.vehicles.append(vehicle)
-            if vehicle.age_id == 0:
-                self.vehicles_age0.append(vehicle)
             if vehicle.option_id == no_action_alt:
                 self.vehicles_no_action.append(vehicle)
 
@@ -214,7 +179,7 @@ class Fleet:
         """
         vmt_thru_age_id \
             = int(settings.repair_and_maintenance.get_attribute_value(('typical_vmt_thru', 'age_id')))
-        year_max = settings.cap_vehicle.year_id_max
+        year_max = settings.vehicle.year_id_max
         key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id
 
         if key in self.typical_vmt_dict:

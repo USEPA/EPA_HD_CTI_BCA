@@ -31,7 +31,7 @@ class EstimatedAge:
         else:
             self.warranty_basis = settings.general_inputs.get_attribute_value('warranty_cost_basis')
 
-        typical_vmt = settings.fleet_cap.get_typical_vmt_per_year(settings, vehicle)
+        typical_vmt = settings.fleet.get_typical_vmt_per_year(settings, vehicle)
 
         avg_speed \
             = settings.average_speed.get_attribute_value(vehicle.sourcetype_id)

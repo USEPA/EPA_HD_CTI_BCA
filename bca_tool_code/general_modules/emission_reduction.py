@@ -16,7 +16,7 @@ def calc_nox_reduction(settings, vehicle):
     if vehicle.option_id == settings.no_action_alt:
         nox_reduction = 0
     else:
-        nox_no_action = [v.nox_ustons for v in settings.fleet_cap.vehicles_no_action
+        nox_no_action = [v.nox_ustons for v in settings.fleet.vehicles_no_action
                          if v.vehicle_id == vehicle.vehicle_id
                          and v.option_id == settings.no_action_alt
                          and v.modelyear_id == vehicle.modelyear_id
@@ -44,7 +44,7 @@ def calc_thc_reduction(settings, vehicle):
     if vehicle.option_id == settings.no_action_alt:
         thc_reduction = 0
     else:
-        thc_no_action = [v.thc_ustons for v in settings.fleet_cap.vehicles_no_action
+        thc_no_action = [v.thc_ustons for v in settings.fleet.vehicles_no_action
                          if v.vehicle_id == vehicle.vehicle_id
                          and v.option_id == settings.no_action_alt
                          and v.modelyear_id == vehicle.modelyear_id
