@@ -158,6 +158,9 @@ def calc_indirect_cost_new_warranty(settings, vehicle):
             'sourceTypeName': vehicle.sourcetype_name,
             'regClassName': vehicle.regclass_name,
             'fuelTypeName': vehicle.fueltype_name,
+            'WarrantyScaler': direct_cost_scaler,
+            'WarrantyCost_PerYear': warranty_cost_per_year,
+            'WarrantyAge': warranty_age,
             f'{markup_factor}Cost_PerVeh': cost_per_veh,
             f'{markup_factor}_factor': markup_value,
         })
