@@ -121,6 +121,23 @@ class CostCalcs:
         for veh in settings.fleet.vehicles_age0:
             settings.estimated_age.calc_estimated_age(settings, veh)
 
+        # Emission Repair Costs ----------------------------------------------------------------------------------------
+        for veh in settings.fleet.vehicles:
+            key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
+
+            # repair_cost_per_veh, repair_cost, repair_cost_per_mile, repair_cost_per_hour \
+            #     = settings.emission_repair_cost.calc_repair_cost(settings, veh)
+            repair_cost_per_veh, repair_cost, repair_cost_per_mile, repair_cost_per_hour \
+                = settings.emission_repair_cost.transfer_at_cost_per_year(settings, veh)
+
+            update_dict = {
+                'EmissionRepairCost_PerVeh': repair_cost_per_veh,
+                'EmissionRepairCost_PerMile': repair_cost_per_mile,
+                'EmissionRepairCost_PerHour': repair_cost_per_hour,
+                'EmissionRepairCost': repair_cost,
+            }
+            self.update_object_dict(key, update_dict)
+
         # Indirect Costs -----------------------------------------------------------------------------------------------
         for veh in settings.fleet.vehicles_age0:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
@@ -166,11 +183,11 @@ class CostCalcs:
             self.update_object_dict(key, update_dict)
 
         # Emission Repair Costs ----------------------------------------------------------------------------------------
-        for veh in settings.fleet.vehicles:
-            key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
+        # for veh in settings.fleet.vehicles:
+        #     key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
 
-            repair_cost_per_veh, repair_cost, repair_cost_per_mile, repair_cost_per_hour \
-                = settings.emission_repair_cost.calc_repair_cost(settings, veh)
+            # repair_cost_per_veh, repair_cost, repair_cost_per_mile, repair_cost_per_hour \
+            #     = settings.emission_repair_cost.calc_repair_cost(settings, veh)
             # repair_cost_per_veh, repair_cost, repair_cost_per_mile \
             #     = settings.emission_repair_cost.calc_using_cost_per_year(settings, veh)
 
@@ -182,13 +199,13 @@ class CostCalcs:
             #         = settings.emission_repair_cost.calc_emission_repair_and_warranty_cost(settings, veh,
             #                                                                                direct_applied_cost_per_veh,
             #                                                                                reference_pkg_cost)
-            update_dict = {
-                'EmissionRepairCost_PerVeh': repair_cost_per_veh,
-                'EmissionRepairCost_PerMile': repair_cost_per_mile,
-                'EmissionRepairCost_PerHour': repair_cost_per_hour,
-                'EmissionRepairCost': repair_cost,
-            }
-            self.update_object_dict(key, update_dict)
+            # update_dict = {
+            #     'EmissionRepairCost_PerVeh': repair_cost_per_veh,
+            #     'EmissionRepairCost_PerMile': repair_cost_per_mile,
+            #     'EmissionRepairCost_PerHour': repair_cost_per_hour,
+            #     'EmissionRepairCost': repair_cost,
+            # }
+            # self.update_object_dict(key, update_dict)
 
         # DEF Costs for diesel fueled vehicles -------------------------------------------------------------------------
         for veh in settings.fleet.vehicles_ft2:

@@ -122,30 +122,29 @@ def calc_indirect_cost_new_warranty(settings, vehicle):
     pkg_cost \
         = settings.cost_calcs.get_attribute_value((vehicle_id, option_id, modelyear_id, 0, 0), 'DirectCost_PerVeh')
 
-    reference_pkg_cost \
-        = settings.cost_calcs.get_attribute_value(((61, 47, 2), 0, modelyear_id, 0, 0), 'DirectCost_PerVeh')
-
-    direct_cost_scaler = pkg_cost / reference_pkg_cost
-    warranty_cost_per_year = settings.warranty_base_costs.get_warranty_cost(vehicle.engine_id)
-    warranty_cost_per_year = warranty_cost_per_year * direct_cost_scaler
-
-    ic_sum_per_veh = 0
-    ic_sum = 0
-    new_tech_adj_factor = 0
+    warranty_cost_per_year = warranty_scaler = warranty_age = ic_sum_per_veh = ic_sum = 0
     return_dict = dict()
     for markup_factor in markup_factors:
         if markup_factor == 'Warranty':
-            estimated_ages_dict_key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, 'Warranty'
             markup_value = 'na'
+
+            repair_cost_details_key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, 0
+            cost_per_veh \
+                = settings.emission_repair_cost.repair_cost_details[repair_cost_details_key]['cumulative_oem_warranty_liability_per_veh']
+
             warranty_age \
-                = settings.estimated_age.get_attribute_value(estimated_ages_dict_key, 'estimated_age')
-            if settings.warranty_new_tech_adj:
-                new_tech_adj_factor = settings.warranty_new_tech_adj.get_attribute_value(vehicle)
-            cost_per_veh = warranty_cost_per_year * warranty_age * (1 + new_tech_adj_factor)
+                = settings.emission_repair_cost.repair_cost_details[repair_cost_details_key]['warranty_est_age']
+
+            warranty_scaler = settings.emission_repair_cost.repair_cost_details[repair_cost_details_key]['base_warranty_scaler']
+            warranty_cost_per_year = cost_per_veh / warranty_age
+
         else:
+
             markup_value = calc_project_markup_value(settings, vehicle, markup_factor)
             cost_per_veh = markup_value * pkg_cost
+
         ic_sum_per_veh += cost_per_veh
+
         return_dict.update({
             'optionID': vehicle.option_id,
             'vehicleID': vehicle.vehicle_id,
@@ -158,7 +157,7 @@ def calc_indirect_cost_new_warranty(settings, vehicle):
             'sourceTypeName': vehicle.sourcetype_name,
             'regClassName': vehicle.regclass_name,
             'fuelTypeName': vehicle.fueltype_name,
-            'WarrantyScaler': direct_cost_scaler,
+            'WarrantyScaler': warranty_scaler,
             'WarrantyCost_PerYear': warranty_cost_per_year,
             'WarrantyAge': warranty_age,
             f'{markup_factor}Cost_PerVeh': cost_per_veh,
