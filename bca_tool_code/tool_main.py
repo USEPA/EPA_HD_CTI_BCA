@@ -142,14 +142,14 @@ def main():
 
         # save DataFrames to CSV
         settings.engine_costs.piece_costs_in_analysis_dollars.to_csv(
-            path_of_modified_inputs_folder / 'engine_costs.csv', index=False)
+            path_of_modified_inputs_folder / f'engine_costs_{stamp}.csv', index=False)
         settings.repair_and_maintenance.repair_and_maintenance_in_analysis_dollars.to_csv(
-            path_of_modified_inputs_folder / 'repair_and_maintenance.csv', index=True)
+            path_of_modified_inputs_folder / f'repair_and_maintenance_{stamp}.csv', index=True)
         settings.warranty_base_costs.piece_costs_in_analysis_dollars.to_csv(
-            path_of_modified_inputs_folder / 'base_warranty_costs.csv', index=False)
+            path_of_modified_inputs_folder / f'base_warranty_costs_{stamp}.csv', index=False)
         if settings.replacement_costs:
             settings.replacement_costs.piece_costs_in_analysis_dollars.to_csv(
-                path_of_modified_inputs_folder / 'replacement_costs.csv', index=False)
+                path_of_modified_inputs_folder / f'replacement_costs_{stamp}.csv', index=False)
 
         # create figures, which are based on the annual summary, which requires discounted values
         if settings.runtime_options.discount_values:
@@ -160,9 +160,9 @@ def main():
     # save additional DataFrames to CSV
     settings.fuel_prices.fuel_prices_in_analysis_dollars.to_csv(
         path_of_modified_inputs_folder /
-        f'fuel_prices_{settings.general_inputs.get_attribute_value("aeo_fuel_price_case")}.csv', index=False)
-    settings.def_prices.def_prices_in_analysis_dollars.to_csv(path_of_modified_inputs_folder / 'def_prices.csv', index=True)
-    settings.deflators.deflators_and_adj_factors.to_csv(path_of_modified_inputs_folder / 'deflators.csv', index=True)
+        f'fuel_prices_{settings.general_inputs.get_attribute_value("aeo_fuel_price_case")}_{stamp}.csv', index=False)
+    settings.def_prices.def_prices_in_analysis_dollars.to_csv(path_of_modified_inputs_folder / f'def_prices_{stamp}.csv', index=True)
+    settings.deflators.deflators_and_adj_factors.to_csv(path_of_modified_inputs_folder / f'deflators_{stamp}.csv', index=True)
 
     end_time_outputs = end_time = time()
     elapsed_time_outputs = end_time_outputs - start_time_outputs
