@@ -572,7 +572,7 @@ class EmissionRepairCost:
                                                       'DirectCost_PerVeh')
 
         base_warranty_scaler = base_pkg_cost / reference_pkg_cost # scales HHD inputs to other engine sizes
-        beyond_warranty_scaler = pkg_cost / reference_pkg_cost # scales emission repair for additional tech
+        # beyond_warranty_scaler = base_pkg_cost / reference_pkg_cost # scales emission repair for additional tech, if applicable
         beyond_ul_scaler = pkg_cost / base_pkg_cost
 
         # get repair cost calculation attribute
@@ -603,23 +603,30 @@ class EmissionRepairCost:
         if vehicle.age_id < warranty_age < vehicle.age_id + 1:
             # this calcs the portion not covered during the year in-which warranty is reached
             # plus 1 here because MOVES uses age_id=0 for first year but EstimatedAge does not
-            portion_under_warranty = warranty_age - floor(warranty_age)
-            portion_beyond_warranty = ceil(warranty_age) - warranty_age
+            portion_under_warranty = warranty_age - vehicle.age_id
+            portion_beyond_warranty = vehicle.age_id + 1 - warranty_age
             oem_warranty_liability_per_veh = warranty_per_year * portion_under_warranty
-            r_and_m_cost_per_veh = warranty_per_year * beyond_warranty_scaler * portion_beyond_warranty
+            r_and_m_cost_per_veh = warranty_per_year * portion_beyond_warranty
 
         elif vehicle.age_id + 1 <= warranty_age:
             # plus 1 here because MOVES uses age_id=0 for first year but EstimatedAge does not
             oem_warranty_liability_per_veh = warranty_per_year
             r_and_m_cost_per_veh = 0
 
-        elif vehicle.age_id + 1 < ul_age < vehicle.age_id + 1:
-            portion_at_lower_cost = ul_age - floor(ul_age)
-            portion_at_higher_cost = ceil(ul_age) - ul_age
+        elif vehicle.age_id < ul_age < vehicle.age_id + 1:
+            portion_at_lower_cost = ul_age - vehicle.age_id
+            portion_at_higher_cost = vehicle.age_id + 1 - ul_age
 
             r_and_m_cost_per_veh \
-                = warranty_per_year * beyond_warranty_scaler \
-                  * (portion_at_lower_cost + portion_at_higher_cost * beyond_ul_scaler)
+                = warranty_per_year * portion_at_lower_cost \
+                  + warranty_per_year * beyond_ul_scaler * portion_at_higher_cost
+
+            # r_and_m_cost_per_veh \
+            #     = warranty_per_year * base_warranty_scaler * beyond_warranty_scaler \
+            #       * (portion_at_lower_cost + portion_at_higher_cost * beyond_ul_scaler)
+
+        elif vehicle.age_id + 1 <= ul_age:
+            r_and_m_cost_per_veh = warranty_per_year
 
         else:
             r_and_m_cost_per_veh = warranty_per_year * beyond_ul_scaler
@@ -653,7 +660,7 @@ class EmissionRepairCost:
             'base_pkg_direct_cost': base_pkg_cost,
             'pkg_direct_cost': pkg_cost,
             'base_warranty_scaler': base_warranty_scaler,
-            'beyond_warranty_scaler': beyond_warranty_scaler,
+            'beyond_warranty_scaler': 'na',
             'beyond_ul_scaler': beyond_ul_scaler,
             'warranty_est_age': warranty_age,
             'ul_est_age': ul_age,
