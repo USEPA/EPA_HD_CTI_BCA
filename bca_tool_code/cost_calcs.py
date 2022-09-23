@@ -127,8 +127,10 @@ class CostCalcs:
 
             # repair_cost_per_veh, repair_cost, repair_cost_per_mile, repair_cost_per_hour \
             #     = settings.emission_repair_cost.calc_repair_cost(settings, veh)
+            # repair_cost_per_veh, repair_cost, repair_cost_per_mile, repair_cost_per_hour \
+            #     = settings.emission_repair_cost.transfer_at_cost_per_year(settings, veh)
             repair_cost_per_veh, repair_cost, repair_cost_per_mile, repair_cost_per_hour \
-                = settings.emission_repair_cost.transfer_at_cost_per_year(settings, veh)
+                = settings.emission_repair_cost.calc_warranty_and_repair(settings, veh)
 
             update_dict = {
                 'EmissionRepairCost_PerVeh': repair_cost_per_veh,
