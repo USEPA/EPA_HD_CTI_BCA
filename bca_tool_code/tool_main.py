@@ -67,6 +67,7 @@ def main():
             shutil.copy2(path_source, path_destination)
         try:
             set_paths.copy_code_to_destination(path_of_code_folder)
+            shutil.copy2(set_paths.path_project / 'requirements.txt', path_of_run_folder)
         except Exception:
             print('\nUnable to copy Python code to run results folder when using the executable.\n')
 
