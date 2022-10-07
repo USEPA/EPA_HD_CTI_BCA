@@ -16,8 +16,7 @@ from bca_tool_code.general_input_modules.warranty_base_costs import BaseWarranty
 from bca_tool_code.general_input_modules.warranty_new_tech_adj_factor import WarrantyNewTechAdj
 from bca_tool_code.general_input_modules.useful_life import UsefulLife
 from bca_tool_code.general_input_modules.average_speed import AverageSpeed
-from bca_tool_code.general_input_modules.cost_factors import CostFactors
-# from bca_tool_code.general_input_modules.dollar_per_ton_cap import DollarPerTonCAP
+# from bca_tool_code.general_input_modules.cost_factors import CostFactors
 from bca_tool_code.general_input_modules.options import Options
 from bca_tool_code.general_input_modules.moves_adjustments import MovesAdjustments
 

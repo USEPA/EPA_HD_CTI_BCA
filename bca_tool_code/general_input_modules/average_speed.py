@@ -70,7 +70,7 @@ class AverageSpeed:
         """
 
         Parameters:
-            key: tuple; sourcetype_id, regclass_id
+            key: tuple; sourcetype_id
 
         Returns:
             A single value associated with the period_id for the given key.

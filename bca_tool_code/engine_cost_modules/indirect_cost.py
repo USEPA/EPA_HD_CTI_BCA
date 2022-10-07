@@ -25,12 +25,13 @@ def calc_project_markup_value(settings, vehicle, markup_factor_name):
     option_id, modelyear_id = vehicle.option_id, vehicle.modelyear_id
 
     markups_key = ft, option_id, markup_factor_name
-    scaling_metric = settings.general_inputs.get_attribute_value('indirect_cost_scaling_metric')  # scaling metric will be 'Miles' or 'Age'
+    # scaling metric will be 'Miles' or 'Age'
+    scaling_metric = settings.general_inputs.get_attribute_value('indirect_cost_scaling_metric')
     input_markup_value, scaler, scaled_by, num_years = settings.markups.get_attribute_values(markups_key)
 
     numerator, denominator = 1, 1
 
-    # remember that warranty and useful life provisions are by regclass, not sourcetype
+    # remember that warranty (if using markups) and useful life provisions are by regclass, not sourcetype
     scaling_dict_key = ((rc, ft), option_id, modelyear_id, scaling_metric)
     scaling_dict = dict()
     if scaled_by == 'Warranty':

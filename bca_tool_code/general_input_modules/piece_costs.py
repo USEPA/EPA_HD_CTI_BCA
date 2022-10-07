@@ -1,3 +1,62 @@
+"""
+
+**INPUT FILE FORMAT**
+
+The file format consists of a one-row data header and subsequent data rows.
+
+The data represent the cost of the applicable piece of technology, indicated by the TechDescription, and the dollar
+basis for the cost.
+
+File Type
+    comma-separated values (CSV)
+
+Sample Data Columns
+    .. csv-table::
+        :widths: auto
+
+        optionID,regClassName,regClassID,FuelName,fuelTypeID,TechDescription,2027,2031,DollarBasis,Notes
+        0,LHD,41,Diesel,2,CDA,0,0,,
+        0,LHD,41,Diesel,2,ClosedCrankcase,0,0,,
+        0,LHD,41,Diesel,2,EngineHardware,1065.75,0,2015,
+        0,LHD,41,Diesel,2,EGR_CoolerBypass,0,0,,
+
+Data Column Name and Description
+    :optionID:
+        The option or alternative number.
+
+    :regClassName:
+        The MOVES regulatory class name corresponding to the regClassID.
+
+    :regClassID:
+            The MOVES regClass ID, an integer.
+
+    :FuelName:
+        The MOVES fuel type name corresponding to the fuelTypeID.
+
+    :fuelTypeID:
+        The MOVES fuel type ID, an integer, where 1=Gasoline, 2=Diesel, etc.
+
+    :TechDescription:
+        A description or name of the technology.
+
+    :2027:
+        The cost associated with a new standard that begins in the indicated year (i.e., 2027, if applicable).
+
+    :2031:
+        The cost associated with a new standard that begins in the indicated year (i.e., 2031, if applicable).
+
+    :DollarBasis:
+        The dollar basis (dollars valued in what year) for the corresponding cost; costs are converted to analysis
+        dollars in-code.
+
+    :Notes:
+        User input area, if desired; ignored in-code.
+
+----
+
+**CODE**
+
+"""
 import sys
 import pandas as pd
 
@@ -8,7 +67,7 @@ from bca_tool_code.general_input_modules.input_files import InputFiles
 class PieceCosts:
     """
 
-    The EngineCosts class reads the appropriate engine_costs input file and converts all dollar values to
+    The PieceCosts class reads the appropriate piece cost input file and converts all dollar values to
     dollar_basis_analysis dollars and provides methods to query the data.
 
     """
@@ -40,12 +99,21 @@ class PieceCosts:
         if unit_id == 'engine_id':
             df.insert(0,
                       unit_id,
-                      pd.Series(zip(df['regClassID'], df['fuelTypeID'])))
+                      pd.Series(
+                          zip(
+                              df['regClassID'],
+                              df['fuelTypeID']
+                          )))
             id_vars = ['optionID', unit_id, 'regClassID', 'fuelTypeID', 'TechDescription', 'DollarBasis']
         elif unit_id == 'vehicle_id':
             df.insert(0,
                       unit_id,
-                      pd.Series(zip(df['sourceTypeID'], df['regClassID'], df['fuelTypeID'])))
+                      pd.Series(
+                          zip(
+                              df['sourceTypeID'],
+                              df['regClassID'],
+                              df['fuelTypeID']
+                          )))
             id_vars = ['optionID', unit_id, 'sourceTypeID', 'regClassID', 'fuelTypeID', 'TechDescription', 'DollarBasis']
         else:
             print(f'\nImproper unit_id passed to {self}')
@@ -72,11 +140,12 @@ class PieceCosts:
 
         df.rename(columns={'piece_cost': 'pkg_cost'}, inplace=True)
 
-        key = pd.Series(zip(
-            df[unit_id],
-            df['optionID'],
-            df['standardyear_id']
-        ))
+        key = pd.Series(
+            zip(
+                df[unit_id],
+                df['optionID'],
+                df['standardyear_id']
+            ))
         df.set_index(key, inplace=True)
 
         self._dict = df.to_dict('index')
@@ -124,7 +193,7 @@ class PieceCosts:
         """
 
         Parameters:
-            key: tuple; (unit_id, option_id, model_year).\n
+            key: tuple; (unit_id, option_id, year).\n
             attribute_names: list; the list of attribute names for which values are sought.
 
         Returns:

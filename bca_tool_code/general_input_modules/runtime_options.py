@@ -1,3 +1,39 @@
+"""
+
+**INPUT FILE FORMAT**
+
+The file format consists of a one-row data header and subsequent data rows.
+
+The data represent options for what to include in the given run of the tool.
+
+File Type
+    comma-separated values (CSV)
+
+Sample Data Columns
+    .. csv-table::
+        :widths: auto
+
+        item,user_entry,notes
+        calculate_cap_costs,1,"1 for YES, 0 for NO"
+        calculate_cap_pollution_effects,0,"1 for YES, 0 for NO"
+        discount_values,1,"1 for YES, 0 for NO"
+        calculate_deltas,1,"1 for YES, 0 for NO"
+
+Data Column Name and Description
+    :item:
+        The name of the option; these should not be changed.
+
+    :user_entry:
+        A boolean indication (0 or 1) of what to include in the run.
+
+    :Notes:
+        User input area, if desired; ignored in-code.
+
+----
+
+**CODE**
+
+"""
 import pandas as pd
 
 from bca_tool_code.general_input_modules.general_functions import read_input_file

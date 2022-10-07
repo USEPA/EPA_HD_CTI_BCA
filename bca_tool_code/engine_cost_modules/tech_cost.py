@@ -2,6 +2,7 @@ def calc_tech_cost(settings, vehicle):
     """
 
     Parameters:
+        settings: object; an object of the SetInputs class.
         vehicle: object; an object of the Vehicle class.
 
     Returns:

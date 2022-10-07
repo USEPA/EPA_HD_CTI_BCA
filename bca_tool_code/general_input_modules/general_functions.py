@@ -52,6 +52,9 @@ def read_input_file(path, usecols=None, index_col=None, skiprows=None, reset_ind
     Returns:
         A DataFrame of the desired data from the passed input file.
 
+    Note:
+        If a file is not found, the code issues an exit command and stops.
+
     """
     try:
         pd.read_csv(path, usecols=usecols, index_col=index_col, skiprows=skiprows, on_bad_lines='skip')

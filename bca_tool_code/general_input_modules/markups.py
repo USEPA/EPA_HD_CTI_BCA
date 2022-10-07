@@ -79,7 +79,12 @@ class Markups:
         """
         df = read_input_file(filepath, skiprows=1, usecols=lambda x: 'Notes' not in x)
 
-        key = pd.Series(zip(df['fuelTypeID'], df['optionID'], df['Markup_Factor']))
+        key = pd.Series(
+            zip(
+                df['fuelTypeID'],
+                df['optionID'],
+                df['Markup_Factor'],
+            ))
         df.set_index(key, inplace=True)
 
         self.markup_factor_names = [arg for arg in df['Markup_Factor'].unique()]
@@ -152,6 +157,9 @@ class Markups:
 
         Returns:
             Revised warranty contributions based on prior model year values.
+
+        Note:
+            This method is not being used so may not function properly.
 
         """
         identifier = 'Warranty'

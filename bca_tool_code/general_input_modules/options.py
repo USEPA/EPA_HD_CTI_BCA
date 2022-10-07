@@ -1,3 +1,34 @@
+"""
+
+**INPUT FILE FORMAT**
+
+The file format consists of a one-row data header and subsequent data rows.
+
+The data represent the option_id numbers and corresponding option names.
+
+File Type
+    comma-separated values (CSV)
+
+Sample Data Columns
+    .. csv-table::
+        :widths: auto
+
+        optionID,optionName
+        0,FRM Baseline
+        1,FRM Final Control
+
+Data Column Name and Description
+    :optionID:
+        The option or alternative number.
+
+    :optionName:
+        The option name that corresponds to the corresponding optionID.
+
+----
+
+**CODE**
+
+"""
 from bca_tool_code.general_input_modules.general_functions import read_input_file
 from bca_tool_code.general_input_modules.input_files import InputFiles
 

@@ -1,3 +1,7 @@
+"""
+This module was not used to support the HD2027 FRM so there is no input file(s).
+
+"""
 import pandas as pd
 
 from bca_tool_code.general_input_modules.general_functions import read_input_file
@@ -8,7 +12,7 @@ class CostFactors:
 
     """
 
-    The DollarPerTonCAP class reads the cost factors input file and provides methods to query contents.
+    The CostFactors class reads the cost factors input file and provides methods to query contents.
 
     """
     def __init__(self):
