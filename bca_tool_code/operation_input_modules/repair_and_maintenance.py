@@ -1,3 +1,44 @@
+"""
+
+**INPUT FILE FORMAT**
+
+The file format consists of a one-row data header and subsequent data rows.
+
+The data represent the repair and maintenance cost per mile/hour values, their dollar basis and other metrics used to
+estimate emission-related repair costs.
+
+File Type
+    comma-separated values (CSV)
+
+Sample Data Columns
+    .. csv-table::
+        :widths: auto
+
+        Metric,Units,Value,DollarBasis,Notes
+        repair_and_maintenance,dollars_per_mile,0.158,2017,
+        repair_and_maintenance,dollars_per_hour,6.31,2017,
+        typical_vmt_thru,age_id,6,,ageID=6 would include 7 years
+        emission_repair_share,share_of_total_repair_and_maintenance,0.108,,
+
+Data Column Name and Description
+    :Metric:
+        The name of the given attribute.
+
+    :Units:
+        The units of the given attribute value.
+
+    :Value:
+        The value of the given metric.
+
+    :DollarBasis:
+        The dollar basis (dollars valued in what year) for the corresponding cost; costs are converted to analysis
+        dollars in-code.
+
+----
+
+**CODE**
+
+"""
 import pandas as pd
 
 from bca_tool_code.general_input_modules.general_functions import read_input_file
@@ -49,7 +90,7 @@ class RepairAndMaintenance:
         """
 
         Parameters:
-            key: tuple of strings; e.g., ('max', 'dollars_per_mile').
+            key: tuple of strings; e.g., ('repair_and_maintenance', 'dollars_per_mile').
 
         Returns:
             The value of the passed attribute.

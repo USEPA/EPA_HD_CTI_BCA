@@ -6,6 +6,14 @@ bca_tool_code.general_input_modules package
    :undoc-members:
    :show-inheritance:
 
+bca_tool_code.general_input_modules.average_speed module
+--------------------------------------------------------
+
+.. automodule:: bca_tool_code.general_input_modules.average_speed
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 bca_tool_code.general_input_modules.def_prices module
 -----------------------------------------------------
 
@@ -18,14 +26,6 @@ bca_tool_code.general_input_modules.deflators module
 ----------------------------------------------------
 
 .. automodule:: bca_tool_code.general_input_modules.deflators
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-bca_tool_code.general_input_modules.dollar_per_ton_cap module
--------------------------------------------------------------
-
-.. automodule:: bca_tool_code.general_input_modules.dollar_per_ton_cap
    :members:
    :undoc-members:
    :show-inheritance:
@@ -86,6 +86,30 @@ bca_tool_code.general_input_modules.options module
    :undoc-members:
    :show-inheritance:
 
+bca_tool_code.general_input_modules.piece_costs module
+------------------------------------------------------
+
+.. automodule:: bca_tool_code.general_input_modules.piece_costs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+bca_tool_code.general_input_modules.runtime_options module
+----------------------------------------------------------
+
+.. automodule:: bca_tool_code.general_input_modules.runtime_options
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+bca_tool_code.general_input_modules.tech_penetrations module
+------------------------------------------------------------
+
+.. automodule:: bca_tool_code.general_input_modules.tech_penetrations
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 bca_tool_code.general_input_modules.useful_life module
 ------------------------------------------------------
 
@@ -98,6 +122,22 @@ bca_tool_code.general_input_modules.warranty module
 ---------------------------------------------------
 
 .. automodule:: bca_tool_code.general_input_modules.warranty
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+bca_tool_code.general_input_modules.warranty_base_costs module
+--------------------------------------------------------------
+
+.. automodule:: bca_tool_code.general_input_modules.warranty_base_costs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+bca_tool_code.general_input_modules.warranty_extended module
+------------------------------------------------------------
+
+.. automodule:: bca_tool_code.general_input_modules.warranty_extended
    :members:
    :undoc-members:
    :show-inheritance:

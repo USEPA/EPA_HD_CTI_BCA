@@ -4,9 +4,7 @@ from math import ceil
 class EmissionRepairCost:
 
     def __init__(self):
-        self.repair_cpm_dict = dict()
         self.repair_cost_details = dict()
-        self.repair_cpm_curve_coeffs = dict()
 
     def calc_warranty_and_repair(self, settings, vehicle):
         """
@@ -16,7 +14,8 @@ class EmissionRepairCost:
             vehicle: object; an object of the Vehicle class.
 
         Returns:
-            Repair and maintenance cost per vehicle, total cost, cost per mile and cost per hour
+            Repair and maintenance cost per vehicle, total cost, cost per mile and cost per hour; also updates the
+            object dictionary for inclusion with the run results.
 
         """
         dollars_per_mile = dollars_per_hour = 0

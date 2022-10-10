@@ -3,9 +3,8 @@ import pandas as pd
 import bca_tool_code.engine_cost_modules.engine_package_cost as cap_package_cost
 from bca_tool_code.general_modules.sum_by_vehicle import calc_sum_of_costs
 from bca_tool_code.general_modules.emission_cost import calc_criteria_emission_cost
-from bca_tool_code.general_modules.weighted_results import create_weighted_cost_dict
 from bca_tool_code.general_modules.discounting import discount_values
-from bca_tool_code.general_modules.calc_deltas import calc_deltas, calc_deltas_weighted
+from bca_tool_code.general_modules.calc_deltas import calc_deltas
 from bca_tool_code.general_modules.emission_reduction import calc_nox_reduction, calc_thc_reduction
 
 from bca_tool_code.engine_cost_modules.engine_package_cost import calc_package_cost
@@ -23,7 +22,6 @@ class CostCalcs:
         self.attributes_to_sum = {
             'OperatingCost': ['DEFCost', 'FuelCost_Pretax', 'EmissionRepairCost'],
             'TechAndOperatingCost': ['TechCost', 'OperatingCost'],
-            # 'OperatingCost_Owner_PerMile': ['DEFCost_PerMile', 'FuelCost_Retail_PerMile', 'EmissionRepairCost_PerMile'],
             'OperatingCost_Owner_PerVeh': ['DEFCost_PerVeh', 'FuelCost_Retail_PerVeh', 'EmissionRepairCost_PerVeh'],
             'TechAndOperatingCost_Owner_PerVeh': ['TechCost_PerVeh', 'OperatingCost_Owner_PerVeh'],
         }
@@ -125,10 +123,6 @@ class CostCalcs:
         for veh in settings.fleet.vehicles:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
 
-            # repair_cost_per_veh, repair_cost, repair_cost_per_mile, repair_cost_per_hour \
-            #     = settings.emission_repair_cost.calc_repair_cost(settings, veh)
-            # repair_cost_per_veh, repair_cost, repair_cost_per_mile, repair_cost_per_hour \
-            #     = settings.emission_repair_cost.transfer_at_cost_per_year(settings, veh)
             repair_cost_per_veh, repair_cost, repair_cost_per_mile, repair_cost_per_hour \
                 = settings.emission_repair_cost.calc_warranty_and_repair(settings, veh)
 
@@ -184,31 +178,6 @@ class CostCalcs:
             }
             self.update_object_dict(key, update_dict)
 
-        # Emission Repair Costs ----------------------------------------------------------------------------------------
-        # for veh in settings.fleet.vehicles:
-        #     key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
-
-            # repair_cost_per_veh, repair_cost, repair_cost_per_mile, repair_cost_per_hour \
-            #     = settings.emission_repair_cost.calc_repair_cost(settings, veh)
-            # repair_cost_per_veh, repair_cost, repair_cost_per_mile \
-            #     = settings.emission_repair_cost.calc_using_cost_per_year(settings, veh)
-
-            # if settings.warranty_cost_approach.__contains__('per_year'):
-            #     repair_cost_per_veh, repair_cost, repair_cost_per_mile \
-            #         = settings.emission_repair_cost.calc_using_cost_per_year(settings, veh)
-            # else:
-            #     repair_cost_per_veh, repair_cost, repair_cost_per_mile \
-            #         = settings.emission_repair_cost.calc_emission_repair_and_warranty_cost(settings, veh,
-            #                                                                                direct_applied_cost_per_veh,
-            #                                                                                reference_pkg_cost)
-            # update_dict = {
-            #     'EmissionRepairCost_PerVeh': repair_cost_per_veh,
-            #     'EmissionRepairCost_PerMile': repair_cost_per_mile,
-            #     'EmissionRepairCost_PerHour': repair_cost_per_hour,
-            #     'EmissionRepairCost': repair_cost,
-            # }
-            # self.update_object_dict(key, update_dict)
-
         # DEF Costs for diesel fueled vehicles -------------------------------------------------------------------------
         for veh in settings.fleet.vehicles_ft2:
             key = (veh.vehicle_id, veh.option_id, veh.modelyear_id, veh.age_id, discount_rate)
@@ -254,16 +223,6 @@ class CostCalcs:
                 update_dict = calc_criteria_emission_cost(settings, veh)
                 self.update_object_dict(key, update_dict)
 
-        # calc some weighted cost per mile results ---------------------------------------------------------------------
-        # arg = 'VMT_PerVeh'
-        # year_max = settings.vehicle.year_id_max
-        # create_weighted_cost_dict(settings, self, year_max, settings.wtd_def_cpm_dict,
-        #                           arg_to_weight='DEFCost_PerMile', arg_to_weight_by=arg)
-        # create_weighted_cost_dict(settings, self, year_max, settings.wtd_repair_cpm_dict,
-        #                           arg_to_weight='EmissionRepairCost_PerMile', arg_to_weight_by=arg)
-        # create_weighted_cost_dict(settings, self, year_max, settings.wtd_cap_fuel_cpm_dict,
-        #                           arg_to_weight='FuelCost_Retail_PerMile', arg_to_weight_by=arg)
-
         # discount things ----------------------------------------------------------------------------------------------
         if settings.runtime_options.discount_values:
             add_keys_for_discounting(settings.general_inputs, self.results)
@@ -278,13 +237,6 @@ class CostCalcs:
             calc_deltas(settings, self, settings.options)
             if settings.runtime_options.discount_values:
                 calc_deltas(settings, settings.annual_summary_cap, settings.options)
-
-            # settings.wtd_def_cpm_dict = calc_deltas_weighted(settings, settings.wtd_def_cpm_dict,
-            #                                                  settings.options)
-            # settings.wtd_repair_cpm_dict = calc_deltas_weighted(settings, settings.wtd_repair_cpm_dict,
-            #                                                     settings.options)
-            # settings.wtd_cap_fuel_cpm_dict = calc_deltas_weighted(settings, settings.wtd_cap_fuel_cpm_dict,
-            #                                                       settings.options)
 
     def update_object_dict(self, key, update_dict):
         """

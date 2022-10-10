@@ -1,3 +1,48 @@
+"""
+
+**INPUT FILE FORMAT**
+
+The file format consists of a one-row data header and subsequent data rows.
+
+The data represent the warranty cost per year of warranty coverage.
+
+File Type
+    comma-separated values (CSV)
+
+Sample Data Columns
+    .. csv-table::
+        :widths: auto
+
+        regClassName,regClassID,FuelName,fuelTypeID,Cost,DollarBasis,
+        HHD8,47,Gasoline,1,1000,2018
+        HHD8,47,Diesel,2,1000,2018
+        HHD8,47,CNG,3,1000,2018
+
+Data Column Name and Description
+    :regClassName:
+        The MOVES regulatory class name corresponding to the regClassID.
+
+    :regClassID:
+            The MOVES regClass ID, an integer.
+
+    :FuelName:
+        The MOVES fuel type name corresponding to the fuelTypeID.
+
+    :fuelTypeID:
+        The MOVES fuel type ID, an integer, where 1=Gasoline, 2=Diesel, etc.
+
+    :Cost:
+        The cost per year of warranty coverage.
+
+    :DollarBasis:
+        The dollar basis (dollars valued in what year) for the corresponding cost; costs are converted to analysis
+        dollars in-code.
+
+----
+
+**CODE**
+
+"""
 import pandas as pd
 
 from bca_tool_code.general_input_modules.general_functions import read_input_file
@@ -52,7 +97,7 @@ class BaseWarrantyCosts:
         """
 
         Parameters:
-            key: tuple; (engine_id).
+            key: tuple; the engine_id.
 
         Returns:
             The warranty cost for the passed engine_id under option_id.

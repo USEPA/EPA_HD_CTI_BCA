@@ -40,13 +40,13 @@ from bca_tool_code.cost_calcs import CostCalcs
 
 
 class SetInputs:
+    """
+
+    The SetInputs class establishes the input files to use and other input settings set in the BCA_Inputs file and
+    needed within the tool.
+
+    """
     def __init__(self):
-        """
-
-        The SetInputs class establishes the input files to use and other input settings set in the BCA_Inputs file and
-        needed within the tool.
-
-        """
         set_paths = SetPaths()
         self.start_time = time()
         self.start_time_readable = datetime.now().strftime('%Y%m%d-%H%M%S')

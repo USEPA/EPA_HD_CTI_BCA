@@ -1,9 +1,3 @@
-"""
-bca_tool_code.tool_main.py
-
-This is the main module of the tool.
-
-"""
 import pandas as pd
 import shutil
 from datetime import datetime
@@ -11,10 +5,8 @@ from time import time
 
 from bca_tool_code.set_inputs import SetInputs
 from bca_tool_code.set_paths import SetPaths
-import bca_tool_code.general_modules.emission_cost
 import bca_tool_code.general_modules.sum_by_vehicle
 import bca_tool_code.general_modules.discounting
-import bca_tool_code.general_modules.weighted_results
 import bca_tool_code.general_modules.calc_deltas
 import bca_tool_code.general_modules.vehicle
 import bca_tool_code.general_modules.create_figures
@@ -23,6 +15,7 @@ import bca_tool_code.general_input_modules.general_functions as gen_fxns
 
 def main():
     """
+    This is the main module of the tool.
 
     Returns:
         The results of the current run of the tool.
@@ -105,41 +98,16 @@ def main():
             path_of_run_results_folder / 'indirect_cost_details',
             row_header=None, stamp=stamp, index=False
         )
-        # gen_fxns.save_dict(
-        #     settings.wtd_cap_fuel_cpm_dict,
-        #     path_of_run_results_folder / 'CAP_vmt_weighted_fuel_cpm',
-        #     row_header=None, stamp=stamp, index=True
-        # )
-        # gen_fxns.save_dict(
-        #     settings.wtd_def_cpm_dict,
-        #     path_of_run_results_folder / 'CAP_vmt_weighted_def_cpm',
-        #     row_header=None, stamp=stamp, index=True
-        # )
-        # gen_fxns.save_dict(
-        #     settings.wtd_repair_cpm_dict,
-        #     path_of_run_results_folder / 'CAP_vmt_weighted_repair_cpm',
-        #     row_header=None, stamp=stamp, index=True
-        # )
         gen_fxns.save_dict(
             settings.estimated_age.estimated_ages_dict,
             path_of_run_results_folder / 'required_and_estimated_ages',
             row_header=None, stamp=stamp, index=False
         )
-        # gen_fxns.save_dict(
-        #     settings.emission_repair_cost.repair_cpm_dict,
-        #     path_of_run_results_folder / 'CAP_repair_cpm_details',
-        #     row_header=None, stamp=stamp, index=False
-        # )
         gen_fxns.save_dict(
             settings.emission_repair_cost.repair_cost_details,
             path_of_run_results_folder / 'repair_cost_details',
             row_header=None, stamp=stamp, index=False
         )
-        # gen_fxns.save_dict(
-        #     settings.emission_repair_cost.repair_cpm_curve_coeffs,
-        #     path_of_run_results_folder / 'CAP_repair_cpm_curve_coeffs',
-        #     row_header=None, stamp=stamp, index=False
-        # )
 
         # save DataFrames to CSV
         settings.engine_costs.piece_costs_in_analysis_dollars.to_csv(

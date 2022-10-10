@@ -3,7 +3,7 @@ import pandas as pd
 
 def calc_avg_package_cost_per_step(settings, cost_object, vehicle, standardyear_id, labor=False):
     """
-    Tech penetrations are applied here
+
     Parameters:
         settings: object; the SetInputs class object.
         cost_object: object; an object of the PieceCost class (e.g., settings.engine_costs or settings.replacement_costs).
@@ -14,6 +14,9 @@ def calc_avg_package_cost_per_step(settings, cost_object, vehicle, standardyear_
     Returns:
         Updates the engine_costs object dictionary to include the year-over-year package costs, including learning
         effects, associated with implementation of each new standard.
+
+    Note:
+        Tech penetrations are applied here.
 
     """    
     learning_rate = pd.to_numeric(settings.general_inputs.get_attribute_value('learning_rate'))

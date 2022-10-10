@@ -3,7 +3,7 @@ import pandas as pd
 
 def create_weighted_cost_dict(settings, data_object, year_max, destination_dict, arg_to_weight=None, arg_to_weight_by=None):
     """
-
+    This function is not being used.
     This function weights 'arg_to_weight' attributes by the 'arg_to_weight_by' attribute.
 
     Parameters::

@@ -167,11 +167,8 @@ class Vehicle:
     def define_attributes_to_adjust(self):
         """
 
-        Parameters:
-            program: str; represents the program for the given instance (i.e., 'CAP' or 'GHG').\n
-
         Returns:
-            Updates the attributes_with_tech object dictionary.
+            Updates the attributes_to_adjust object list.
 
         """
         self.attributes_to_adjust = ['vpop', 'vmt', 'gallons']

@@ -1,3 +1,59 @@
+"""
+
+**INPUT FILE FORMAT**
+
+The file format consists of a one-row data header and subsequent data rows.
+
+The data represent the percentage of engines complying with the new standard, associated with standardyear_id, and in
+the given year, indicated by the column headers. In the table below, all engines shown comply with the 2027 standards
+in 2027 (and continue to do so) while no engines meet the 2031 standards in 2027 since 2027 engines would be sold prior
+to the 2031 standards being implemented. However, all 2031 engines comply with 2031 and later standards.
+
+File Type
+    comma-separated values (CSV)
+
+Sample Data Columns
+    .. csv-table::
+        :widths: auto
+
+        optionID,regClassName,regClassID,FuelName,fuelTypeID,standardyear_id,2027,2031
+        0,LHD45,42,Gasoline,1,2027,1,1
+        0,LHD45,42,Diesel,2,2027,1,1
+        0,LHD45,42,CNG,3,2027,1,1
+        0,LHD45,42,Gasoline,1,2031,,1
+        0,LHD45,42,Diesel,2,2031,,1
+        0,LHD45,42,CNG,3,2031,,1
+
+Data Column Name and Description
+    :optionID:
+        The option or alternative number.
+
+    :regClassName:
+        The MOVES regulatory class name corresponding to the regClassID.
+
+    :regClassID:
+            The MOVES regClass ID, an integer.
+
+    :FuelName:
+        The MOVES fuel type name corresponding to the fuelTypeID.
+
+    :fuelTypeID:
+        The MOVES fuel type ID, an integer, where 1=Gasoline, 2=Diesel, etc.
+
+    :standardyear_id:
+        The year in which a new standard or provision (for which a corresponding cost exists) is implemented.
+
+    :2027:
+        The share of engines meeting a new standard that begins in the standardyear_id.
+
+    :2031:
+        The share of engines meeting a new standard that begins in the standardyear_id.
+
+----
+
+**CODE**
+
+"""
 import sys
 import pandas as pd
 
@@ -8,7 +64,7 @@ from bca_tool_code.general_input_modules.input_files import InputFiles
 class TechPenetrations:
     """
 
-    The GhgTechPenetrations class reads the tech penetrations file and provides methods to query its contents.
+    The TechPenetrations class reads the tech penetrations file and provides methods to query its contents.
 
     """
     def __init__(self):
@@ -35,12 +91,19 @@ class TechPenetrations:
         if unit_id == 'engine_id':
             df.insert(0,
                       unit_id,
-                      pd.Series(zip(df['regClassID'], df['fuelTypeID'])))
+                      pd.Series(zip(
+                          df['regClassID'],
+                          df['fuelTypeID']
+                      )))
             id_vars = ['optionID', unit_id, 'regClassID', 'fuelTypeID', 'standardyear_id']
         elif unit_id == 'vehicle_id':
             df.insert(0,
                       unit_id,
-                      pd.Series(zip(df['sourceTypeID'], df['regClassID'], df['fuelTypeID'])))
+                      pd.Series(zip(
+                          df['sourceTypeID'],
+                          df['regClassID'],
+                          df['fuelTypeID']
+                      )))
             id_vars = ['optionID', unit_id, 'sourceTypeID', 'regClassID', 'fuelTypeID', 'standardyear_id']
         else:
             print(f'\nImproper unit_id passed to {self}')

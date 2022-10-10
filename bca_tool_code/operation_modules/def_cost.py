@@ -29,7 +29,7 @@ def calc_def_cost(settings, vehicle, nox_reduction=None):
         nox_reduction: numeric; the nox_reduction, if applicable, for the vehicle relative to its no_action state.
 
     Returns:
-        The DEF cost per vehicle and DEF cost for the given vehicle object.
+        The DEF cost per vehicle, the corresponding DEF cost, the DEF cost per mile and the gallons of DEF consumed.
 
     """
     def_gallons_per_ton_nox_reduction \

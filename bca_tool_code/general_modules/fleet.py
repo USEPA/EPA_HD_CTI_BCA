@@ -162,12 +162,12 @@ class Fleet:
 
     def get_typical_vmt_per_year(self, settings, vehicle):
         """
-        This function calculates a typical annual VMT/vehicle over a set number of year_ids as set via the General Inputs
-        workbook. This typical annual VMT/vehicle can then be used to estimate the ages at which warranty and useful life
-        will be reached. When insufficient year_ids are available -- e.g., if the typical_vmt_thru_ageID is set to >5 year_ids and
-        the given vehicle is a MY2041 vintage vehicle and the fleet input file contains data only thru CY2045, then
-        insufficient data exist to calculate the typical VMT for that vehicle -- the typical VMT for that vehicle will be
-        set equal to the last prior MY vintage for which sufficient data were present.
+        This function calculates a typical annual VMT/vehicle over a set number of year_ids as set via the General
+        Inputs workbook. This typical annual VMT/vehicle can then be used to estimate the ages at which warranty and
+        useful life will be reached. When insufficient year_ids are available -- e.g., if the typical_vmt_thru_ageID
+        is set to >5 year_ids and the given vehicle is a MY2041 vintage vehicle and the fleet input file contains data
+        only thru CY2045, then insufficient data exist to calculate the typical VMT for that vehicle -- the typical VMT
+        for that vehicle will be set equal to the last prior MY vintage for which sufficient data were present.
 
         Parameters:
             settings: object; the SetInputs class object.\n

@@ -1,3 +1,56 @@
+"""
+
+**INPUT FILE FORMAT**
+
+The file format consists of a one-row data header and subsequent data rows.
+
+The data represent the warranty provisions for the associated optionID.
+
+File Type
+    comma-separated values (CSV)
+
+Sample Data Columns
+    .. csv-table::
+        :widths: auto
+
+        optionID,regClassName,regClassID,fuelTypeID,period_id,2024,2027,2031
+        0,HHD8,47,1,Miles,50000,50000,50000,
+        0,HHD8,47,1,Age,5,5,5,
+        0,HHD8,47,3,Hours,,,,
+        1,HHD8,47,3,Miles,100000,450000,450000,
+        1,HHD8,47,3,Age,5,7,7,
+        1,HHD8,47,1,Hours,,8000,8000,
+
+Data Column Name and Description
+    :optionID:
+        The option or alternative number.
+
+    :regClassName:
+        The MOVES regulatory class name corresponding to the regClassID.
+
+    :regClassID:
+            The MOVES regClass ID, an integer.
+
+    :fuelTypeID:
+        The MOVES fuel type ID, an integer, where 1=Gasoline, 2=Diesel, etc.
+
+    :period_id:
+        The identifier, i.e., 'Miles', 'Age' or 'Hours'
+
+    :2024:
+        The miles/age/hours provision for MY2024 and later.
+
+    :2027:
+        The miles/age/hours provision for MY2027 and later.
+
+    :2031:
+        The miles/age/hours provision for MY2031 and later.
+
+----
+
+**CODE**
+
+"""
 import pandas as pd
 import numpy as np
 

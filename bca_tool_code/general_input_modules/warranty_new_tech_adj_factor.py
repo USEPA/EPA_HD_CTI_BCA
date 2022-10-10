@@ -7,6 +7,7 @@ from bca_tool_code.general_input_modules.input_files import InputFiles
 class WarrantyNewTechAdj:
     """
 
+    This class is not being used.
     The WarrantyNewTechAdj class reads the warranty_new_tech_adj_factor input file and provides methods to query its
     contents.
 

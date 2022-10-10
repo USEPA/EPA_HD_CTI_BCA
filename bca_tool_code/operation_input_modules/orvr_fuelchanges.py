@@ -1,3 +1,48 @@
+"""
+
+**INPUT FILE FORMAT**
+
+The file format consists of a one-row data header and subsequent data rows.
+
+The data represent the milliliters of gasoline available to burn for work for every gram of hydrocarbon captured.
+
+File Type
+    comma-separated values (CSV)
+
+Sample Data Columns
+    .. csv-table::
+        :widths: auto
+
+        optionID,regClassID,fuelTypeID,ml/g
+        0,41,1,0
+        0,42,1,0
+        0,46,1,0
+        0,47,1,0
+        0,48,1,0
+        1,41,1,0
+        1,42,1,1.48
+        1,46,1,1.48
+        1,47,1,1.48
+        1,48,1,1.48
+
+Data Column Name and Description
+    :optionID:
+        The option or alternative number.
+
+    :regClassID:
+        The MOVES regClass ID, an integer.
+
+    :fuelTypeID:
+        The MOVES fuel type ID, an integer, where 1=Gasoline, 2=Diesel, etc.
+
+    :ml/g:
+        The milliliters of gasoline per gram of hydrocarbon.
+
+----
+
+**CODE**
+
+"""
 import pandas as pd
 
 from bca_tool_code.general_input_modules.general_functions import read_input_file
@@ -26,7 +71,12 @@ class OrvrFuelChanges:
         """
         df = read_input_file(filepath, skiprows=1, usecols=lambda x: 'Notes' not in x)
 
-        key = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID']))
+        key = pd.Series(zip(
+            zip(
+                df['regClassID'],
+                df['fuelTypeID']),
+            df['optionID']
+        ))
         df.set_index(key, inplace=True)
 
         self._dict = df.to_dict('index')

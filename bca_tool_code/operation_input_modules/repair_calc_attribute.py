@@ -1,3 +1,44 @@
+"""
+
+**INPUT FILE FORMAT**
+
+The file format consists of a one-row data header and subsequent data rows.
+
+The data represent the repair and maintenance cost attribute (i.e., cost per mile/hour) to use in estimating
+emission-related repair costs.
+
+File Type
+    comma-separated values (CSV)
+
+Sample Data Columns
+    .. csv-table::
+        :widths: auto
+
+        sourceTypeID,attribute
+        31,dollars_per_mile
+        32,dollars_per_mile
+        41,dollars_per_hour
+        42,dollars_per_hour
+        43,dollars_per_hour
+        51,dollars_per_hour
+        52,dollars_per_hour
+        53,dollars_per_mile
+        54,dollars_per_mile
+        61,dollars_per_mile
+        62,dollars_per_mile
+
+Data Column Name and Description
+    :sourceTypeID:
+        The MOVES sourcetype ID, an integer.
+
+    :attribute:
+        The attribute to use for the given sourcetype ID.
+
+----
+
+**CODE**
+
+"""
 from bca_tool_code.general_input_modules.general_functions import read_input_file
 from bca_tool_code.general_input_modules.input_files import InputFiles
 

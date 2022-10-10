@@ -1,3 +1,56 @@
+"""
+
+**INPUT FILE FORMAT**
+
+The file format consists of a one-row data header and subsequent data rows.
+
+The data represent the useful life provisions for the associated optionID.
+
+File Type
+    comma-separated values (CSV)
+
+Sample Data Columns
+    .. csv-table::
+        :widths: auto
+
+        optionID,regClassName,regClassID,fuelTypeID,period_id,2024,2027,2031,Notes
+        0,HHD8,47,2,Miles,435000,435000,435000,
+        0,HHD8,47,2,Age,10,10,10,
+        0,HHD8,47,2,Hours,22000,22000,22000,
+        1,HHD8,47,2,Miles,435000,650000,650000,
+        1,HHD8,47,2,Age,10,11,11,
+        1,HHD8,47,3,Hours,22000,32000,32000,
+
+Data Column Name and Description
+    :optionID:
+        The option or alternative number.
+
+    :regClassName:
+        The MOVES regulatory class name corresponding to the regClassID.
+
+    :regClassID:
+            The MOVES regClass ID, an integer.
+
+    :fuelTypeID:
+        The MOVES fuel type ID, an integer, where 1=Gasoline, 2=Diesel, etc.
+
+    :period_id:
+        The identifier, i.e., 'Miles', 'Age' or 'Hours'
+
+    :2024:
+        The miles/age/hours provision for MY2024 and later.
+
+    :2027:
+        The miles/age/hours provision for MY2027 and later.
+
+    :2031:
+        The miles/age/hours provision for MY2031 and later.
+
+----
+
+**CODE**
+
+"""
 import pandas as pd
 import numpy as np
 
@@ -42,7 +95,14 @@ class UsefulLife:
         df['start_year'] = pd.to_numeric(df['start_year'])
         self.start_years = df['start_year'].unique()
 
-        key = pd.Series(zip(zip(df['regClassID'], df['fuelTypeID']), df['optionID'], df['start_year'], df['period_id']))
+        key = pd.Series(zip(
+            zip(
+                df['regClassID'],
+                df['fuelTypeID']),
+            df['optionID'],
+            df['start_year'],
+            df['period_id']
+        ))
         df.set_index(key, inplace=True)
 
         self._dict = df.to_dict('index')
@@ -54,7 +114,7 @@ class UsefulLife:
         """
 
         Parameters:
-            key: tuple; ((regclass_id, fueltype_id), option_id, period), where period_id is
+            key: tuple; ((regclass_id, fueltype_id), option_id, modelyear_id, period), where period_id is
             'Miles' or 'Age'.\n
             attribute_name: str; the attribute name for which a value is sought (e.g., period_value).
 

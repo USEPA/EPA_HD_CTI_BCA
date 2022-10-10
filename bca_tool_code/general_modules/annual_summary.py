@@ -49,7 +49,6 @@ class AnnualSummary:
         social_rates = tuple([settings.general_inputs.get_attribute_value('social_discount_rate_1'),
                               settings.general_inputs.get_attribute_value('social_discount_rate_2')])
         social_rates = tuple([pd.to_numeric(rate) for rate in social_rates])
-        # year_ids = settings.vehicle.year_ids
 
         # build the destination dictionary to house data
 
@@ -98,10 +97,6 @@ class AnnualSummary:
                                  and v['optionID'] == option_id}
                     for arg in all_costs:
                         arg_sum = sum(v[arg] for k, v in temp_dict.items())
-                        # arg_sum = sum(v[arg] for k, v in source_dict.items()
-                        #               if v['yearID'] == year_id
-                        #               and v['DiscountRate'] == social_rate
-                        #               and v['optionID'] == option_id)
                         self.results[(series, option_id, year_id, social_rate)][arg] = arg_sum
 
         # now do a cumulative sum year-over-year for each cost arg - these will be present values
@@ -117,11 +112,6 @@ class AnnualSummary:
                         else:
                             arg_value = self.results[(series, option_id, year_id - 1, social_rate)][arg]
                             arg_value += self.results[('AnnualValue', option_id, year_id, social_rate)][arg]
-                        # arg_value = sum(v[arg] for k, v in self.results.items()
-                        #                 if v['yearID'] <= year_id
-                        #                 and v['DiscountRate'] == social_rate
-                        #                 and v['optionID'] == option_id
-                        #                 and v['Series'] == 'AnnualValue')
                         self.results[(series, option_id, year_id, social_rate)][arg] = arg_value
                         self.results[(series, option_id, year_id, social_rate)]['Periods'] = periods
 
@@ -173,7 +163,8 @@ class AnnualSummary:
         """
 
         Parameters:
-            key: tuple; (series, option_id, year_id, rate), where series is 'AnnualValue', 'PresentValue' or 'AnnualizedValue'.\n
+            key: tuple; (series, option_id, year_id, rate), where series is 'AnnualValue', 'PresentValue' or
+            'AnnualizedValue'.\n
             attribute_name: str; the attribute for which the value is sought.
 
         Returns:
@@ -181,23 +172,6 @@ class AnnualSummary:
 
         """
         return self.results[key][attribute_name]
-
-    def update_dict(self, key, input_dict):
-        """
-
-        Parameters:
-            key: tuple; (series, option_id, year_id, rate), where series is 'AnnualValue', 'PresentValue' or 'AnnualizedValue'.\n
-            input_dict: Dictionary; represents the attribute-value pairs to be updated.
-
-        Returns:
-            The dictionary instance with each attribute updated with the appropriate value.
-
-        Note:
-            This method updates an existing dictionary key having attribute_name with an attribute_value.
-
-        """
-        for attribute_name, attribute_value in input_dict.items():
-            self.results[key][attribute_name] = attribute_value
 
     def update_object_dict(self, key, update_dict):
         """
@@ -218,22 +192,6 @@ class AnnualSummary:
             self.results.update({key: {}})
             for attribute_name, attribute_value in update_dict.items():
                 self.results[key].update({attribute_name: attribute_value})
-
-    def add_key_value_pairs(self, key, input_dict):
-        """
-
-        Parameters:
-            key: tuple; (series, option_id, year_id, rate), where series is 'AnnualValue', 'PresentValue' or 'AnnualizedValue'.\n
-            input_dict: Dictionary; represents the attribute-value pairs to be updated.
-
-        Returns:
-            The dictionary instance with each attribute updated with the appropriate value.
-
-        Note:
-            This method updates an existing dictionary key that has no attributes.
-
-        """
-        self.results[key] = input_dict
 
     @staticmethod
     def calc_annualized_value(present_value, rate, periods, annualized_offset):

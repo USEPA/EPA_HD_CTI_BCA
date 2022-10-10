@@ -1,6 +1,6 @@
 def calc_criteria_emission_cost(settings, vehicle):
     """
-
+    This function is not being used.
     Parameters:
         settings: object; the SetInputs class object.\n
         vehicle: object; an object of the Vehicle class.
@@ -32,6 +32,7 @@ def calc_criteria_emission_cost(settings, vehicle):
 def calc_ghg_emission_cost(settings, vehicle):
     """
 
+    This function is not being used.
     Parameters:
         settings: object; the SetInputs class object.\n
         vehicle: object; an object of the Vehicle class.
