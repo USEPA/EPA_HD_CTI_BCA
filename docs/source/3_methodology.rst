@@ -12,7 +12,7 @@ into which all run results will be saved. A timestamp is included in any run-res
 at the run ID prompt. This will send outputs to a 'test' folder in the project folder.
 
 The tool first reads inputs and input files. The specific input files to use (i.e., their filenames) must be specified in the Input_Files.csv file in the "UserEntry.csv" column. The tool then
-calculates appropriate technology costs, operating costs and emission costs (if selected by the user). Once complete, these are brought together in a set of BCA (benefit-cost analysis) results
+calculates appropriate technology costs and operating costs. Once complete, these are brought together in a set of cost results
 with those results saved to a run folder within the outputs folder.
 
 Importantly, monetized values in the tool are treated as costs throughout. So a negative cost represents a savings. Also, for the most part,
@@ -20,12 +20,6 @@ everything is treated in absolute terms. So absolute costs are calculated for ea
 case less costs in the no action, baseline case. As such, higher technology costs in an alternative case than those in the baseline case would result in positive delta costs, or increased costs.
 Likewise, lower operating costs in an alternative case relative to those in the baseline case would result in negative delta costs, or decreased costs. A decrease in operating costs represents
 an increase in operating savings.
-
-Note that the calculation of emission impacts is done using the $/ton estimates included in the CriteriaCostFactors.csv input files The $/ton estimates provided in those files are best understood
-to be the marginal costs associated with the reduction of the individual pollutants as opposed to the absolute costs associated with a ton of each pollutant. As such, the emission "costs" calculated
-by the tool should not be seen as true costs associated with emissions, but rather the first step in estimating the benefits associated with reductions of those emissions. For that reason, the user
-must be careful not to consider those as absolute costs, but once compared to the "costs" of another scenario (presumably via calculation of a difference in "costs" between two scenarios) the result
-can be interpreted as a benefit.
 
 Calculations and Equations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -93,35 +87,13 @@ where,
 - *CumulativeSales* = cumulative sales of MY2027 and later vehicles in model year, MY, of implementation
 - *SeedVolumeFactor* = 0 or greater to represent the number of years of learning already having occurred
 
-Emission repair costs
----------------------
-
-The tool calculates emission repair costs associated with changes in warranty and useful life provisions which occur only in the criteria air pollutant program.
-
-Direct cost scalers
-...................
-
-The direct cost scalers are used to scale the repair cost per mile estimates for engines other than the baseline heavy heavy-duty diesel engine for which the cost per mile inputs apply. In other words, if the cost
-per mile inputs are $0.10/mile, and that applies to a heavy heavy-duty diesel engine estimated to cost $5000, then the cost per mile for that engine after adding $1000 in new technology would be scaled
-by $6000/$5000 to give a value of $0.12/mile. Similarly, a light heavy-duty diesel engine costing $2000 but adding $500 in new technology would be scaled by $2500/$5000 to give a value of $0.05/mile.
-
-.. math::
-    :label: dc_scaler
-
-    DirectCostScalar_{optionID;engine;MY}=\small\frac{DirectCost_{optionID;engine;MY}} {DirectCost_{Baseline;HHDDE;MY}}
-
-where,
-
-- *DirectCost* = the direct manufacturing cost absent indirect costs
-- *optionID* = the option considered (i.e, baseline or one of the action alternatives)
-- *HHDDE* = heavy heavy-duty diesel engine regulatory class
-- *MY* = the model year being considered
-- *engine* = a unique regclass-fueltype engine within MOVES
+Warranty and emission-related repair costs
+------------------------------------------
 
 Estimated warranty & useful life ages
 .....................................
 
-The estimated warranty and useful life ages are used to generate a repair cost per mile curve for each vehicle based on the estimated age when its warranty period will be reached and when its
+The estimated warranty and useful life ages are used to estimate both warranty costs and repair costs for each vehicle based on the estimated age when its warranty period will be reached and when its
 useful life will be reached. These ages differ by sourcetype since sourcetypes accumulate miles at such different rates. Therefore, while a long-haul tractor might reach a 100,000 mile warranty
 within its first or second year of use, a school bus could take several years to drive that number of miles. If both have a 5 year, 100,000 mile warranty, then the long-haul tractor would have an
 estimated warranty age of roughly 1 year, while the school bus would have an estimated warranty age of, perhaps, 5 years. The same concepts are true for estimated useful life ages.
@@ -143,98 +115,86 @@ where,
 
 - *RequiredWarrantyAge* = the minimum age required by regulation at which the warranty can end
 - *RequiredUsefulLifeAge* = the age required by regulation at which the useful life ends
-- *CalculatedWarrantyAge* = the minimum mileage required by regulation at which the warranty can end divided by the "typical" annual miles driven for the given vehicle
-- *CalculatedUsefulLifeAge* = the minimum mileage required by regulation at which the useful life can end divided by the "typical" annual miles driven for the given vehicle
+- *CalculatedWarrantyAge* = the minimum mileage/hours required by regulation at which the warranty can end divided by the "typical" annual miles/hours driven for the given vehicle
+- *CalculatedUsefulLifeAge* = the minimum mileage/hours required by regulation at which the useful life can end divided by the "typical" annual miles/hours driven for the given vehicle
 - *optionID* = the option considered (i.e, baseline or one of the action alternatives)
 - *MY* = the model year being considered
 - *vehicle* = a unique sourcetype-regclass-fueltype vehicle within MOVES
 
 Required warranty and useful life miles and ages by optionID/MY/RegClass/FuelType are controlled via input files to the tool (Warranty_Inputs.csv and
 UsefulLife_Inputs.csv, respectively). “Estimated” and “Calculated” ages are calculated by the tool in-code where “Calculated” age uses MOVES sourcetype
-mileage accumulations. The "typical" annual miles driven is calculated in the tool as the cumulative miles driven divided by the number of years included
-in the cumulative miles. Because vehicles tend to be driven fewer miles with age, the "typical" annual miles driven decreases with age. The Repair_and_Maintenance_Curve_Inputs.csv
-file has a controller for how many years of mileage accumulation to include (typical_vmt_thru_ageID). The default value is 6 which represents 7 years of cumulative miles.
+mileage accumulations and average speeds. The "typical" annual miles driven is calculated in the tool as the cumulative miles driven divided by the number of years included
+in the cumulative miles. Because vehicles tend to be driven fewer miles with age, the "typical" annual miles driven decreases with age. The file designated by the 'repair_and_maintenance' entry of Input_Files.csv should
+include a setting for how many years of mileage accumulation to include (typical_vmt_thru_ageID). The default value is 6 which represents 7 years of cumulative miles.
 Again, a smaller value would result in more "typical" annual miles driven and a lower calculated age, and a larger value would result in fewer "typical" annual miles driven
 and a higher calculated age.
 
-Cost per mile by age (for emission-related repairs)
-...................................................
+Emission-related warranty costs
+...............................
 
-Here the tool estimates the repair cost per mile curve, by age, for each sourcetype-regclass-fueltype vehicle in the analysis. These curves are unique to each type of vehicle and to any options having
-different warranty and/or useful life provisions.
-
-.. math::
-    :label: inw_cpm
-
-    & InWarrantyCPM_{optionID;vehicle;MY}\\
-    & = \small FleetAdvantageCPM_{Year1} \times EmissionRepairShare \times DirectCostScalar_{optionID;engine;MY}
+The tool estimates the warranty costs for each sourcetype-regclass-fueltype vehicle in the analysis. These values are unique to each type of vehicle and to any options having
+different warranty provisions.
 
 .. math::
-    :label: atul_cpm
+    :label: warranty_cost
 
-    & AtUsefulLifeCPM_{optionID;vehicle;MY}\\
-    & = \small FleetAdvantageCPM_{Year6} \times EmissionRepairShare \times DirectCostScalar_{optionID;engine;MY}
-
-.. math::
-    :label: max_cpm
-
-    & MaxCPM_{optionID;vehicle;MY}\\
-    & = \small FleetAdvantageCPM_{Year7} \times EmissionRepairShare \times DirectCostScalar_{optionID;engine;MY}
+    & WarrantyCost_{optionID;vehicle;MY}\\
+    & = \small WarrantyCostPerYear \times BaseCostScaler_{engine;MY} \times EstimatedWarrantyAge_{optionID;vehicle;MY}
 
 .. math::
-    :label: slope_cpm
+    :label: base_cost_scaler
 
-    & SlopeCPM_{optionID;vehicle;MY}\\
-    & =\small\frac{(AtUsefulLifeCPM_{optionID;vehicle;MY}-InWarrantyCPM_{optionID;vehicle;MY})} {(EstimatedUsefulLifeAge_{optionID;vehicle;MY}-EstimatedWarrantyAge_{optionID;vehicle;MY})}
+    BaseCostScaler_{engine;MY} = \frac{BaselineDMC_{NoActionOption;engine;MY}} {ReferenceDMC_{NoActionOption;HHDDE;MY}}
 
 where,
 
-- *InWarrantyCPM* = in-warranty emission repair cost per mile for the engine in the given vehicle
-- *AtUsefulLifeCPM* = at-useful-life emission repair cost per mile for the engine in the given vehicle
-- *MaxCPM* = the maximum emission repair cost per mile for the engine in the given vehicle
-- *SlopeCPM* = the cost per mile slope between the estimated warranty age and the estimated useful life age for a given vehicle
-- *optionID* = the option considered (i.e, baseline or one of the action alternatives)
-- *FleetAdvantageCPMYear1* = first year cost per mile from the Fleet Advantage white paper (2.07 cents/mile in 2018 dollars)
-- *FleetAdvantageCPMYear6* = year six cost per mile from the Fleet Advantage white paper (14.56 cents/mile in 2018 dollars)
-- *FleetAdvantageCPMYear7* = year seven cost per mile from the Fleet Advantage white paper (19.82 cents/mile in 2018 dollars)
-- *EmissionRepairShare* = EPA developed share of Fleet Advantage Maintenance and Repair costs that are emission-related (10.8%)
-- *engine* = a unique regclass-fueltype engine for equations :math:numref:`inw_cpm`, :math:numref:`atul_cpm` and :math:numref:`max_cpm`
-- *vehicle* = a unique sourcetype-regclass-fueltype vehicle in equation :math:numref:`slope_cpm`
+- *WarrantyCostPerYear* = the warranty cost per engine per year of coverage set via the base_warranty_costs input file
+- *DMC* = Direct manufacturing cost
+- *BaselineDMC* = No-action DMC for the given engine in the given model year
+- *ReferenceDMC* = No-action DMC for a diesel heavy HDE in the given model year
+- *EstimatedWarrantyAge* = the estimated warranty age from equation :math:numref:`estimated_warranty_age`
+- *engine* = a unique regclass-fueltype engine
+- *vehicle* = a unique sourcetype-regclass-fueltype vehicle
 
-Repair and maintenance cost per mile values—currently based on the Fleet Advantage whitepaper—are controlled via the “Repair_and_Maintenance_Curve_Inputs.csv”
-input file to the tool.
+Emission-related repair costs
+.............................
 
-For any given optionID/vehicle/MY where vehicle is a unique sourcetype-regclass-fueltype within MOVES, the emission-repair cost per mile (EmissionRepairCPM) at any given age would be calculated as:
-
-When Age+1 < EstimatedWarrantyAge:
+The tool estimates the emission-related repair costs for each sourcetype-regclass-fueltype vehicle in the analysis. These values are unique to each type of vehicle and to any options having
+different warranty and/or useful life provisions.
 
 .. math::
-    :label:
+    :label: in_ul_cpm
 
-    EmissionRepairCPM_{optionID;vehicle;MY;age}=InWarrantyCPM_{optionID;vehicle;MY}
+    & BetweenWarrantyAndUsefulLifeCPM_{optionID;vehicle;MY}\\
+    & = \small RepairAndMaintenanceCPM \times EmissionRepairShare \times BaseCostScaler_{engine;MY}
 
-When EstimatedWarrantyAge <= Age+1 < EstimatedUsefulLifeAge:
+where,
 
-.. math::
-    :label:
-
-    & EmissionRepairCPM_{optionID;vehicle;MY;age}\\
-    & = \small SlopeCPM_{optionID;vehicle;MY} \times ((Age_{optionID;vehicle;MY}+1)-EstimatedWarrantyAge_{optionID;vehicle;MY})\\
-    & + \small InWarrantyCPM_{optionID;vehicle;MY}
-
-When Age+1 = EstimatedUsefulLifeAge:
+- *BetweenWarrantyAndUsefulLifeCPM* = the emission-related repair cost per mile/hour in the period between warranty and useful life
+- *RepairAndMaintenanceCPM* = dollars_per_mile or dollars_per_hour value in the repair_and_maintenance input file
+- *EmissionRepairShare* = EPA developed share of Maintenance and Repair costs that are emission-related (10.8%)
+- *BaseCostScaler* = the base cost scaler from equation :math:numref:`base_cost_scaler`
 
 .. math::
-    :label:
+    :label: beyond_ul_cpm
 
-    EmissionRepairCPM_{optionID;vehicle;MY;age}=AtUsefulLifeCPM_{optionID;vehicle;MY}
-
-Otherwise:
+    & BeyondUsefulLifeCPM_{optionID;vehicle;MY}\\
+    & \small RepairAndMaintenance_{input} \times EmissionRepairShare \times BeyondUsefulLifeScaler_{optionID;engine;MY}
 
 .. math::
-    :label:
+    :label: beyond_ul_scaler
 
-    EmissionRepairCPM_{optionID;vehicle;MY;age}=MaxCPM_{optionID;vehicle;MY}
+    BeyondUsefulLifeScaler_{optionID;engine;MY} = \frac{ActionDMC_{optionID;engine;MY}} {BaseDMC_{NoActionOption;engine;MY}}
+
+where,
+
+- *BeyondUsefulLifeCPM* = the emission-related repair cost per mile/hour in the period between beyond useful life
+- *RepairAndMaintenance* = dollars_per_mile or dollars_per_hour value in the repair_and_maintenance input file
+- *EmissionRepairShare* = EPA developed share of Maintenance and Repair costs that are emission-related (10.8%)
+- *ActionDMC* = the given engine's DMC in the given option and model year
+- *BaseDMC* = the given engine's DMC in the no-action option and model year
+
+The emission-related repair costs are then calculated as the applicable cost per mile (or hours) multiplied by the applicable miles (or hours) in the given year.
 
 Discounting
 -----------

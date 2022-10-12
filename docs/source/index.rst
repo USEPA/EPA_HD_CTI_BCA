@@ -11,11 +11,11 @@ Welcome to the usepa-cti-bca documentation!
    :caption: Contents:
    :numbered:
 
-   introduction
-   getting_started
-   methodology
-   bca_tool_code
-   software_policy
+   1_introduction
+   2_getting_started
+   3_methodology
+   4_code_details
+   5_software_policy
 
 
 
