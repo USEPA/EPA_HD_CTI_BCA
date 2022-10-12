@@ -31,9 +31,20 @@ release = "1.1.0"
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'sphinx.ext.viewcode']
+extensions = [
+    'sphinx.ext.napoleon',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.viewcode',
+    'sphinx.ext.todo'
+]
 
-autodoc_member_order = 'bysource'  # 'bysource' presents autodocs in the same order as they appear in the code, as opposed to alphabetical
+autodoc_default_options = {
+    'member-order': 'bysource',  # other option is 'alphabetical'
+    'special-members': '__init__',
+}
+
+# autodoc_member_order = 'bysource'  # 'bysource' presents autodocs in the same order as they appear in the code, as opposed to alphabetical
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -41,7 +52,10 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['*setup*']
+exclude_patterns = [
+    '*setup*',
+    '*exe_entry*'
+]
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -52,6 +66,13 @@ exclude_patterns = ['*setup*']
 # html_theme = 'classic'
 html_theme = 'sphinx_rtd_theme'
 numfig = True
+todo_include_todos = True
+
+html_theme_options = {
+    'navigation_depth': 5,
+    'style_nav_header_background': '#0071BC',
+    'collapse_navigation': False,
+}
 
 # EPA Palette
 # html_theme_options = {
@@ -88,3 +109,5 @@ latex_elements = {
 
 # set top level document to index.rst:
 master_doc = 'index'
+
+add_module_names = False

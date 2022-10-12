@@ -2,15 +2,22 @@
 
 pushd %~dp0
 
+if "%1" == "" goto help
+
 REM Command file for Sphinx documentation
+REM Call from venv command-line, e.g. "make html"
+
+set DOCOPTS=--force --append-syspath --doc-project "Code Details" --doc-version 2.0.1 --module-first --tocfile 7_code_details
+set EXCLUDES=../setup.py ../exe_entry.py
+
+sphinx-apidoc -o source ".." %EXCLUDES% %DOCOPTS%
 
 if "%SPHINXBUILD%" == "" (
-	set SPHINXBUILD=sphinx-build
+	set SPHINXBUILD="sphinx-build"
 )
 set SOURCEDIR=source
 set BUILDDIR=build
-
-if "%1" == "" goto help
+set SPHINXOPTS=-v
 
 %SPHINXBUILD% >NUL 2>NUL
 if errorlevel 9009 (
