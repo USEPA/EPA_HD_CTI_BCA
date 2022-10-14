@@ -149,17 +149,18 @@ class Markups:
 
         This method revises warranty costs where insufficient years of data exist to get a full accounting (i.e., if
         estimated warranty age is 5 years, then a 2045 vehicle has insufficient data to fully account for warranty costs
-        since warranty costs are calculated on cost/year basis. This method is used only when warrnaty cost method is
+        since warranty costs are calculated on cost/year basis. This method is used only when warranty cost method is
         set to cost_per_year.
 
         Parameters:
+            settings: object; an object of the SetInputs class.
             vehicle: object; a vehicle object of the Vehicles class.\n
 
         Returns:
             Revised warranty contributions based on prior model year values.
 
         Note:
-            This method is not being used so may not function properly.
+            This method is not being used so may not function properly. The issue it was meant to address is handled in the repair_cost module.
 
         """
         identifier = 'Warranty'

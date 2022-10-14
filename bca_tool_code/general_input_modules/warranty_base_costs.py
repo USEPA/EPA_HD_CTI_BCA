@@ -14,9 +14,21 @@ Sample Data Columns
         :widths: auto
 
         regClassName,regClassID,FuelName,fuelTypeID,Cost,DollarBasis,
-        HHD8,47,Gasoline,1,1000,2018
-        HHD8,47,Diesel,2,1000,2018
-        HHD8,47,CNG,3,1000,2018
+        LHD,41,Gasoline,1,0,,
+        LHD45,42,Gasoline,1,1000,2018,EMA public comments at page 151
+        MHD67,46,Gasoline,1,1000,2018,ibid
+        HHD8,47,Gasoline,1,1000,2018,ibid
+        UrbanBus,48,Gasoline,1,0,,
+        LHD,41,Diesel,2,1000,2018,ibid
+        LHD45,42,Diesel,2,1000,2018,ibid
+        MHD67,46,Diesel,2,1000,2018,ibid
+        HHD8,47,Diesel,2,1000,2018,ibid
+        UrbanBus,48,Diesel,2,1000,2018,ibid
+        LHD,41,CNG,3,0,,
+        LHD45,42,CNG,3,0,,
+        MHD67,46,CNG,3,0,,
+        HHD8,47,CNG,3,1000,2018,ibid
+        UrbanBus,48,CNG,3,1000,2018,ibid
 
 Data Column Name and Description
     :regClassName:

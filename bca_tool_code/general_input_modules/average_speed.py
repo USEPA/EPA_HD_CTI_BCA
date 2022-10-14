@@ -70,10 +70,10 @@ class AverageSpeed:
         """
 
         Parameters:
-            key: tuple; sourcetype_id
+            key: int; sourcetype_id
 
         Returns:
-            A single value associated with the period_id for the given key.
+            The average speed associated with  the passed sourcetype_id.
 
         """
         return self._dict[key][self.attribute_name]

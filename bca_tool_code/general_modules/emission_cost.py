@@ -1,12 +1,15 @@
 def calc_criteria_emission_cost(settings, vehicle):
     """
-    This function is not being used.
+
     Parameters:
         settings: object; the SetInputs class object.\n
         vehicle: object; an object of the Vehicle class.
 
     Returns:
         An update_dict for use in updating the cost results dictionary.
+
+    Note:
+        This function is not being used so may not work properly.
 
     """
     cap_dr1 = settings.general_inputs.get_attribute_value('criteria_discount_rate_1')
@@ -32,13 +35,15 @@ def calc_criteria_emission_cost(settings, vehicle):
 def calc_ghg_emission_cost(settings, vehicle):
     """
 
-    This function is not being used.
     Parameters:
         settings: object; the SetInputs class object.\n
         vehicle: object; an object of the Vehicle class.
 
     Returns:
         An update_dict for use in updating the cost results dictionary.
+
+    Note:
+        This function is not being used so may not work properly.
 
     """
     ghgs = ['CO2', 'N2O', 'CH4']

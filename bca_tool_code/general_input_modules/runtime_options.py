@@ -89,6 +89,15 @@ class RuntimeOptions:
         return self._dict[attribute_name]['user_entry']
 
     def set_runtime_options(self, df):
+        """
+
+        Parameters:
+            df: DataFrame; a DataFrame of the runtime_options input file.
+
+        Returns:
+            The passed DataFrame with boolean 'True' or 'False' rather than 1 or 0 set via the input file.
+
+        """
 
         self.runtime_options = [item for item in df.index.values]
 
@@ -101,6 +110,12 @@ class RuntimeOptions:
         return df
 
     def get_runtime_options(self):
+        """
+
+        Returns:
+            Nothing, but this method sets the applicable attribute values for use throughout the tool code.
+
+        """
 
         self.calc_cap_costs = self.get_attribute_value('calculate_cap_costs')
         self.calc_cap_pollution = self.get_attribute_value('calculate_cap_pollution_effects')

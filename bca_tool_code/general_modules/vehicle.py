@@ -7,7 +7,7 @@ from bca_tool_code.general_input_modules.input_files import InputFiles
 class Vehicle:
     """
 
-    Define vehicle attribute names for sourceTypeID, regClassID, fuelTypeID.
+    Define vehicle object attributes.
 
     """
     vehicle_df = pd.DataFrame()
@@ -50,12 +50,30 @@ class Vehicle:
         self.gallons = 0
 
     def set_vehicle_id(self):
+        """
+
+        Returns:
+            A tuple denoting the vehicle_id consisting of (sourcetype_id, regclass_id, fueltype_id).
+
+        """
         return (self.sourcetype_id, self.regclass_id, self.fueltype_id)
 
     def set_engine_id(self):
+        """
+
+        Returns:
+            A tuple denoting the engine_id consisting of (regclass_id, fueltype_id).
+
+        """
         return (self.regclass_id, self.fueltype_id)
 
     def set_age_id(self):
+        """
+
+        Returns:
+            The age_id (age) of the vehicle.
+
+        """
         return self.year_id - self.modelyear_id
 
     def get_fueltype_name(self):
@@ -179,7 +197,6 @@ class Vehicle:
         Parameters:
             df: DataFrame; the raw fleet input data (e.g., from MOVES). \n
             year_min: int; the first model year to include in the returned DataFrame.\n
-            # program: str; represents the program for the given instance (i.e., 'CAP' or 'GHG').\n
             options: object; the options class object.\n
             adjustments: object; the MovesAdjustments class object.
 
@@ -269,6 +286,15 @@ class Vehicle:
 
     @staticmethod
     def rename_attributes(df):
+        """
+
+        Parameters:
+            df: DataFrame; the raw fleet input data (e.g., from MOVES). \n
+
+        Returns:
+            The passed DataFrame with attributes (headers) renamed according to the method's rename_dict.
+
+        """
 
         rename_dict = {'sourceTypeID': 'sourcetype_id',
                        'regClassID': 'regclass_id',

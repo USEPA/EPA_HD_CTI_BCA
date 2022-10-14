@@ -262,7 +262,7 @@ class CostCalcs:
         """
 
         Parameters:
-            key: tuple; ((sourcetype_id, regclass_id, fueltype_id), option_id, model_year, age_id, discount_rate).\n
+            key: tuple; (vehicle_id, option_id, model_year, age_id, discount_rate).\n
             attribute_names: str(s); the attribute names for which values are sought.
 
         Returns:
@@ -279,7 +279,7 @@ class CostCalcs:
         """
 
         Parameters:
-            key: tuple; ((sourcetype_id, regclass_id, fueltype_id), option_id, model_year, age_id, discount_rate).\n
+            key: tuple; (vehicle_id, option_id, model_year, age_id, discount_rate).\n
             attribute_name: str; the attribute name for which a value is sought.
 
         Returns:

@@ -39,7 +39,7 @@ Data Column Name and Description
         The value of the seed volume factor, an integer.
 
     :Notes:
-        A string of notes pertinent to the data; Notes are ignored in code.
+        Notes pertinent to the data; Notes are ignored in code.
 
 ----
 
@@ -103,8 +103,7 @@ class EngineLearningScalers:
         Args:
             vehicle: object; an object of the Vehicle class.
             sales_year1: numeric; the sales in the first year of implementation of a new standard.
-            cumulative_sales: numeric; the cumulative sales since and including the first year of implementation of a
-            new standard.
+            cumulative_sales: numeric; the cumulative sales since and including the first year of implementation of a new standard.
             learning_rate: numeric; the learning rate set via the General Inputs file.
 
         Returns:

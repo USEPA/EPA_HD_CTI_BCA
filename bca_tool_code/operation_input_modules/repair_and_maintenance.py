@@ -48,8 +48,7 @@ from bca_tool_code.general_input_modules.input_files import InputFiles
 class RepairAndMaintenance:
     """
 
-    The RepairAndMaintenance class reads the repair and maintenance input file, converts monetized values to analysis
-     dollars, and provides methods to query its contents.
+    The RepairAndMaintenance class reads the repair and maintenance input file, converts monetized values to analysis dollars, and provides methods to query its contents.
 
     """
     def __init__(self):

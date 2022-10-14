@@ -3,8 +3,6 @@ import pandas as pd
 
 def create_weighted_cost_dict(settings, data_object, year_max, destination_dict, arg_to_weight=None, arg_to_weight_by=None):
     """
-    This function is not being used.
-    This function weights 'arg_to_weight' attributes by the 'arg_to_weight_by' attribute.
 
     Parameters::
         settings: object; the SetInputs class object.\n
@@ -18,6 +16,8 @@ def create_weighted_cost_dict(settings, data_object, year_max, destination_dict,
         Updates the destination_dict dictionary of arguments weighted by the weight_by argument.
 
     Note:
+        This function is not being used.
+        This function weights 'arg_to_weight' attributes by the 'arg_to_weight_by' attribute.
         The weighting is limited by the number of year_ids (ages) to be included which is set in the general inputs file.
         The weighting is also limited to model year_ids for which sufficient data exits to include all of those ages. For
         example, if the maximum calendar year included in the input data is 2045, and the maximum numbers of ages of

@@ -104,8 +104,7 @@ class EstimatedAge:
         """
 
         Parameters:
-            key: tuple; the object dictionary key (i.e., vehicle_id, option_id, modelyear_id, identifier) where
-            identifier would be 'Warranty' or 'UsefulLife'.
+            key: tuple; the object dictionary key (i.e., vehicle_id, option_id, modelyear_id, identifier) where identifier would be 'Warranty' or 'UsefulLife'.
             attribute_name: str; The name of the attribute for which a value is sought.
 
         Returns:

@@ -108,7 +108,7 @@ class DefDoseRates:
             attribute_name: str; the attribute name for which a value is sought.
 
         Returns:
-            The slope and intercept curve coefficients for calculating DEF doserate.
+            The slope or intercept curve coefficient for calculating DEF doserate.
 
         """
         return self._dict[engine][attribute_name]

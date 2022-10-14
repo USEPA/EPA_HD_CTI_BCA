@@ -79,7 +79,7 @@ class RepairCalcAttribute:
             sourcetype_id: int; the vehicle sourcetype_id.
 
         Returns:
-            The repair calculation attribute (dollars_per_mile or dollars_per_hour).
+            The repair calculation attribute (dollars_per_mile or dollars_per_hour) to use when calculating emission-related repair costs.
 
         """
         return self._dict[sourcetype_id][self.attribute_name]

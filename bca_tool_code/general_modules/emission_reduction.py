@@ -9,7 +9,7 @@ def calc_nox_reduction(settings, vehicle):
     Returns:
         The NOx reduction for the passed vehicle.
 
-    Notes:
+    Note:
         The nox_reduction calculation should be done such that it is positive if action has lower nox than no action.
 
     """
@@ -37,7 +37,7 @@ def calc_thc_reduction(settings, vehicle):
     Returns:
         The THC reduction for the given vehicle object.
 
-    Notes:
+    Note:
         The thc_reduction calculation should be done such that it is positive if action has lower thc than no action.
 
     """

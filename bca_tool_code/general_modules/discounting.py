@@ -88,8 +88,7 @@ def discount_value(arg_value, rate, year, discount_to, offset):
         rate: Numeric; the discount rate to use.\n
         year: int; the calendar year associated with arg_value.\n
         discount_to: int; the calendar year to which to discount the value.\n
-        offset: int; 0 or 1 reflecting whether costs are assumed to occur at the start of the year or the end of the
-        year.
+        offset: int; 0 or 1 reflecting whether costs are assumed to occur at the start of the year or the end of the year.
 
     Returns:
         A single value representing arg_value discounted to the year discount_to at rate.

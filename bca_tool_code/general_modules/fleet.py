@@ -14,6 +14,16 @@ class Fleet:
         self.typical_vmt_dict = dict() # used for estimating ages at certain events (see estimated_age_at_event module)
 
     def create_vehicles(self, no_action_alt, options):
+        """
+
+        Parameters:
+            no_action_alt: int; the no-action option_id number.
+            options: object; an object of the Options class.
+
+        Returns:
+            Nothing but it creates vehicle objects and lists of vehicle objects.
+
+        """
         print('Creating vehicle objects...')
         for index, row in Vehicle.vehicle_df.iterrows():
             vehicle = Vehicle()
@@ -54,11 +64,12 @@ class Fleet:
 
     def engine_sales(self, vehicle):
         """
-        engine sales by model year
+
         Parameters:
             vehicle: object; an object of the Vehicle class..
 
         Returns:
+            Nothing, but it updates the sales by start year object dictionary with engine sales data.
 
         """
         if vehicle.age_id != 0:
@@ -90,19 +101,15 @@ class Fleet:
 
             self.update_object_dict(vehicle, vehicle.engine_id, update_dict)
 
-        return sales
-
     def cumulative_engine_sales(self, vehicle, start_year):
         """
-        cumulative engine sales in modelyear_id by implementation step
+
         Parameters:
             vehicle: object; an object of the Vehicle class.
             start_year: int; the implementation step for which cumulative sales are sought.
 
         Returns:
-            The cumulative sales of engines equipped in vehicle through its model year and for the given implementation
-            step.
-            Updates the object dictionary with the cumulative sales.
+            Nothing, but it updates the sales by start year object dictionary with cumulative engine sales data.
 
         """
         if vehicle.age_id != 0:
@@ -118,19 +125,18 @@ class Fleet:
         update_dict = {f'cumulative_engine_sales_{start_year}_std': sales}
         self.update_object_dict(vehicle, vehicle.engine_id, update_dict)
 
-        return sales
-
     def cumulative_vehicle_sales(self, vehicle, start_year):
         """
-        cumulative vehicle sales in modelyear_id by implementation step
+
         Parameters:
             vehicle: object; an object of the Vehicle class.
             start_year: int; the implementation step for which cumulative sales are sought.
 
         Returns:
-            The cumulative sales of vehicles through its model year and for the given implementation
-            step.
-            Updates the object dictionary with the cumulative sales.
+            Nothing, but it updates the sales by start year object dictionary with cumulative vehicle sales data.
+
+        Note:
+            This method is not used so may not work properly.
 
         """
         if vehicle.age_id != 0:
@@ -158,16 +164,8 @@ class Fleet:
 
         self.update_object_dict(vehicle, vehicle.vehicle_id, update_dict)
 
-        return sales
-
     def get_typical_vmt_per_year(self, settings, vehicle):
         """
-        This function calculates a typical annual VMT/vehicle over a set number of year_ids as set via the General
-        Inputs workbook. This typical annual VMT/vehicle can then be used to estimate the ages at which warranty and
-        useful life will be reached. When insufficient year_ids are available -- e.g., if the typical_vmt_thru_ageID
-        is set to >5 year_ids and the given vehicle is a MY2041 vintage vehicle and the fleet input file contains data
-        only thru CY2045, then insufficient data exist to calculate the typical VMT for that vehicle -- the typical VMT
-        for that vehicle will be set equal to the last prior MY vintage for which sufficient data were present.
 
         Parameters:
             settings: object; the SetInputs class object.\n
@@ -175,6 +173,14 @@ class Fleet:
 
         Returns:
             A single typical annual VMT/veh value for the given vehicle.
+
+        Note:
+            This function calculates a typical annual VMT/vehicle over a set number of year_ids as set via the General
+            Inputs workbook. This typical annual VMT/vehicle can then be used to estimate the ages at which warranty and
+            useful life will be reached. When insufficient year_ids are available -- e.g., if the typical_vmt_thru_ageID
+            is set to >5 year_ids and the given vehicle is a MY2041 vintage vehicle and the fleet input file contains data
+            only thru CY2045, then insufficient data exist to calculate the typical VMT for that vehicle -- the typical VMT
+            for that vehicle will be set equal to the last prior MY vintage for which sufficient data were present.
 
         """
         vmt_thru_age_id \
@@ -207,7 +213,7 @@ class Fleet:
 
         Parameters:
             vehicle: object; an object of the Vehicle class.\n
-            unit: tuple; the vehicle unit to use in the key (e.g., engine_id or vehicle_id).\n
+            unit: tuple; the unit to use in the key (e.g., engine_id or vehicle_id).\n
             update_dict: Dictionary; represents the attribute-value pairs to be updated.
 
         Returns:

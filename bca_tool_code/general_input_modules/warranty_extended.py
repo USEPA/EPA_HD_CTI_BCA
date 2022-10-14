@@ -32,12 +32,17 @@ Data Column Name and Description
     :fuelTypeID:
         The MOVES fuel type ID, an integer, where 1=Gasoline, 2=Diesel, etc.
 
-    :Cost:
-        The cost per year of warranty coverage.
+    :period_id:
+        The identifier, i.e., 'Miles', 'Age' or 'Hours'
 
-    :DollarBasis:
-        The dollar basis (dollars valued in what year) for the corresponding cost; costs are converted to analysis
-        dollars in-code.
+    :Share:
+        The share of engines purchased with extended warranty coverage in the no-action scenario.
+
+    :Base:
+        The required base warranty coverage.
+
+    :Extended:
+        The extended warranty coverage.
 
 ----
 

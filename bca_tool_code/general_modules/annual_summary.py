@@ -163,8 +163,7 @@ class AnnualSummary:
         """
 
         Parameters:
-            key: tuple; (series, option_id, year_id, rate), where series is 'AnnualValue', 'PresentValue' or
-            'AnnualizedValue'.\n
+            key: tuple; (series, option_id, year_id, rate), where series is 'AnnualValue', 'PresentValue' or 'AnnualizedValue'.\n
             attribute_name: str; the attribute for which the value is sought.
 
         Returns:
@@ -201,8 +200,7 @@ class AnnualSummary:
             present_value: Numeric; the present value to be annualized.\n
             rate: Numeric; the discount rate to use.\n
             periods: int; the number of periods over which to annualize present_value.\n
-            annualized_offset: int; 0 or 1 reflecting whether costs are assumed to occur at the start of the year or the
-            end of the year.
+            annualized_offset: int; 0 or 1 reflecting whether costs are assumed to occur at the start of the year or the end of the year.
 
         Returns:
             A single annualized value of present_value discounted at rate over periods number of year_ids.

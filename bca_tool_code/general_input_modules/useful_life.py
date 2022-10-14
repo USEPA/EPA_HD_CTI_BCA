@@ -114,8 +114,7 @@ class UsefulLife:
         """
 
         Parameters:
-            key: tuple; ((regclass_id, fueltype_id), option_id, modelyear_id, period), where period_id is
-            'Miles' or 'Age'.\n
+            key: tuple; ((regclass_id, fueltype_id), option_id, modelyear_id, period), where period_id is 'Miles' or 'Age' or 'Hours'.\n
             attribute_name: str; the attribute name for which a value is sought (e.g., period_value).
 
         Returns:

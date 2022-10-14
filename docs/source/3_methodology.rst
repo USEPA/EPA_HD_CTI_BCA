@@ -179,7 +179,7 @@ where,
     :label: beyond_ul_cpm
 
     & BeyondUsefulLifeCPM_{optionID;vehicle;MY}\\
-    & \small RepairAndMaintenance_{input} \times EmissionRepairShare \times BeyondUsefulLifeScaler_{optionID;engine;MY}
+    & \small RepairAndMaintenanceCPM \times EmissionRepairShare \times BeyondUsefulLifeScaler_{optionID;engine;MY}
 
 .. math::
     :label: beyond_ul_scaler
@@ -188,8 +188,8 @@ where,
 
 where,
 
-- *BeyondUsefulLifeCPM* = the emission-related repair cost per mile/hour in the period between beyond useful life
-- *RepairAndMaintenance* = dollars_per_mile or dollars_per_hour value in the repair_and_maintenance input file
+- *BeyondUsefulLifeCPM* = the emission-related repair cost per mile/hour in the period beyond useful life
+- *RepairAndMaintenanceCPM* = dollars_per_mile or dollars_per_hour value in the repair_and_maintenance input file
 - *EmissionRepairShare* = EPA developed share of Maintenance and Repair costs that are emission-related (10.8%)
 - *ActionDMC* = the given engine's DMC in the given option and model year
 - *BaseDMC* = the given engine's DMC in the no-action option and model year

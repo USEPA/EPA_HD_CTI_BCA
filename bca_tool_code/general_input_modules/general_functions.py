@@ -9,8 +9,7 @@ def inputs_filenames(input_files_pathlist):
     """
 
     Parameters:
-        input_files_pathlist: List; those input files that are specified in the Input_Files.csv file contained in the
-        inputs folder.
+        input_files_pathlist: List; those input files that are specified in the Input_Files.csv file contained in the inputs folder.
 
     Returns:
         A list of input file full paths - these will be copied directly to the output folder so that inputs and outputs

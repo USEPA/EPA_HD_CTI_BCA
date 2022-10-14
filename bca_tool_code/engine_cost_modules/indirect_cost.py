@@ -8,17 +8,17 @@ def calc_project_markup_value(settings, vehicle, markup_factor_name):
     Parameters:
         settings: object; the SetInputs class object.\n
         vehicle: object; an object of the Vehicle class.
-        markup_factor_name: str; represents the name of the project markup factor value to return (warranty, r and d,
-        other, etc.).
+        markup_factor_name: str; represents the name of the project markup factor value to return (warranty, r and d, other, etc.).
 
     Returns:
         A single markup factor value to be used in the project having been adjusted in accordance with the proposed
         warranty and useful life changes and the Absolute/Relative scaling entries.
 
     Note:
-        The project markup factor differs from the input markup factors by scaling where that scaling is done based on
-        the "Absolute" or "Relative" entries in the input file and by the scaling metric (Miles or Age) entries of the
-        warranty/useful life input files. Whether Miles or Age is used is set via the BCA_General_Inputs file.
+        The project markup factor differs from the input markup factors by scaling where that scaling (if applicable)
+        is done based on the "Absolute" or "Relative" entries in the input file and by the scaling metric (Miles or Age)
+        entries of the warranty/useful life input files. Whether Miles or Age is used is set via the BCA_General_Inputs
+        file.
 
     """
     rc, ft = vehicle.engine_id

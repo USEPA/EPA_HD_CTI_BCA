@@ -106,7 +106,7 @@ def calc_deltas_weighted(settings, dict_for_deltas, options):
         have optionID=10.
 
     Note:
-        There is no age_id or discount rate in the key for the passed weighted dictionaries.
+        There is no age_id or discount rate in the key for the passed weighted dictionaries; this function was not used for the HD2027 FRM so may not work properly.
 
     """
     print('\nCalculating weighted deltas...')

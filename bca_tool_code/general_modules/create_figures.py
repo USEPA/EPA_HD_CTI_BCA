@@ -1,9 +1,3 @@
-"""
-create_figures.py
-
-Contains the CreateFigures class.
-
-"""
 import pandas as pd
 import matplotlib.pyplot as plt
 
