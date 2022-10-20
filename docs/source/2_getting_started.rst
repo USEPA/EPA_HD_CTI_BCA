@@ -1,6 +1,6 @@
 Getting started
 ===============
-Required files for using the tool can be found in the docket associated with the proposed rulemaking.
+Required files for using the tool can be found in the docket associated with the rulemaking.
 
 In addition, the code repository can be found at https://github.com/USEPA/EPA_HD_CTI_BCA.
 Navigate to the above link and select "Clone or download" to either clone the repository to your local machine or download it as a ZIP file. Alternatively, you may wish to Fork the repo to your

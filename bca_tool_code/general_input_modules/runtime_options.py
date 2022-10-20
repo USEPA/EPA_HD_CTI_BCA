@@ -2,8 +2,6 @@
 
 **INPUT FILE FORMAT**
 
-The file format consists of a one-row data header and subsequent data rows.
-
 The data represent options for what to include in the given run of the tool.
 
 File Type
@@ -21,7 +19,7 @@ Sample Data Columns
 
 Data Column Name and Description
     :item:
-        The name of the option; these should not be changed.
+        The name of the runtime option; these should not be changed.
 
     :user_entry:
         A boolean indication (0 or 1) of what to include in the run.
