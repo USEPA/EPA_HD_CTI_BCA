@@ -144,33 +144,15 @@ class Markups:
             for attribute_name, attribute_value in update_dict.items():
                 self.contribution_factors[key].update({attribute_name: attribute_value})
 
-    def revise_warranty_contribution(self, settings, vehicle):
+    def get_contribution_factors_data(self, key, attribute_name):
         """
-
-        This method revises warranty costs where insufficient years of data exist to get a full accounting (i.e., if
-        estimated warranty age is 5 years, then a 2045 vehicle has insufficient data to fully account for warranty costs
-        since warranty costs are calculated on cost/year basis. This method is used only when warranty cost method is
-        set to cost_per_year.
 
         Parameters:
-            settings: object; an object of the SetInputs class.
-            vehicle: object; a vehicle object of the Vehicles class.\n
+            key: tuple; the object contribution_factors dictionary key.
+            attribute_name: str; the name of the attribute (data) sought.
 
         Returns:
-            Revised warranty contributions based on prior model year values.
-
-        Note:
-            This method is not being used so may not function properly. The issue it was meant to address is handled in the repair_cost module.
+            The value associated with the passed attribute name.
 
         """
-        identifier = 'Warranty'
-        estimated_ages_dict_key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, identifier
-
-        estimated_age = settings.estimated_age.get_attribute_value(estimated_ages_dict_key, 'estimated_age')
-
-        if vehicle.modelyear_id + estimated_age > settings.vehicle.year_id_max:
-            modelyear_id = settings.vehicle.year_id_max - estimated_age
-            key = vehicle.vehicle_id, vehicle.engine_id, vehicle.option_id, modelyear_id
-            warranty_cost = self.contribution_factors[key]['WarrantyCost_PerVeh']
-            update_dict = {'WarrantyCost_PerVeh': warranty_cost}
-            self.update_contribution_factors(vehicle, update_dict)
+        return self.contribution_factors[key][attribute_name]

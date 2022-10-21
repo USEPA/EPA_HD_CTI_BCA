@@ -94,10 +94,8 @@ class BaseWarrantyCosts:
 
         df.drop(columns='DollarBasis', inplace=True)
 
-        key = pd.Series(zip(
-            df['regClassID'],
-            df['fuelTypeID'],
-        ))
+        key = df['regClassID']
+
         df.set_index(key, inplace=True)
 
         self._dict = df.to_dict('index')
@@ -109,7 +107,7 @@ class BaseWarrantyCosts:
         """
 
         Parameters:
-            key: tuple; the engine_id.
+            key: tuple; the object dictionary key.
 
         Returns:
             The warranty cost for the passed engine_id under option_id.

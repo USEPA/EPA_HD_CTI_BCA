@@ -1,4 +1,3 @@
-from math import ceil
 
 
 class EmissionRepairCost:
@@ -6,7 +5,7 @@ class EmissionRepairCost:
     def __init__(self):
         self.repair_cost_details = dict()
 
-    def calc_warranty_and_repair(self, settings, vehicle):
+    def calc_repair_cost(self, settings, vehicle):
         """
 
         Args:
@@ -20,7 +19,12 @@ class EmissionRepairCost:
         """
         dollars_per_mile = dollars_per_hour = 0
 
-        vehicle_id, option_id, modelyear_id = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id
+        vehicle_id, engine_id, option_id, modelyear_id \
+            = vehicle.vehicle_id, \
+              vehicle.engine_id,\
+              vehicle.option_id, \
+              vehicle.modelyear_id
+
         cost_key = vehicle_id, option_id, modelyear_id, 0, 0
 
         pkg_cost = settings.cost_calcs.get_attribute_value(cost_key, 'DirectCost_PerVeh')
@@ -34,11 +38,11 @@ class EmissionRepairCost:
             = settings.cost_calcs.get_attribute_value(((61, 47, 2), settings.no_action_alt, modelyear_id, 0, 0),
                                                       'DirectCost_PerVeh')
 
-        base_warranty_scaler = base_pkg_cost / reference_pkg_cost # scales HHD inputs to other engine sizes
-        beyond_ul_scaler = pkg_cost / base_pkg_cost
+        # scale HHD inputs to other engine sizes
+        in_ul_scaler = base_pkg_cost / reference_pkg_cost
 
-        warranty_per_year = settings.warranty_base_costs.get_warranty_cost(vehicle.engine_id)
-        warranty_per_year = warranty_per_year * base_warranty_scaler
+        # scale repair costs beyond UL based on new tech vs existing tech
+        beyond_ul_scaler = pkg_cost / base_pkg_cost
 
         # get repair cost calculation attribute
         calc_basis = settings.repair_calc_attr.get_attribute_value(vehicle.sourcetype_id)
@@ -51,11 +55,11 @@ class EmissionRepairCost:
         if 'mile' in calc_basis:
             dollars_per_mile \
                 = settings.repair_and_maintenance.get_attribute_value(('repair_and_maintenance', 'dollars_per_mile')) \
-                  * base_warranty_scaler * emission_repair_share
+                  * in_ul_scaler * emission_repair_share
         else:
             dollars_per_hour \
                 = settings.repair_and_maintenance.get_attribute_value(('repair_and_maintenance', 'dollars_per_hour')) \
-                  * base_warranty_scaler * emission_repair_share
+                  * in_ul_scaler * emission_repair_share
 
         # age estimated warranty and useful life ages
         estimated_ages_dict_key = vehicle_id, option_id, modelyear_id, 'Warranty'
@@ -74,19 +78,13 @@ class EmissionRepairCost:
         else:
             r_and_m_per_veh = dollars_per_hour * operating_hours
 
-        oem_warranty_liability_per_veh = 0
-        cumulative_value = 0
         if vehicle.age_id < warranty_age < vehicle.age_id + 1:
-            # this calcs the portion not covered during the year in-which warranty is reached
             # plus 1 here because MOVES uses age_id=0 for first year but EstimatedAge does not
-            portion_under_warranty = warranty_age - vehicle.age_id
             portion_beyond_warranty = vehicle.age_id + 1 - warranty_age
-            oem_warranty_liability_per_veh = warranty_per_year * portion_under_warranty
             r_and_m_cost_per_veh = r_and_m_per_veh * portion_beyond_warranty
 
         elif vehicle.age_id + 1 <= warranty_age:
             # plus 1 here because MOVES uses age_id=0 for first year but EstimatedAge does not
-            oem_warranty_liability_per_veh = warranty_per_year
             r_and_m_cost_per_veh = 0
 
         elif vehicle.age_id < ul_age < vehicle.age_id + 1:
@@ -103,14 +101,16 @@ class EmissionRepairCost:
         else:
             r_and_m_cost_per_veh = r_and_m_per_veh * beyond_ul_scaler
 
-        if (vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, 0) in self.repair_cost_details:
-            cumulative_value \
-                = self.repair_cost_details[vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, 0]['cumulative_oem_warranty_liability_per_veh']
-
-        cumulative_oem_warranty_liability_per_veh = oem_warranty_liability_per_veh + cumulative_value
         r_and_m_cost = r_and_m_cost_per_veh * vehicle.vpop
         cpm = r_and_m_cost_per_veh / vehicle.vmt_per_veh
         cph = r_and_m_cost_per_veh / operating_hours
+
+        # get warranty cost for inclusion in repair cost dictionary
+        warranty_cost_per_veh = 0
+        if vehicle.age_id == 0:
+            contribution_factors_dict_key = vehicle_id, engine_id, option_id, modelyear_id
+            warranty_cost_per_veh \
+                = settings.markups.get_contribution_factors_data(contribution_factors_dict_key, 'WarrantyCost_PerVeh')
 
         key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, vehicle.age_id
         self.repair_cost_details[key] = {
@@ -131,30 +131,15 @@ class EmissionRepairCost:
             'reference_pkg_direct_cost': reference_pkg_cost,
             'base_pkg_direct_cost': base_pkg_cost,
             'pkg_direct_cost': pkg_cost,
-            'base_warranty_scaler': base_warranty_scaler,
-            'beyond_warranty_scaler': 'na',
+            'in_ul_scaler': in_ul_scaler,
             'beyond_ul_scaler': beyond_ul_scaler,
-            'warranty_est_age': warranty_age,
-            'ul_est_age': ul_age,
+            'estimated_warranty_age': warranty_age,
+            'estimated_ul_age': ul_age,
             'emission_repair_dollars_per_mile': cpm,
             'emission_repair_dollars_per_hour': cph,
             'emission_repair_dollars_per_veh': r_and_m_cost_per_veh,
-            'oem_warranty_liability_dollars_per_veh': oem_warranty_liability_per_veh,
-            'cumulative_oem_warranty_liability_per_veh': 0,
-            'emission_repair_dollar_cost': r_and_m_cost,
+            'warranty_cost_per_veh': warranty_cost_per_veh,
+            'emission_repair_cost_dollars': r_and_m_cost,
         }
-
-        # have to be sure to get full upfront warranty liability when there's not enough years of data
-        year_max = settings.vehicle.year_id_max
-        if vehicle.modelyear_id + warranty_age > year_max:
-            modelyear_id = year_max - ceil(warranty_age)
-            needed_key = vehicle.vehicle_id, vehicle.option_id, modelyear_id, 0
-            cumulative_oem_warranty_liability_per_veh \
-                = self.repair_cost_details[needed_key]['cumulative_oem_warranty_liability_per_veh']
-
-        update_key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, 0
-        self.repair_cost_details[update_key].update({
-            'cumulative_oem_warranty_liability_per_veh': cumulative_oem_warranty_liability_per_veh
-        })
 
         return r_and_m_cost_per_veh, r_and_m_cost, cpm, cph

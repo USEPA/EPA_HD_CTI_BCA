@@ -120,24 +120,40 @@ def calc_indirect_cost_new_warranty(settings, vehicle):
 
     vehicle_id, option_id, modelyear_id = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id
 
+    no_action = settings.no_action_alt
     pkg_cost \
         = settings.cost_calcs.get_attribute_value((vehicle_id, option_id, modelyear_id, 0, 0), 'DirectCost_PerVeh')
 
-    warranty_cost_per_year = warranty_scaler = warranty_age = ic_sum_per_veh = ic_sum = 0
+    warranty_cost_per_year = reference_warranty_scaler = warranty_age = ic_sum_per_veh = ic_sum = 0
     return_dict = dict()
     for markup_factor in markup_factors:
         if markup_factor == 'Warranty':
             markup_value = 'na'
 
-            repair_cost_details_key = vehicle.vehicle_id, vehicle.option_id, vehicle.modelyear_id, 0
-            cost_per_veh \
-                = settings.emission_repair_cost.repair_cost_details[repair_cost_details_key]['cumulative_oem_warranty_liability_per_veh']
+            base_pkg_cost \
+                = settings.cost_calcs.get_attribute_value((vehicle_id, no_action, modelyear_id, 0, 0),
+                                                          'DirectCost_PerVeh')
 
+            # Note: the reference_pkg_cost should be diesel regclass=47, no_action_alt and the same model year as vehicle.
+            reference_pkg_cost \
+                = settings.cost_calcs.get_attribute_value(((61, 47, 2), no_action, modelyear_id, 0, 0),
+                                                          'DirectCost_PerVeh')
+
+            # reference warranty cost is also regclass 47
+            reference_warranty_cost_key = 47
+            reference_warranty_per_year = settings.warranty_base_costs.get_warranty_cost(reference_warranty_cost_key)
+
+            # scale HHD warranty cost inputs to other engine sizes
+            reference_warranty_scaler = base_pkg_cost / reference_pkg_cost
+
+            warranty_cost_per_year = reference_warranty_per_year * reference_warranty_scaler
+
+            # age estimated warranty and useful life ages
+            estimated_ages_dict_key = vehicle_id, option_id, modelyear_id, 'Warranty'
             warranty_age \
-                = settings.emission_repair_cost.repair_cost_details[repair_cost_details_key]['warranty_est_age']
+                = settings.estimated_age.get_attribute_value(estimated_ages_dict_key, 'estimated_age')
 
-            warranty_scaler = settings.emission_repair_cost.repair_cost_details[repair_cost_details_key]['base_warranty_scaler']
-            warranty_cost_per_year = cost_per_veh / warranty_age
+            cost_per_veh = warranty_cost_per_year * warranty_age
 
         else:
 
@@ -158,7 +174,7 @@ def calc_indirect_cost_new_warranty(settings, vehicle):
             'sourceTypeName': vehicle.sourcetype_name,
             'regClassName': vehicle.regclass_name,
             'fuelTypeName': vehicle.fueltype_name,
-            'WarrantyScaler': warranty_scaler,
+            'WarrantyScaler': reference_warranty_scaler,
             'WarrantyCost_PerYear': warranty_cost_per_year,
             'WarrantyAge': warranty_age,
             f'{markup_factor}Cost_PerVeh': cost_per_veh,
